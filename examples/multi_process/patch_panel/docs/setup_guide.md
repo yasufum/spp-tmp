@@ -1,5 +1,11 @@
 Sample usage of the application :
 
+Compilation
+===========
+Compile DPDK for x86_64-ivshmem-linuxapp-* configuration
+Compile SPP: make -C examples/multi_process/patch_panel
+Change to SPP directory
+
 Start Controller
 ================
 python spp.py -p 5555 -s 6666
