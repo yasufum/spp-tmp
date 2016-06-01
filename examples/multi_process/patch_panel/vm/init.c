@@ -52,10 +52,10 @@ struct port_info *ports;
  * buffer pools needed by the app - currently none.
  */
 static int
-init_mbuf_pools(void)
+init_mbuf_pools(int total_ports)
 {
 	const unsigned int num_mbufs = (num_clients * MBUFS_PER_CLIENT)
-			+ (ports->num_ports * MBUFS_PER_PORT);
+			+ (total_ports * MBUFS_PER_PORT);
 
 	/*
 	 * don't pass single-producer/single-consumer flags to mbuf create as
@@ -103,21 +103,17 @@ init(int argc, char *argv[])
 	total_ports = rte_eth_dev_count();
 
 	/* set up array for port data */
-	if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
-		mz = rte_memzone_lookup(VM_MZ_PORT_INFO);
-		if (mz == NULL)
-			rte_exit(EXIT_FAILURE,
-				"Cannot get port info structure\n");
-		ports = mz->addr;
-	} else {
-		mz = rte_memzone_reserve(VM_MZ_PORT_INFO, sizeof(*ports),
+	mz = rte_memzone_lookup(MZ_PORT_INFO);
+	if (mz == NULL) {
+		RTE_LOG(DEBUG, APP, "Cannot get port info structure\n");
+		mz = rte_memzone_reserve(MZ_PORT_INFO, sizeof(*ports),
 			rte_socket_id(), NO_FLAGS);
 		if (mz == NULL)
 			rte_exit(EXIT_FAILURE,
 				"Cannot reserve memory zone for port information\n");
 		memset(mz->addr, 0, sizeof(*ports));
-		ports = mz->addr;
 	}
+	ports = mz->addr;
 
 	/* parse additional, application arguments */
 	retval = parse_app_args(total_ports, argc, argv);
@@ -125,20 +121,20 @@ init(int argc, char *argv[])
 		return -1;
 
 	/* initialise mbuf pools */
-	retval = init_mbuf_pools();
+	retval = init_mbuf_pools(total_ports);
 	if (retval != 0)
 		rte_exit(EXIT_FAILURE, "Cannot create needed mbuf pools\n");
 
 	/* now initialise the ports we will use */
 	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
-		for (i = 0; i < ports->num_ports; i++) {
+		for (i = 0; i < total_ports; i++) {
 			retval = init_port(ports->id[i], pktmbuf_pool);
 			if (retval != 0)
 				rte_exit(EXIT_FAILURE,
 					"Cannot initialise port %d\n", i);
 		}
 	}
-	check_all_ports_link_status(ports, ports->num_ports, (~0x0));
+	check_all_ports_link_status(ports, total_ports, (~0x0));
 
 	return 0;
 }
