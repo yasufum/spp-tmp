@@ -76,16 +76,6 @@ init_mbuf_pools(void)
 			rte_pktmbuf_pool_init, NULL, rte_pktmbuf_init, NULL,
 			rte_socket_id(), NO_FLAGS);
 	}
-	if (pktmbuf_pool == NULL) {
-		RTE_LOG(INFO, APP, "Creating mbuf pool '%s' [%u mbufs] ...\n",
-			VM_PKTMBUF_POOL_NAME, num_mbufs);
-
-		pktmbuf_pool = rte_mempool_create(VM_PKTMBUF_POOL_NAME,
-			num_mbufs, MBUF_SIZE, MBUF_CACHE_SIZE,
-			sizeof(struct rte_pktmbuf_pool_private),
-			rte_pktmbuf_pool_init, NULL, rte_pktmbuf_init, NULL,
-			rte_socket_id(), NO_FLAGS);
-	}
 
 	return (pktmbuf_pool == NULL); /* 0  on success */
 }
