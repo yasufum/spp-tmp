@@ -54,8 +54,10 @@ struct port_info *ports;
 static int
 init_mbuf_pools(int total_ports)
 {
-	const unsigned int num_mbufs = (num_clients * MBUFS_PER_CLIENT)
-			+ (total_ports * MBUFS_PER_PORT);
+	const unsigned int num_mbufs = total_ports * MBUFS_PER_PORT;
+
+	if (num_mbufs == 0)
+		return 0;
 
 	/*
 	 * don't pass single-producer/single-consumer flags to mbuf create as

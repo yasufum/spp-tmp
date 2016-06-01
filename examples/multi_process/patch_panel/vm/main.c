@@ -49,8 +49,6 @@ static struct port_map port_map[RTE_MAX_ETHPORTS];
 
 static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
 
-static uint8_t client_id;
-
 static void
 forward(void)
 {

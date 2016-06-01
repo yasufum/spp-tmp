@@ -40,7 +40,7 @@
 #include "init.h"
 
 /* global var for number of clients - extern in header */
-uint8_t num_clients;
+uint8_t client_id;
 char *server_ip;
 int server_port;
 
@@ -53,9 +53,9 @@ static void
 usage(void)
 {
 	RTE_LOG(INFO, APP,
-	    "%s [EAL options] -- -p PORTMASK -n NUM_CLIENTS [-s NUM_SOCKETS]\n"
+	    "%s [EAL options] -- -p PORTMASK -n CLIENT_ID [-s NUM_SOCKETS]\n"
 	    " -p PORTMASK: hexadecimal bitmask of ports to use\n"
-	    " -n NUM_CLIENTS: number of client processes to use\n"
+	    " -n CLIENT_ID: the requested if of current client\n"
 	    , progname);
 }
 
@@ -85,7 +85,7 @@ parse_app_args(uint8_t max_ports, int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			if (parse_num_clients(&num_clients, optarg) != 0) {
+			if (parse_num_clients(&client_id, optarg) != 0) {
 				usage();
 				return -1;
 			}
