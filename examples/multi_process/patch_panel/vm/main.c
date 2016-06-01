@@ -33,7 +33,9 @@
 
 #include <arpa/inet.h>
 
+#include <rte_eal_memconfig.h>
 #include <rte_eth_ring.h>
+#include <rte_memzone.h>
 
 #include "args.h"
 #include "common.h"
@@ -345,6 +347,29 @@ add_patch(int in_port, int out_port)
 	return 0;
 }
 
+static struct rte_memzone *
+get_memzone_by_addr(const void *addr)
+{
+	struct rte_memzone *tmp, *mz;
+	struct rte_mem_config *mcfg;
+	int i;
+
+	mcfg = rte_eal_get_configuration()->mem_config;
+	mz = NULL;
+
+	/* find memzone for the ring */
+	for (i = 0; i < RTE_MAX_MEMZONE; i++) {
+		tmp = &mcfg->memzone[i];
+
+		if (tmp->addr_64 == (uint64_t) addr) {
+			mz = tmp;
+			break;
+		}
+	}
+
+	return mz;
+}
+
 static int
 add_ring_pmd(int ring_id)
 {
@@ -360,16 +385,13 @@ add_ring_pmd(int ring_id)
 		return -1;
 	}
 
+	memzone = get_memzone_by_addr(ring);
+	if (memzone == NULL)
+		return -1;
+
 	/* create ring pmd*/
-	/*
-	 * TODO: ring->memzone is not accessable by vm
-	 * this is workaround to prevent a crash in vm,
-	 * this should be fixed properly
-	 */
-	memzone = ring->memzone;
-	ring->memzone = NULL;
-	ring_port_id = rte_eth_from_ring(ring);
 	ring->memzone = memzone;
+	ring_port_id = rte_eth_from_ring(ring);
 
 	RTE_LOG(DEBUG, APP, "ring port id %d\n", ring_port_id);
 
