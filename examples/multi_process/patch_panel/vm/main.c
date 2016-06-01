@@ -49,7 +49,6 @@ static struct port_map port_map[RTE_MAX_ETHPORTS];
 
 static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
 
-static struct rte_mempool *host_mp;
 static uint8_t client_id;
 
 static void
@@ -414,13 +413,6 @@ do_add(char *token_list[], int max_token)
 
 		type = RING;
 		port_id = add_ring_pmd(id);
-
-	} else if (strncmp(token_list[1], "pool", 4) == 0) {
-		host_mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
-		if (host_mp == NULL)
-			rte_exit(EXIT_FAILURE,
-				"Cannot get mempool for mbufs\n");
-		return 0;
 	}
 
 	if (port_id < 0)
