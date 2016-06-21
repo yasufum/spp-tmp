@@ -365,10 +365,10 @@ class Shell(cmd.Cmd):
         elif cmds[0] == 'all':
             close_all_secondary()
             command_primary('exit')
-
-        print('Thank you for using Soft Patch Panel')
-        self.close()
-        return True
+        elif cmds[0] == '':
+            print('Thank you for using Soft Patch Panel')
+            self.close()
+            return True
 
 def main(argv):
     """main"""
