@@ -1,6 +1,6 @@
 #   BSD LICENSE
 #
-#   Copyright(c) 2010-2014 Intel Corporation. All rights reserved.
+#   Copyright(c) 2015-2016 Intel Corporation. All rights reserved.
 #   All rights reserved.
 #
 #   Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,6 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += nfv
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += primary
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += vm
+DIRS-y += src
 
 include $(RTE_SDK)/mk/rte.extsubdir.mk
