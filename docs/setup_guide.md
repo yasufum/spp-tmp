@@ -2,9 +2,13 @@ Sample usage of the application :
 
 Compilation
 ===========
-Compile DPDK for x86_64-ivshmem-linuxapp-* configuration
-Compile SPP: make -C examples/multi_process/patch_panel
+Change to DPDK directory
+Set RTE_SDK variable to current folder
+Set RTE_TARGET variable to "x86_64-ivshmem-linuxapp-*"
+Compile DPDK: "make T=x86_64-ivshmem-linuxapp-gcc install"
+
 Change to SPP directory
+Compile SPP: "make"
 
 Start Controller
 ================
@@ -12,16 +16,18 @@ python spp.py -p 5555 -s 6666
 
 Start spp_primary
 =================
-sudo ./primary/primary/x86_64-ivshmem-linuxapp-gcc/spp_primary -c 0x02 -n 4 --socket-mem 512,512 --huge-dir=/dev/hugepages --proc-type=primary -- -p 0x03 -n 4 -s 192.168.122.1:5555
+sudo ./src/primary/src/primary/x86_64-ivshmem-linuxapp-gcc/spp_primary -c 0x02 -n 4 --socket-mem 512,512 --huge-dir=/dev/hugepages --proc-type=primary -- -p 0x03 -n 4 -s 192.168.122.1:5555
 
 Start spp_nfv
 =============
-sudo ./nfv/nfv/x86_64-ivshmem-linuxapp-gcc/app/spp_nfv -c 0x06 -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
-sudo ./nfv/nfv/x86_64-ivshmem-linuxapp-gcc/app/spp_nfv -c 0x0A -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
+sudo ./src/nfv/src/nfv/x86_64-ivshmem-linuxapp-gcc/spp_nfv -c 0x06 -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
+sudo ./src/nfv/src/nfv/x86_64-ivshmem-linuxapp-gcc/spp_nfv 0x0A -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
 
 Start VM (QEMU)
 ===============
-Comman qemu command line:
+[NOTE: Custom QEMU version required]
+
+Common qemu command line:
 sudo ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on -numa node,memdev=mem -mem-prealloc -hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 -m 2048 -smp cores=4,threads=1,sockets=1 -device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 -netdev tap,id=net0 -nographic -vnc :2
 
 To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup to host /etc/qemu-ifup
@@ -49,7 +55,7 @@ Two types of VM interfaces supported:
 
 Start spp_vm (Inside the VM)
 ============================
-sudo ./vm/vm/x86_64-ivshmem-linuxapp-gcc/spp_vm -c 0x03 -n 4 --proc-type=primary -- -p 0x01 -n 1 -s 192.168.122.1:6666
+sudo ./src/vm/src/vm/x86_64-ivshmem-linuxapp-gcc/spp_vm -c 0x03 -n 4 --proc-type=primary -- -p 0x01 -n 1 -s 192.168.122.1:6666
 
 
 
