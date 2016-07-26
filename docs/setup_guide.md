@@ -319,6 +319,7 @@ sec 0 = spp_nfv
 sec 1 = spp_vm
 
 
+[rm –rf /tmp/sock0]
 spp > sec 0;add vhost 0
 [start VM]
 spp > sec 0;patch 0 2
