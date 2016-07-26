@@ -50,7 +50,7 @@ Two types of VM interfaces supported:
 -----------------
   - spp should do a "sec x:add vhost y" before starting the VM. x: vnf number, y: vhost port id.
   - Needs vhost argument for qemu:
-    sudo ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on -numa node,memdev=mem -mem-prealloc -hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 -m 2048 -smp cores=4,threads=1,sockets=1 -device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 -netdev tap,id=net0 -chardev socket,id=chr0,path=/tmp/sock0 -netdev vhost-user,id=net0,chardev=chr0,vhostforce -device virtio-net-pci,netdev=net0 -nographic -vnc :2
+    sudo ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on -numa node,memdev=mem -mem-prealloc -hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 -m 2048 -smp cores=4,threads=1,sockets=1 -device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 -netdev tap,id=net0 -chardev socket,id=chr0,path=/tmp/sock0 -netdev vhost-user,id=net1,chardev=chr0,vhostforce -device virtio-net-pci,netdev=net1 -nographic -vnc :2
 
 
 Start spp_vm (Inside the VM)
