@@ -34,7 +34,6 @@
 #include <limits.h>
 
 #include <rte_cycles.h>
-#include <rte_ivshmem.h>
 #include <rte_malloc.h>
 #include <rte_memzone.h>
 
@@ -43,9 +42,6 @@
 #include "init.h"
 
 #define CLIENT_QUEUE_RINGSIZE 128
-
-#define IVSHMEN_METADATA_NAME "pp_ivshmem"
-#define QEMU_CMD_FMT "/tmp/ivshmem_qemu_cmdline_%s"
 
 /* array of info/queues for clients */
 struct client *clients;
@@ -129,45 +125,6 @@ init_shm_rings(void)
 	return 0;
 }
 
-static int
-print_to_file(const char *cmdline, const char *config_name)
-{
-	FILE *file;
-	char path[PATH_MAX];
-
-	snprintf(path, sizeof(path), QEMU_CMD_FMT, config_name);
-	file = fopen(path, "w");
-	if (file == NULL) {
-		RTE_LOG(ERR, APP, "Could not open '%s'\n", path);
-		return -1;
-	}
-
-	RTE_LOG(INFO, APP, "QEMU command line for config '%s': %s\n",
-			config_name, cmdline);
-
-	fprintf(file, "%s\n", cmdline);
-	fclose(file);
-
-	return 0;
-}
-
-static int
-generate_ivshmem_cmdline(const char *config_name)
-{
-	char cmdline[PATH_MAX];
-
-	if (rte_ivshmem_metadata_cmdline_generate(cmdline, sizeof(cmdline),
-			config_name) < 0)
-		return -1;
-
-	if (print_to_file(cmdline, config_name) < 0)
-		return -1;
-
-	rte_ivshmem_metadata_dump(stdout, config_name);
-
-	return 0;
-}
-
 /**
  * Main init function for the multi-process server app,
  * calls subfunctions to do each stage of the initialisation.
@@ -230,39 +187,6 @@ init(int argc, char *argv[])
 
 	/* initialise the client queues/rings for inter-eu comms */
 	init_shm_rings();
-
-	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
-		int ret;
-
-		/* create metadata, output cmdline */
-		ret = rte_ivshmem_metadata_create(IVSHMEN_METADATA_NAME);
-		if (ret < 0)
-			rte_exit(EXIT_FAILURE,
-				"Cannot create IVSHMEM metadata\n");
-
-		ret = rte_ivshmem_metadata_add_memzone(mz,
-			IVSHMEN_METADATA_NAME);
-		if (ret)
-			rte_exit(EXIT_FAILURE,
-				"Cannot add memzone to IVSHMEM metadata\n");
-
-		ret = rte_ivshmem_metadata_add_mempool(pktmbuf_pool,
-				IVSHMEN_METADATA_NAME);
-		if (ret)
-			rte_exit(EXIT_FAILURE,
-				"Cannot add mbuf mempool to IVSHMEM metadata\n");
-
-		for (i = 0; i < num_clients; i++) {
-			ret = rte_ivshmem_metadata_add_ring(clients[i].rx_q,
-				IVSHMEN_METADATA_NAME);
-			if (ret < 0)
-				rte_exit(EXIT_FAILURE,
-					"Cannot add ring client %d to IVSHMEM metadata\n",
-					i);
-		}
-
-		generate_ivshmem_cmdline(IVSHMEN_METADATA_NAME);
-	}
 
 	return 0;
 }
