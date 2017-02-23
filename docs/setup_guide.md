@@ -17,17 +17,47 @@ python spp.py -p 5555 -s 6666
 
 Start spp_primary
 -----------------
-sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary -c 0x02 -n 4 --socket-mem 512,512 --huge-dir=/dev/hugepages --proc-type=primary -- -p 0x03 -n 4 -s 192.168.122.1:5555
+sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+	-c 0x02 -n 4 \
+	--socket-mem 512,512 \
+	--huge-dir=/dev/hugepages \
+	--proc-type=primary \
+	-- \
+	-p 0x03 \
+	-n 4 \
+	-s 192.168.122.1:5555
 
 Start spp_nfv
 -------------
-sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv -c 0x06 -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
-sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv 0x0A -n 4 --proc-type=secondary -- -n 1 -s 192.168.122.1:6666
+sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+	-c 0x06 -n 4 \
+	--proc-type=secondary \
+	-- \
+	-n 1 \
+	-s 192.168.122.1:6666
+
+sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+	-c 0x0A -n 4 \
+	--proc-type=secondary \
+	-- \
+	-n 1 \
+	-s 192.168.122.1:6666
 
 Start VM (QEMU)
 ---------------
 Common qemu command line:
-sudo ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on -numa node,memdev=mem -mem-prealloc -hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 -m 2048 -smp cores=4,threads=1,sockets=1 -device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 -netdev tap,id=net0 -nographic -vnc :2
+sudo ./x86_64-softmmu/qemu-system-x86_64 \
+	-cpu host \
+	-enable-kvm \
+	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
+	-numa node,memdev=mem \
+	-mem-prealloc \
+	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
+	-m 2048 \
+	-smp cores=4,threads=1,sockets=1 \
+	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
+	-netdev tap,id=net0 \
+	-nographic -vnc :2
 
 To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup to host /etc/qemu-ifup
 
@@ -37,14 +67,31 @@ vhost interface
 ~~~~~~~~~~~~~~~~~
   - spp should do a "sec x:add vhost y" before starting the VM. x: vnf number, y: vhost port id.
   - Needs vhost argument for qemu:
-    sudo ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on -numa node,memdev=mem -mem-prealloc -hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 -m 2048 -smp cores=4,threads=1,sockets=1 -device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 -netdev tap,id=net0 -chardev socket,id=chr0,path=/tmp/sock0 -netdev vhost-user,id=net1,chardev=chr0,vhostforce -device virtio-net-pci,netdev=net1 -nographic -vnc :2
-
+    sudo ./x86_64-softmmu/qemu-system-x86_64 \
+	-cpu host \
+	-enable-kvm \
+	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
+	-numa node,memdev=mem \
+	-mem-prealloc \
+	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
+	-m 2048 \
+	-smp cores=4,threads=1,sockets=1 \
+	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
+	-netdev tap,id=net0 \
+	-chardev socket,id=chr0,path=/tmp/sock0 \
+	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
+	-device virtio-net-pci,netdev=net1 \
+	-nographic -vnc :2
 
 Start spp_vm (Inside the VM)
 ----------------------------
-sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm -c 0x03 -n 4 --proc-type=primary -- -p 0x01 -n 1 -s 192.168.122.1:6666
-
-
+sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
+	-c 0x03 -n 4 \
+	--proc-type=primary \
+	-- \
+	-p 0x01 \
+	-n 1 \
+	-s 192.168.122.1:6666
 
 Test Setups
 ===========
