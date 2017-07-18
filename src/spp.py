@@ -350,6 +350,7 @@ class Shell(cmd.Cmd):
     PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
     SEC_SUBCMDS = ['vhost', 'ring']
+    BYE_CMDS = ['sec', 'all']
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands"""
@@ -408,6 +409,18 @@ class Shell(cmd.Cmd):
         except Exception, e:
             print(len(cleaned_line.split()))
             print(e)
+
+    def complete_bye(self, text, line, begidx, endidx):
+        """Completion for bye commands"""
+
+        if not text:
+            completions = self.BYE_CMDS[:]
+        else:
+            completions = [p
+                           for p in self.BYE_CMDS
+                           if p.startswith(text)
+                          ]
+        return completions
 
     def response(self, result, message):
         """Enqueue message from other than CLI"""
