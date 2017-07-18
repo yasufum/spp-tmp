@@ -278,7 +278,8 @@ def primarythread(sock, main2primary, primary2main):
             try:
                 data = conn.recv(1024) # 1024 stands for bytes of data to be received
                 if data:
-                    primary2main.put("recv:" + str(addr) + ":" + "{" + data + "}")
+                    #primary2main.put("recv:" + str(addr) + ":" + "{" + data + "}")
+                    primary2main.put("recv:%s:{%s}" % (str(addr), data))
                 else:
                     primary2main.put("closing:" + str(addr))
                     conn.close()
@@ -331,6 +332,14 @@ def check_sec_cmds(cmds):
 
     return valid
 
+def clean_sec_cmd(cmdstr):
+    """remove unwanted spaces to avoid invalid command error"""
+     
+    tmparg = re.sub(r'\s+', " ", cmdstr)
+    res = re.sub(r'\s?;\s?', ";", tmparg)
+    return res
+
+
 class Shell(cmd.Cmd):
     """SPP command prompt"""
 
@@ -338,18 +347,18 @@ class Shell(cmd.Cmd):
     prompt = 'spp > '
     recorded_file = None
 
-    # TODO define pri_commands and sec_commands if there are difference
-    COMMANDS = ['status', 'add', 'patch', 'ring', 'vhost',
-                'reset', 'exit', 'forward', 'stop', 'clear']
+    PRI_CMDS = ['status', 'exit', 'clear']
+    SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
+    SEC_SUBCMDS = ['vhost', 'ring']
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands"""
 
         if not text:
-            completions = self.COMMANDS[:]
+            completions = self.PRI_CMDS[:]
         else:
             completions = [p
-                           for p in self.COMMANDS
+                           for p in self.PRI_CMDS
                            if p.startswith(text)
                           ]
         return completions
@@ -357,14 +366,48 @@ class Shell(cmd.Cmd):
     def complete_sec(self, text, line, begidx, endidx):
         """Completion for secondary process commands"""
 
-        if not text:
-            completions = self.COMMANDS[:]
-        else:
-            completions = [p
-                           for p in self.COMMANDS
-                           if p.startswith(text)
-                          ]
-        return completions
+        try:
+            cleaned_line = clean_sec_cmd(line)
+            if len(cleaned_line.split()) == 1:
+                completions = [str(i)+";" for i in SECONDARY_LIST]
+            elif len(cleaned_line.split()) == 2:
+                if not (";" in cleaned_line):
+                    tmplist = [str(i) for i in SECONDARY_LIST]
+                    completions = [p+";"
+                            for p in tmplist
+                            if p.startswith(text)
+                            ]
+                elif cleaned_line[-1] == ";":
+                    completions = self.SEC_CMDS[:]
+                else:
+                    seccmd = cleaned_line.split(";")[1]
+                    if cleaned_line[-1] != " ":
+                        completions = [p
+                                for p in self.SEC_CMDS
+                                if p.startswith(seccmd)
+                                ]
+                    elif ("add" in seccmd) or ("del" in seccmd):
+                        completions = self.SEC_SUBCMDS[:]
+                    else:
+                        completions = []
+            elif len(cleaned_line.split()) == 3:
+                subcmd = cleaned_line.split()[-1]
+                if ("add" == subcmd) or ("del" == subcmd):
+                    completions = self.SEC_SUBCMDS[:]
+                else:
+                    if cleaned_line[-1] == " ":
+                        completions = []
+                    else:
+                        completions = [p
+                                for p in self.SEC_SUBCMDS
+                                if p.startswith(subcmd)
+                                ]
+            else:
+                completions = []
+            return completions
+        except Exception, e:
+            print(len(cleaned_line.split()))
+            print(e)
 
     def response(self, result, message):
         """Enqueue message from other than CLI"""
@@ -389,20 +432,19 @@ class Shell(cmd.Cmd):
     def do_pri(self, command):
         """Send command to primary process"""
 
-        if command and command in self.COMMANDS:
+        if command and command in self.PRI_CMDS:
             result, message = command_primary(command)
             self.response(result, message)
         else:
             message = "primary invalid command"
             print(message)
-            self.response(CMD_ERROR, ret)
+            self.response(CMD_ERROR, message)
 
     def do_sec(self, arg):
         """Send command to secondary process"""
 
         # remove unwanted spaces to avoid invalid command error
-        tmparg = re.sub(r'\s+', " ", arg)
-        tmparg = re.sub(r'\s?;\s?', ";", tmparg)
+        tmparg = clean_sec_cmd(arg)
         cmds = tmparg.split(';')
         if len(cmds) < 2:
             message = "error"
@@ -559,7 +601,7 @@ def main(argv):
         secondary_sock.shutdown(socket.SHUT_RDWR)
         secondary_sock.close()
     except socket.error, excep:
-        print(excep, ", Error while closing primary_sock in main()!")
+        print(excep, ", Error while closing secondary_sock in main()!")
 
 
 if __name__ == "__main__":
