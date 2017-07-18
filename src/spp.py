@@ -10,6 +10,8 @@ import getopt
 import select
 import socket
 import sys
+import re
+#import pdb; pdb.set_trace()
 
 class GrowingList(list):
     """GrowingList"""
@@ -309,7 +311,10 @@ class Shell(cmd.Cmd):
     def do_sec(self, arg):
         """Send command to secondary process"""
 
-        cmds = arg.split(';')
+        # remove unwanted space to avoid invalid command error
+        tmparg = re.sub(r'\s+', " ", arg)
+        tmparg = re.sub(r'\s?;\s?', ";", tmparg)
+        cmds = tmparg.split(';')
         if len(cmds) < 2:
             print ("error")
         elif str.isdigit(cmds[0]):
@@ -370,6 +375,7 @@ class Shell(cmd.Cmd):
             self.close()
             return True
 
+
 def main(argv):
     """main"""
 
@@ -381,6 +387,7 @@ def main(argv):
     except getopt.GetoptError:
         print ('spp.py -p <primary__port_number> -s <secondary_port_number>')
         sys.exit(2)
+
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print ('spp.py -p <primary__port_number> -s <secondary_port_number>')
@@ -428,6 +435,7 @@ def main(argv):
     primary_sock.close()
     secondary_sock.shutdown(socket.SHUT_RDWR)
     secondary_sock.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
