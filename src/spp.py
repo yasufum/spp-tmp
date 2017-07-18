@@ -394,6 +394,7 @@ def main(argv):
 
     #Creating primary socket object
     primary_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    primary_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     #Binding primary socket to a address. bind() takes tuple of host and port.
     primary_sock.bind((host, primary_port))
@@ -408,6 +409,7 @@ def main(argv):
 
     #Creating secondary socket object
     secondary_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    secondary_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     #Binding secondary socket to a address. bind() takes tuple of host and port.
     secondary_sock.bind((host, secondary_port))
