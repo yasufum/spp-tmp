@@ -104,7 +104,7 @@ Start spp_vm (Inside the VM)
 ----------------------------
 
 ```sh
-sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
+$ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
 	-c 0x03 -n 4 \
 	--proc-type=primary \
 	-- \
@@ -119,6 +119,7 @@ Test Setups
 Test Setup 1: Single NFV
 ------------------------
 
+```
                                                                         __
                                     +--------------+                      |
                                     |    spp_nfv   |                      |
@@ -140,19 +141,19 @@ Test Setup 1: Single NFV
                               |                           |
                               :                           v
 
-Configuration for L2fwd
-~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-```sh
+### Configuration for L2fwd
+
+```
 spp > sec 0;patch 0 1
 spp > sec 0;patch 1 0
 spp > sec 0;forward
 ```
 
-Configuration for loopback
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Configuration for loopback
 
-```sh
+```
 spp > sec 0;patch 0 0
 spp > sec 0;patch 1 1
 spp > sec 0;forward
@@ -161,6 +162,7 @@ spp > sec 0;forward
 Test Setup 2: Dual NFV
 ----------------------
 
+```
                                                                         __
                          +--------------+          +--------------+       |
                          |    spp_nfv   |          |    spp_nfv   |       |
@@ -182,16 +184,18 @@ Test Setup 2: Dual NFV
                               |                           |
                               :                           v
 
-Configuration for L2fwd
-~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-```sh
+### Configuration for L2fwd
+
+```
 spp > sec 0;patch 0 1
 spp > sec 1;patch 1 0
 spp > sec 0;forward
 spp > sec 1;forward
 ```
 
+```
 
                                                                         __
                          +--------------+          +--------------+       |
@@ -214,10 +218,11 @@ spp > sec 1;forward
                               |                           |
                               v                           v
 
-Configuration for loopback
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-```sh
+### Configuration for loopback
+
+```
 spp > sec 0;patch 0 0
 spp > sec 1;patch 1 1
 spp > sec 0;forward
@@ -227,6 +232,7 @@ spp > sec 1;forward
 Test Setup 3: Dual NFV with ring pmd
 ------------------------------------
 
+```
                                                                         __
                        +----------+      ring        +----------+         |
                        |  spp_nfv |    +--------+    |  spp_nfv |         |
@@ -248,10 +254,11 @@ Test Setup 3: Dual NFV with ring pmd
                               |                           |
                               :                           v
 
-Configuration for Uni directional L2fwd
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-```sh
+### Configuration for Uni directional L2fwd
+
+```
 spp > sec 0;add ring 0
 spp > sec 1;add ring 0
 spp > sec 0;patch 0 2
@@ -260,6 +267,7 @@ spp > sec 0;forward
 spp > sec 1;forward
 ```
 
+```
                                                                         __
                                          ring                             |
                                        +--------+                         |
@@ -284,10 +292,11 @@ spp > sec 1;forward
                               |                           |
                               v                           v
 
-Configuration for L2fwd
-~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-```sh
+### Configuration for L2fwd
+
+```
 spp > sec 0;add ring 0
 spp > sec 0;add ring 1
 spp > sec 1;add ring 0
@@ -303,6 +312,7 @@ spp > sec 1;forward
 Test Setup 4: Single NFV with VM through vhost pmd
 --------------------------------------------------
 
+```
                                                    __
                           +----------------------+   |
                           | guest                |   |
@@ -336,13 +346,14 @@ Test Setup 4: Single NFV with VM through vhost pmd
                               |                           |
                               :                           v
 
+```
+
 Legend:-
 sec 0 = spp_nfv
 sec 1 = spp_vm
 
 
-Configuration for Uni directional L2fwd
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Configuration for Uni directional L2fwd
 
 ```sh
 [rm –rf /tmp/sock0]
@@ -358,15 +369,19 @@ spp > sec 0;forward
 
 Optimizing qemu performance
 ---------------------------
+
 First find out the PID for qemu-system-x86 process
-ps ea
+
+```sh
+$ ps ea
    PID TTY      STAT   TIME COMMAND
 192606 pts/11   Sl+    4:42 ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,siz
+```
 
 Using pstree to list out qemu-system-x86_64 threads:-
 
 ```sh
-pstree -p 192606
+$ pstree -p 192606
 qemu-system-x86(192606)--+--{qemu-system-x8}(192607)
                          |--{qemu-system-x8}(192623)
                          |--{qemu-system-x8}(192624)
