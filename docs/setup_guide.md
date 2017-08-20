@@ -3,6 +3,7 @@ Sample usage of the application
 
 Compilation
 -----------
+
 Change to DPDK directory
 Set RTE_SDK variable to current folder
 Set RTE_TARGET variable to any valid target.
@@ -13,11 +14,16 @@ Compile SPP: "make"
 
 Start Controller
 ----------------
-python spp.py -p 5555 -s 6666
+
+```sh
+$ python spp.py -p 5555 -s 6666
+```
 
 Start spp_primary
 -----------------
-sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+
+```sh
+$ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
 	-c 0x02 -n 4 \
 	--socket-mem 512,512 \
 	--huge-dir=/dev/hugepages \
@@ -26,27 +32,34 @@ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
 	-p 0x03 \
 	-n 4 \
 	-s 192.168.122.1:5555
+```
 
 Start spp_nfv
 -------------
-sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+
+```sh
+$ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
 	-c 0x06 -n 4 \
 	--proc-type=secondary \
 	-- \
 	-n 1 \
 	-s 192.168.122.1:6666
 
-sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+$ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
 	-c 0x0A -n 4 \
 	--proc-type=secondary \
 	-- \
-	-n 1 \
+	-n 2 \
 	-s 192.168.122.1:6666
+```
 
 Start VM (QEMU)
 ---------------
+
 Common qemu command line:
-sudo ./x86_64-softmmu/qemu-system-x86_64 \
+
+```sh
+$ sudo ./x86_64-softmmu/qemu-system-x86_64 \
 	-cpu host \
 	-enable-kvm \
 	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
@@ -58,33 +71,39 @@ sudo ./x86_64-softmmu/qemu-system-x86_64 \
 	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
 	-netdev tap,id=net0 \
 	-nographic -vnc :2
+```
 
 To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup to host /etc/qemu-ifup
 
 Vhost interface is supported to communicate between guest and host:
 
-vhost interface
-~~~~~~~~~~~~~~~~~
-  - spp should do a "sec x:add vhost y" before starting the VM. x: vnf number, y: vhost port id.
-  - Needs vhost argument for qemu:
-    sudo ./x86_64-softmmu/qemu-system-x86_64 \
-	-cpu host \
-	-enable-kvm \
-	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
-	-numa node,memdev=mem \
-	-mem-prealloc \
-	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
-	-m 2048 \
-	-smp cores=4,threads=1,sockets=1 \
-	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
-	-netdev tap,id=net0 \
-	-chardev socket,id=chr0,path=/tmp/sock0 \
-	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
-	-device virtio-net-pci,netdev=net1 \
-	-nographic -vnc :2
+### vhost interface
+
+- spp should do a "sec x:add vhost y" before starting the VM. x: vnf number, y: vhost port id.
+- Needs vhost argument for qemu:
+
+```sh
+      sudo ./x86_64-softmmu/qemu-system-x86_64 \
+      	-cpu host \
+      	-enable-kvm \
+      	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
+      	-numa node,memdev=mem \
+      	-mem-prealloc \
+      	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
+      	-m 2048 \
+      	-smp cores=4,threads=1,sockets=1 \
+      	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
+      	-netdev tap,id=net0 \
+      	-chardev socket,id=chr0,path=/tmp/sock0 \
+      	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
+      	-device virtio-net-pci,netdev=net1 \
+      	-nographic -vnc :2
+```
 
 Start spp_vm (Inside the VM)
 ----------------------------
+
+```sh
 sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
 	-c 0x03 -n 4 \
 	--proc-type=primary \
@@ -92,6 +111,7 @@ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
 	-p 0x01 \
 	-n 1 \
 	-s 192.168.122.1:6666
+```
 
 Test Setups
 ===========
@@ -122,16 +142,21 @@ Test Setup 1: Single NFV
 
 Configuration for L2fwd
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;patch 0 1
 spp > sec 0;patch 1 0
 spp > sec 0;forward
+```
 
 Configuration for loopback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;patch 0 0
 spp > sec 0;patch 1 1
 spp > sec 0;forward
-
+```
 
 Test Setup 2: Dual NFV
 ----------------------
@@ -159,10 +184,13 @@ Test Setup 2: Dual NFV
 
 Configuration for L2fwd
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;patch 0 1
 spp > sec 1;patch 1 0
 spp > sec 0;forward
 spp > sec 1;forward
+```
 
 
                                                                         __
@@ -188,11 +216,13 @@ spp > sec 1;forward
 
 Configuration for loopback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;patch 0 0
 spp > sec 1;patch 1 1
 spp > sec 0;forward
 spp > sec 1;forward
-
+```
 
 Test Setup 3: Dual NFV with ring pmd
 ------------------------------------
@@ -220,13 +250,15 @@ Test Setup 3: Dual NFV with ring pmd
 
 Configuration for Uni directional L2fwd
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;add ring 0
 spp > sec 1;add ring 0
 spp > sec 0;patch 0 2
 spp > sec 1;patch 2 1
 spp > sec 0;forward
 spp > sec 1;forward
-
+```
 
                                                                         __
                                          ring                             |
@@ -254,6 +286,8 @@ spp > sec 1;forward
 
 Configuration for L2fwd
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 spp > sec 0;add ring 0
 spp > sec 0;add ring 1
 spp > sec 1;add ring 0
@@ -264,7 +298,7 @@ spp > sec 1;patch 1 3
 spp > sec 1;patch 2 1
 spp > sec 0;forward
 spp > sec 1;forward
-
+```
 
 Test Setup 4: Single NFV with VM through vhost pmd
 --------------------------------------------------
@@ -309,6 +343,8 @@ sec 1 = spp_vm
 
 Configuration for Uni directional L2fwd
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+```sh
 [rm –rf /tmp/sock0]
 spp > sec 0;add vhost 0
 [start VM]
@@ -317,7 +353,7 @@ spp > sec 0;patch 2 1
 spp > sec 1;patch 0 0
 spp > sec 1;forward
 spp > sec 0;forward
-
+```
 
 
 Optimizing qemu performance
@@ -328,14 +364,19 @@ ps ea
 192606 pts/11   Sl+    4:42 ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,siz
 
 Using pstree to list out qemu-system-x86_64 threads:-
+
+```sh
 pstree -p 192606
 qemu-system-x86(192606)--+--{qemu-system-x8}(192607)
                          |--{qemu-system-x8}(192623)
                          |--{qemu-system-x8}(192624)
                          |--{qemu-system-x8}(192625)
                          |--{qemu-system-x8}(192626)
+```
 
 To Optimize, use taskset to pin each thread:-
+
+```sh
 $ sudo taskset -pc 4 192623
 pid 192623's current affinity list: 0-31
 pid 192623's new affinity list: 4
@@ -348,3 +389,4 @@ pid 192625's new affinity list: 6
 $ sudo taskset -pc 7 192626
 pid 192626's current affinity list: 0-31
 pid 192626's new affinity list: 7
+```
