@@ -1,25 +1,23 @@
-# Table of Contents
+## Table of Contents
 
 - [Sample usage of the application](#sample-usage-of-the-application)
   - [Compilation](#compilation)
   - [Start Controller](#start-controller)
   - [Start spp_primary](#start-spp_primary)
   - [Start spp_nfv](#start-spp_nfv)
-  - [Start VM (QEMU)](#start-vm-qemu)
-  - [Start spp_vm (Inside the VM)](#start-spp_vm-inside-the-vm))
+  - [Start spp_vm](#start-spp_vm)
 
 - [Test Setups](#test-setups)
   - [Test Setup 1: Single NFV](#test-setup-1-single-nfv)
   - [Test Setup 2: Dual NFV](#test-setup-2-dual-nfv)
   - [Test Setup 3: Dual NFV with ring pmd](#test-setup-3-dual-nfv-with-ring-pmd)
   - [Test Setup 4: Single NFV with VM through vhost pmd](#test-setup-4-single-nfv-with-vm-through-vhost-pmd)
-  - [Optimizing qemu performance](#optimizing-qemu-performance)
+- [Optimizing qemu performance](#optimizing-qemu-performance)
 
-Sample usage of the application
-===============================
 
-Compilation
------------
+## Sample usage of the application
+
+### Compilation
 
 Compile DPDK 
 * Change to DPDK directory
@@ -31,20 +29,25 @@ Compile SPP
 * Change to SPP directory
 * Compile SPP: "make"
 
-Start Controller
-----------------
+### Start Controller
+
+First, start spp.py with port numbers for spp_primary and secondary processes.
 
 ```sh
 $ python spp.py -p 5555 -s 6666
+primary port : 5555
+secondary port : 6666
+Welcome to the spp.   Type help or ? to list commands.
+
+spp >
 ```
 
-Start spp_primary
------------------
+### Start spp_primary
 
-Options
-* p: port mask
-* n: number of sec
-* s: ipaddr of controller and port for primary
+Start spp_primary with SPP options.
+* -p: port mask
+* -n: number of ring
+* -s: IP address of controller and port for primary
 
 ```sh
 $ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
@@ -58,12 +61,13 @@ $ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
 	-s 192.168.122.1:5555
 ```
 
-Start spp_nfv
--------------
+### Start spp_nfv
 
-Options
-* n: seconary id (n > 0)
-* s: ipaddr of controller and port for secondary
+There are two types fo secondary, spp_nfv and spp_vm.
+
+Start two spp_nfv with SPP Options
+* -n: seconary id (n > 0)
+* -s: ipaddr of controller and port for secondary
 
 ```sh
 $ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
@@ -81,10 +85,26 @@ $ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
 	-s 192.168.122.1:6666
 ```
 
-Start VM (QEMU)
----------------
+### Start spp_vm
 
-Common qemu command line:
+Start a VM for running spp_vm.
+You need to add vhost interface while starting VM.
+Vhost interface is supported to communicate between guest and host.
+
+To start spp_vm, "qemu-ifup" script required.
+Please copy "docs/qemu-ifup" to /etc/qemu-ifup of host.
+
+SPP controller should do a "sec x;add vhost y" before starting the VM.
+x is an id of spp_nfv and y is vhost port id (num of socket).
+Vhost port is created as "/tmp/sock'y'".
+
+To add vhost port 0 to sec 1,
+```
+spp > sec 1;add vhost 0
+```
+and confirm that "/tmp/sock0" is created.
+
+Common qemu command line without vhost is here.
 
 ```sh
 $ sudo ./x86_64-softmmu/qemu-system-x86_64 \
@@ -101,16 +121,7 @@ $ sudo ./x86_64-softmmu/qemu-system-x86_64 \
 	-nographic -vnc :2
 ```
 
-To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup
-to host /etc/qemu-ifup
-
-Vhost interface is supported to communicate between guest and host:
-
-### vhost interface
-
-- spp should do a "sec x:add vhost y" before starting the VM.
-  x: vnf number, y: vhost port id.
-- Needs vhost argument for qemu:
+Add chardev and another netdev,device options for vhost interface.
 
 ```sh
   sudo ./x86_64-softmmu/qemu-system-x86_64 \
@@ -124,19 +135,18 @@ Vhost interface is supported to communicate between guest and host:
   	-smp cores=4,threads=1,sockets=1 \
   	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
   	-netdev tap,id=net0 \
-  	-chardev socket,id=chr0,path=/tmp/sock0 \
-  	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
-  	-device virtio-net-pci,netdev=net1 \
+  	-chardev socket,id=chr0,path=/tmp/sock0 \              # vhost port
+  	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \   # netdev for vhost-user
+  	-device virtio-net-pci,netdev=net1 \                   # device as virtio-net-pci
   	-nographic -vnc :2
 ```
 
-Start spp_vm (Inside the VM)
-----------------------------
+Compile DPDK and SPP inside the VM and start spp_vm.
 
-Options
-* p: port mask
-* n: secondary id
-* s: ipaddr of controller and port for secondary
+SPP options
+* -p: port mask
+* -n: secondary id
+* -s: IP address of controller and port for secondary
 
 ```sh
 $ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
@@ -148,11 +158,10 @@ $ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
 	-s 192.168.122.1:6666
 ```
 
-Test Setups
-===========
 
-Test Setup 1: Single NFV
-------------------------
+## Test Setups
+
+### Test Setup 1: Single NFV
 
 ```
                                                                         __
@@ -170,7 +179,7 @@ Test Setup 1: Single NFV
     |                         +----------+      +---------+           |   |  host
     |                         :                           v           |   |
     |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |  ovs-dpdk  |   phy port 1 |   |   |
+    |                  |   phy port 0 |            |   phy port 1 |   |   |
     +------------------+--------------+------------+--------------+---+ __|
                               ^                           :
                               |                           |
@@ -178,24 +187,57 @@ Test Setup 1: Single NFV
 
 ```
 
-### Configuration for L2fwd
+Check status of spp_nfv in spp controller.
 
+```
+spp > sec 1;status
+recv:6:{Client ID 1 Idling
+1
+port id: 0,on,PHY,outport: -99
+port id: 1,on,PHY,outport: -99
+}
+```
+
+This message means that sec 1 has two physical ports refered as port 0, 1.
+"outpport: -99" means the destionation is no assigned.
+
+#### Configure spp_nfv as L2fwd
+
+Assing the destination of ports by "patch" subcommand and start forwarding.
+It is bi-directional.
 ```
 spp > sec 1;patch 0 1
 spp > sec 1;patch 1 0
 spp > sec 1;forward
 ```
 
-### Configuration for loopback
+Check the status of sec 1 is updated.
+```
+spp > sec 1;status
+recv:6:{Client ID 1 Running
+1
+port id: 0,on,PHY,outport: 1
+port id: 1,on,PHY,outport: 0
+}
+```
 
+Clear patch configuration.
+```
+spp > sec 1;stop
+spp > sec 1;patch reset
+```
+
+#### Configure spp_nfv for loopback
+
+Another example of patch configuration.
 ```
 spp > sec 1;patch 0 0
 spp > sec 1;patch 1 1
 spp > sec 1;forward
 ```
 
-Test Setup 2: Dual NFV
-----------------------
+
+### Test Setup 2: Dual NFV
 
 ```
                                                                         __
@@ -221,8 +263,10 @@ Test Setup 2: Dual NFV
 
 ```
 
-### Configuration for L2fwd
+#### Configuration for two L2fwds
 
+Assign patch configuration for sec 1 and 2.
+It is uni-directional.
 ```
 spp > sec 1;patch 0 1
 spp > sec 2;patch 1 0
@@ -255,7 +299,7 @@ spp > sec 2;forward
 
 ```
 
-### Configuration for loopback
+#### Configuration for loopback
 
 ```
 spp > sec 1;patch 0 0
@@ -264,8 +308,8 @@ spp > sec 1;forward
 spp > sec 2;forward
 ```
 
-Test Setup 3: Dual NFV with ring pmd
-------------------------------------
+
+### Test Setup 3: Dual NFV with ring pmd
 
 ```
                                                                         __
@@ -291,8 +335,27 @@ Test Setup 3: Dual NFV with ring pmd
 
 ```
 
-### Configuration for Uni directional L2fwd
+#### Configuration for Uni directional L2fwd
 
+Ring is an interface between spp_nfvs.
+The maximum number of rings is defined as an option of spp_primary.
+spp_nfv is able to find a ring by adding it.
+
+Please notice that sec 1 has a new port id 2 after adding ring 0.
+```
+spp > sec 1;add ring 0
+recv:6:{addring0}
+spp > sec 1;status
+recv:6:{Client ID 1 Idling
+1
+port id: 0,on,PHY,outport: -99
+port id: 1,on,PHY,outport: -99
+port id: 2,on,RING(0),outport: -99
+}
+```
+
+To configure sec 1 and 2 forwarding thorugh ring 0,
+add the ring both of them and patch.
 ```
 spp > sec 1;add ring 0
 spp > sec 2;add ring 0
@@ -302,24 +365,26 @@ spp > sec 1;forward
 spp > sec 2;forward
 ```
 
+#### Configuration for Bi directional L2fwd
+
 ```
                                                                         __
-                                         ring 0                           |
-                                       +--------+                         |
-                      +-----------+ <--|  |  |  |<-- +-----------+        |
-                      |          3|    +--------+    |3          |        |
-                      |  spp_nfv  |                  |  spp_nfv  |        |
-                      |  (sec 1) 2|--> +--------+ -->|2 (sec 2)  |        |
-                      +-----------+    |  |  |  |    +-----------+        |
-                          ^            +--------+             ^           |
-                          |              ring 1               |           |
-                          v                                   v           |
+                                        ring 0                            |
+                                      +--------+                          |
+                    +------------+ <--|  |  |  |<-- +-----------+         |
+                    |          p3|    +--------+    |p3         |         |
+                    |  spp_nfv   |                  |  spp_nfv  |         |
+                    |  (sec 1) p2|--> +--------+ -->|p2 (sec 2) |         |
+                    +------------+    |  |  |  |    +-----------+         |
+                            ^         +--------+          ^               |
+                            |           ring 1            |               |
+                            v                             v               |
     +---+----------+--------------------------------------------------+   |
-    |   | primary  |        ^                               ^         |   |
-    |   +----------+        |                               :         |   |
-    |                       :                               :         |   |
-    |                       :                               |         |   |  host
-    |                       v                               v         |   |
+    |   | primary  |        ^                             ^           |   |
+    |   +----------+        |                             :           |   |
+    |                       :                             :           |   |
+    |                       :                             |           |   |  host
+    |                       v                             v           |   |
     |                  +--------------+            +--------------+   |   |
     |                  |  phy port 0  |            |  phy port 1  |   |   |
     +------------------+--------------+------------+--------------+---+ __|
@@ -329,11 +394,24 @@ spp > sec 2;forward
 
 ```
 
-### Configuration for L2fwd
+Add ring 0 and 1 for sec 1.
 
 ```
 spp > sec 1;add ring 0
 spp > sec 1;add ring 1
+spp > sec 1;status
+recv:6:{Client ID 1 Idling
+1
+port id: 0,on,PHY,outport: -99
+port id: 1,on,PHY,outport: -99
+port id: 2,on,RING(0),outport: -99
+port id: 3,on,RING(1),outport: -99
+}
+```
+
+Then, add also for sec 2 and patch.
+"p2" and "p3" inside of spp_nfv in the figure are port ids.
+```
 spp > sec 2;add ring 0
 spp > sec 2;add ring 1
 spp > sec 1;patch 0 2
@@ -344,8 +422,7 @@ spp > sec 1;forward
 spp > sec 2;forward
 ```
 
-Test Setup 4: Single NFV with VM through vhost pmd
---------------------------------------------------
+### Test Setup 4: Single NFV with VM through vhost pmd
 
 ```
                                                     __
@@ -355,14 +432,14 @@ Test Setup 4: Single NFV with VM through vhost pmd
                           |   +--------------+    |   |  guest 
                           |   |    spp_vm    |    |   |  192.168.122.51
                           |   |    (sec 2)   |    |   |
-                          |   |       0      |    |   |
+                          |   |      p0      |    |   |
                           +---+--------------+----+ __|
                                ^           :
                                |  virtio   |
                                |           V                          __
                            +--------------------+                       |
                            |      spp_nfv       |                       |
-                           |  2   (sec 1)       |                       |
+                           | p2   (sec 1)       |                       |
                            +--------------------+                       |
                                ^           :                            |
                                |           +---------- +                |
@@ -381,18 +458,23 @@ Test Setup 4: Single NFV with VM through vhost pmd
 
 ```
 
-### Configuration for Uni directional L2fwd
+#### Configuration for Uni directional L2fwd
+
+Remove vhost port "/tmp/sock0" before starting VM if exists.
 
 ```sh
-[rm –rf /tmp/sock0]
+$ rm /tmp/sock0
 ```
 
+Then, add sock0 from spp controller.
 ```
-spp > sec 0;add vhost 0
+spp > sec 1;add vhost 0
 ```
 
-[start VM]
+Start VM and run spp_vm with sec id 2 inside VM.
+You can find sec 2 from spp controller after spp_vm is launched.
 
+Configure patch.
 ```
 spp > sec 1;patch 0 2
 spp > sec 1;patch 2 1
@@ -402,10 +484,9 @@ spp > sec 2;forward
 ```
 
 
-Optimizing qemu performance
----------------------------
+### Optimizing qemu performance
 
-First find out the PID for qemu-system-x86 process
+First, find out the PID for qemu-system-x86 process.
 
 ```sh
 $ ps ea
@@ -413,7 +494,7 @@ $ ps ea
 192606 pts/11   Sl+    4:42 ./x86_64-softmmu/qemu-system-x86_64 -cpu host -enable-kvm -object memory-backend-file,id=mem,siz
 ```
 
-Using pstree to list out qemu-system-x86_64 threads:-
+Using `pstree` to list out qemu-system-x86_64 threads.
 
 ```sh
 $ pstree -p 192606
@@ -424,7 +505,7 @@ qemu-system-x86(192606)--+--{qemu-system-x8}(192607)
                          |--{qemu-system-x8}(192626)
 ```
 
-To Optimize, use taskset to pin each thread:-
+To Optimize, use `taskset` to pin each thread
 
 ```sh
 $ sudo taskset -pc 4 192623
