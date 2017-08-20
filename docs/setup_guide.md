@@ -1,3 +1,20 @@
+# Table of Contents
+
+- [Sample usage of the application](#sample-usage-of-the-application)
+  - [Compilation](#compilation)
+  - [Start Controller](#start-controller)
+  - [Start spp_primary](#start-spp_primary)
+  - [Start spp_nfv](#start-spp_nfv)
+  - [Start VM (QEMU)](#start-vm-qemu)
+  - [Start spp_vm (Inside the VM)](#start-spp_vm-inside-the-vm))
+
+- [Test Setups](#test-setups)
+  - [Test Setup 1: Single NFV](#test-setup-1-single-nfv)
+  - [Test Setup 2: Dual NFV](#test-setup-2-dual-nfv)
+  - [Test Setup 3: Dual NFV with ring pmd](#test-setup-3-dual-nfv-with-ring-pmd)
+  - [Test Setup 4: Single NFV with VM through vhost pmd](#test-setup-4-single-nfv-with-vm-through-vhost-pmd)
+  - [Optimizing qemu performance](#optimizing-qemu-performance)
+
 Sample usage of the application
 ===============================
 
