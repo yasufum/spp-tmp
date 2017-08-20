@@ -21,13 +21,15 @@ Sample usage of the application
 Compilation
 -----------
 
-Change to DPDK directory
-Set RTE_SDK variable to current folder
-Set RTE_TARGET variable to any valid target.
-Compile DPDK: "make T=x86_64-native-linuxapp-gcc install"
+Compile DPDK 
+* Change to DPDK directory
+* Set `RTE_SDK` variable to current folder
+* Set `RTE_TARGET` variable to any valid target.
+* Compile DPDK: "make T=x86_64-native-linuxapp-gcc install"
 
-Change to SPP directory
-Compile SPP: "make"
+Compile SPP
+* Change to SPP directory
+* Compile SPP: "make"
 
 Start Controller
 ----------------
@@ -38,6 +40,11 @@ $ python spp.py -p 5555 -s 6666
 
 Start spp_primary
 -----------------
+
+Options
+* p: port mask
+* n: number of sec
+* s: ipaddr of controller and port for primary
 
 ```sh
 $ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
@@ -53,6 +60,10 @@ $ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
 
 Start spp_nfv
 -------------
+
+Options
+* n: seconary id (n > 0)
+* s: ipaddr of controller and port for secondary
 
 ```sh
 $ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
@@ -90,35 +101,42 @@ $ sudo ./x86_64-softmmu/qemu-system-x86_64 \
 	-nographic -vnc :2
 ```
 
-To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup to host /etc/qemu-ifup
+To start spp_vm "qemu-ifup" script required, please copy docs/qemu-ifup
+to host /etc/qemu-ifup
 
 Vhost interface is supported to communicate between guest and host:
 
 ### vhost interface
 
-- spp should do a "sec x:add vhost y" before starting the VM. x: vnf number, y: vhost port id.
+- spp should do a "sec x:add vhost y" before starting the VM.
+  x: vnf number, y: vhost port id.
 - Needs vhost argument for qemu:
 
 ```sh
-      sudo ./x86_64-softmmu/qemu-system-x86_64 \
-      	-cpu host \
-      	-enable-kvm \
-      	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
-      	-numa node,memdev=mem \
-      	-mem-prealloc \
-      	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
-      	-m 2048 \
-      	-smp cores=4,threads=1,sockets=1 \
-      	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
-      	-netdev tap,id=net0 \
-      	-chardev socket,id=chr0,path=/tmp/sock0 \
-      	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
-      	-device virtio-net-pci,netdev=net1 \
-      	-nographic -vnc :2
+  sudo ./x86_64-softmmu/qemu-system-x86_64 \
+  	-cpu host \
+  	-enable-kvm \
+  	-object memory-backend-file,id=mem,size=2048M,mem-path=/dev/hugepages,share=on \
+  	-numa node,memdev=mem \
+  	-mem-prealloc \
+  	-hda /home/dpdk/debian_wheezy_amd64_standard.qcow2 \
+  	-m 2048 \
+  	-smp cores=4,threads=1,sockets=1 \
+  	-device e1000,netdev=net0,mac=DE:AD:BE:EF:00:01 \
+  	-netdev tap,id=net0 \
+  	-chardev socket,id=chr0,path=/tmp/sock0 \
+  	-netdev vhost-user,id=net1,chardev=chr0,vhostforce \
+  	-device virtio-net-pci,netdev=net1 \
+  	-nographic -vnc :2
 ```
 
 Start spp_vm (Inside the VM)
 ----------------------------
+
+Options
+* p: port mask
+* n: secondary id
+* s: ipaddr of controller and port for secondary
 
 ```sh
 $ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
@@ -140,7 +158,7 @@ Test Setup 1: Single NFV
                                                                         __
                                     +--------------+                      |
                                     |    spp_nfv   |                      |
-                                    |              |                      |
+                                    |    (sec 1)   |                      |
                                     +--------------+                      |
                                          ^      :                         |
                                          |      |                         |
@@ -163,17 +181,17 @@ Test Setup 1: Single NFV
 ### Configuration for L2fwd
 
 ```
-spp > sec 0;patch 0 1
-spp > sec 0;patch 1 0
-spp > sec 0;forward
+spp > sec 1;patch 0 1
+spp > sec 1;patch 1 0
+spp > sec 1;forward
 ```
 
 ### Configuration for loopback
 
 ```
-spp > sec 0;patch 0 0
-spp > sec 0;patch 1 1
-spp > sec 0;forward
+spp > sec 1;patch 0 0
+spp > sec 1;patch 1 1
+spp > sec 1;forward
 ```
 
 Test Setup 2: Dual NFV
@@ -183,7 +201,7 @@ Test Setup 2: Dual NFV
                                                                         __
                          +--------------+          +--------------+       |
                          |    spp_nfv   |          |    spp_nfv   |       |
-                         |              |          |              |       |
+                         |    (sec 1)   |          |    (sec 2)   |       |
                          +--------------+          +--------------+       |
                             ^        :               :         :          |
                             |        |      +--------+         |          |
@@ -206,10 +224,10 @@ Test Setup 2: Dual NFV
 ### Configuration for L2fwd
 
 ```
-spp > sec 0;patch 0 1
-spp > sec 1;patch 1 0
-spp > sec 0;forward
+spp > sec 1;patch 0 1
+spp > sec 2;patch 1 0
 spp > sec 1;forward
+spp > sec 2;forward
 ```
 
 ```
@@ -217,7 +235,7 @@ spp > sec 1;forward
                                                                         __
                          +--------------+          +--------------+       |
                          |    spp_nfv   |          |    spp_nfv   |       |
-                         |              |          |              |       |
+                         |    (sec 1)   |          |    (sec 2)   |       |
                          +--------------+          +--------------+       |
                             ^        :               ^         :          |
                             |        |               |         |          |
@@ -240,10 +258,10 @@ spp > sec 1;forward
 ### Configuration for loopback
 
 ```
-spp > sec 0;patch 0 0
-spp > sec 1;patch 1 1
-spp > sec 0;forward
+spp > sec 1;patch 0 0
+spp > sec 2;patch 1 1
 spp > sec 1;forward
+spp > sec 2;forward
 ```
 
 Test Setup 3: Dual NFV with ring pmd
@@ -251,9 +269,9 @@ Test Setup 3: Dual NFV with ring pmd
 
 ```
                                                                         __
-                       +----------+      ring        +----------+         |
+                       +----------+      ring 0      +----------+         |
                        |  spp_nfv |    +--------+    |  spp_nfv |         |
-                       |        2 | -> |  |  |  |- > |  2       |         |
+                       |  (sec 1) | -> |  |  |  |- > |  (sec 2) |         |
                        +----------+    +--------+    +----------+         |
                           ^                                   :           |
                           |                                   |           |
@@ -276,34 +294,34 @@ Test Setup 3: Dual NFV with ring pmd
 ### Configuration for Uni directional L2fwd
 
 ```
-spp > sec 0;add ring 0
 spp > sec 1;add ring 0
-spp > sec 0;patch 0 2
-spp > sec 1;patch 2 1
-spp > sec 0;forward
+spp > sec 2;add ring 0
+spp > sec 1;patch 0 2
+spp > sec 2;patch 2 1
 spp > sec 1;forward
+spp > sec 2;forward
 ```
 
 ```
                                                                         __
-                                         ring                             |
+                                         ring 0                           |
                                        +--------+                         |
-                       +----------+ <--|  |  |  |<-- +----------+         |
-                       |        3 |    +--------+    |  3       |         |
-                       |  spp_nfv |                  |  spp_nfv |         |
-                       |        2 |--> +--------+ -->|  2       |         |
-                       +----------+    |  |  |  |    +----------+         |
+                      +-----------+ <--|  |  |  |<-- +-----------+        |
+                      |          3|    +--------+    |3          |        |
+                      |  spp_nfv  |                  |  spp_nfv  |        |
+                      |  (sec 1) 2|--> +--------+ -->|2 (sec 2)  |        |
+                      +-----------+    |  |  |  |    +-----------+        |
                           ^            +--------+             ^           |
-                          |              ring                 |           |
+                          |              ring 1               |           |
                           v                                   v           |
-    +----+----------+-------------------------------------------------+   |
-    |    | primary  |       ^                               ^         |   |
-    |    +----------+       |                               :         |   |
+    +---+----------+--------------------------------------------------+   |
+    |   | primary  |        ^                               ^         |   |
+    |   +----------+        |                               :         |   |
     |                       :                               :         |   |
     |                       :                               |         |   |  host
     |                       v                               v         |   |
     |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |            |   phy port  1|   |   |
+    |                  |  phy port 0  |            |  phy port 1  |   |   |
     +------------------+--------------+------------+--------------+---+ __|
                               ^                           ^
                               |                           |
@@ -314,73 +332,73 @@ spp > sec 1;forward
 ### Configuration for L2fwd
 
 ```
-spp > sec 0;add ring 0
-spp > sec 0;add ring 1
 spp > sec 1;add ring 0
 spp > sec 1;add ring 1
-spp > sec 0;patch 0 2
-spp > sec 0;patch 3 0
-spp > sec 1;patch 1 3
-spp > sec 1;patch 2 1
-spp > sec 0;forward
+spp > sec 2;add ring 0
+spp > sec 2;add ring 1
+spp > sec 1;patch 0 2
+spp > sec 1;patch 3 0
+spp > sec 2;patch 1 3
+spp > sec 2;patch 2 1
 spp > sec 1;forward
+spp > sec 2;forward
 ```
 
 Test Setup 4: Single NFV with VM through vhost pmd
 --------------------------------------------------
 
 ```
-                                                   __
-                          +----------------------+   |
-                          | guest                |   |
-                          |                      |   |
-                          |   +-------------+    |   |  guest 192.168.122.51
-                          |   |    spp_vm   |    |   |
-                          |   |      0      |    |   |
-                          +---+--------------+---+ __|
+                                                    __
+                          +-----------------------+   |
+                          | guest                 |   |
+                          |                       |   |
+                          |   +--------------+    |   |  guest 
+                          |   |    spp_vm    |    |   |  192.168.122.51
+                          |   |    (sec 2)   |    |   |
+                          |   |       0      |    |   |
+                          +---+--------------+----+ __|
                                ^           :
-                               |           |
                                |  virtio   |
-                               |           |
-                               |           V                            __
-                           +--------------------+                         |
-                           |  spp_nfv           |                         |
-                           |  2                 |                         |
-                           +--------------------+                         |
-                               ^           :                              |
-                               |           +---------- +                  |
-                               :                       v                  |
-    +----+----------+--------------------------------------------+        |
-    |    | primary  |       ^                          :         |        |
-    |    +----------+       |                          :         |        |
-    |                       :                          :         |        |
-    |                       :                          |         |        |  host 192.168.122.1
-    |                       :                          v         |        |
-    |                  +--------------+       +--------------+   |        |
-    |                  |   phy port 0 |       |   phy port  1|   |        |
-    +------------------+--------------+-------+--------------+---+      __|
+                               |           V                          __
+                           +--------------------+                       |
+                           |      spp_nfv       |                       |
+                           |  2   (sec 1)       |                       |
+                           +--------------------+                       |
+                               ^           :                            |
+                               |           +---------- +                |
+                               :                       v                |
+    +----+----------+--------------------------------------------+      |
+    |    | primary  |       ^                          :         |      |
+    |    +----------+       |                          :         |      |
+    |                       :                          |         |      | host 
+    |                       :                          v         |      | 192.168.122.1
+    |                  +--------------+       +--------------+   |      |
+    |                  |   phy port 0 |       |  phy port  1 |   |      |
+    +------------------+--------------+-------+--------------+---+    __|
                               ^                           :
                               |                           |
                               :                           v
 
 ```
 
-Legend:-
-sec 0 = spp_nfv
-sec 1 = spp_vm
-
-
 ### Configuration for Uni directional L2fwd
 
 ```sh
 [rm –rf /tmp/sock0]
+```
+
+```
 spp > sec 0;add vhost 0
+```
+
 [start VM]
-spp > sec 0;patch 0 2
-spp > sec 0;patch 2 1
-spp > sec 1;patch 0 0
+
+```
+spp > sec 1;patch 0 2
+spp > sec 1;patch 2 1
+spp > sec 2;patch 0 0
 spp > sec 1;forward
-spp > sec 0;forward
+spp > sec 2;forward
 ```
 
 
