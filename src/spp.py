@@ -503,8 +503,9 @@ class Shell(cmd.Cmd):
 
     def precmd(self, line):
         line = line.lower()
-        if self.recorded_file and 'playback' not in line:
-            print(line, file=self.recorded_file)
+        if self.recorded_file:
+            if not (('playback' in line) or ('bye' in line)):
+                print(line, file=self.recorded_file)
         return line
 
     def close(self):
