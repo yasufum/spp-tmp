@@ -477,29 +477,35 @@ class Shell(cmd.Cmd):
             print ("first %s" % cmds[1])
             self.response(CMD_ERROR, "invalid format")
 
-    def do_record(self, arg):
+    def do_record(self, fname):
         """Save future commands to filename:  RECORD filename.cmd"""
 
-        self.recorded_file = open(arg, 'w')
-        self.response(CMD_OK, "record")
+        if fname == '':
+            print("Record file is required!")
+        else:
+            self.recorded_file = open(fname, 'w')
+            self.response(CMD_OK, "record")
 
-    def do_playback(self, arg):
+    def do_playback(self, fname):
         """Playback commands from a file:  PLAYBACK filename.cmd"""
 
-        self.close()
-        try:
-            with open(arg) as recorded_file:
-                lines = []
-                for line in recorded_file:
-                    if line.strip().startswith("#"):
-                        continue
-                    lines.append(line)
-                self.cmdqueue.extend(lines)
-                self.response(CMD_OK, "playback")
-        except IOError:
-            message = "Error: File does not exist."
-            print(message)
-            self.response(CMD_NG, message)
+        if fname == '':
+            print("Record file is required!")
+        else:
+            self.close()
+            try:
+                with open(fname) as recorded_file:
+                    lines = []
+                    for line in recorded_file:
+                        if line.strip().startswith("#"):
+                            continue
+                        lines.append(line)
+                    self.cmdqueue.extend(lines)
+                    self.response(CMD_OK, "playback")
+            except IOError:
+                message = "Error: File does not exist."
+                print(message)
+                self.response(CMD_NG, message)
 
     def precmd(self, line):
         line = line.lower()
