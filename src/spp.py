@@ -18,14 +18,17 @@ import readline
 import threading
 import json
 
-from logging import getLogger,StreamHandler,Formatter,DEBUG
-logger = getLogger(__name__)
-handler = StreamHandler()
-handler.setLevel(DEBUG)
-formatter = Formatter('%(asctime)s - [%(name)s] - [%(levelname)s] - %(message)s')
-handler.setFormatter(formatter)
-logger.setLevel(DEBUG)
-logger.addHandler(handler)
+logger = None
+
+# Comment out to activate debug logging
+#from logging import getLogger,StreamHandler,Formatter,DEBUG
+#logger = getLogger(__name__)
+#handler = StreamHandler()
+#handler.setLevel(DEBUG)
+#formatter = Formatter('%(asctime)s - [%(name)s] - [%(levelname)s] - %(message)s')
+#handler.setFormatter(formatter)
+#logger.setLevel(DEBUG)
+#logger.addHandler(handler)
 
 
 CMD_OK = "OK"
@@ -53,13 +56,16 @@ class CmdRequestHandler(SocketServer.BaseRequestHandler):
             CmdRequestHandler.CMD.onecmd(self.data)
             ret = RCMD_RESULT_QUEUE.get()
             if (ret is not None):
-                logger.debug("ret:%s" % ret)
+                if logger != None:
+                    logger.debug("ret:%s" % ret)
                 self.request.send(ret)
             else:
-                logger.debug("ret is none")
+                if logger != None:
+                    logger.debug("ret is none")
                 self.request.send("")
         else:
-            logger.debug("CMD is None")
+            if logger != None:
+                logger.debug("CMD is None")
             self.request.send("")
 
 
@@ -340,6 +346,7 @@ def clean_sec_cmd(cmdstr):
     return res
 
 
+
 class Shell(cmd.Cmd):
     """SPP command prompt"""
 
@@ -433,7 +440,8 @@ class Shell(cmd.Cmd):
             param = result + '\n' + message
             RCMD_RESULT_QUEUE.put(param)
         else:
-            logger.debug("unknown remote command = %s" % rcmd)
+            if logger != None:
+                logger.debug("unknown remote command = %s" % rcmd)
 
     def do_status(self, _):
         """Display Soft Patch Panel Status"""
@@ -488,7 +496,7 @@ class Shell(cmd.Cmd):
 
     def do_playback(self, fname):
         """Playback commands from a file:  PLAYBACK filename.cmd"""
-
+        
         if fname == '':
             print("Record file is required!")
         else:
