@@ -120,10 +120,10 @@ forward(void)
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		struct rte_mbuf *bufs[MAX_PKT_BURST];
 
-		if (ports_fwd_array[i].in_port_id < 0)
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
 
-		if (ports_fwd_array[i].out_port_id < 0)
+		if (ports_fwd_array[i].out_port_id == PORT_RESET)
 			continue;
 
 		/* if status active, i count is in port*/
@@ -223,7 +223,7 @@ forward_array_reset(void)
 
 	/* initialize port forward array*/
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
-		if (ports_fwd_array[i].in_port_id > -1) {
+		if (ports_fwd_array[i].in_port_id != PORT_RESET) {
 			ports_fwd_array[i].out_port_id = PORT_RESET;
 			RTE_LOG(INFO, APP, "Port ID %d\n", i);
 			RTE_LOG(INFO, APP, "out_port_id %d\n",
@@ -242,7 +242,7 @@ print_active_ports(char *str)
 
 	/* every elements value*/
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
-		if (ports_fwd_array[i].in_port_id < 0)
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
 
 		RTE_LOG(INFO, APP, "Port ID %d\n", i);
@@ -250,7 +250,7 @@ print_active_ports(char *str)
 			ports_fwd_array[i].in_port_id);
 
 		sprintf(str + strlen(str), "port id: %d,", i);
-		if (ports_fwd_array[i].in_port_id >= 0)
+		if (ports_fwd_array[i].in_port_id != PORT_RESET)
 			sprintf(str + strlen(str), "on,");
 		else
 			sprintf(str + strlen(str), "off,");
@@ -309,7 +309,7 @@ forward_array_remove(int port_id)
 	forward_array_init_one(port_id);
 
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
-		if (ports_fwd_array[i].in_port_id < 0)
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
 
 		if (ports_fwd_array[i].out_port_id == port_id) {
@@ -439,7 +439,7 @@ add_vhost_pmd(int index)
 		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
 	};
 	struct rte_mempool *mp;
-	uint8_t vhost_port_id;
+	uint16_t vhost_port_id;
 	int nr_queues = 1;
 	const char *name;
 	char devargs[64];

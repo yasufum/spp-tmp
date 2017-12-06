@@ -41,6 +41,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <rte_branch_prediction.h>
 #include <rte_common.h>
@@ -57,7 +58,7 @@
 #define MAX_CLIENT  99
 #define MSG_SIZE    1000
 #define SOCK_RESET  -1
-#define PORT_RESET  -99
+#define PORT_RESET  UINT16_MAX
 
 /*
  * When doing reads from the NIC or the client queues,
@@ -128,10 +129,10 @@ struct port_map {
 };
 
 struct port {
-	int in_port_id;
-	int out_port_id;
-	uint16_t (*rx_func)(uint8_t, uint16_t, struct rte_mbuf **, uint16_t);
-	uint16_t (*tx_func)(uint8_t, uint16_t, struct rte_mbuf **, uint16_t);
+	uint16_t in_port_id;
+	uint16_t out_port_id;
+	uint16_t (*rx_func)(uint16_t, uint16_t, struct rte_mbuf **, uint16_t);
+	uint16_t (*tx_func)(uint16_t, uint16_t, struct rte_mbuf **, uint16_t);
 };
 
 /* define common names for structures shared between server and client */
