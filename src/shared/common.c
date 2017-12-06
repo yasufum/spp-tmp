@@ -37,12 +37,13 @@
 
 /* Check the link status of all ports in up to 9s, and print them finally */
 void
-check_all_ports_link_status(struct port_info *ports, uint8_t port_num,
+check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 		uint32_t port_mask)
 {
 #define CHECK_INTERVAL 100 /* 100ms */
 #define MAX_CHECK_TIME 90 /* 9s (90 * 100ms) in total */
-	uint8_t portid, count, all_ports_up;
+	uint8_t count, all_ports_up;
+	uint16_t portid;
 	struct rte_eth_link link;
 
 	RTE_LOG(INFO, APP, "\nChecking link status");
@@ -102,7 +103,7 @@ check_all_ports_link_status(struct port_info *ports, uint8_t port_num,
  * - start the port and report its status to stdout
  */
 int
-init_port(uint8_t port_num, struct rte_mempool *pktmbuf_pool)
+init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 {
 	/* for port configuration all features are off by default */
 	const struct rte_eth_conf port_conf = {
@@ -165,7 +166,7 @@ parse_portmask(struct port_info *ports, uint16_t max_ports,
 {
 	char *end = NULL;
 	unsigned long pm;
-	uint8_t count = 0;
+	uint16_t count = 0;
 
 	if (portmask == NULL || *portmask == '\0')
 		return -1;

@@ -186,10 +186,10 @@ get_vhost_iface_name(unsigned int id)
 	return buffer;
 }
 
-void check_all_ports_link_status(struct port_info *ports, uint8_t port_num,
+void check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 		uint32_t port_mask);
 
-int init_port(uint8_t port_num, struct rte_mempool *pktmbuf_pool);
+int init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool);
 
 int parse_portmask(struct port_info *ports, uint16_t max_ports,
 		const char *portmask);
