@@ -250,3 +250,66 @@ spp_atoi(const char *str, int *val)
 
 	return 0;
 }
+
+/*
+ * Print port status in forward array
+ *
+ * Each of port status is formatted as
+ * "port_id:[PORT_ID],[IN_PORT_STAT],[TYPE],output:[OUTPORT_STAT]"
+ */
+void
+print_active_ports(char *str, uint16_t client_id,
+		struct port *ports_fwd_array,
+		struct port_map *port_map)
+{
+	unsigned int i;
+
+	sprintf(str, "clinet_id:%d\n", client_id);
+
+	/* Every elements value */
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+			continue;
+
+		RTE_LOG(INFO, APP, "Port ID %d\n", i);
+		RTE_LOG(INFO, APP, "Status %d\n",
+			ports_fwd_array[i].in_port_id);
+
+		sprintf(str + strlen(str), "port_id:%d,", i);
+		/* in_port_id is same value as port_id */
+		if (ports_fwd_array[i].in_port_id != PORT_RESET)
+			sprintf(str + strlen(str), "on,");
+		else
+			sprintf(str + strlen(str), "off,");
+
+		switch (port_map[i].port_type) {
+		case PHY:
+			RTE_LOG(INFO, APP, "Type: PHY\n");
+			sprintf(str + strlen(str), "PHY,");
+			break;
+		case RING:
+			RTE_LOG(INFO, APP, "Type: RING\n");
+			sprintf(str + strlen(str), "RING(%u),",
+				port_map[i].id);
+			break;
+		case VHOST:
+			RTE_LOG(INFO, APP, "Type: VHOST\n");
+			sprintf(str + strlen(str), "VHOST(%u),",
+				port_map[i].id);
+			break;
+		case UNDEF:
+			RTE_LOG(INFO, APP, "Type: UDF\n");
+			sprintf(str + strlen(str), "UDF,");
+			break;
+		}
+
+		RTE_LOG(INFO, APP, "Out Port ID %d\n",
+				ports_fwd_array[i].out_port_id);
+		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
+			sprintf(str + strlen(str), "outport:%s\n", "none");
+		} else {
+			sprintf(str + strlen(str), "outport:%d\n",
+					ports_fwd_array[i].out_port_id);
+		}
+	}
+}
