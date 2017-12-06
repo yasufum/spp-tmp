@@ -108,8 +108,8 @@ struct stats {
 } __rte_cache_aligned;
 
 struct port_info {
-	uint8_t num_ports;
-	uint8_t id[RTE_MAX_ETHPORTS];
+	uint16_t num_ports;
+	uint16_t id[RTE_MAX_ETHPORTS];
 	struct stats port_stats[RTE_MAX_ETHPORTS];
 	struct stats client_stats[MAX_CLIENT];
 };
@@ -191,7 +191,7 @@ void check_all_ports_link_status(struct port_info *ports, uint8_t port_num,
 
 int init_port(uint8_t port_num, struct rte_mempool *pktmbuf_pool);
 
-int parse_portmask(struct port_info *ports, uint8_t max_ports,
+int parse_portmask(struct port_info *ports, uint16_t max_ports,
 		const char *portmask);
 int parse_num_clients(uint8_t *num_clients, const char *clients);
 int parse_server(char **server_ip, int *server_port, char *server_addr);

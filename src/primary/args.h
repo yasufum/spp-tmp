@@ -40,6 +40,6 @@ extern uint8_t num_clients;
 extern char *server_ip;
 extern int server_port;
 
-int parse_app_args(uint8_t max_ports, int argc, char *argv[]);
+int parse_app_args(uint16_t max_ports, int argc, char *argv[]);
 
 #endif /* ifndef _ARGS_H_ */

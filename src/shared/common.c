@@ -160,7 +160,7 @@ init_port(uint8_t port_num, struct rte_mempool *pktmbuf_pool)
  * array variable
  */
 int
-parse_portmask(struct port_info *ports, uint8_t max_ports,
+parse_portmask(struct port_info *ports, uint16_t max_ports,
 		const char *portmask)
 {
 	char *end = NULL;

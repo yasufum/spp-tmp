@@ -66,7 +66,7 @@ usage(void)
  * on error.
  */
 int
-parse_app_args(uint8_t max_ports, int argc, char *argv[])
+parse_app_args(uint16_t max_ports, int argc, char *argv[])
 {
 	int option_index, opt;
 	char **argvopt = argv;
