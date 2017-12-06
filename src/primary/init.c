@@ -134,8 +134,7 @@ init(int argc, char *argv[])
 {
 	int retval;
 	const struct rte_memzone *mz;
-	uint8_t i;
-	uint16_t total_ports;
+	uint16_t count, total_ports;
 
 	/* init EAL, parsing EAL args */
 	retval = rte_eal_init(argc, argv);
@@ -177,11 +176,11 @@ init(int argc, char *argv[])
 
 	/* now initialise the ports we will use */
 	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
-		for (i = 0; i < ports->num_ports; i++) {
-			retval = init_port(ports->id[i], pktmbuf_pool);
+		for (count = 0; count < ports->num_ports; count++) {
+			retval = init_port(ports->id[count], pktmbuf_pool);
 			if (retval != 0)
 				rte_exit(EXIT_FAILURE,
-					"Cannot initialise port %d\n", i);
+					"Cannot initialise port %d\n", count);
 		}
 	}
 	check_all_ports_link_status(ports, ports->num_ports, (~0x0));
