@@ -91,7 +91,8 @@ init(int argc, char *argv[])
 {
 	int retval;
 	const struct rte_memzone *mz;
-	uint8_t i, total_ports;
+	uint8_t i;
+	uint16_t total_ports;
 
 	/* init EAL, parsing EAL args */
 	retval = rte_eal_init(argc, argv);

@@ -36,7 +36,7 @@
 
 #include <stdint.h>
 
-extern uint8_t num_clients;
+extern uint16_t num_clients;
 extern char *server_ip;
 extern int server_port;
 

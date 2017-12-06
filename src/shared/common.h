@@ -193,7 +193,7 @@ int init_port(uint8_t port_num, struct rte_mempool *pktmbuf_pool);
 
 int parse_portmask(struct port_info *ports, uint16_t max_ports,
 		const char *portmask);
-int parse_num_clients(uint8_t *num_clients, const char *clients);
+int parse_num_clients(uint16_t *num_clients, const char *clients);
 int parse_server(char **server_ip, int *server_port, char *server_addr);
 
 int spp_atoi(const char *str, int *val);

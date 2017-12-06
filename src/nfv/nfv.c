@@ -46,7 +46,7 @@ static sig_atomic_t on = 1;
  * our client id number - tells us which rx queue to read, and NIC TX
  * queue to write to.
  */
-static uint8_t client_id;
+static uint16_t client_id;
 static char *server_ip;
 static int server_port;
 

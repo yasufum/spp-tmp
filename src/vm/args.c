@@ -40,7 +40,7 @@
 #include "init.h"
 
 /* global var for number of clients - extern in header */
-uint8_t client_id;
+uint16_t client_id;
 char *server_ip;
 int server_port;
 
@@ -66,7 +66,7 @@ usage(void)
  * on error.
  */
 int
-parse_app_args(uint8_t max_ports, int argc, char *argv[])
+parse_app_args(uint16_t max_ports, int argc, char *argv[])
 {
 	int option_index, opt;
 	char **argvopt = argv;

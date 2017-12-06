@@ -40,7 +40,7 @@
 #include "init.h"
 
 /* global var for number of clients - extern in header */
-uint8_t num_clients;
+uint16_t num_clients;
 char *server_ip;
 int server_port;
 

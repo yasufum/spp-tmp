@@ -197,7 +197,7 @@ parse_portmask(struct port_info *ports, uint16_t max_ports,
  * and convert to a number to store in the num_clients variable
  */
 int
-parse_num_clients(uint8_t *num_clients, const char *clients)
+parse_num_clients(uint16_t *num_clients, const char *clients)
 {
 	char *end = NULL;
 	unsigned long temp;
@@ -209,7 +209,7 @@ parse_num_clients(uint8_t *num_clients, const char *clients)
 	if (end == NULL || *end != '\0' || temp == 0)
 		return -1;
 
-	*num_clients = (uint8_t)temp;
+	*num_clients = (uint16_t)temp;
 	return 0;
 }
 
