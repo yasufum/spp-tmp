@@ -17,31 +17,35 @@ import threading
 import traceback
 
 # Turn true if activate logger to debug remote command.
-logger = True
+logger = None
 
-if logger is True:
-    from logging import DEBUG
-    from logging import Formatter
-    from logging import getLogger
-    from logging import StreamHandler
-    logger = getLogger(__name__)
-    handler = StreamHandler()
-    handler.setLevel(DEBUG)
-    formatter = Formatter(
-        '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
-    handler.setFormatter(formatter)
-    logger.setLevel(DEBUG)
-    logger.addHandler(handler)
+# Maximum num of sock queues for secondaries
+MAX_SECONDARY = 16
 
+PRIMARY = ''
+SECONDARY_LIST = []
+SECONDARY_COUNT = 0
 
-CMD_OK = "OK"
-CMD_NG = "NG"
-CMD_NOTREADY = "NOTREADY"
-CMD_ERROR = "ERROR"
+# Initialize primary comm channel
+MAIN2PRIMARY = Queue()
+PRIMARY2MAIN = Queue()
 
+REMOTE_COMMAND = "RCMD"
 RCMD_EXECUTE_QUEUE = Queue()
 RCMD_RESULT_QUEUE = Queue()
-REMOTE_COMMAND = "RCMD"
+
+
+class GrowingList(list):
+    """GrowingList"""
+
+    def __setitem__(self, index, value):
+        if index >= len(self):
+            self.extend([None]*(index + 1 - len(self)))
+        list.__setitem__(self, index, value)
+
+# init secondary comm channel list
+MAIN2SEC = GrowingList()
+SEC2MAIN = GrowingList()
 
 
 class CmdRequestHandler(SocketServer.BaseRequestHandler):
@@ -71,31 +75,6 @@ class CmdRequestHandler(SocketServer.BaseRequestHandler):
             if logger is not None:
                 logger.debug("CMD is None")
             self.request.send("")
-
-
-class GrowingList(list):
-    """GrowingList"""
-
-    def __setitem__(self, index, value):
-        if index >= len(self):
-            self.extend([None]*(index + 1 - len(self)))
-        list.__setitem__(self, index, value)
-
-# Maximum num of sock queues for secondaries
-MAX_SECONDARY = 16
-
-# init
-PRIMARY = ''
-SECONDARY_LIST = []
-SECONDARY_COUNT = 0
-
-# init primary comm channel
-MAIN2PRIMARY = Queue()
-PRIMARY2MAIN = Queue()
-
-# init secondary comm channel list
-MAIN2SEC = GrowingList()
-SEC2MAIN = GrowingList()
 
 
 class ConnectionThread(threading.Thread):
@@ -155,59 +134,6 @@ class ConnectionThread(threading.Thread):
         self.conn.close()
 
 
-def getclientid(conn):
-    """Get client_id from client"""
-
-    try:
-        conn.send("_get_client_id")
-    except KeyError:
-        return -1
-
-    data = conn.recv(1024)
-    if data is None:
-        return -1
-
-    if logger is not None:
-        logger.debug("data: %s" % data)
-    client_id = int(data.strip('\0'))
-
-    if client_id < 0 or client_id > MAX_SECONDARY:
-        logger.debug("Failed to get client_id: %d" % client_id)
-        return -1
-
-    found = 0
-    for i in SECONDARY_LIST:
-        if client_id == i:
-            found = 1
-            break
-
-    if found == 0:
-        return client_id
-
-    # client_id in use, find a free one
-    free_client_id = -1
-    for i in range(MAX_SECONDARY):
-        found = -1
-        for j in SECONDARY_LIST:
-            if i == j:
-                found = i
-                break
-        if found == -1:
-            free_client_id = i
-            break
-
-    if logger is not None:
-        logger.debug("Found free_client_id: %d" % free_client_id)
-
-    if free_client_id < 0:
-        return -1
-
-    conn.send("_set_client_id %u" % free_client_id)
-    data = conn.recv(1024)
-
-    return free_client_id
-
-
 class AcceptThread(threading.Thread):
 
     def __init__(self, host, port, main2sec, sec2main):
@@ -230,6 +156,58 @@ class AcceptThread(threading.Thread):
         self.stop_event = threading.Event()
         self.sock_opened = False
 
+    def getclientid(self, conn):
+        """Get client_id from client"""
+
+        try:
+            conn.send("_get_client_id")
+        except KeyError:
+            return -1
+
+        data = conn.recv(1024)
+        if data is None:
+            return -1
+
+        if logger is not None:
+            logger.debug("data: %s" % data)
+        client_id = int(data.strip('\0'))
+
+        if client_id < 0 or client_id > MAX_SECONDARY:
+            logger.debug("Failed to get client_id: %d" % client_id)
+            return -1
+
+        found = 0
+        for i in SECONDARY_LIST:
+            if client_id == i:
+                found = 1
+                break
+
+        if found == 0:
+            return client_id
+
+        # client_id in use, find a free one
+        free_client_id = -1
+        for i in range(MAX_SECONDARY):
+            found = -1
+            for j in SECONDARY_LIST:
+                if i == j:
+                    found = i
+                    break
+            if found == -1:
+                free_client_id = i
+                break
+
+        if logger is not None:
+            logger.debug("Found free_client_id: %d" % free_client_id)
+
+        if free_client_id < 0:
+            return -1
+
+        conn.send("_set_client_id %u" % free_client_id)
+        data = conn.recv(1024)
+
+        return free_client_id
+
     def stop(self):
         if self.sock_opened is True:
             try:
@@ -248,7 +226,7 @@ class AcceptThread(threading.Thread):
                 # Accepting incoming connections
                 conn, _ = self.sock.accept()
 
-                client_id = getclientid(conn)
+                client_id = self.getclientid(conn)
                 if client_id < 0:
                     break
 
@@ -271,55 +249,6 @@ class AcceptThread(threading.Thread):
             traceback.print_exc()
             self.sock_opened = False
             self.sock.close()
-
-
-def command_primary(command):
-    """Send command to primary process"""
-
-    if PRIMARY:
-        MAIN2PRIMARY.put(command)
-        recv = PRIMARY2MAIN.get(True)
-        print (recv)
-        return CMD_OK, recv
-    else:
-        recv = "primary not started"
-        print (recv)
-        return CMD_NOTREADY, recv
-
-
-def command_secondary(sec_id, command):
-    """Send command to secondary process with sec_id"""
-
-    if sec_id in SECONDARY_LIST:
-        MAIN2SEC[sec_id].put(command)
-        recv = SEC2MAIN[sec_id].get(True)
-        print (recv)
-        return CMD_OK, recv
-    else:
-        message = "secondary id %d not exist" % sec_id
-        print(message)
-        return CMD_NOTREADY, message
-
-
-def get_status():
-    secondary = []
-    for i in SECONDARY_LIST:
-        secondary.append("%d" % i)
-    stat = {
-        "primary": "%d" % PRIMARY,
-        "secondary": secondary
-        }
-    return stat
-
-
-def print_status():
-    """Display information about connected clients"""
-
-    print ("Soft Patch Panel Status :")
-    print ("primary: %d" % PRIMARY)  # "primary: 1" if PRIMA == True
-    print ("secondary count: %d" % len(SECONDARY_LIST))
-    for i in SECONDARY_LIST:
-        print ("Connected secondary id: %d" % i)
 
 
 class PrimaryThread(threading.Thread):
@@ -396,19 +325,6 @@ class PrimaryThread(threading.Thread):
                     break
 
 
-def close_all_secondary():
-    """Exit all secondary processes"""
-
-    global SECONDARY_COUNT
-
-    tmp_list = []
-    for i in SECONDARY_LIST:
-        tmp_list.append(i)
-    for i in tmp_list:
-        command_secondary(i, 'exit')
-    SECONDARY_COUNT = 0
-
-
 def check_sec_cmds(cmds):
     """Validate secondary commands before sending"""
 
@@ -455,10 +371,72 @@ class Shell(cmd.Cmd):
     prompt = 'spp > '
     recorded_file = None
 
+    CMD_OK = "OK"
+    CMD_NG = "NG"
+    CMD_NOTREADY = "NOTREADY"
+    CMD_ERROR = "ERROR"
+
     PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
     SEC_SUBCMDS = ['vhost', 'ring']
     BYE_CMDS = ['sec', 'all']
+
+    def close_all_secondary(self):
+        """Exit all secondary processes"""
+
+        global SECONDARY_COUNT
+
+        tmp_list = []
+        for i in SECONDARY_LIST:
+            tmp_list.append(i)
+        for i in tmp_list:
+            self.command_secondary(i, 'exit')
+        SECONDARY_COUNT = 0
+
+    def get_status(self):
+        secondary = []
+        for i in SECONDARY_LIST:
+            secondary.append("%d" % i)
+        stat = {
+            "primary": "%d" % PRIMARY,
+            "secondary": secondary
+            }
+        return stat
+
+    def print_status(self):
+        """Display information about connected clients"""
+
+        print ("Soft Patch Panel Status :")
+        print ("primary: %d" % PRIMARY)  # "primary: 1" if PRIMA == True
+        print ("secondary count: %d" % len(SECONDARY_LIST))
+        for i in SECONDARY_LIST:
+            print ("Connected secondary id: %d" % i)
+
+    def command_primary(self, command):
+        """Send command to primary process"""
+
+        if PRIMARY:
+            MAIN2PRIMARY.put(command)
+            recv = PRIMARY2MAIN.get(True)
+            print (recv)
+            return self.CMD_OK, recv
+        else:
+            recv = "primary not started"
+            print (recv)
+            return self.CMD_NOTREADY, recv
+
+    def command_secondary(self, sec_id, command):
+        """Send command to secondary process with sec_id"""
+
+        if sec_id in SECONDARY_LIST:
+            MAIN2SEC[sec_id].put(command)
+            recv = SEC2MAIN[sec_id].get(True)
+            print (recv)
+            return self.CMD_OK, recv
+        else:
+            message = "secondary id %d not exist" % sec_id
+            print(message)
+            return self.CMD_NOTREADY, message
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands"""
@@ -547,20 +525,20 @@ class Shell(cmd.Cmd):
     def do_status(self, _):
         """Display Soft Patch Panel Status"""
 
-        print_status()
-        stat = get_status()
-        self.response(CMD_OK, json.dumps(stat))
+        self.print_status()
+        stat = self.get_status()
+        self.response(self.CMD_OK, json.dumps(stat))
 
     def do_pri(self, command):
         """Send command to primary process"""
 
         if command and command in self.PRI_CMDS:
-            result, message = command_primary(command)
+            result, message = self.command_primary(command)
             self.response(result, message)
         else:
             message = "primary invalid command"
             print(message)
-            self.response(CMD_ERROR, message)
+            self.response(self.CMD_ERROR, message)
 
     def do_sec(self, arg):
         """Send command to secondary process"""
@@ -571,20 +549,20 @@ class Shell(cmd.Cmd):
         if len(cmds) < 2:
             message = "error"
             print(message)
-            self.response(CMD_ERROR, message)
+            self.response(self.CMD_ERROR, message)
         elif str.isdigit(cmds[0]):
             sec_id = int(cmds[0])
             if check_sec_cmds(cmds[1]):
-                result, message = command_secondary(sec_id, cmds[1])
+                result, message = self.command_secondary(sec_id, cmds[1])
                 self.response(result, message)
             else:
                 message = "invalid cmd"
                 print(message)
-                self.response(CMD_ERROR, message)
+                self.response(self.CMD_ERROR, message)
         else:
             print (cmds[0])
             print ("first %s" % cmds[1])
-            self.response(CMD_ERROR, "invalid format")
+            self.response(self.CMD_ERROR, "invalid format")
 
     def do_record(self, fname):
         """Save future commands to filename:  RECORD filename.cmd"""
@@ -593,7 +571,7 @@ class Shell(cmd.Cmd):
             print("Record file is required!")
         else:
             self.recorded_file = open(fname, 'w')
-            self.response(CMD_OK, "record")
+            self.response(self.CMD_OK, "record")
 
     def do_playback(self, fname):
         """Playback commands from a file:  PLAYBACK filename.cmd"""
@@ -610,11 +588,11 @@ class Shell(cmd.Cmd):
                             continue
                         lines.append(line)
                     self.cmdqueue.extend(lines)
-                    self.response(CMD_OK, "playback")
+                    self.response(self.CMD_OK, "playback")
             except IOError:
                 message = "Error: File does not exist."
                 print(message)
-                self.response(CMD_NG, message)
+                self.response(self.CMD_NG, message)
 
     def precmd(self, line):
         line = line.lower()
@@ -636,10 +614,10 @@ class Shell(cmd.Cmd):
 
         cmds = arg.split(' ')
         if cmds[0] == 'sec':
-            close_all_secondary()
+            self.close_all_secondary()
         elif cmds[0] == 'all':
-            close_all_secondary()
-            command_primary('exit')
+            self.close_all_secondary()
+            self.command_primary('exit')
         elif cmds[0] == '':
             print('Thank you for using Soft Patch Panel')
             self.close()
@@ -709,4 +687,18 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    if logger is True:
+        from logging import DEBUG
+        from logging import Formatter
+        from logging import getLogger
+        from logging import StreamHandler
+        logger = getLogger(__name__)
+        handler = StreamHandler()
+        handler.setLevel(DEBUG)
+        formatter = Formatter(
+            '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
+        handler.setFormatter(formatter)
+        logger.setLevel(DEBUG)
+        logger.addHandler(handler)
+
     main(sys.argv[1:])
