@@ -36,12 +36,23 @@ RCMD_RESULT_QUEUE = Queue()
 
 
 class GrowingList(list):
-    """GrowingList"""
+    """Growing List
+
+    Custom list type for appending index over the range which is
+    similar to ruby's Array. Empty index is filled with 'None'.
+    It is used to contain queues for secondaries with any sec ID.
+
+    >>> gl = GrowingList()
+    >>> gl.[3] = 0
+    >>> gl
+    [None, None, None, 0]
+    """
 
     def __setitem__(self, index, value):
         if index >= len(self):
             self.extend([None]*(index + 1 - len(self)))
         list.__setitem__(self, index, value)
+
 
 # init secondary comm channel list
 MAIN2SEC = GrowingList()
@@ -78,15 +89,14 @@ class CmdRequestHandler(SocketServer.BaseRequestHandler):
 
 
 class ConnectionThread(threading.Thread):
+    """Manage connection between controller and secondary"""
 
-    def __init__(self, client_id, conn, m2s, s2m):
+    def __init__(self, client_id, conn):
         super(ConnectionThread, self).__init__()
         self.daemon = True
 
         self.client_id = client_id
         self.conn = conn
-        self.m2s = m2s
-        self.s2m = s2m
         self.stop_event = threading.Event()
         self.conn_opened = False
 
@@ -94,6 +104,10 @@ class ConnectionThread(threading.Thread):
         self.stop_event.set()
 
     def run(self):
+        global SECONDARY_LIST
+        global MAIN2SEC
+        global SEC2MAIN
+
         cmd_str = 'hello'
 
         # infinite loop so that function do not terminate and thread do not
@@ -107,7 +121,7 @@ class ConnectionThread(threading.Thread):
 
             # Sending message to connected secondary
             try:
-                cmd_str = self.m2s.get(True)
+                cmd_str = MAIN2SEC[self.client_id].get(True)
                 self.conn.send(cmd_str)  # send only takes string
             except KeyError:
                 break
@@ -120,10 +134,10 @@ class ConnectionThread(threading.Thread):
                 # 1024 stands for bytes of data to be received
                 data = self.conn.recv(1024)
                 if data:
-                    self.s2m.put(
+                    SEC2MAIN[self.client_id].put(
                         "recv:%s:{%s}" % (str(self.conn.fileno()), data))
                 else:
-                    self.s2m.put("closing:" + str(self.conn))
+                    SEC2MAIN[self.client_id].put("closing:" + str(self.conn))
                     break
             except Exception as excep:
                 print(
@@ -135,8 +149,9 @@ class ConnectionThread(threading.Thread):
 
 
 class AcceptThread(threading.Thread):
+    """Manage connection"""
 
-    def __init__(self, host, port, main2sec, sec2main):
+    def __init__(self, host, port):
         super(AcceptThread, self).__init__()
         self.daemon = True
 
@@ -151,13 +166,13 @@ class AcceptThread(threading.Thread):
         # Listening secondary at the address
         self.sock.listen(MAX_SECONDARY)
 
-        self.main2sec = main2sec
-        self.sec2main = sec2main
         self.stop_event = threading.Event()
         self.sock_opened = False
 
     def getclientid(self, conn):
         """Get client_id from client"""
+
+        global SECONDARY_LIST
 
         try:
             conn.send("_get_client_id")
@@ -220,6 +235,9 @@ class AcceptThread(threading.Thread):
 
     def run(self):
         global SECONDARY_COUNT
+        global SECONDARY_LIST
+        global MAIN2SEC
+        global SEC2MAIN
 
         try:
             while True:
@@ -234,12 +252,9 @@ class AcceptThread(threading.Thread):
                 # Calling secondarythread function for this function and
                 # passing conn as argument.
                 SECONDARY_LIST.append(client_id)
-                self.main2sec[client_id] = Queue()
-                self.sec2main[client_id] = Queue()
-                connection_thread = ConnectionThread(
-                    client_id, conn,
-                    self.main2sec[client_id],
-                    self.sec2main[client_id])
+                MAIN2SEC[client_id] = Queue()
+                SEC2MAIN[client_id] = Queue()
+                connection_thread = ConnectionThread(client_id, conn)
                 connection_thread.daemon = True
                 connection_thread.start()
 
@@ -253,7 +268,7 @@ class AcceptThread(threading.Thread):
 
 class PrimaryThread(threading.Thread):
 
-    def __init__(self, host, port, main2primary, primary2main):
+    def __init__(self, host, port):
         super(PrimaryThread, self).__init__()
         self.daemon = True
 
@@ -266,8 +281,6 @@ class PrimaryThread(threading.Thread):
         # Listening primary at the address
         self.sock.listen(1)  # 5 denotes the number of clients can queue
 
-        self.main2primary = main2primary
-        self.primary2main = primary2main
         self.stop_event = threading.Event()
         self.sock_opened = False
 
@@ -296,7 +309,7 @@ class PrimaryThread(threading.Thread):
                 self.sock_opened = True
                 # Sending message to connected primary
                 try:
-                    cmd_str = self.main2primary.get(True)
+                    cmd_str = MAIN2PRIMARY.get(True)
                     conn.send(cmd_str)  # send only takes string
                 except KeyError:
                     break
@@ -311,10 +324,10 @@ class PrimaryThread(threading.Thread):
                     # 1024 stands for bytes of data to be received
                     data = conn.recv(1024)
                     if data:
-                        self.primary2main.put(
+                        PRIMARY2MAIN.put(
                             "recv:%s:{%s}" % (str(addr), data))
                     else:
-                        self.primary2main.put("closing:" + str(addr))
+                        PRIMARY2MAIN.put("closing:" + str(addr))
                         conn.close()
                         self.sock_opened = False
                         break
@@ -323,37 +336,6 @@ class PrimaryThread(threading.Thread):
                         excep,
                         ", Error while receiving msg in primarythread()!")
                     break
-
-
-def check_sec_cmds(cmds):
-    """Validate secondary commands before sending"""
-
-    level1 = ['status', 'exit', 'forward', 'stop']
-    level2 = ['add', 'patch', 'del']
-    patch_args = ['reset']
-    add_del_args = ['ring', 'vhost']
-    cmdlist = cmds.split(' ')
-    valid = 0
-
-    length = len(cmdlist)
-    if length == 1:
-        if cmdlist[0] in level1:
-            valid = 1
-    elif length == 2:
-        if cmdlist[0] == 'patch':
-            if cmdlist[1] in patch_args:
-                valid = 1
-    elif length == 3:
-        if cmdlist[0] in level2:
-            if cmdlist[0] == 'add' or cmdlist[0] == 'del':
-                if cmdlist[1] in add_del_args:
-                    if str.isdigit(cmdlist[2]):
-                        valid = 1
-            elif cmdlist[0] == 'patch':
-                if str.isdigit(cmdlist[1]) and str.isdigit(cmdlist[2]):
-                    valid = 1
-
-    return valid
 
 
 def clean_sec_cmd(cmdstr):
@@ -385,6 +367,7 @@ class Shell(cmd.Cmd):
         """Exit all secondary processes"""
 
         global SECONDARY_COUNT
+        global SECONDARY_LIST
 
         tmp_list = []
         for i in SECONDARY_LIST:
@@ -394,6 +377,8 @@ class Shell(cmd.Cmd):
         SECONDARY_COUNT = 0
 
     def get_status(self):
+        global SECONDARY_LIST
+
         secondary = []
         for i in SECONDARY_LIST:
             secondary.append("%d" % i)
@@ -405,6 +390,8 @@ class Shell(cmd.Cmd):
 
     def print_status(self):
         """Display information about connected clients"""
+
+        global SECONDARY_LIST
 
         print ("Soft Patch Panel Status :")
         print ("primary: %d" % PRIMARY)  # "primary: 1" if PRIMA == True
@@ -428,6 +415,8 @@ class Shell(cmd.Cmd):
     def command_secondary(self, sec_id, command):
         """Send command to secondary process with sec_id"""
 
+        global SECONDARY_LIST
+
         if sec_id in SECONDARY_LIST:
             MAIN2SEC[sec_id].put(command)
             recv = SEC2MAIN[sec_id].get(True)
@@ -437,6 +426,36 @@ class Shell(cmd.Cmd):
             message = "secondary id %d not exist" % sec_id
             print(message)
             return self.CMD_NOTREADY, message
+
+    def check_sec_cmds(self, cmds):
+        """Validate secondary commands before sending"""
+
+        level1 = ['status', 'exit', 'forward', 'stop']
+        level2 = ['add', 'patch', 'del']
+        patch_args = ['reset']
+        add_del_args = ['ring', 'vhost']
+        cmdlist = cmds.split(' ')
+        valid = 0
+
+        length = len(cmdlist)
+        if length == 1:
+            if cmdlist[0] in level1:
+                valid = 1
+        elif length == 2:
+            if cmdlist[0] == 'patch':
+                if cmdlist[1] in patch_args:
+                    valid = 1
+        elif length == 3:
+            if cmdlist[0] in level2:
+                if cmdlist[0] == 'add' or cmdlist[0] == 'del':
+                    if cmdlist[1] in add_del_args:
+                        if str.isdigit(cmdlist[2]):
+                            valid = 1
+                elif cmdlist[0] == 'patch':
+                    if str.isdigit(cmdlist[1]) and str.isdigit(cmdlist[2]):
+                        valid = 1
+
+        return valid
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands"""
@@ -452,6 +471,8 @@ class Shell(cmd.Cmd):
 
     def complete_sec(self, text, line, begidx, endidx):
         """Completion for secondary process commands"""
+
+        global SECONDARY_LIST
 
         try:
             cleaned_line = clean_sec_cmd(line)
@@ -552,7 +573,7 @@ class Shell(cmd.Cmd):
             self.response(self.CMD_ERROR, message)
         elif str.isdigit(cmds[0]):
             sec_id = int(cmds[0])
-            if check_sec_cmds(cmds[1]):
+            if self.check_sec_cmds(cmds[1]):
                 result, message = self.command_secondary(sec_id, cmds[1])
                 self.response(result, message)
             else:
@@ -656,11 +677,10 @@ def main(argv):
     print('secondary port : %d' % secondary_port)
     print('management port : %d' % management_port)
 
-    primary_thread = PrimaryThread(
-        host, primary_port, MAIN2PRIMARY, PRIMARY2MAIN)
+    primary_thread = PrimaryThread(host, primary_port)
     primary_thread.start()
 
-    accept_thread = AcceptThread(host, secondary_port, MAIN2SEC, SEC2MAIN)
+    accept_thread = AcceptThread(host, secondary_port)
     accept_thread.start()
 
     shell = Shell()
