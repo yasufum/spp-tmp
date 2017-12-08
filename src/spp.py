@@ -2,33 +2,36 @@
 """Soft Patch Panel"""
 
 from __future__ import print_function
-from Queue import Queue, Empty
-from thread import start_new_thread
-from threading import Thread
-import cmd
+
 import argparse
+import cmd
+import json
+from Queue import Empty
+from Queue import Queue
+import re
 import select
 import socket
-import sys
-import re
-#import pdb; pdb.set_trace()
-
 import SocketServer
-import readline
+import sys
 import threading
-import json
+from threading import Thread
 
+# Turn true if activate logger to debug remote command.
 logger = None
 
-# Comment out to activate debug logging
-#from logging import getLogger,StreamHandler,Formatter,DEBUG
-#logger = getLogger(__name__)
-#handler = StreamHandler()
-#handler.setLevel(DEBUG)
-#formatter = Formatter('%(asctime)s - [%(name)s] - [%(levelname)s] - %(message)s')
-#handler.setFormatter(formatter)
-#logger.setLevel(DEBUG)
-#logger.addHandler(handler)
+if logger is not None:
+    from logging import DEBUG
+    from logging import Formatter
+    from logging import getLogger
+    from logging import StreamHandler
+    logger = getLogger(__name__)
+    handler = StreamHandler()
+    handler.setLevel(DEBUG)
+    formatter = Formatter(
+        '%(asctime)s - [%(name)s] - [%(levelname)s] - %(message)s')
+    handler.setFormatter(formatter)
+    logger.setLevel(DEBUG)
+    logger.addHandler(handler)
 
 
 CMD_OK = "OK"
@@ -39,6 +42,7 @@ CMD_ERROR = "ERROR"
 RCMD_EXECUTE_QUEUE = Queue()
 RCMD_RESULT_QUEUE = Queue()
 REMOTE_COMMAND = "RCMD"
+
 
 class CmdRequestHandler(SocketServer.BaseRequestHandler):
     """Request handler for getting message from remote entities"""
@@ -56,15 +60,15 @@ class CmdRequestHandler(SocketServer.BaseRequestHandler):
             CmdRequestHandler.CMD.onecmd(self.data)
             ret = RCMD_RESULT_QUEUE.get()
             if (ret is not None):
-                if logger != None:
+                if logger is not None:
                     logger.debug("ret:%s" % ret)
                 self.request.send(ret)
             else:
-                if logger != None:
+                if logger is not None:
                     logger.debug("ret is none")
                 self.request.send("")
         else:
-            if logger != None:
+            if logger is not None:
                 logger.debug("CMD is None")
             self.request.send("")
 
@@ -85,51 +89,53 @@ PRIMARY = ''
 SECONDARY_LIST = []
 SECONDARY_COUNT = 0
 
-#init primary comm channel
+# init primary comm channel
 MAIN2PRIMARY = Queue()
 PRIMARY2MAIN = Queue()
 
-#init secondary comm channel list
+# init secondary comm channel list
 MAIN2SEC = GrowingList()
 SEC2MAIN = GrowingList()
+
 
 def connectionthread(name, client_id, conn, m2s, s2m):
     """Manage secondary process connections"""
 
     cmd_str = 'hello'
 
-    #infinite loop so that function do not terminate and thread do not end.
+    # infinite loop so that function do not terminate and thread do not end.
     while True:
         try:
-            _, _, _ = select.select([conn,], [conn,], [], 5)
+            _, _, _ = select.select([conn, ], [conn, ], [], 5)
         except select.error:
             break
 
-        #Sending message to connected secondary
+        # Sending message to connected secondary
         try:
             cmd_str = m2s.get(True)
-            conn.send(cmd_str) #send only takes string
+            conn.send(cmd_str)  # send only takes string
         except KeyError:
             break
-        except Exception, excep:
+        except Exception as excep:
             print(excep, ",Error while sending msg in connectionthread()!")
             break
 
-        #Receiving from secondary
+        # Receiving from secondary
         try:
-            data = conn.recv(1024) # 1024 stands for bytes of data to be received
+            # 1024 stands for bytes of data to be received
+            data = conn.recv(1024)
             if data:
-                #s2m.put("recv:" + str(conn.fileno()) + ":" + "{" + data + "}")
                 s2m.put("recv:%s:{%s}" % (str(conn.fileno()), data))
             else:
                 s2m.put("closing:" + str(conn))
                 break
-        except Exception, excep:
+        except Exception as excep:
             print(excep, ",Error while receiving msg in connectionthread()!")
             break
 
     SECONDARY_LIST.remove(client_id)
     conn.close()
+
 
 def getclientid(conn):
     """Get client_id from client"""
@@ -140,7 +146,7 @@ def getclientid(conn):
         return -1
 
     data = conn.recv(1024)
-    if data == None:
+    if data is None:
         return -1
 
     client_id = int(data.strip('\0'))
@@ -177,6 +183,7 @@ def getclientid(conn):
 
     return free_client_id
 
+
 def acceptthread(sock, main2sec, sec2main):
     """Listen for secondary processes"""
 
@@ -184,28 +191,31 @@ def acceptthread(sock, main2sec, sec2main):
 
     try:
         while True:
-            #Accepting incoming connections
+            # Accepting incoming connections
             conn, _ = sock.accept()
 
             client_id = getclientid(conn)
             if client_id < 0:
                 break
 
-            #Creating new thread.
-            #Calling secondarythread function for this function and passing
-            #conn as argument.
-
+            # Creating new thread.
+            # Calling secondarythread function for this function and passing
+            # conn as argument.
             SECONDARY_LIST.append(client_id)
             main2sec[client_id] = Queue()
             sec2main[client_id] = Queue()
-            start_new_thread(connectionthread,
-                             ('secondary', client_id, conn,
-                              main2sec[client_id],
-                              sec2main[client_id], ))
+            connection_thread = Thread(target=connectionthread,
+                                       args=('secondary', client_id, conn,
+                                             main2sec[client_id],
+                                             sec2main[client_id]))
+            connection_thread.daemon = True
+            connection_thread.start()
+
             SECONDARY_COUNT += 1
-    except Exception, excep:
+    except Exception as excep:
         print(excep, ", Error in acceptthread()!")
         sock.close()
+
 
 def command_primary(command):
     """Send command to primary process"""
@@ -220,6 +230,7 @@ def command_primary(command):
         print (recv)
         return CMD_NOTREADY, recv
 
+
 def command_secondary(sec_id, command):
     """Send command to secondary process with sec_id"""
 
@@ -233,6 +244,7 @@ def command_secondary(sec_id, command):
         print(message)
         return CMD_NOTREADY, message
 
+
 def get_status():
     secondary = []
     for i in SECONDARY_LIST:
@@ -243,6 +255,7 @@ def get_status():
         }
     return stat
 
+
 def print_status():
     """Display information about connected clients"""
 
@@ -252,6 +265,7 @@ def print_status():
     for i in SECONDARY_LIST:
         print ("Connected secondary id: %d" % i)
 
+
 def primarythread(sock, main2primary, primary2main):
     """Manage primary process connection"""
 
@@ -259,42 +273,43 @@ def primarythread(sock, main2primary, primary2main):
     cmd_str = ''
 
     while True:
-        #waiting for connection
+        # waiting for connection
         PRIMARY = False
         conn, addr = sock.accept()
         PRIMARY = True
 
         while conn:
             try:
-                _, _, _ = select.select([conn,], [conn,], [], 5)
+                _, _, _ = select.select([conn, ], [conn, ], [], 5)
             except select.error:
                 break
 
-            #Sending message to connected primary
+            # Sending message to connected primary
             try:
                 cmd_str = main2primary.get(True)
-                conn.send(cmd_str) #send only takes string
+                conn.send(cmd_str)  # send only takes string
             except KeyError:
                 break
-            except Exception, excep:
+            except Exception as excep:
                 print(excep, ", Error while sending msg in primarythread()!")
                 break
 
-            #Receiving from primary
+            # Receiving from primary
             try:
-                data = conn.recv(1024) # 1024 stands for bytes of data to be received
+                # 1024 stands for bytes of data to be received
+                data = conn.recv(1024)
                 if data:
-                    #primary2main.put("recv:" + str(addr) + ":" + "{" + data + "}")
                     primary2main.put("recv:%s:{%s}" % (str(addr), data))
                 else:
                     primary2main.put("closing:" + str(addr))
                     conn.close()
                     break
-            except Exception, excep:
+            except Exception as excep:
                 print(excep, ", Error while receiving msg in primarythread()!")
                 break
 
     print ("primary communication thread end")
+
 
 def close_all_secondary():
     """Exit all secondary processes"""
@@ -307,6 +322,7 @@ def close_all_secondary():
     for i in tmp_list:
         command_secondary(i, 'exit')
     SECONDARY_COUNT = 0
+
 
 def check_sec_cmds(cmds):
     """Validate secondary commands before sending"""
@@ -338,13 +354,13 @@ def check_sec_cmds(cmds):
 
     return valid
 
+
 def clean_sec_cmd(cmdstr):
     """remove unwanted spaces to avoid invalid command error"""
-     
+
     tmparg = re.sub(r'\s+', " ", cmdstr)
     res = re.sub(r'\s?;\s?', ";", tmparg)
     return res
-
 
 
 class Shell(cmd.Cmd):
@@ -368,7 +384,7 @@ class Shell(cmd.Cmd):
             completions = [p
                            for p in self.PRI_CMDS
                            if p.startswith(text)
-                          ]
+                           ]
         return completions
 
     def complete_sec(self, text, line, begidx, endidx):
@@ -382,18 +398,18 @@ class Shell(cmd.Cmd):
                 if not (";" in cleaned_line):
                     tmplist = [str(i) for i in SECONDARY_LIST]
                     completions = [p+";"
-                            for p in tmplist
-                            if p.startswith(text)
-                            ]
+                                   for p in tmplist
+                                   if p.startswith(text)
+                                   ]
                 elif cleaned_line[-1] == ";":
                     completions = self.SEC_CMDS[:]
                 else:
                     seccmd = cleaned_line.split(";")[1]
                     if cleaned_line[-1] != " ":
                         completions = [p
-                                for p in self.SEC_CMDS
-                                if p.startswith(seccmd)
-                                ]
+                                       for p in self.SEC_CMDS
+                                       if p.startswith(seccmd)
+                                       ]
                     elif ("add" in seccmd) or ("del" in seccmd):
                         completions = self.SEC_SUBCMDS[:]
                     else:
@@ -407,13 +423,13 @@ class Shell(cmd.Cmd):
                         completions = []
                     else:
                         completions = [p
-                                for p in self.SEC_SUBCMDS
-                                if p.startswith(subcmd)
-                                ]
+                                       for p in self.SEC_SUBCMDS
+                                       if p.startswith(subcmd)
+                                       ]
             else:
                 completions = []
             return completions
-        except Exception, e:
+        except Exception as e:
             print(len(cleaned_line.split()))
             print(e)
 
@@ -426,7 +442,7 @@ class Shell(cmd.Cmd):
             completions = [p
                            for p in self.BYE_CMDS
                            if p.startswith(text)
-                          ]
+                           ]
         return completions
 
     def response(self, result, message):
@@ -440,7 +456,7 @@ class Shell(cmd.Cmd):
             param = result + '\n' + message
             RCMD_RESULT_QUEUE.put(param)
         else:
-            if logger != None:
+            if logger is not None:
                 logger.debug("unknown remote command = %s" % rcmd)
 
     def do_status(self, _):
@@ -496,7 +512,7 @@ class Shell(cmd.Cmd):
 
     def do_playback(self, fname):
         """Playback commands from a file:  PLAYBACK filename.cmd"""
-        
+
         if fname == '':
             print("Record file is required!")
         else:
@@ -549,23 +565,23 @@ def main(argv):
     """main"""
 
     parser = argparse.ArgumentParser(description="SPP Controller")
-    
+
     parser.add_argument(
-            "-p", "--pri-port",
-            type=int, default=5555,
-            help="primary port number")
+        "-p", "--pri-port",
+        type=int, default=5555,
+        help="primary port number")
     parser.add_argument(
-            "-s", "--sec-port",
-            type=int, default=6666,
-            help="secondary port number")
+        "-s", "--sec-port",
+        type=int, default=6666,
+        help="secondary port number")
     parser.add_argument(
-            "-m", "--mng-port",
-            type=int, default=7777,
-            help="management port number")
+        "-m", "--mng-port",
+        type=int, default=7777,
+        help="management port number")
     parser.add_argument(
-            "-ip", "--ipaddr",
-            type=str, default='', #'localhost' or '127.0.0.1' or '' are all same
-            help="IP address")
+        "-ip", "--ipaddr",
+        type=str, default='',  # 'localhost' or '127.0.0.1' or '' are all same
+        help="IP address")
     args = parser.parse_args()
 
     host = args.ipaddr
@@ -577,41 +593,46 @@ def main(argv):
     print('secondary port : %d' % secondary_port)
     print('management port : %d' % management_port)
 
-    #Creating primary socket object
+    # Creating primary socket object
     primary_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     primary_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    #Binding primary socket to a address. bind() takes tuple of host and port.
+    # Binding primary socket to a address. bind() takes tuple of host and port.
     primary_sock.bind((host, primary_port))
 
-    #Listening primary at the address
-    primary_sock.listen(1) #5 denotes the number of clients can queue
+    # Listening primary at the address
+    primary_sock.listen(1)  # 5 denotes the number of clients can queue
 
     primary_thread = Thread(target=primarythread,
-                            args=(primary_sock, MAIN2PRIMARY, PRIMARY2MAIN,))
+                            args=(primary_sock, MAIN2PRIMARY, PRIMARY2MAIN))
     primary_thread.daemon = True
     primary_thread.start()
 
-    #Creating secondary socket object
+    # Creating secondary socket object
     secondary_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     secondary_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    #Binding secondary socket to a address. bind() takes tuple of host and port.
+    # Binding secondary socket to a address. bind() takes tuple of host
+    # and port.
     secondary_sock.bind((host, secondary_port))
 
-    #Listening secondary at the address
+    # Listening secondary at the address
     secondary_sock.listen(MAX_SECONDARY)
 
     # secondary process handling thread
-    start_new_thread(acceptthread, (secondary_sock, MAIN2SEC, SEC2MAIN))
+    accept_thread = Thread(target=acceptthread,
+                           args=(secondary_sock, MAIN2SEC, SEC2MAIN))
+    accept_thread.daemon = True
+    accept_thread.start()
 
     shell = Shell()
 
     # Run request handler as a TCP server thread
     SocketServer.ThreadingTCPServer.allow_reuse_address = True
     CmdRequestHandler.CMD = shell
-    command_server = SocketServer.ThreadingTCPServer((host, management_port),CmdRequestHandler)
-            
+    command_server = SocketServer.ThreadingTCPServer(
+        (host, management_port), CmdRequestHandler)
+
     t = threading.Thread(target=command_server.serve_forever)
     t.setDaemon(True)
     t.start()
@@ -622,13 +643,13 @@ def main(argv):
     try:
         primary_sock.shutdown(socket.SHUT_RDWR)
         primary_sock.close()
-    except socket.error, excep:
+    except socket.error as excep:
         print(excep, ", Error while closing primary_sock in main()!")
 
     try:
         secondary_sock.shutdown(socket.SHUT_RDWR)
         secondary_sock.close()
-    except socket.error, excep:
+    except socket.error as excep:
         print(excep, ", Error while closing secondary_sock in main()!")
 
 
