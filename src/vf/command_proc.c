@@ -358,7 +358,7 @@ append_interface_array(char **output, const enum port_type type)
 		if (!spp_check_flush_port(type, i))
 			continue;
 
-		sprintf(tmp_str, "%s%d", JSON_APPEND_COMMA(i), i);
+		sprintf(tmp_str, "%s%d", JSON_APPEND_COMMA(port_cnt), i);
 
 		*output = spp_strbuf_append(*output, tmp_str, strlen(tmp_str));
 		if (unlikely(*output == NULL)) {
