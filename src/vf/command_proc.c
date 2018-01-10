@@ -204,6 +204,11 @@ execute_command(const struct spp_command *command)
 				command->spec.port.name);
 		break;
 
+	case SPP_CMDTYPE_CANCEL:
+		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute cancel command.\n");
+		spp_cancel();
+		break;
+
 	default:
 		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute other command. type=%d\n", command->type);
 		/* nothing to do here */

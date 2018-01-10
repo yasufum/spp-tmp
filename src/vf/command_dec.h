@@ -38,6 +38,7 @@ enum spp_command_type {
 	SPP_CMDTYPE_EXIT,
 	SPP_CMDTYPE_COMPONENT,
 	SPP_CMDTYPE_PORT,
+	SPP_CMDTYPE_CANCEL,
 };
 
 /* "classifier_table" command specific parameters */

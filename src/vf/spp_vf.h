@@ -167,6 +167,11 @@ int spp_update_port(
  */
 int spp_flush(void);
 
+/*
+ * Cancel data that is not flushing
+ */
+void spp_cancel(void);
+
 /* definition of iterated core element procedure function */
 struct spp_iterate_core_params;
 typedef int (*spp_iterate_core_element_proc)(

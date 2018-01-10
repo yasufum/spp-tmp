@@ -31,6 +31,13 @@ enum SPP_LONGOPT_RETVAL {
 	SPP_LONGOPT_RETVAL_VHOST_CLIENT
 };
 
+/* Flag of processing type to copy management information */
+enum copy_mng_flg {
+	COPY_MNG_FLG_NONE,
+	COPY_MNG_FLG_UPDCOPY,
+	COPY_MNG_FLG_ALLCOPY,
+};
+
 /* Manage given options as global variable */
 struct startup_param {
 	int client_id;
@@ -65,6 +72,13 @@ struct core_mng_info {
 	struct core_info core[SPP_INFO_AREA_MAX];
 };
 
+/* Manage data to be backup */
+struct cancel_backup_info {
+	struct core_mng_info core[RTE_MAX_LCORE];
+	struct spp_component_info component[RTE_MAX_LCORE];
+	struct if_info interface;
+};
+
 /* Declare global variables */
 static unsigned int g_main_lcore_id = 0xffffffff;
 static struct startup_param		g_startup_param;
@@ -74,6 +88,8 @@ static struct core_mng_info		g_core_info[RTE_MAX_LCORE];
 
 static int 				g_change_core[RTE_MAX_LCORE];  /* TODO(yasufum) add desc how it is used and why changed component is kept */
 static int 				g_change_component[RTE_MAX_LCORE];
+
+static struct cancel_backup_info	g_backup_info;
 
 /* Print help message */
 static void
@@ -87,6 +103,34 @@ usage(const char *progname)
 			" -s SERVER_IP:SERVER_PORT  : Access information to the server\n"
 			" --vhost-client            : Run vhost on client\n"
 			, progname);
+}
+
+/* Make a hexdump of an array data in every 4 byte */
+static void
+dump_buff(const char *name, const void *addr, const size_t size)
+{
+	size_t cnt = 0;
+	size_t max = (size / sizeof(unsigned int)) +
+			((size % sizeof(unsigned int)) != 0);
+	const uint32_t *buff = addr;
+
+	if ((name != NULL) && (name[0] != '\0'))
+		RTE_LOG(DEBUG, APP, "dump buff. (%s)\n", name);
+
+	for (cnt = 0; cnt < max; cnt += 16) {
+		RTE_LOG(DEBUG, APP, "[%p]"
+				" %08x %08x %08x %08x %08x %08x %08x %08x"
+				" %08x %08x %08x %08x %08x %08x %08x %08x",
+				&buff[cnt],
+				buff[cnt+0], buff[cnt+1],
+				buff[cnt+2], buff[cnt+3],
+				buff[cnt+4], buff[cnt+5],
+				buff[cnt+6], buff[cnt+7],
+				buff[cnt+8], buff[cnt+9],
+				buff[cnt+10], buff[cnt+11],
+				buff[cnt+12], buff[cnt+13],
+				buff[cnt+14], buff[cnt+15]);
+	}
 }
 
 static int
@@ -415,6 +459,183 @@ get_if_area(enum port_type if_type, int if_no)
 		return NULL;
 		break;
 	}
+}
+
+/* Dump of core information */
+static void
+dump_core_info(const struct core_mng_info *core_info)
+{
+	char str[SPP_NAME_STR_LEN];
+	const struct core_mng_info *info = NULL;
+	unsigned int lcore_id = 0;
+	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+		info = &core_info[lcore_id];
+		RTE_LOG(DEBUG, APP, "core[%d] status=%d, ref=%d, upd=%d\n",
+				lcore_id, info->status,
+				info->ref_index, info->upd_index);
+
+		sprintf(str, "core[%d]-0 type=%d, num=%d", lcore_id,
+				info->core[0].type, info->core[0].num);
+		dump_buff(str, info->core[0].id, sizeof(int)*info->core[0].num);
+
+		sprintf(str, "core[%d]-1 type=%d, num=%d", lcore_id,
+				info->core[1].type, info->core[1].num);
+		dump_buff(str, info->core[1].id, sizeof(int)*info->core[1].num);
+	}
+}
+
+/* Dump of component information */
+static void
+dump_component_info(const struct spp_component_info *component_info)
+{
+	char str[SPP_NAME_STR_LEN];
+	const struct spp_component_info *component = NULL;
+	int cnt = 0;
+	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
+		component = &component_info[cnt];
+		if (component->type == SPP_COMPONENT_UNUSE)
+			continue;
+
+		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, core=%u, index=%d\n",
+				cnt, component->name, component->type,
+				component->lcore_id, component->component_id);
+
+		sprintf(str, "component[%d] rx=%d", cnt,
+				component->num_rx_port);
+		dump_buff(str, component->rx_ports,
+			sizeof(struct spp_port_info *)*component->num_rx_port);
+
+		sprintf(str, "component[%d] tx=%d", cnt,
+				component->num_tx_port);
+		dump_buff(str, component->tx_ports,
+			sizeof(struct spp_port_info *)*component->num_tx_port);
+	}
+}
+
+/* Dump of interface information */
+static void
+dump_interface_info(const struct if_info *if_info)
+{
+	const struct spp_port_info *port = NULL;
+	int cnt = 0;
+	RTE_LOG(DEBUG, APP, "interface phy=%d, vhost=%d, ring=%d\n",
+			if_info->num_nic,
+			if_info->num_vhost,
+			if_info->num_ring);
+	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
+		port = &if_info->nic[cnt];
+		if (port->if_type == UNDEF)
+			continue;
+
+		RTE_LOG(DEBUG, APP, "phy  [%d] type=%d, no=%d, port=%d, "
+				"mac=%08lx(%s)\n",
+				cnt, port->if_type, port->if_no,
+				port->dpdk_port,
+				port->mac_addr, port->mac_addr_str);
+	}
+	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
+		port = &if_info->vhost[cnt];
+		if (port->if_type == UNDEF)
+			continue;
+
+		RTE_LOG(DEBUG, APP, "vhost[%d] type=%d, no=%d, port=%d, "
+				"mac=%08lx(%s)\n",
+				cnt, port->if_type, port->if_no,
+				port->dpdk_port,
+				port->mac_addr, port->mac_addr_str);
+	}
+	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
+		port = &if_info->ring[cnt];
+		if (port->if_type == UNDEF)
+			continue;
+
+		RTE_LOG(DEBUG, APP, "ring [%d] type=%d, no=%d, port=%d, "
+				"mac=%08lx(%s)\n",
+				cnt, port->if_type, port->if_no,
+				port->dpdk_port,
+				port->mac_addr, port->mac_addr_str);
+	}
+}
+
+/* Dump of all management information */
+static void
+dump_all_mng_info(
+		const struct core_mng_info *core,
+		const struct spp_component_info *component,
+		const struct if_info *interface)
+{
+	if (rte_log_get_global_level() < RTE_LOG_DEBUG)
+		return;
+
+	dump_core_info(core);
+	dump_component_info(component);
+	dump_interface_info(interface);
+}
+
+/* Copy management information */
+static void
+copy_mng_info(
+		struct core_mng_info *dst_core,
+		struct spp_component_info *dst_component,
+		struct if_info *dst_interface,
+		const struct core_mng_info *src_core,
+		const struct spp_component_info *src_component,
+		const struct if_info *src_interface,
+		enum copy_mng_flg flg)
+{
+	int upd_index = 0;
+	unsigned int lcore_id = 0;
+
+	switch (flg) {
+	case COPY_MNG_FLG_UPDCOPY:
+		RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+			upd_index = src_core[lcore_id].upd_index;
+			memcpy(&dst_core[lcore_id].core[upd_index],
+					&src_core[lcore_id].core[upd_index],
+					sizeof(struct core_info));
+		}
+		break;
+	default:
+		/*
+		 * Even if the flag is set to None,
+		 * copying of core is necessary,
+		 * so we will treat all copies as default.
+		 */
+		memcpy(dst_core, src_core,
+				sizeof(struct core_mng_info)*RTE_MAX_LCORE);
+		break;
+	}
+
+	memcpy(dst_component, src_component,
+			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
+	memcpy(dst_interface, src_interface,
+			sizeof(struct if_info));
+}
+
+/* Backup the management information */
+static void
+backup_mng_info(struct cancel_backup_info *backup)
+{
+	dump_all_mng_info(g_core_info, g_component_info, &g_if_info);
+	copy_mng_info(backup->core, backup->component, &backup->interface,
+			g_core_info, g_component_info, &g_if_info,
+			COPY_MNG_FLG_ALLCOPY);
+	dump_all_mng_info(backup->core, backup->component, &backup->interface);
+	memset(g_change_core, 0x00, sizeof(g_change_core));
+	memset(g_change_component, 0x00, sizeof(g_change_component));
+}
+
+/* Cancel update of management information */
+static void
+cancel_mng_info(struct cancel_backup_info *backup)
+{
+	dump_all_mng_info(backup->core, backup->component, &backup->interface);
+	copy_mng_info(g_core_info, g_component_info, &g_if_info,
+			backup->core, backup->component, &backup->interface,
+			COPY_MNG_FLG_ALLCOPY);
+	dump_all_mng_info(g_core_info, g_component_info, &g_if_info);
+	memset(g_change_core, 0x00, sizeof(g_change_core));
+	memset(g_change_component, 0x00, sizeof(g_change_component));
 }
 
 /**
@@ -763,6 +984,9 @@ ut_main(int argc, char *argv[])
 		set_all_core_status(SPP_CORE_FORWARD);
 		RTE_LOG(INFO, APP, "My ID %d start handling message\n", 0);
 		RTE_LOG(INFO, APP, "[Press Ctrl-C to quit ...]\n");
+
+		/* Backup the management information after initialization */
+		backup_mng_info(&g_backup_info);
 
 		/* Enter loop for accepting commands */
 		int ret_do = 0;
@@ -1321,16 +1545,19 @@ spp_flush(void)
 
 	/* Flush of core index. */
 	flush_core();
-	memset(g_change_core, 0x00, sizeof(g_change_core));
 
 	/* Flush of component */
 	ret = flush_component();
-	if (ret < 0)
-		return ret;
 
-	/* Finally, zero-clear g_change_core */
-	memset(g_change_component, 0x00, sizeof(g_change_component));
-	return SPP_RET_OK;
+	backup_mng_info(&g_backup_info);
+	return ret;
+}
+
+/* Cancel data that is not flushing */
+void
+spp_cancel(void)
+{
+	cancel_mng_info(&g_backup_info);
 }
 
 /* Iterate core infomartion */
