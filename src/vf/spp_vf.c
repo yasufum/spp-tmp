@@ -161,7 +161,7 @@ add_vhost_pmd(int index, int client)
 		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
 	};
 	struct rte_mempool *mp;
-	uint8_t vhost_port_id;
+	uint16_t vhost_port_id;
 	int nr_queues = 1;
 	const char *name;
 	char devargs[64];
