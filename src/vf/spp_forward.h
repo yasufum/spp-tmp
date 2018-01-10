@@ -15,8 +15,9 @@ int spp_forward_update(struct spp_component_info *component);
  */
 int spp_forward(int id);
 
-/* Merge/Forward iterate component information */
-int spp_forward_core_info_iterate(unsigned int lcore_id, int id,
+/* Merge/Forward get component status */
+int spp_forward_get_component_status(
+		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
 #endif /* __SPP_FORWARD_H__ */

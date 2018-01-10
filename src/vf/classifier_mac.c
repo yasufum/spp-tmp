@@ -589,7 +589,8 @@ spp_classifier_mac_do(int id)
 
 /* classifier iterate component information */
 int
-spp_classifier_component_info_iterate(unsigned int lcore_id, int id,
+spp_classifier_get_component_status(
+		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
 	int ret = -1;
@@ -629,7 +630,7 @@ spp_classifier_component_info_iterate(unsigned int lcore_id, int id,
 
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(
-		params->opaque, lcore_id,
+		params, lcore_id,
 		classifier_info->name, SPP_TYPE_CLASSIFIER_MAC_STR,
 		num_rx, rx_ports, num_tx, tx_ports);
 	if (unlikely(ret != 0))
@@ -671,7 +672,7 @@ spp_classifier_mac_iterate_table(
 			port.if_no   = (classified_data + classifier_info->default_classified)->if_no_global;
 
 			(*params->element_proc)(
-					params->opaque,
+					params,
 					SPP_CLASSIFIER_TYPE_MAC,
 					SPP_DEFAULT_CLASSIFIED_SPEC_STR,
 					&port);
@@ -692,7 +693,7 @@ spp_classifier_mac_iterate_table(
 			port.if_no   = (classified_data + (long)data)->if_no_global;
 
 			(*params->element_proc)(
-					params->opaque,
+					params,
 					SPP_CLASSIFIER_TYPE_MAC,
 					mac_addr_str,
 					&port);

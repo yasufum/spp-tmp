@@ -30,13 +30,13 @@ int spp_classifier_mac_update(struct spp_component_info *component_info);
 int spp_classifier_mac_do(int id);
 
 /*
- * classifier iterate component information
+ * classifier get component status
  *
  * @ret_val 0  succeeded.
  * @ret_val -1 failed.
  */
 int
-spp_classifier_component_info_iterate(unsigned int lcore_id, int id,
+spp_classifier_get_component_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
 /**

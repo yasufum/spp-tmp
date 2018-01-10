@@ -168,8 +168,9 @@ int spp_update_port(
 int spp_flush(void);
 
 /* definition of iterated core element procedure function */
+struct spp_iterate_core_params;
 typedef int (*spp_iterate_core_element_proc)(
-		void *opaque,
+		struct spp_iterate_core_params *params,
 		const unsigned int lcore_id,
 		const char *name,
 		const char *type,
@@ -180,7 +181,7 @@ typedef int (*spp_iterate_core_element_proc)(
 
 /* iterate core information  parameters */
 struct spp_iterate_core_params {
-	void *opaque;
+	char *output;
 	spp_iterate_core_element_proc element_proc;
 };
 
@@ -188,15 +189,16 @@ struct spp_iterate_core_params {
 int spp_iterate_core_info(struct spp_iterate_core_params *params);
 
 /* definition of iterated classifier element procedure function */
+struct spp_iterate_classifier_table_params;
 typedef int (*spp_iterate_classifier_element_proc)(
-		void *opaque,
+		struct spp_iterate_classifier_table_params *params,
 		enum spp_classifier_type type,
 		const char *data,
 		const struct spp_port_index *port);
 
 /* iterate classifier table parameters */
 struct spp_iterate_classifier_table_params {
-	void *opaque;
+	void *output;
 	spp_iterate_classifier_element_proc element_proc;
 };
 

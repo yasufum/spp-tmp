@@ -47,7 +47,6 @@ CFLAGS += -I$(SRCDIR)/../shared
 #CFLAGS += -DSPP_DEMONIZE
 #CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
-LDLIBS += -ljansson
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)
 LDLIBS += -lrte_pmd_ring
 LDLIBS += -lrte_pmd_vhost

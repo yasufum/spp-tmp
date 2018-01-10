@@ -165,9 +165,10 @@ spp_forward(int id)
 	return 0;
 }
 
-/* Merge/Forward iterate component information */
+/* Merge/Forward get component status */
 int
-spp_forward_core_info_iterate(unsigned int lcore_id, int id,
+spp_forward_get_component_status(
+		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
 	int ret = -1;
@@ -203,7 +204,7 @@ spp_forward_core_info_iterate(unsigned int lcore_id, int id,
 
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(
-		params->opaque, lcore_id,
+		params, lcore_id,
 		path->name, component_type,
 		path->num, rx_ports, num_tx, tx_ports);
 	if (unlikely(ret != 0))

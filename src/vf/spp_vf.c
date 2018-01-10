@@ -1348,7 +1348,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 		core = get_core_info(lcore_id);
 		if (core->num == 0) {
 			ret = (*params->element_proc)(
-				params->opaque, lcore_id,
+				params, lcore_id,
 				"", SPP_TYPE_UNUSE_STR,
 				0, NULL, 0, NULL);
 			if (unlikely(ret != 0)) {
@@ -1362,12 +1362,12 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 
 		for (cnt = 0; cnt < core->num; cnt++) {
 			if (core->type == SPP_COMPONENT_CLASSIFIER_MAC) {
-				ret = spp_classifier_component_info_iterate(
+				ret = spp_classifier_get_component_status(
 						lcore_id,
 						core->id[cnt],
 						params);
 			} else {
-				ret = spp_forward_core_info_iterate(
+				ret = spp_forward_get_component_status(
 						lcore_id,
 						core->id[cnt],
 						params);

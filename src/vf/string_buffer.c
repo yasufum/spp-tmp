@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <rte_log.h>
 #include <rte_branch_prediction.h>
 
 #include "string_buffer.h"
+
+#define RTE_LOGTYPE_SPP_STRING_BUFF RTE_LOGTYPE_USER1
 
 /* get message buffer capacity */
 inline size_t
@@ -42,6 +45,9 @@ spp_strbuf_allocate(size_t capacity)
 
 	memset(buf, 0x00, capacity + sizeof(size_t));
 	*((size_t *)buf) = capacity;
+	RTE_LOG(DEBUG, SPP_STRING_BUFF,
+			";alloc  ; addr=%p; size=%lu; str= ; len=0;\n",
+			buf + sizeof(size_t), capacity);
 
 	return buf + sizeof(size_t);
 }
@@ -50,8 +56,13 @@ spp_strbuf_allocate(size_t capacity)
 void
 spp_strbuf_free(char* strbuf)
 {
-	if (likely(strbuf != NULL))
+	if (likely(strbuf != NULL)) {
+		RTE_LOG(DEBUG, SPP_STRING_BUFF,
+				";free   ; addr=%p; size=%lu; str=%s; len=%lu;\n",
+				strbuf, strbuf_get_capacity(strbuf),
+				strbuf, strlen(strbuf));
 		free(strbuf - sizeof(size_t));
+	}
 }
 
 /* append message to buffer */
@@ -70,6 +81,10 @@ spp_strbuf_append(char *strbuf, const char *append, size_t append_len)
 
 	memcpy(new_strbuf + len, append, append_len);
 	*(new_strbuf + len + append_len) = '\0';
+	RTE_LOG(DEBUG, SPP_STRING_BUFF,
+			";append ; addr=%p; size=%lu; str=%s; len=%lu;\n",
+			new_strbuf, strbuf_get_capacity(new_strbuf),
+			new_strbuf, strlen(new_strbuf));
 
 	return new_strbuf;
 }

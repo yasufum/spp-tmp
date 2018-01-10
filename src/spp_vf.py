@@ -41,6 +41,7 @@ def connectionthread(name, client_id, conn, m2s, s2m):
 
     cmd_str = 'hello'
     recv_str = 'recv'
+    recv_json = None
 
     #infinite loop so that function do not terminate and thread do not end.
     while True:
@@ -71,7 +72,8 @@ def connectionthread(name, client_id, conn, m2s, s2m):
                 else:
                     break
             if len(recv_str) > 0:
-                recv_str = "recv:" + str(conn.fileno()) + ":len:" + str(len(recv_str)) + ":\n{" + recv_str + "}\n"
+                recv_json = json.loads(recv_str)
+                recv_str = "recv:" + str(conn.fileno()) + ":len:" + str(len(recv_str)) + ":\n" + json.dumps(recv_json, indent=4) + "\n"
 
             if not data:
                 s2m.put(recv_str + "closing:" + str(conn))
