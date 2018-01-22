@@ -311,7 +311,8 @@ transmit_packet(struct classified_data *classified_data)
 			rte_pktmbuf_free(classified_data->pkts[i]);
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"drop packets(tx). num=%hu, dpdk_port=%hu\n",
-				classified_data->num_pkt - n_tx, classified_data->port);
+				(uint16_t)(classified_data->num_pkt - n_tx),
+				classified_data->port);
 	}
 
 	classified_data->num_pkt = 0;
