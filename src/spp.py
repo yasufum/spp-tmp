@@ -360,7 +360,7 @@ class Shell(cmd.Cmd):
 
     PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
-    SEC_SUBCMDS = ['vhost', 'ring', 'pcap']
+    SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
     def close_all_secondary(self):
@@ -433,7 +433,7 @@ class Shell(cmd.Cmd):
         level1 = ['status', 'exit', 'forward', 'stop']
         level2 = ['add', 'patch', 'del']
         patch_args = ['reset']
-        add_del_args = ['ring', 'vhost', 'pcap']
+        add_del_args = ['ring', 'vhost', 'pcap', 'nullpmd']
         cmdlist = cmds.split(' ')
         valid = 0
 
