@@ -327,6 +327,19 @@ do_del(char *token_list[], int max_token)
 			return -1;
 
 		rte_eth_dev_detach(port_id, name);
+
+	} else if (!strcmp(token_list[1], "nullpmd")) {
+		char name[RTE_ETH_NAME_MAX_LEN];
+
+		if (spp_atoi(token_list[2], &id) < 0)
+			return 0;
+
+		port_id = find_port_id(id, NULLPMD);
+		if (port_id < 0)
+			return -1;
+
+		rte_eth_dev_detach(port_id, name);
+
 	}
 
 	forward_array_remove(port_id);
@@ -518,6 +531,68 @@ add_pcap_pmd(int index)
 }
 
 static int
+add_null_pmd(int index)
+{
+	struct rte_eth_conf port_conf = {
+			.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+	};
+
+	struct rte_mempool *mp;
+	const char *name;
+	char devargs[64];
+	uint16_t null_pmd_port_id;
+	uint16_t nr_queues = 1;
+
+	int ret;
+
+	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
+	if (mp == NULL)
+		rte_exit(EXIT_FAILURE, "Cannon get mempool for mbuf\n");
+
+	name = get_null_pmd_name(index);
+	sprintf(devargs, "%s", name);
+	ret = rte_eth_dev_attach(devargs, &null_pmd_port_id);
+	if (ret < 0)
+		return ret;
+
+	ret = rte_eth_dev_configure(
+			null_pmd_port_id, nr_queues, nr_queues,
+			&port_conf);
+	if (ret < 0)
+		return ret;
+
+	/* Allocate and set up 1 RX queue per Ethernet port. */
+	uint16_t q;
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_rx_queue_setup(
+				null_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(
+					null_pmd_port_id), NULL, mp);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* Allocate and set up 1 TX queue per Ethernet port. */
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_tx_queue_setup(
+				null_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(
+					null_pmd_port_id),
+				NULL);
+		if (ret < 0)
+			return ret;
+	}
+
+	ret = rte_eth_dev_start(null_pmd_port_id);
+	if (ret < 0)
+		return ret;
+
+	RTE_LOG(DEBUG, APP, "null port id %d\n", null_pmd_port_id);
+
+	return null_pmd_port_id;
+}
+
+static int
 do_add(char *token_list[], int max_token)
 {
 	enum port_type type = UNDEF;
@@ -547,6 +622,13 @@ do_add(char *token_list[], int max_token)
 
 		type = PCAP;
 		port_id = add_pcap_pmd(id);
+
+	} else if (!strcmp(token_list[1], "nullpmd")) {
+		if (spp_atoi(token_list[2], &id) < 0)
+			return 0;
+
+		type = NULLPMD;
+		port_id = add_null_pmd(id);
 	}
 
 	if (port_id < 0)

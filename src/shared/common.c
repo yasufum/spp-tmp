@@ -302,6 +302,11 @@ print_active_ports(char *str, uint16_t client_id,
 			sprintf(str + strlen(str), "PCAP(%u),",
 					port_map[i].id);
 			break;
+		case NULLPMD:
+			RTE_LOG(INFO, APP, "Type: NULLPMD\n");
+			sprintf(str + strlen(str), "NULLPMD(%u),",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			RTE_LOG(INFO, APP, "Type: UDF\n");
 			sprintf(str + strlen(str), "UDF,");
