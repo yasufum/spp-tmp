@@ -118,6 +118,7 @@ enum port_type {
 	PHY,
 	RING,
 	VHOST,
+	PCAP,
 	UNDEF,
 };
 
@@ -143,6 +144,7 @@ struct port {
 #define MZ_PORT_INFO "MProc_port_info"
 #define VHOST_BACKEND_NAME "eth_vhost%u"
 #define VHOST_IFACE_NAME "/tmp/sock%u"
+#define PCAP_PMD_DEV_NAME "eth_pcap%u"
 
 /*
  * Given the rx queue name template above, get the queue name
@@ -183,6 +185,14 @@ get_vhost_iface_name(unsigned int id)
 	static char buffer[sizeof(VHOST_IFACE_NAME) + 2];
 
 	snprintf(buffer, sizeof(buffer) - 1, VHOST_IFACE_NAME, id);
+	return buffer;
+}
+
+static inline const char *
+get_pcap_pmd_name(int id)
+{
+	static char buffer[sizeof(PCAP_PMD_DEV_NAME) + 2];
+	snprintf(buffer, sizeof(buffer) - 1, PCAP_PMD_DEV_NAME, id);
 	return buffer;
 }
 

@@ -304,7 +304,6 @@ do_del(char *token_list[], int max_token)
 		if (port_id < 0)
 			return -1;
 
-
 	} else if (!strcmp(token_list[1], "ring")) {
 		char name[RTE_ETH_NAME_MAX_LEN];
 
@@ -312,6 +311,18 @@ do_del(char *token_list[], int max_token)
 			return 0;
 
 		port_id = find_port_id(id, RING);
+		if (port_id < 0)
+			return -1;
+
+		rte_eth_dev_detach(port_id, name);
+
+	} else if (!strcmp(token_list[1], "pcap")) {
+		char name[RTE_ETH_NAME_MAX_LEN];
+
+		if (spp_atoi(token_list[2], &id) < 0)
+			return 0;
+
+		port_id = find_port_id(id, PCAP);
 		if (port_id < 0)
 			return -1;
 
@@ -442,6 +453,71 @@ add_vhost_pmd(int index)
 }
 
 static int
+add_pcap_pmd(int index)
+{
+	struct rte_eth_conf port_conf = {
+		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+	};
+
+	struct rte_mempool *mp;
+	const char *name;
+	char devargs[256];
+	uint16_t pcap_pmd_port_id;
+	uint16_t nr_queues = 1;
+
+	int ret;
+
+	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
+	if (mp == NULL)
+		rte_exit(EXIT_FAILURE, "Cannon get mempool for mbuf\n");
+
+	name = get_pcap_pmd_name(index);
+	sprintf(devargs,
+		"%s,rx_pcap=/tmp/rx_%d.pcap,tx_pcap=/tmp/tx_%d.pcap",
+		name, index, index);
+	ret = rte_eth_dev_attach(devargs, &pcap_pmd_port_id);
+
+	if (ret < 0)
+		return ret;
+
+	ret = rte_eth_dev_configure(
+			pcap_pmd_port_id, nr_queues, nr_queues, &port_conf);
+
+	if (ret < 0)
+		return ret;
+
+	/* Allocate and set up 1 RX queue per Ethernet port. */
+	uint16_t q;
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_rx_queue_setup(
+				pcap_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(pcap_pmd_port_id),
+				NULL, mp);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* Allocate and set up 1 TX queue per Ethernet port. */
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_tx_queue_setup(
+				pcap_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(pcap_pmd_port_id),
+				NULL);
+		if (ret < 0)
+			return ret;
+	}
+
+	ret = rte_eth_dev_start(pcap_pmd_port_id);
+
+	if (ret < 0)
+		return ret;
+
+	RTE_LOG(DEBUG, APP, "pcap port id %d\n", pcap_pmd_port_id);
+
+	return pcap_pmd_port_id;
+}
+
+static int
 do_add(char *token_list[], int max_token)
 {
 	enum port_type type = UNDEF;
@@ -464,6 +540,13 @@ do_add(char *token_list[], int max_token)
 
 		type = RING;
 		port_id = add_ring_pmd(id);
+
+	} else if (!strcmp(token_list[1], "pcap")) {
+		if (spp_atoi(token_list[2], &id) < 0)
+			return 0;
+
+		type = PCAP;
+		port_id = add_pcap_pmd(id);
 	}
 
 	if (port_id < 0)

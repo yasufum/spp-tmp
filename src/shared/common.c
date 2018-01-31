@@ -297,6 +297,11 @@ print_active_ports(char *str, uint16_t client_id,
 			sprintf(str + strlen(str), "VHOST(%u),",
 				port_map[i].id);
 			break;
+		case PCAP:
+			RTE_LOG(INFO, APP, "Type: PCAP\n");
+			sprintf(str + strlen(str), "PCAP(%u),",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			RTE_LOG(INFO, APP, "Type: UDF\n");
 			sprintf(str + strlen(str), "UDF,");
