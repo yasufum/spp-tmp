@@ -43,3 +43,12 @@ include $(RTE_SDK)/mk/rte.vars.mk
 DIRS-y += src
 
 include $(RTE_SDK)/mk/rte.extsubdir.mk
+
+# Compile RST documents
+.PHONY: doc-html
+doc-html:
+	sh docs/guides/compile-doc.sh doc-html
+
+.PHONY: doc-clean
+doc-clean:
+	sh docs/guides/compile-doc.sh clean
