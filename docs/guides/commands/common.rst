@@ -35,8 +35,8 @@ Common Commands
 status
 ------
 
-Display number of connected primary and secondary application count
-Also display connected secondary application client_id.
+Show the number of connected primary and secondary processes.
+It also show a list of secondary IDs
 
 .. code-block:: console
 
@@ -51,13 +51,33 @@ Also display connected secondary application client_id.
 record
 ------
 
+Start recording user's input and create a history file for ``playback``
+commnad.
+Recording is stopped by executing ``exit`` or ``playback`` command.
+
 .. code-block:: console
 
     spp > record 2nfv_uni.config
 
+.. note::
+
+    It is not supported to stop recording without ``exit`` or ``playback``
+    command.
+    It is planned to support ``stop`` command for stopping record in
+    next relase.
+
 
 playback
 --------
+
+Restore configuration from a config file.
+Content of config file is just a series of SPP commnad.
+You prepare a config file by using ``record`` command or editing a text
+file by hand.
+
+It is recommended to use extension ``.config`` to be self-sxplanatory
+as a config, although you can use any of extensions such as ``.txt`` or
+``.log``.
 
 .. code-block:: console
 
@@ -90,6 +110,7 @@ Second one is for all SPP processes other than controller.
     closing:<socket._socketobject object at 0x10bd95a60>
     closing:('127.0.0.1', 53620)
 
+
 help
 ----
 
@@ -97,8 +118,17 @@ help
 
     ``help`` command is not implemented yet.
 
-Displays brief help
+Show brief help
 
 .. code-block:: console
 
     spp > help
+
+    Documented commands (type help <topic>):
+    ========================================
+    bye  help  playback  pri  record  sec  status
+
+    spp > help status
+    Display Soft Patch Panel Status
+    spp > help sec
+    Send command to secondary process
