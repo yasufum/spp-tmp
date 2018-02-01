@@ -32,8 +32,13 @@
 Primary Commands
 ====================
 
+Primary process is managed with ``pri`` command.
+
+
 status
 ------
+
+Show status of primary.
 
 .. code-block:: console
 
@@ -44,14 +49,23 @@ status
 exit
 ----
 
+Terminate primary.
+
 .. code-block:: console
 
     spp > pri exit
     closing:('127.0.0.1', 50524)
 
+.. note::
+
+    You should not use this command because terminating primary before
+    secondaries may cause an error.
+    You shold use ``bye`` command instead of ``pri exit``.
 
 clear
 -----
+
+Clear statistics.
 
 .. code-block:: console
 
