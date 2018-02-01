@@ -114,11 +114,7 @@ Second one is for all SPP processes other than controller.
 help
 ----
 
-.. note::
-
-    ``help`` command is not implemented yet.
-
-Show brief help
+Show help message for SPP commands.
 
 .. code-block:: console
 
