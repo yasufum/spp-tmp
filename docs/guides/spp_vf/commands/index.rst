@@ -36,7 +36,6 @@ SPP controller.
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    primary
    secondary
