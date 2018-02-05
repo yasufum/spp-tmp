@@ -32,7 +32,6 @@
 How to Use
 ==========
 
-
 SPP Controller
 --------------
 
@@ -52,9 +51,9 @@ You need to run SPP primary before secondary processes.
 SPP primary has two kinds of options for DPDK and spp.
 Before ``--`` are for DPDK is, and after ``--`` are for spp.
 
-See
-`DPDK documentation <http://dpdk.org/doc/guides/linux_gsg/build_sample_apps.html#running-a-sample-application>`_
-about options for DPDK.
+See `Running a Sample Application
+<http://dpdk.org/doc/guides/linux_gsg/build_sample_apps.html#running-a-sample-application>`_
+in DPDK documentation for options.
 
 Options of spp primary are:
 
@@ -99,7 +98,8 @@ If ``--vhost-client`` option is specified, then ``vhost-user`` act as
 the client, otherwise the server.
 For reconnect feature from SPP to VM, ``--vhost-client`` option can be
 used. This reconnect features requires QEMU 2.7 (or later).
-See also `DPDK documentation <http://dpdk.org/doc/guides/sample_app_ug/vhost.html>`_.
+See also `Vhost Sample Application
+<http://dpdk.org/doc/guides/sample_app_ug/vhost.html>`_.
 
 VM
 --
