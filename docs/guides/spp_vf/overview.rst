@@ -28,14 +28,10 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SPP documentation
-=================
+SPP_VF
+==================
 
-.. toctree::
-   :maxdepth: 1
+Overview
+--------
 
-   overview
-   setup/index
-   commands/index
-   tools/index
-   spp_vf/index
+SPP_VF
