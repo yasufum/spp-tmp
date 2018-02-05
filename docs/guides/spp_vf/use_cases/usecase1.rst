@@ -177,15 +177,15 @@ MAC address and corresponging port is registered to the table with
 
 .. code-block:: console
 
-    spp > classifier_table add mac [MACADDRESS] [PORT]
+    spp > [SEC_ID];classifier_table add mac [MACADDRESS] [PORT]
 
 In this usecase, you need to register two MAC addresses for merger1.
 
 .. code-block:: console
 
     # Register MAC address to classifier
-    spp > classifier_table add mac 52:54:00:12:34:56 ring:0
-    spp > classifier_table add mac 52:54:00:12:34:58 ring:1
+    spp > sec 1;classifier_table add mac 52:54:00:12:34:56 ring:0
+    spp > sec 1;classifier_table add mac 52:54:00:12:34:58 ring:1
 
 
 Configuration for the second login path is almost similar to the first
@@ -232,8 +232,8 @@ Register entries to classifier_table for classifier2.
 .. code-block:: console
 
     # Register MAC address to classifier
-    spp > classifier_table add mac 52:54:00:12:34:57 ring:4
-    spp > classifier_table add mac 52:54:00:12:34:59 ring:5
+    spp > sec 1;classifier_table add mac 52:54:00:12:34:57 ring:4
+    spp > sec 1;classifier_table add mac 52:54:00:12:34:59 ring:5
 
 Finally, activate all of settings by doign `flush` subcommand.
 
@@ -331,8 +331,8 @@ for the first SSH login path.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > classifier_table del mac 51:54:00:12:34:56 ring:0
-    spp > classifier_table del mac 51:54:00:12:34:58 ring:1
+    spp > sec 1;classifier_table del mac 51:54:00:12:34:56 ring:0
+    spp > sec 1;classifier_table del mac 51:54:00:12:34:58 ring:1
 
 .. code-block:: console
 
@@ -376,8 +376,8 @@ components.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > classifier_table del mac 51:54:00:12:34:57 ring:4
-    spp > classifier_table del mac 51:54:00:12:34:59 ring:5
+    spp > sec 1;classifier_table del mac 51:54:00:12:34:57 ring:4
+    spp > sec 1;classifier_table del mac 51:54:00:12:34:59 ring:5
 
 .. code-block:: console
 

@@ -207,7 +207,7 @@ to classifier table.
 
 .. code-block:: console
 
-    spp > sec 1;classifier_table add mac [MAC_ADDRESS] [RES_ID]
+    spp > sec [SEC_ID];classifier_table add mac [MAC_ADDRESS] [RES_ID]
 
 This is an example to register an entry for port ``ring:0``.
 
