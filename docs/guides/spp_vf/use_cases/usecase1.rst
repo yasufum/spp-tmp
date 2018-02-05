@@ -113,10 +113,9 @@ sent to SSH clinet via NIC0.
     Network Configuration
 
 You need to input a little bit large amount of commands for the
-configuration, or use ``playback`` command to load from a file.
-You can get a series of files from
-`here <http://dpdk.org/browse/apps/spp/tree/docs/spp_vf>`_
-for loading commands used in this usecase.
+configuration, or use ``playback`` command to load from config files.
+You can find a series of config files for this use case in
+``docs/samples/command/spp_vf/usecase1/``.
 
 First, lanch threads of SPP VF called ``component`` with its core ID
 and a directive for behaviour.
