@@ -30,3 +30,14 @@
 
 SPP VF Commands
 ===============
+
+SPP VF provides commands for managing primary, secondary processes and
+SPP controller.
+
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+
+   primary
+   secondary
+   common
