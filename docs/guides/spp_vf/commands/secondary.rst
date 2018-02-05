@@ -164,8 +164,8 @@ Or to delete VLAN tag, ``del_vlantag`` option is required.
 
 This is an example for adding a port with ``add_vlantag`` or
 ``del_vlantag``.
-In this case, add rx port to append VLAN tag 101 with PCP 3 and
-tx port to append VLAN tag 102 with PCP3.
+In this case, add rx port to append VLAN ID 101 with PCP 3 and
+tx port to append VLAN ID 102 with PCP3.
 
 (1) Add VLAN tag
 
@@ -215,13 +215,13 @@ This is an example to register an entry for port ``ring:0``.
 
     spp > sec 1;classifier_table add mac 52:54:00:01:00:01 ring:0
 
-Register an entry with a VLAN tag to classifier table.
+Register an entry with a VLAN ID to classifier table.
 
 .. code-block:: console
 
     spp > sec 1;classifier_table add vlan [VLAN_ID] [MAC_ADDRESS] [RES_ID]
 
-This is an example to register an entry with VLAN tag 101
+This is an example to register an entry with VLAN ID 101
 for port ``ring:0``.
 
 .. code-block:: console
@@ -240,13 +240,13 @@ This is an example to delete an entry for port ``ring:0``.
 
     spp > sec 1;classifier_table del mac 52:54:00:01:00:01 ring:0
 
-Delete an entry with a VLAN tag.
+Delete an entry with a VLAN ID.
 
 .. code-block:: console
 
-    spp > sec 1;classifier_table add del [MAC_ADDRESS] [RES_ID]
+    spp > sec 1;classifier_table del vlan [VLAN_ID] [MAC_ADDRESS] [RES_ID]
 
-This is an example to delete an entry with VLAN tag 101.
+This is an example to delete an entry with VLAN ID 101.
 
 .. code-block:: console
 
