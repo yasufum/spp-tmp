@@ -44,6 +44,8 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
+numfig = True
+
 # General information about the project.
 project = u'Soft Patch Panel'
 copyright = u'2018, Yasufumi Ogawa'
