@@ -30,3 +30,9 @@
 
 Getting Started
 ===============
+
+.. toctree::
+   :maxdepth: 2
+
+   build
+   howto_use

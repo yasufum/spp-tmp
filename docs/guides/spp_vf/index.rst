@@ -36,6 +36,8 @@ SPP VF
    :numbered:
 
    overview
-   getting_started/index
+   design
+   gsg/index
    use_cases/index
    commands/index
+   explain/index
