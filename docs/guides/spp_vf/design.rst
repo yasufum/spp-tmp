@@ -36,7 +36,9 @@ Design
 Components
 ----------
 
-``spp_vf`` supports three types of components, ``forwarder``,
+``spp_vf`` is a kind of secondary process and consists of several
+threads called component.
+There are three types of components, ``forwarder``,
 ``merger`` and ``classifier``.
 
 .. image:: images/spp_vf_overview.svg
@@ -46,34 +48,26 @@ Components
 Forwarder
 ~~~~~~~~~
 
-This component provides function for packet processing from one port
-to one port.
-Incoming packets from port are to be transferred to specific one port.
-The direction of this transferring is specified by ``port`` command.
-The concept of port is described later of this section.
+Simply forwards packets from rx to tx port.
 
 Merger
 ~~~~~~
 
-This component provides packet forwarding function from multiple ports
-to one port.
-Incoming packets from multiple ports are to be transferred to one
-specific port.
-The flow of this merging process is specified by `port` command.
+Receives packets from multiple rx ports to aggregate
+packets and sends to a desctination port.
 
 Classifier
 ~~~~~~~~~~
 
-This component provides packet forwarding function from one port to
-one port.
-Classifier has table of virtual MAC address(A). According to this table,
-classifier lookups L2 destination MAC address and determines which port
-to be transferred to incoming packets.
-This component also supports vlan-tag(TPID:0x8100), and has the virtual
-MAC tables for each VID(B). If the TPID of incoming packet equals
-0x8100,
-then lookup these tables(B) and determines which port to be transferred.
-Otherwise, incoming packet is transferred according to table(A).
+Sends packets to multiple tx ports based on entries of
+MAC address and destination port in a classifier table.
+This component also supports VLAN tag.
+
+For VLAN addressing, classifier has other tables than defalut.
+Classifier prepares tables for each of VLAN ID and decides
+which of table is referred
+if TPID (Tag Protocol Indetifier) is included in a packet and
+equals to 0x8100 as defined in IEEE 802.1Q standard.
 
 
 Ports
