@@ -28,13 +28,6 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Setup Guide
-===========
 
-.. toctree::
-   :maxdepth: 2
-   :numbered:
-
-   getting_started
-   howto_use
-   use_cases
+Getting Started
+===============
