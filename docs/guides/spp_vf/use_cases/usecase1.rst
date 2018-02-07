@@ -28,6 +28,7 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+.. _spp_vf_use_cases_usecase1:
 
 Simple SSH Login
 ================
@@ -93,6 +94,15 @@ Network Configuration
 
 Detailed configuration of :numref:`figure_simple_ssh_login` is
 described below.
+In this usecase, there are two NICs on host1 and host2 to duplicate
+login path. Each of combination of classifier and merger responds
+to each of pathes.
+
+Incoming packets from NIC0 are classified based on destionation address.
+For example, classifier1 sends packets to forwarder1 for vNIC0 and
+to forwarder2 for vNIC2.
+Outgoing packets from SSH server1 and 2 are aggregated to merger1 and
+sent to SSH clinet via NIC0.
 
 .. _figure_network_config:
 
@@ -102,43 +112,74 @@ described below.
 
     Network Configuration
 
-First, start the ``component`` of classifier, forwarders, and merge
-in ``spp_vf``.
+You need to input a little bit large amount of commands for the
+configuration, or use ``playback`` command to load from a file.
+You can get a series of files from
+`here <http://dpdk.org/browse/apps/spp/tree/docs/spp_vf>`_
+for loading commands used in this usecase.
+
+First, lanch threads of SPP VF called ``component`` with its core ID
+and a directive for behaviour.
+It is launched from ``component`` subcommand with options.
+
+.. code-block:: console
+
+    spp > sec [SEC_ID];component start [NAME] [CORE_ID] [BEHAVIOUR]
+
+In this usecase, spp_vf is launched with ID=1. Let's start components
+for the first login path.
+Directive for classifier ``classifier_mac`` means to classify with MAC
+address.
+Core ID from 2 to 7 are assigned to each of components.
 
 .. code-block:: console
 
     # Start component to spp_vf
     spp > sec 1;component start classifier1 2 classifier_mac
-    spp > sec 1;component start forward1 3 forward
-    spp > sec 1;component start forward2 4 forward
-    spp > sec 1;component start forward3 5 forward
-    spp > sec 1;component start forward4 6 forward
-    spp > sec 1;component start merge1 7 merge
+    spp > sec 1;component start forwarder1 3 forward
+    spp > sec 1;component start forwarder2 4 forward
+    spp > sec 1;component start forwarder3 5 forward
+    spp > sec 1;component start forwarder4 6 forward
+    spp > sec 1;component start merger1 7 merge
 
-Second, add ``port`` to each component in ``spp_vf``.
+Each of components must have rx and tx ports for forwarding.
+Add ports for each of components as following.
+You might notice that classifier has two tx ports and
+merger has two rx ports.
 
 .. code-block:: console
 
-    # Add port to component
+    # classifier1
     spp > sec 1;port add phy:0 rx classifier1
     spp > sec 1;port add ring:0 tx classifier1
     spp > sec 1;port add ring:1 tx classifier1
-    spp > sec 1;port add ring:0 rx forward1
-    spp > sec 1;port add vhost:0 tx forward1
-    spp > sec 1;port add vhost:0 rx forward2
-    spp > sec 1;port add ring:2 tx forward2
-    spp > sec 1;port add ring:1 rx forward3
-    spp > sec 1;port add vhost:2 rx forward3
-    spp > sec 1;port add vhost:2 tx forward4
-    spp > sec 1;port add ring:3 rx forward4
-    spp > sec 1;port add ring:2 rx merge1
-    spp > sec 1;port add ring:3 rx merge1
-    spp > sec 1;port add phy:0 tx merge1
+    # forwarder1
+    spp > sec 1;port add ring:0 rx forwarder1
+    spp > sec 1;port add vhost:0 tx forwarder1
+    # forwarder2
+    spp > sec 1;port add vhost:0 rx forwarder2
+    spp > sec 1;port add ring:2 tx forwarder2
+    # forwarder3
+    spp > sec 1;port add ring:1 rx forwarder3
+    spp > sec 1;port add vhost:2 rx forwarder3
+    # forwarder4
+    spp > sec 1;port add vhost:2 tx forwarder4
+    spp > sec 1;port add ring:3 rx forwarder4
+    # merger1
+    spp > sec 1;port add ring:2 rx merger1
+    spp > sec 1;port add ring:3 rx merger1
+    spp > sec 1;port add phy:0 tx merger1
 
-To communicate remote node and VM via NIC0, each of packets from
-remote node is required to be routed to specific VM according
-to its MAC address.
-This configuration is done by ``classfier_table`` command.
+As given ``classifier_mac``, classifier component decides
+the destination with MAC address by referring ``classifier_table``.
+MAC address and corresponging port is registered to the table with
+``classifier_table add mac`` command.
+
+.. code-block:: console
+
+    spp > classifier_table add mac [MACADDRESS] [PORT]
+
+In this usecase, you need to register two MAC addresses for merger1.
 
 .. code-block:: console
 
@@ -147,36 +188,46 @@ This configuration is done by ``classfier_table`` command.
     spp > classifier_table add mac 52:54:00:12:34:58 ring:1
 
 
-For NIC1, also setup ``component``, ``port`` and ``classifier_table``,
-as following steps.
+Configuration for the second login path is almost similar to the first
+path.
+
+Start components with core ID 8-13 and directives.
 
 .. code-block:: console
 
-    # Start component to spp_vf
     spp > sec 1;component start classifier2 8 classifier_mac
-    spp > sec 1;component start forward5 9 forward
-    spp > sec 1;component start forward6 10 forward
-    spp > sec 1;component start forward7 11 forward
-    spp > sec 1;component start forward8 12 forward
-    spp > sec 1;component start merge2 13 merge
+    spp > sec 1;component start forwarder5 9 forward
+    spp > sec 1;component start forwarder6 10 forward
+    spp > sec 1;component start forwarder7 11 forward
+    spp > sec 1;component start forwarder8 12 forward
+    spp > sec 1;component start merger2 13 merge
+
+Add ports to each of components.
 
 .. code-block:: console
 
-    # Add port to component
+    # classifier2
     spp > sec 1;port add phy:1 rx classifier2
     spp > sec 1;port add ring:4 tx classifier2
     spp > sec 1;port add ring:5 tx classifier2
-    spp > sec 1;port add ring:4 rx forward5
-    spp > sec 1;port add vhost:1 tx forward5
-    spp > sec 1;port add vhost:1 rx forward6
-    spp > sec 1;port add ring:6 tx forward6
-    spp > sec 1;port add ring:5 rx forward7
-    spp > sec 1;port add vhost:3 rx forward7
-    spp > sec 1;port add vhost:3 tx forward8
-    spp > sec 1;port add ring:7 rx forward8
-    spp > sec 1;port add ring:6 rx merge2
-    spp > sec 1;port add ring:7 rx merge2
-    spp > sec 1;port add phy:1 tx merge2
+    # forwarder5
+    spp > sec 1;port add ring:4 rx forwarder5
+    spp > sec 1;port add vhost:1 tx forwarder5
+    # forwarder6
+    spp > sec 1;port add vhost:1 rx forwarder6
+    spp > sec 1;port add ring:6 tx forwarder6
+    # forwarder7
+    spp > sec 1;port add ring:5 rx forwarder7
+    spp > sec 1;port add vhost:3 rx forwarder7
+    # forwarder8
+    spp > sec 1;port add vhost:3 tx forwarder8
+    spp > sec 1;port add ring:7 rx forwarder8
+    # merger2
+    spp > sec 1;port add ring:6 rx merger2
+    spp > sec 1;port add ring:7 rx merger2
+    spp > sec 1;port add phy:1 tx merger2
+
+Register entries to classifier_table for classifier2.
 
 .. code-block:: console
 
@@ -184,29 +235,40 @@ as following steps.
     spp > classifier_table add mac 52:54:00:12:34:57 ring:4
     spp > classifier_table add mac 52:54:00:12:34:59 ring:5
 
-To activate above settings, input the `flush` command.
+Finally, activate all of settings by doign `flush` subcommand.
 
 .. code-block:: console
 
     spp > sec 1;flush
 
+.. note::
+
+    Commands for SPP VF Controller are accepted but not activated until
+    user inputs ``flush`` subcommand.
+    You can cancel all of commands before doing ``flush``.
+
+
 Setup for VMs
 ~~~~~~~~~~~~~
 
-Start two VMs.
+Launch VM1 and VM2 with virsh command.
+Setup for virsh is described in :ref:`spp_vf_gsg_build`.
 
 .. code-block:: console
 
-    $ virsh start spp-vm1
-    $ virsh start spp-vm2
+    $ virsh start spp-vm1  # VM1
+    $ virsh start spp-vm2  # VM2
 
-Login to ``spp-vm1`` for network configuration.
-To not ask for unknown keys while login VMs,
-set ``-oStrictHostKeyChecking=no`` option for ssh.
+After launched, login to ``spp-vm1`` for configuration inside the VM.
 
-.. code-block:: console
+.. note::
 
-    $ ssh -oStrictHostKeyChecking=no sppuser@192.168.122.31
+    To avoid asked for unknown keys while login VMs,
+    use ``-oStrictHostKeyChecking=no`` option for ssh.
+
+    .. code-block:: console
+
+        $ ssh -oStrictHostKeyChecking=no sppuser at 192.168.122.31
 
 Up interfaces for vhost inside ``spp-vm1``.
 In addition, you have to disable TCP offload function, or ssh is failed
@@ -222,7 +284,7 @@ after configuration is done.
     $ sudo ethtool -K ens4 tx off
     $ sudo ethtool -K ens5 tx off
 
-Configurations for ``spp-vm2`` is same as ``spp-vm1``.
+Configurations also for ``spp-vm2`` as ``spp-vm1``.
 
 .. code-block:: console
 
@@ -240,7 +302,7 @@ Configurations for ``spp-vm2`` is same as ``spp-vm1``.
 Login to VMs
 ~~~~~~~~~~~~
 
-Now, you can login to VMs.
+Now, you can login to VMs from the remote host1.
 
 .. code-block:: console
 
@@ -256,20 +318,15 @@ Now, you can login to VMs.
     # spp-vm2 via NIC1
     $ ssh sppuser@192.168.150.32
 
-Close Applications
-~~~~~~~~~~~~~~~~~~
+Shutdown SPP VF Components
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Describe the procedure to close the applications.
+Basically, you can shutdown all of SPP processes with ``bye all``
+command.
+This section describes graceful shutting down for SPP VF components.
 
-(1) Stop and delete command
-
-By following commands from `spp_vf.py`, you can delete `classifier_table`
-and ports, and stop components.
-The `flush` command is required to reflect this deletion and stopping.
-If you close the applications by `Ctrl+C` or `bye all` command,
-all settings will be deleted, following steps are not mandatory.
-
-First, delete the configuration between NIC-1 and VM and stop related components.
+First, delete entries of ``classifier_table`` and ports of components
+for the first SSH login path.
 
 .. code-block:: console
 
@@ -279,33 +336,42 @@ First, delete the configuration between NIC-1 and VM and stop related components
 
 .. code-block:: console
 
-    # Delete port to component
-    spp > sec 0;port del phy:0 rx classifier1
-    spp > sec 0;port del ring:0 tx classifier1
-    spp > sec 0;port del ring:1 tx classifier1
-    spp > sec 0;port del ring:0 rx forward1
-    spp > sec 0;port del vhost:0 tx forward1
-    spp > sec 0;port del vhost:0 rx forward2
-    spp > sec 0;port del ring:2 tx forward2
-    spp > sec 0;port del ring:1 rx forward3
-    spp > sec 0;port del vhost:2 rx forward3
-    spp > sec 0;port del vhost:2 tx forward4
-    spp > sec 0;port del ring:3 rx forward4
-    spp > sec 0;port del ring:2 rx merge1
-    spp > sec 0;port del ring:3 rx merge1
-    spp > sec 0;port del phy:0 tx merge1
+    # classifier1
+    spp > sec 1;port del phy:0 rx classifier1
+    spp > sec 1;port del ring:0 tx classifier1
+    spp > sec 1;port del ring:1 tx classifier1
+    # forwarder1
+    spp > sec 1;port del ring:0 rx forward1
+    spp > sec 1;port del vhost:0 tx forward1
+    # forwarder2
+    spp > sec 1;port del vhost:0 rx forward2
+    spp > sec 1;port del ring:2 tx forward2
+    # forwarder3
+    spp > sec 1;port del ring:1 rx forward3
+    spp > sec 1;port del vhost:2 rx forward3
+    # forwarder4
+    spp > sec 1;port del vhost:2 tx forward4
+    spp > sec 1;port del ring:3 rx forward4
+    # merger1
+    spp > sec 1;port del ring:2 rx merge1
+    spp > sec 1;port del ring:3 rx merge1
+    spp > sec 1;port del phy:0 tx merge1
+
+Then, stop components.
 
 .. code-block:: console
 
     # Stop component to spp_vf
-    spp > sec 0;component stop classifier1
-    spp > sec 0;component stop forward1
-    spp > sec 0;component stop forward2
-    spp > sec 0;component stop forward3
-    spp > sec 0;component stop forward4
-    spp > sec 0;component stop merge1
+    spp > sec 1;component stop classifier1
+    spp > sec 1;component stop forward1
+    spp > sec 1;component stop forward2
+    spp > sec 1;component stop forward3
+    spp > sec 1;component stop forward4
+    spp > sec 1;component stop merge1
 
-Second, delete the configuration between NIC0 and VM and stop related components.
+Second, do termination for the second path.
+Delete entries from ``classifier_table`` and ports from each of
+components.
 
 .. code-block:: console
 
@@ -315,47 +381,41 @@ Second, delete the configuration between NIC0 and VM and stop related components
 
 .. code-block:: console
 
-    # Delete port to component
-    spp > sec 0;port del phy:1 rx classifier2
-    spp > sec 0;port del ring:4 tx classifier2
-    spp > sec 0;port del ring:5 tx classifier2
-    spp > sec 0;port del ring:4 rx forward5
-    spp > sec 0;port del vhost:1 tx forward5
-    spp > sec 0;port del vhost:1 rx forward6
-    spp > sec 0;port del ring:6 tx forward6
-    spp > sec 0;port del ring:5 rx forward7
-    spp > sec 0;port del vhost:3 rx forward7
-    spp > sec 0;port del vhost:3 tx forward8
-    spp > sec 0;port del ring:7 rx forward8
-    spp > sec 0;port del ring:6 rx merge2
-    spp > sec 0;port del ring:7 rx merge2
-    spp > sec 0;port del phy:1 tx merge2
+    # classifier2
+    spp > sec 1;port del phy:1 rx classifier2
+    spp > sec 1;port del ring:4 tx classifier2
+    spp > sec 1;port del ring:5 tx classifier2
+    # forwarder5
+    spp > sec 1;port del ring:4 rx forwarder5
+    spp > sec 1;port del vhost:1 tx forwarder5
+    # forwarder6
+    spp > sec 1;port del vhost:1 rx forwarder6
+    spp > sec 1;port del ring:6 tx forwarder6
+    # forwarder7
+    spp > sec 1;port del ring:5 rx forwarder7
+    spp > sec 1;port del vhost:3 rx forwarder7
+    # forwarder8
+    spp > sec 1;port del vhost:3 tx forwarder8
+    spp > sec 1;port del ring:7 rx forwarder8
+    # merger2
+    spp > sec 1;port del ring:6 rx merger2
+    spp > sec 1;port del ring:7 rx merger2
+    spp > sec 1;port del phy:1 tx merger2
+
+Then, stop components.
 
 .. code-block:: console
 
     # Stop component to spp_vf
-    spp > sec 0;component stop classifier2 8 classifier_mac
-    spp > sec 0;component stop forward5 9 forward
-    spp > sec 0;component stop forward6 10 forward
-    spp > sec 0;component stop forward7 11 forward
-    spp > sec 0;component stop forward8 12 forward
-    spp > sec 0;component stop merge2 13 merge
+    spp > sec 1;component stop classifier2 8 classifier_mac
+    spp > sec 1;component stop forward5 9 forward
+    spp > sec 1;component stop forward6 10 forward
+    spp > sec 1;component stop forward7 11 forward
+    spp > sec 1;component stop forward8 12 forward
+    spp > sec 1;component stop merge2 13 merge
 
-To activate above settings, input the ``flush`` command.
-
-.. code-block:: console
-
-    spp > sec 0;flush
-
-
-(2) Close SPP VF
-
-Simply, ``spp_vf`` and primary process can be closed
-by ``Ctrl+C`` or ``bye all`` command from ``spp_vf.py``.
-Also ``spp_vf.py`` can be closed by the ``bye`` command.
+Finally, run ``flush`` subcommand.
 
 .. code-block:: console
 
-    # stop controller
-    spp > bye all
-    spp > bye
+    spp > sec 1;flush
