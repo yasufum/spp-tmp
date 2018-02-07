@@ -28,14 +28,5 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SPP VF
-===========
-
-.. toctree::
-   :maxdepth: 2
-   :numbered:
-
-   overview
-   getting_started/index
-   use_cases/index
-   commands/index
+Use Cases
+=========
