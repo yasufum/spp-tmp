@@ -32,30 +32,9 @@
 How to Use
 ==========
 
-SPP_VF
-------
-
-``SPP_VF`` is a SR-IOV like network functionality for NFV.
-
-.. image:: images/spp_vf_overview.svg
-   :height: 550 em
-   :width: 550 em
-
-Environment
------------
-
-* Ubuntu 16.04
-* qemu-kvm 2.7 or later
-* DPDK v17.11 or later
-
-Launch SPP
-----------
-
-Before launching spp, you need to setup DPDK, virsh, etc. described at
-:doc:`build`.
 
 SPP Controller
-~~~~~~~~~~~~~~
+--------------
 
 First, run SPP Controller with port numbers for spp primary and secondary.
 
@@ -65,7 +44,7 @@ First, run SPP Controller with port numbers for spp primary and secondary.
 
 
 SPP Primary
-~~~~~~~~~~~
+-----------
 
 SPP primary allocates and manages resources for secondary processes.
 You need to run SPP primary before secondary processes.
@@ -94,7 +73,7 @@ Then, spp primary can be launched like this.
       -- -p 0x03 -n 9 -s 127.0.0.1:5555
 
 SPP Secondary
-~~~~~~~~~~~~~
+-------------
 
 spp secondary processes(``spp_vf``) can be launched with two kinds of
 options, like primary process.
@@ -104,9 +83,9 @@ DPDK, the other is ``spp_vf``.
 
 ``spp_vf`` specific options are:
 
-  * --client-id    : client id
-  * -s             : IPv4 address and port for spp secondary
-  * --vhost-client : vhost-user client enable setting
+  * --client-id: client id
+  * -s: IPv4 address and port for spp secondary
+  * --vhost-client: vhost-user client enable setting
 
 ``spp_vf`` can be launched like this.
 
@@ -120,7 +99,7 @@ If ``--vhost-client`` option is specified, then ``vhost-user`` act as
 the client, otherwise the server.
 For reconnect feature from SPP to VM, ``--vhost-client`` option can be
 used. This reconnect features requires QEMU 2.7 (or later).
-See also `DPDK documentation <http://dpdk.org/doc/guides/sample_app_ug/vhost.html>_.
+See also `DPDK documentation <http://dpdk.org/doc/guides/sample_app_ug/vhost.html>`_.
 
 VM
 --
@@ -138,8 +117,7 @@ Additional Network Configurations
 To enable processes running on the VM to communicate through spp,
 it is required additional network configurations on host and guest VMs.
 
-Guest VMs
-"""""""""
+(1) Guest VMs
 
 .. code-block:: console
 
@@ -149,8 +127,7 @@ Guest VMs
     # Disable offload for vhost interface
     $ sudo ethtool -K [IF_NAME] tx off
 
-Host2
-"""""
+(2) Host2
 
 .. code-block:: console
 
