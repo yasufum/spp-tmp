@@ -49,6 +49,47 @@ static struct port_map port_map[RTE_MAX_ETHPORTS];
 
 static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
 
+/* It is used to convert port name from string type to enum */
+struct porttype_map {
+	const char     *port_name;
+	enum port_type port_type;
+};
+
+struct porttype_map portmap[] = {
+	{ .port_name = "phy",   .port_type = PHY, },
+	{ .port_name = "ring",  .port_type = RING, },
+	{ .port_name = "vhost", .port_type = VHOST, },
+	{ .port_name = NULL,    .port_type = UNDEF, },
+};
+
+/* Return a type of port as a enum member of porttype_map structure. */
+static enum port_type get_port_type(char *portname)
+{
+	for (int i = 0; portmap[i].port_name != NULL; i++) {
+		const char *port_name = portmap[i].port_name;
+		if (strncmp(portname, port_name, strlen(port_name)) == 0)
+			return portmap[i].port_type;
+	}
+	return UNDEF;
+}
+
+/*
+ * Split a token into words  with given separator and return the number of
+ * splitted words.
+ */
+static int spp_split(char *splitted_words[], char *token, const char *sep)
+{
+	int cnt = 0;
+	splitted_words[cnt] = strtok(token, sep);
+	while (splitted_words[cnt] != NULL) {
+		RTE_LOG(DEBUG, APP, "token %d = %s\n",
+				cnt, splitted_words[cnt]);
+		cnt++;
+		splitted_words[cnt] = strtok(NULL, sep);
+	}
+	return cnt;
+}
+
 static void
 forward(void)
 {
@@ -406,7 +447,8 @@ parse_command(char *str)
 			i = sprintf(str, "Client ID %d Running\n", client_id);
 		else
 			i = sprintf(str, "Client ID %d Idling\n", client_id);
-		print_active_ports(str + i, client_id, ports_fwd_array, port_map);
+		print_active_ports(
+				str+i, client_id, ports_fwd_array, port_map);
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
@@ -452,10 +494,43 @@ parse_command(char *str)
 			if (max_token <= 2)
 				return 0;
 
-			if (spp_atoi(token_list[1], &in_port) < 0)
-				return 0;
+			if (spp_atoi(token_list[1], &in_port) < 0) {
+				char *param_list[MAX_PARAMETER] = { 0 };
+				int param_count = spp_split(
+						param_list, token_list[1], ":");
+				if (param_count == 2) {
+					int in_port_id;
+					if (spp_atoi(
+						param_list[1], &in_port_id) < 0)
+						return 0;
+					in_port = find_port_id(
+						in_port_id,
+						get_port_type(param_list[0]));
+				} else {
+					return 0;
+				}
+			}
 
-			if (spp_atoi(token_list[2], &out_port) < 0)
+			if (spp_atoi(token_list[2], &out_port) < 0) {
+				char *param_list[MAX_PARAMETER] = { 0 };
+				int param_count = spp_split(
+						param_list,
+						token_list[2], ":");
+				if (param_count == 2) {
+					int out_port_id;
+					if (spp_atoi(
+						param_list[1],
+						&out_port_id) < 0)
+						return 0;
+					out_port = find_port_id(
+						out_port_id,
+						get_port_type(param_list[0]));
+				} else {
+					return 0;
+				}
+			}
+
+			if (in_port < 0 || out_port < 0)
 				return 0;
 
 			add_patch(in_port, out_port);
