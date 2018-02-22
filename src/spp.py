@@ -346,7 +346,7 @@ def clean_sec_cmd(cmdstr):
     return res
 
 
-class Shell(cmd.Cmd):
+class Shell(cmd.Cmd, object):
     """SPP command prompt"""
 
     intro = 'Welcome to the spp.   Type help or ? to list commands.\n'
@@ -364,6 +364,36 @@ class Shell(cmd.Cmd):
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
+
+    def is_comment_line(self, line):
+        input_line = line.strip()
+        if len(input_line) > 0:
+            if (input_line[0] == '#') or (input_line[0:2] == '//'):
+                return True
+            else:
+                return False
+
+    def default(self, line):
+        """Define defualt behaviour
+
+        If user input is commend styled, controller simply echo as a comment.
+        Supported styles are
+          - python ('#')
+          - C ('//')
+        """
+
+        if self.is_comment_line(line):
+            print("%s" % line.strip())
+        else:
+            super(Shell, self).default(line)
+
+    def emptyline(self):
+        """Do nothin for empty input
+
+        It override Cmd.emptyline() which runs previous input as default
+        to do nothing.
+        """
+        pass
 
     def close_all_secondary(self):
         """Exit all secondary processes"""
@@ -626,8 +656,8 @@ class Shell(cmd.Cmd):
                 with open(fname) as recorded_file:
                     lines = []
                     for line in recorded_file:
-                        if line.strip().startswith("#"):
-                            continue
+                        if not self.is_comment_line(line):
+                            lines.append("# %s" % line)
                         lines.append(line)
                     self.cmdqueue.extend(lines)
                     self.response(self.CMD_OK, "playback")
@@ -637,7 +667,6 @@ class Shell(cmd.Cmd):
                 self.response(self.CMD_NG, message)
 
     def precmd(self, line):
-        line = line.lower()
         if self.recorded_file:
             if not (('playback' in line) or ('bye' in line)):
                 print(line, file=self.recorded_file)
