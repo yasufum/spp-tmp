@@ -358,6 +358,8 @@ class Shell(cmd.Cmd):
     CMD_NOTREADY = "NOTREADY"
     CMD_ERROR = "ERROR"
 
+    PORT_TYPES = ['phy', 'ring', 'vhost']
+
     PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
@@ -427,6 +429,25 @@ class Shell(cmd.Cmd):
             print(message)
             return self.CMD_NOTREADY, message
 
+    def is_patched_ids_valid(self, id1, id2, delim=':'):
+        """Check if port IDs are valid
+
+        Supported format is port ID of integer or resource ID such as
+        'phy:0' or 'ring:1'. Default delimiter ':' can be overwritten
+        by giving 'delim' option.
+        """
+
+        if str.isdigit(id1) and str.isdigit(id2):
+            return True
+        else:
+            ptn = r"\w+\%s\d+" % delim  # Match "phy:0" or "ring:1" or so
+            if re.match(ptn, id1) and re.match(ptn, id2):
+                pt1 = id1.split(delim)[0]
+                pt2 = id2.split(delim)[0]
+                if (pt1 in self.PORT_TYPES) and (pt2 in self.PORT_TYPES):
+                    return True
+        return False
+
     def check_sec_cmds(self, cmds):
         """Validate secondary commands before sending"""
 
@@ -452,7 +473,7 @@ class Shell(cmd.Cmd):
                         if str.isdigit(cmdlist[2]):
                             valid = 1
                 elif cmdlist[0] == 'patch':
-                    if str.isdigit(cmdlist[1]) and str.isdigit(cmdlist[2]):
+                    if self.is_patched_ids_valid(cmdlist[1], cmdlist[2]):
                         valid = 1
 
         return valid
