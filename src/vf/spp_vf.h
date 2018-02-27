@@ -85,8 +85,8 @@
 /** Maximum number of port abilities available */
 #define SPP_PORT_ABILITY_MAX 4
 
-/** Maximum VLAN ID */
-#define SPP_VLAN_VID_MAX 4096
+/** Number of VLAN ID */
+#define SPP_NUM_VLAN_VID 4096
 
 /** Maximum VLAN PCP */
 #define SPP_VLAN_PCP_MAX 7
@@ -118,7 +118,8 @@ enum spp_component_type {
  */
 enum spp_classifier_type {
 	SPP_CLASSIFIER_TYPE_NONE, /**< Type none */
-	SPP_CLASSIFIER_TYPE_MAC   /**< MAC address */
+	SPP_CLASSIFIER_TYPE_MAC,  /**< MAC address */
+	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
 };
 
 /**
@@ -181,15 +182,22 @@ struct spp_port_ability {
 	union spp_ability_data data;   /**< Port ability data */
 };
 
+/** Port class identifier for classifying */
+struct spp_port_class_identifier {
+	uint64_t mac_addr;                      /**< Mac address (binary) */
+	char     mac_addr_str[SPP_MIN_STR_LEN]; /**< Mac address (text) */
+	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
+};
+
 /**
  * Port info
  */
 struct spp_port_info {
-	enum port_type iface_type; /**< Interface type (phy/vhost/ring) */
-	int            iface_no;   /**< Interface number */
-	int            dpdk_port;  /**< DPDK port number */
-	uint64_t       mac_addr;   /**< Mac address for classifying */
-	char           mac_addr_str[SPP_MIN_STR_LEN]; /**< Mac address */
+	enum port_type iface_type;      /**< Interface type (phy/vhost/ring) */
+	int            iface_no;        /**< Interface number */
+	int            dpdk_port;       /**< DPDK port number */
+	struct spp_port_class_identifier class_id;
+					/**< Port class identifier */
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
 					/**< Port ability */
 };
@@ -235,7 +243,8 @@ int spp_get_client_id(void);
 int spp_update_classifier_table(
 		enum spp_command_action action,
 		enum spp_classifier_type type,
-		const char *data,
+		int vid,
+		const char *mac,
 		const struct spp_port_index *port);
 
 /**
@@ -331,7 +340,7 @@ struct spp_iterate_classifier_table_params;
 typedef int (*spp_iterate_classifier_element_proc)(
 		struct spp_iterate_classifier_table_params *params,
 		enum spp_classifier_type type,
-		const char *data,
+		int vid, const char *mac,
 		const struct spp_port_index *port);
 
 /** iterate classifier table parameters */
@@ -423,6 +432,8 @@ int spp_get_component_id(const char *name);
 /**
  * Check mac address used on the port for registering or removing
  *
+ * @param vid
+ *  VLAN ID to be validated.
  * @param mac_addr
  *  Mac address to be validated.
  * @param iface_type
@@ -431,12 +442,12 @@ int spp_get_component_id(const char *name);
  *  Interface number to be validated.
  *
  * @return
- *  True if target MAC address matches MAC address of port.
+ *  True if target identifier(VLAN ID, MAC address)
+ *  matches identifier(VLAN ID, MAC address) of port.
  */
-int spp_check_mac_used_port(
-		uint64_t mac_addr,
-		enum port_type iface_type,
-		int iface_no);
+int spp_check_classid_used_port(
+		int vid, uint64_t mac_addr,
+		enum port_type iface_type, int iface_no);
 
 /**
  * Check if port has been added.

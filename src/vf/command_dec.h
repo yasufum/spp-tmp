@@ -74,14 +74,32 @@ enum spp_command_decode_error_code {
  *            defined in command_dec.c
  */
 enum spp_command_type {
-	SPP_CMDTYPE_CLASSIFIER_TABLE, /**< classifier_table command */
-	SPP_CMDTYPE_FLUSH,            /**< flush command */
-	SPP_CMDTYPE_CLIENT_ID,        /**< get_client_id command */
-	SPP_CMDTYPE_STATUS,           /**< status command */
-	SPP_CMDTYPE_EXIT,             /**< exit command */
-	SPP_CMDTYPE_COMPONENT,        /**< component command */
-	SPP_CMDTYPE_PORT,             /**< port command */
-	SPP_CMDTYPE_CANCEL,           /**< cancel command */
+	/** classifier_table command(mac) */
+	SPP_CMDTYPE_CLASSIFIER_TABLE_MAC,
+
+	/** classifier_table command(VLAN) */
+	SPP_CMDTYPE_CLASSIFIER_TABLE_VLAN,
+
+	/** flush command */
+	SPP_CMDTYPE_FLUSH,
+
+	/** get_client_id command */
+	SPP_CMDTYPE_CLIENT_ID,
+
+	/** status command */
+	SPP_CMDTYPE_STATUS,
+
+	/** exit command */
+	SPP_CMDTYPE_EXIT,
+
+	/** component command */
+	SPP_CMDTYPE_COMPONENT,
+
+	/** port command */
+	SPP_CMDTYPE_PORT,
+
+	/** cancel command */
+	SPP_CMDTYPE_CANCEL,
 };
 
 /** "classifier_table" command specific parameters */
@@ -92,8 +110,11 @@ struct spp_command_classifier_table {
 	/** Classify type (currently only for mac) */
 	enum spp_classifier_type type;
 
-	/** Value to be classified */
-	char value[SPP_CMD_VALUE_BUFSZ];
+	/** VLAN ID to be classified */
+	int vid;
+
+	/** MAC address to be classified */
+	char mac[SPP_CMD_VALUE_BUFSZ];
 
 	/** Destination port type and number */
 	struct spp_port_index port;

@@ -51,6 +51,7 @@
 const char *CLASSIFILER_TYPE_STRINGS[] = {
 	"none",
 	"mac",
+	"vlan",
 
 	/* termination */ "",
 };
@@ -535,21 +536,18 @@ decode_classifier_type_value(void *output, const char *arg_val)
 	return 0;
 }
 
-/* decoding procedure of value for classifier_table command */
+/* decoding procedure of vlan id for classifier_table command */
 static int
-decode_classifier_value_value(void *output, const char *arg_val)
+decode_classifier_vid_value(void *output, const char *arg_val)
 {
 	int ret = -1;
-	struct spp_command_classifier_table *classifier_table = output;
-	switch (classifier_table->type) {
-	case SPP_CLASSIFIER_TYPE_MAC:
-		ret = decode_mac_addr_str_value(classifier_table->value,
+	ret = get_int_value(output, arg_val, 0, ETH_VLAN_ID_MAX);
+	if (unlikely(ret < 0)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad VLAN ID. val=%s\n",
 				arg_val);
-		break;
-	default:
-		break;
+		return -1;
 	}
-	return ret;
+	return 0;
 }
 
 /* decoding procedure of port for classifier_table command */
@@ -571,20 +569,24 @@ decode_classifier_port_value(void *output, const char *arg_val)
 		return -1;
 	}
 
+	if (classifier_table->type == SPP_CLASSIFIER_TYPE_MAC)
+		classifier_table->vid = ETH_VLAN_ID_MAX;
+
 	if (unlikely(classifier_table->action == SPP_CMD_ACTION_ADD)) {
-		if (!spp_check_mac_used_port(0, tmp_port.iface_type,
-				tmp_port.iface_no)) {
+		if (!spp_check_classid_used_port(ETH_VLAN_ID_MAX, 0,
+				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Port in used. (classifier_table command) val=%s\n",
 					arg_val);
 			return -1;
 		}
 	} else if (unlikely(classifier_table->action == SPP_CMD_ACTION_DEL)) {
-		mac_addr = spp_change_mac_str_to_int64(classifier_table->value);
+		mac_addr = spp_change_mac_str_to_int64(classifier_table->mac);
 		if (mac_addr < 0)
 			return -1;
 
-		if (!spp_check_mac_used_port((uint64_t)mac_addr,
+		if (!spp_check_classid_used_port(classifier_table->vid,
+				(uint64_t)mac_addr,
 				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Port in used. (classifier_table command) val=%s\n",
@@ -610,7 +612,7 @@ struct decode_parameter_list {
 
 /* parameter list for each command */
 static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
-	{                                /* classifier_table */
+	{                                /* classifier_table(mac) */
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
@@ -624,10 +626,43 @@ static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 			.func = decode_classifier_type_value
 		},
 		{
-			.name = "value",
+			.name = "mac address",
+			.offset = offsetof(struct spp_command,
+					spec.classifier_table.mac),
+			.func = decode_mac_addr_str_value
+		},
+		{
+			.name = "port",
 			.offset = offsetof(struct spp_command,
 					spec.classifier_table),
-			.func = decode_classifier_value_value
+			.func = decode_classifier_port_value
+		},
+		DECODE_PARAMETER_LIST_EMPTY,
+	},
+	{                                /* classifier_table(VLAN) */
+		{
+			.name = "action",
+			.offset = offsetof(struct spp_command,
+					spec.classifier_table.action),
+			.func = decode_classifier_action_value
+		},
+		{
+			.name = "type",
+			.offset = offsetof(struct spp_command,
+					spec.classifier_table.type),
+			.func = decode_classifier_type_value
+		},
+		{
+			.name = "vlan id",
+			.offset = offsetof(struct spp_command,
+					spec.classifier_table.vid),
+			.func = decode_classifier_vid_value
+		},
+		{
+			.name = "mac address",
+			.offset = offsetof(struct spp_command,
+					spec.classifier_table.mac),
+			.func = decode_mac_addr_str_value
 		},
 		{
 			.name = "port",
@@ -747,7 +782,9 @@ struct decode_command_list {
 /* command list */
 static struct decode_command_list command_list[] = {
 	{ "classifier_table", 5, 5, decode_command_parameter_in_list },
-						/* classifier_table */
+						/* classifier_table(mac) */
+	{ "classifier_table", 6, 6, decode_command_parameter_in_list },
+						/* classifier_table(vlan) */
 	{ "flush",            1, 1, NULL },     /* flush            */
 	{ "_get_client_id",   1, 1, NULL },     /* _get_client_id   */
 	{ "status",           1, 1, NULL },     /* status           */
@@ -767,6 +804,7 @@ decode_command_in_list(struct spp_command_request *request,
 			struct spp_command_decode_error *error)
 {
 	int ret = 0;
+	int command_name_check = 0;
 	struct decode_command_list *list = NULL;
 	int i = 0;
 	int argc = 0;
@@ -792,11 +830,8 @@ decode_command_in_list(struct spp_command_request *request,
 
 		if (unlikely(argc < list->param_min) ||
 				unlikely(list->param_max < argc)) {
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Parameter number out of range."
-					"request_str=%s\n", request_str);
-			return set_decode_error(error, SPP_CMD_DERR_BAD_FORMAT,
-					NULL);
+			command_name_check = 1;
+			continue;
 		}
 
 		request->commands[0].type = i;
@@ -804,6 +839,12 @@ decode_command_in_list(struct spp_command_request *request,
 			return (*list->func)(request, argc, argv, error);
 
 		return 0;
+	}
+
+	if (command_name_check != 0) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number out of range."
+				"request_str=%s\n", request_str);
+		return set_decode_error(error, SPP_CMD_DERR_BAD_FORMAT, NULL);
 	}
 
 	RTE_LOG(ERR, SPP_COMMAND_PROC,

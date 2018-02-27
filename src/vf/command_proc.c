@@ -102,6 +102,18 @@ const char *PORT_ABILITY_STATUS_STRINGS[] = {
 	/* termination */ "",
 };
 
+/*
+ * classifier type string list
+ * do it same as the order of enum spp_classifier_type (spp_vf.h)
+ */
+const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
+	"none",
+	"mac",
+	"vlan",
+
+	/* termination */ "",
+};
+
 /* append a comma for JSON format */
 static int
 append_json_comma(char **output)
@@ -226,13 +238,15 @@ execute_command(const struct spp_command *command)
 	int ret = 0;
 
 	switch (command->type) {
-	case SPP_CMDTYPE_CLASSIFIER_TABLE:
+	case SPP_CMDTYPE_CLASSIFIER_TABLE_MAC:
+	case SPP_CMDTYPE_CLASSIFIER_TABLE_VLAN:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute classifier_table command.\n");
 		ret = spp_update_classifier_table(
 				command->spec.classifier_table.action,
 				command->spec.classifier_table.type,
-				command->spec.classifier_table.value,
+				command->spec.classifier_table.vid,
+				command->spec.classifier_table.mac,
 				&command->spec.classifier_table.port);
 		break;
 
@@ -688,13 +702,14 @@ append_core_value(const char *name, char **output,
 static int
 append_classifier_element_value(
 		struct spp_iterate_classifier_table_params *params,
-		__rte_unused enum spp_classifier_type type,
-		const char *data,
+		enum spp_classifier_type type,
+		int vid, const char *mac,
 		const struct spp_port_index *port)
 {
 	int ret = -1;
 	char *buff, *tmp_buff;
 	char port_str[CMD_TAG_APPEND_SIZE];
+	char value_str[SPP_MIN_STR_LEN];
 	buff = params->output;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -705,11 +720,25 @@ append_classifier_element_value(
 
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 
-	ret = append_json_str_value("type", &tmp_buff, "mac");
+	ret = append_json_str_value("type", &tmp_buff,
+			CLASSIFILER_TYPE_STATUS_STRINGS[type]);
 	if (unlikely(ret < 0))
 		return ret;
 
-	ret = append_json_str_value("value", &tmp_buff, data);
+	memset(value_str, 0x00, SPP_MIN_STR_LEN);
+	switch (type) {
+	case SPP_CLASSIFIER_TYPE_MAC:
+		sprintf(value_str, "%s", mac);
+		break;
+	case SPP_CLASSIFIER_TYPE_VLAN:
+		sprintf(value_str, "%d/%s", vid, mac);
+		break;
+	default:
+		/* not used */
+		break;
+	}
+
+	ret = append_json_str_value("value", &tmp_buff, value_str);
 	if (unlikely(ret < 0))
 		return ret;
 

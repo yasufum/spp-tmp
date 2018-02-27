@@ -591,10 +591,12 @@ dump_interface_info(const struct iface_info *iface_info)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "phy  [%d] type=%d, no=%d, port=%d, "
-				"mac=%08lx(%s)\n",
+				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
-				port->mac_addr, port->mac_addr_str);
+				port->class_id.vlantag.vid,
+				port->class_id.mac_addr,
+				port->class_id.mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->vhost[cnt];
@@ -602,10 +604,12 @@ dump_interface_info(const struct iface_info *iface_info)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "vhost[%d] type=%d, no=%d, port=%d, "
-				"mac=%08lx(%s)\n",
+				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
-				port->mac_addr, port->mac_addr_str);
+				port->class_id.vlantag.vid,
+				port->class_id.mac_addr,
+				port->class_id.mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->ring[cnt];
@@ -613,10 +617,12 @@ dump_interface_info(const struct iface_info *iface_info)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "ring [%d] type=%d, no=%d, port=%d, "
-				"mac=%08lx(%s)\n",
+				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
-				port->mac_addr, port->mac_addr_str);
+				port->class_id.vlantag.vid,
+				port->class_id.mac_addr,
+				port->class_id.mac_addr_str);
 	}
 }
 
@@ -712,15 +718,21 @@ init_iface_info(void)
 	int port_cnt;  /* increment ether ports */
 	memset(&g_iface_info, 0x00, sizeof(g_iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		g_iface_info.nic[port_cnt].iface_type   = UNDEF;
-		g_iface_info.nic[port_cnt].iface_no     = port_cnt;
-		g_iface_info.nic[port_cnt].dpdk_port = -1;
-		g_iface_info.vhost[port_cnt].iface_type   = UNDEF;
-		g_iface_info.vhost[port_cnt].iface_no     = port_cnt;
-		g_iface_info.vhost[port_cnt].dpdk_port = -1;
-		g_iface_info.ring[port_cnt].iface_type   = UNDEF;
-		g_iface_info.ring[port_cnt].iface_no     = port_cnt;
-		g_iface_info.ring[port_cnt].dpdk_port = -1;
+		g_iface_info.nic[port_cnt].iface_type = UNDEF;
+		g_iface_info.nic[port_cnt].iface_no   = port_cnt;
+		g_iface_info.nic[port_cnt].dpdk_port  = -1;
+		g_iface_info.nic[port_cnt].class_id.vlantag.vid =
+				ETH_VLAN_ID_MAX;
+		g_iface_info.vhost[port_cnt].iface_type = UNDEF;
+		g_iface_info.vhost[port_cnt].iface_no   = port_cnt;
+		g_iface_info.vhost[port_cnt].dpdk_port  = -1;
+		g_iface_info.vhost[port_cnt].class_id.vlantag.vid =
+				ETH_VLAN_ID_MAX;
+		g_iface_info.ring[port_cnt].iface_type = UNDEF;
+		g_iface_info.ring[port_cnt].iface_no   = port_cnt;
+		g_iface_info.ring[port_cnt].dpdk_port  = -1;
+		g_iface_info.ring[port_cnt].class_id.vlantag.vid =
+				ETH_VLAN_ID_MAX;
 	}
 }
 
@@ -1098,13 +1110,13 @@ spp_get_client_id(void)
  * Check mac address used on the port for registering or removing
  */
 int
-spp_check_mac_used_port(
-		uint64_t mac_addr,
-		enum port_type iface_type,
-		int iface_no)
+spp_check_classid_used_port(
+		int vid, uint64_t mac_addr,
+		enum port_type iface_type, int iface_no)
 {
 	struct spp_port_info *port_info = get_iface_info(iface_type, iface_no);
-	return (mac_addr == port_info->mac_addr);
+	return ((mac_addr == port_info->class_id.mac_addr) &&
+			(vid == port_info->class_id.vlantag.vid));
 }
 
 /*
@@ -1190,62 +1202,78 @@ set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
 int
 spp_update_classifier_table(
 		enum spp_command_action action,
-		enum spp_classifier_type type,
-		const char *data,
+		enum spp_classifier_type type __attribute__ ((unused)),
+		int vid,
+		const char *mac_addr_str,
 		const struct spp_port_index *port)
 {
 	struct spp_port_info *port_info = NULL;
 	int64_t ret_mac = 0;
 	uint64_t mac_addr = 0;
 
-	if (type == SPP_CLASSIFIER_TYPE_MAC) {
-		RTE_LOG(DEBUG, APP, "update_classifier_table ( type = mac, data = %s, port = %d:%d )\n",
-				data, port->iface_type, port->iface_no);
+	RTE_LOG(DEBUG, APP, "update_classifier_table ( type = mac, mac addr = %s, port = %d:%d )\n",
+			mac_addr_str, port->iface_type, port->iface_no);
 
-		ret_mac = spp_change_mac_str_to_int64(data);
-		if (unlikely(ret_mac == -1)) {
-			RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
-					data);
+	ret_mac = spp_change_mac_str_to_int64(mac_addr_str);
+	if (unlikely(ret_mac == -1)) {
+		RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
+				mac_addr_str);
+		return SPP_RET_NG;
+	}
+	mac_addr = (uint64_t)ret_mac;
+
+	port_info = get_iface_info(port->iface_type, port->iface_no);
+	if (unlikely(port_info == NULL)) {
+		RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
+				port->iface_type, port->iface_no);
+		return SPP_RET_NG;
+	}
+	if (unlikely(port_info->iface_type == UNDEF)) {
+		RTE_LOG(ERR, APP, "Port not added. ( port = %d:%d )\n",
+				port->iface_type, port->iface_no);
+		return SPP_RET_NG;
+	}
+
+	if (action == SPP_CMD_ACTION_DEL) {
+		/* Delete */
+		if ((port_info->class_id.vlantag.vid != 0) &&
+				unlikely(port_info->class_id.vlantag.vid !=
+				vid)) {
+			RTE_LOG(ERR, APP, "VLAN ID is different. ( vid = %d )\n",
+					vid);
 			return SPP_RET_NG;
 		}
-		mac_addr = (uint64_t)ret_mac;
-
-		port_info = get_iface_info(port->iface_type, port->iface_no);
-		if (unlikely(port_info == NULL)) {
-			RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
-					port->iface_type, port->iface_no);
-			return SPP_RET_NG;
-		}
-		if (unlikely(port_info->iface_type == UNDEF)) {
-			RTE_LOG(ERR, APP, "Port not added. ( port = %d:%d )\n",
-					port->iface_type, port->iface_no);
+		if ((port_info->class_id.mac_addr != 0) &&
+				unlikely(port_info->class_id.mac_addr !=
+						mac_addr)) {
+			RTE_LOG(ERR, APP, "MAC address is different. ( mac = %s )\n",
+					mac_addr_str);
 			return SPP_RET_NG;
 		}
 
-		if (action == SPP_CMD_ACTION_DEL) {
-			/* Delete */
-			if ((port_info->mac_addr != 0) &&
-					unlikely(port_info->mac_addr !=
-							mac_addr)) {
-				RTE_LOG(ERR, APP, "MAC address is different. ( mac = %s )\n",
-						data);
-				return SPP_RET_NG;
-			}
-
-			port_info->mac_addr = 0;
-			memset(port_info->mac_addr_str, 0x00, SPP_MIN_STR_LEN);
-		} else if (action == SPP_CMD_ACTION_ADD) {
-			/* Setting */
-			if (unlikely(port_info->mac_addr != 0)) {
-				RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d )\n",
-						port->iface_type,
-						port->iface_no);
-				return SPP_RET_NG;
-			}
-
-			port_info->mac_addr = mac_addr;
-			strcpy(port_info->mac_addr_str, data);
+		port_info->class_id.vlantag.vid = ETH_VLAN_ID_MAX;
+		port_info->class_id.mac_addr    = 0;
+		memset(port_info->class_id.mac_addr_str, 0x00, SPP_MIN_STR_LEN);
+	} else if (action == SPP_CMD_ACTION_ADD) {
+		/* Setting */
+		if (unlikely(port_info->class_id.vlantag.vid !=
+				ETH_VLAN_ID_MAX)) {
+			RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d, vlan = %d != %d )\n",
+					port->iface_type, port->iface_no,
+					port_info->class_id.vlantag.vid, vid);
+			return SPP_RET_NG;
 		}
+		if (unlikely(port_info->class_id.mac_addr != 0)) {
+			RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d, mac = %s != %s )\n",
+					port->iface_type, port->iface_no,
+					port_info->class_id.mac_addr_str,
+					mac_addr_str);
+			return SPP_RET_NG;
+		}
+
+		port_info->class_id.vlantag.vid = vid;
+		port_info->class_id.mac_addr    = mac_addr;
+		strcpy(port_info->class_id.mac_addr_str, mac_addr_str);
 	}
 
 	set_component_change_port(port_info, SPP_PORT_RXTX_TX);
