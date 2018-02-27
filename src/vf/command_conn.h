@@ -3,11 +3,11 @@
 
 /** result code - temporary error. please retry */
 #define SPP_CONNERR_TEMPORARY -1
-/** result code - fatal error occurred. should teminate process. */
+/** result code - fatal error occurred. should terminate process. */
 #define SPP_CONNERR_FATAL     -2
 
 /**
- * intialize command connection.
+ * initialize command connection.
  *
  * @param controller_ip
  *  controller listen ip address.
@@ -44,7 +44,7 @@ int spp_connect_to_controller(int *sock);
  * @retval 0 <                   succeeded. number of bytes received.
  * @retval 0                     no receive message.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.
- * @retval SPP_CONNERR_FATAL     fatal error occurred. should teminate process.
+ * @retval SPP_CONNERR_FATAL     fatal error occurred. should terminate process.
  */
 int spp_receive_message(int *sock, char **msgbuf);
 
@@ -65,6 +65,6 @@ int spp_receive_message(int *sock, char **msgbuf);
  * @retval 0                     succeeded.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.
  */
-int spp_send_message(int *sock, const char* message, size_t message_len);
+int spp_send_message(int *sock, const char *message, size_t message_len);
 
 #endif /* _COMMAND_CONN_H_ */

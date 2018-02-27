@@ -1,8 +1,6 @@
 #ifndef _COMMAND_DEC_H_
 #define _COMMAND_DEC_H_
 
-//#include "spp_vf.h"
-
 /* max number of command per request */
 #define SPP_CMD_MAX_COMMANDS 32
 
@@ -20,7 +18,7 @@
 
 /* decode error code */
 enum spp_command_decode_error_code {
-	/* not use 0, in general 0 is ok */
+	/* not use 0, in general 0 is OK */
 	SPP_CMD_DERR_BAD_FORMAT = 1,
 	SPP_CMD_DERR_UNKNOWN_COMMAND,
 	SPP_CMD_DERR_NO_PARAM,
@@ -28,8 +26,12 @@ enum spp_command_decode_error_code {
 	SPP_CMD_DERR_BAD_VALUE,
 };
 
-/* command type
-	do it same as the order of COMMAND_TYPE_STRINGS */
+/**
+ * spp command type.
+ *
+ * @attention This enumerated type must have the same order of command_list
+ *            defined in command_dec.c
+*/
 enum spp_command_type {
 	SPP_CMDTYPE_CLASSIFIER_TABLE,
 	SPP_CMDTYPE_FLUSH,

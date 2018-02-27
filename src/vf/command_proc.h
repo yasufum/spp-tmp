@@ -2,10 +2,10 @@
 #define _COMMAND_PROC_H_
 
 /**
- * intialize command processor.
+ * initialize command processor.
  *
  * @param controller_ip
- *  controller listen ip address.
+ *  controller listen IP address.
  *
  * @param controller_port
  *  controller listen port number.

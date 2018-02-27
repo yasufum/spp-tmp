@@ -9,10 +9,10 @@
  * @param capacity
  *  initial buffer size (include null char).
  *
- * @retval not-NULL pointer to the allocated memory. 
+ * @retval not-NULL pointer to the allocated memory.
  * @retval NULL     error.
  */
-char* spp_strbuf_allocate(size_t capacity);
+char *spp_strbuf_allocate(size_t capacity);
 
 /**
  * free string buffer.
@@ -20,7 +20,7 @@ char* spp_strbuf_allocate(size_t capacity);
  * @param strbuf
  *  spp_strbuf_allocate/spp_strbuf_append return value.
  */
-void spp_strbuf_free(char* strbuf);
+void spp_strbuf_free(char *strbuf);
 
 /**
  * append string to buffer.
@@ -35,11 +35,10 @@ void spp_strbuf_free(char* strbuf);
  * @param append_len
  *  length of append string.
  *
- * @return if the capacity is enough, the 1st parameter "strbuf", 
- *         if it is insufficient, a new pointer to the allocated memory.
- *         in that case, old strbuf is freed in the function.
+ * @return if "strbuf" has enough space to append, returns "strbuf"
+ *         else returns a new pointer to the allocated memory.
  */
-char* spp_strbuf_append(char *strbuf, const char *append, size_t append_len);
+char *spp_strbuf_append(char *strbuf, const char *append, size_t append_len);
 
 /**
  * remove string from front.
@@ -51,6 +50,6 @@ char* spp_strbuf_append(char *strbuf, const char *append, size_t append_len);
  * @param remove_len
  *  length of remove.
  */
-char* spp_strbuf_remove_front(char *strbuf, size_t remove_len);
+char *spp_strbuf_remove_front(char *strbuf, size_t remove_len);
 
 #endif /* _STRING_BUFFER_H_ */

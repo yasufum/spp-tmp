@@ -16,11 +16,11 @@
 /* one receive message size */
 #define MESSAGE_BUFFER_BLOCK_SIZE 2048
 
-/* controller's ip address */
+/* controller's IP address */
 static char g_controller_ip[128] = "";
 
 /* controller's port number */
-static int g_controller_port = 0;
+static int g_controller_port;
 
 /* initialize command connection */
 int
@@ -40,15 +40,15 @@ spp_connect_to_controller(int *sock)
 	int ret = -1;
 	int sock_flg = 0;
 
-	if (likely(*sock >=0))
+	if (likely(*sock >= 0))
 		return 0;
 
 	/* create socket */
 	RTE_LOG(INFO, SPP_COMMAND_PROC, "Creating socket...\n");
 	*sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (unlikely(*sock < 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, 
-				"Cannot create tcp socket. errno=%d\n", errno);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Cannot create TCP socket. errno=%d\n", errno);
 		return SPP_CONNERR_TEMPORARY;
 	}
 
@@ -58,12 +58,14 @@ spp_connect_to_controller(int *sock)
 	controller_addr.sin_port = htons(g_controller_port);
 
 	/* connect to */
-	RTE_LOG(INFO, SPP_COMMAND_PROC, "Trying to connect ... socket=%d\n", *sock);
+	RTE_LOG(INFO, SPP_COMMAND_PROC, "Trying to connect ... socket=%d\n",
+			*sock);
 	ret = connect(*sock, (struct sockaddr *)&controller_addr,
 			sizeof(controller_addr));
 	if (unlikely(ret < 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"Cannot connect to controller. errno=%d\n", errno);
+				"Cannot connect to controller. errno=%d\n",
+				errno);
 		close(*sock);
 		*sock = -1;
 		return SPP_CONNERR_TEMPORARY;
@@ -94,12 +96,12 @@ spp_receive_message(int *sock, char **strbuf)
 		if (likely(ret == 0)) {
 			RTE_LOG(INFO, SPP_COMMAND_PROC,
 					"Controller has performed an shutdown.");
-		} else if (likely(errno == EAGAIN || errno == EWOULDBLOCK)) {
-			/* no receive message */
-			return 0;
-		} else {
+		} else if (unlikely(errno != EAGAIN && errno != EWOULDBLOCK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Receive failure. errno=%d\n", errno);
+		} else {
+			/* no receive message */
+			return 0;
 		}
 
 		RTE_LOG(INFO, SPP_COMMAND_PROC, "Assume Server closed connection.\n");
@@ -125,7 +127,7 @@ spp_receive_message(int *sock, char **strbuf)
 
 /* send message */
 int
-spp_send_message(int *sock, const char* message, size_t message_len)
+spp_send_message(int *sock, const char *message, size_t message_len)
 {
 	int ret = -1;
 

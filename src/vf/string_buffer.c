@@ -39,7 +39,7 @@ strbuf_reallocate(char *strbuf, size_t required_len)
 char*
 spp_strbuf_allocate(size_t capacity)
 {
-	char* buf = (char *)malloc(capacity + sizeof(size_t));
+	char *buf = (char *)malloc(capacity + sizeof(size_t));
 	if (unlikely(buf == NULL))
 		return NULL;
 
@@ -54,7 +54,7 @@ spp_strbuf_allocate(size_t capacity)
 
 /* free message buffer */
 void
-spp_strbuf_free(char* strbuf)
+spp_strbuf_free(char *strbuf)
 {
 	if (likely(strbuf != NULL)) {
 		RTE_LOG(DEBUG, SPP_STRING_BUFF,

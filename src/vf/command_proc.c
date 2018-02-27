@@ -172,7 +172,8 @@ execute_command(const struct spp_command *command)
 
 	switch (command->type) {
 	case SPP_CMDTYPE_CLASSIFIER_TABLE:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute classifier_table command.\n");
+		RTE_LOG(INFO, SPP_COMMAND_PROC,
+				"Execute classifier_table command.\n");
 		ret = spp_update_classifier_table(
 				command->spec.classifier_table.action,
 				command->spec.classifier_table.type,
@@ -195,7 +196,8 @@ execute_command(const struct spp_command *command)
 		break;
 
 	case SPP_CMDTYPE_PORT:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute port command. (act = %d)\n",
+		RTE_LOG(INFO, SPP_COMMAND_PROC,
+				"Execute port command. (act = %d)\n",
 				command->spec.port.action);
 		ret = spp_update_port(
 				command->spec.port.action,
@@ -210,7 +212,9 @@ execute_command(const struct spp_command *command)
 		break;
 
 	default:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute other command. type=%d\n", command->type);
+		RTE_LOG(INFO, SPP_COMMAND_PROC,
+				"Execute other command. type=%d\n",
+				command->type);
 		/* nothing to do here */
 		break;
 	}
@@ -220,7 +224,9 @@ execute_command(const struct spp_command *command)
 
 /* make decode error message for response */
 static const char *
-make_decode_error_message(const struct spp_command_decode_error *decode_error, char *message)
+make_decode_error_message(
+		const struct spp_command_decode_error *decode_error,
+		char *message)
 {
 	switch (decode_error->code) {
 	case SPP_CMD_DERR_BAD_FORMAT:
@@ -232,11 +238,13 @@ make_decode_error_message(const struct spp_command_decode_error *decode_error, c
 		break;
 
 	case SPP_CMD_DERR_NO_PARAM:
-		sprintf(message, "not enough parameter(%s)", decode_error->value_name);
+		sprintf(message, "not enough parameter(%s)",
+				decode_error->value_name);
 		break;
 
 	case SPP_CMD_DERR_BAD_TYPE:
-		sprintf(message, "bad value type(%s)", decode_error->value_name);
+		sprintf(message, "bad value type(%s)",
+				decode_error->value_name);
 		break;
 
 	case SPP_CMD_DERR_BAD_VALUE:
@@ -272,7 +280,6 @@ set_command_results(struct command_result *result,
 		memset(result->error_message, 0x00, CMD_RES_ERR_MSG_SIZE);
 		break;
 	}
-	return;
 }
 
 /* set decode error to command result */
@@ -765,7 +772,8 @@ send_decode_error_response(int *sock, const struct spp_command_request *request,
 			request->num_command, command_results);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make command result response.\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Failed to make command result response.\n");
 		return;
 	}
 
@@ -785,23 +793,25 @@ send_decode_error_response(int *sock, const struct spp_command_request *request,
 		return;
 	}
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Make command response (decode error). "
+	RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+			"Make command response (decode error). "
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to send decode error response.\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Failed to send decode error response.\n");
 		/* not return */
 	}
 
 	spp_strbuf_free(msg);
-	return;
 }
 
 /* send response for command execution result */
 static void
-send_command_result_response(int *sock, const struct spp_command_request *request,
+send_command_result_response(int *sock,
+		const struct spp_command_request *request,
 		struct command_result *command_results)
 {
 	int ret = -1;
@@ -818,7 +828,8 @@ send_command_result_response(int *sock, const struct spp_command_request *reques
 			request->num_command, command_results);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make command result response.\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Failed to make command result response.\n");
 		return;
 	}
 
@@ -827,7 +838,8 @@ send_command_result_response(int *sock, const struct spp_command_request *reques
 		ret = append_client_id_value("client_id", &tmp_buff, NULL);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make client id response.\n");
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
+					"Failed to make client id response.\n");
 			return;
 		}
 	}
@@ -837,7 +849,8 @@ send_command_result_response(int *sock, const struct spp_command_request *reques
 		ret = append_info_value("info", &tmp_buff);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make status response.\n");
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
+					"Failed to make status response.\n");
 			return;
 		}
 	}
@@ -858,18 +871,19 @@ send_command_result_response(int *sock, const struct spp_command_request *reques
 		return;
 	}
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Make command response (command result). "
+	RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+			"Make command response (command result). "
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to send command result response.\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+			"Failed to send command result response.\n");
 		/* not return */
 	}
 
 	spp_strbuf_free(msg);
-	return;
 }
 
 /* process command request from no-null-terminated string */
@@ -888,7 +902,8 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	memset(command_results, 0, sizeof(command_results));
 
 	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Start command request processing. "
-			"request_str=\n%.*s\n", (int)request_str_len, request_str);
+			"request_str=\n%.*s\n",
+			(int)request_str_len, request_str);
 
 	/* decode request message */
 	ret = spp_command_decode_request(
@@ -898,7 +913,8 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 		set_decode_error_to_results(command_results, &request,
 				&decode_error);
 		send_decode_error_response(sock, &request, command_results);
-		RTE_LOG(DEBUG, SPP_COMMAND_PROC, "End command request processing.\n");
+		RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+				"End command request processing.\n");
 		return 0;
 	}
 
@@ -927,7 +943,8 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	if (request.is_requested_exit) {
 		/* Terminated by process exit command.                       */
 		/* Other route is normal end because it responds to command. */
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "No response with process exit command.\n");
+		RTE_LOG(INFO, SPP_COMMAND_PROC,
+				"No response with process exit command.\n");
 		return -1;
 	}
 
@@ -954,7 +971,7 @@ spp_command_proc_do(void)
 	int msg_ret = -1;
 
 	static int sock = -1;
-	static char *msgbuf = NULL;
+	static char *msgbuf;
 
 	if (unlikely(msgbuf == NULL)) {
 		msgbuf = spp_strbuf_allocate(CMD_REQ_BUF_INIT_SIZE);

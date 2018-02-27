@@ -8,13 +8,14 @@
 
 /** ring latency statistics */
 struct spp_ringlatencystats_ring_latency_stats {
-	uint64_t slot[SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT]; /**< slots to save latency */
+	/**< slots to save latency */
+	uint64_t slot[SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT];
 };
 
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 /**
- * initialize ring latency statisics.
+ * initialize ring latency statistics.
  *
  * @retval 0: succeeded.
  * @retval -1: failed.
@@ -22,7 +23,7 @@ struct spp_ringlatencystats_ring_latency_stats {
 int spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count);
 
 /**
- *uninitialize ring latency statisics.
+ *uninitialize ring latency statistics.
  */
 void spp_ringlatencystats_uninit(void);
 
@@ -43,14 +44,14 @@ void spp_ringlatencystats_calculate_latency(int ring_id,
 			struct rte_mbuf **pkts, uint16_t nb_pkts);
 
 /**
- * get number of ring latency statisics.
+ * get number of ring latency statistics.
  *
  * @return spp_ringlatencystats_init's parameter "stats_count"
  */
 int spp_ringlatencystats_get_count(void);
 
 /**
- *get specific ring latency statisics.
+ *get specific ring latency statistics.
  */
 void spp_ringlatencystats_get_stats(int ring_id,
 		struct spp_ringlatencystats_ring_latency_stats *stats);

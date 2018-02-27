@@ -80,16 +80,21 @@ struct cancel_backup_info {
 };
 
 /* Declare global variables */
-static unsigned int g_main_lcore_id = 0xffffffff;
-static struct startup_param		g_startup_param;
-static struct if_info			g_if_info;
-static struct spp_component_info	g_component_info[RTE_MAX_LCORE];
-static struct core_mng_info		g_core_info[RTE_MAX_LCORE];
+static unsigned int         g_main_lcore_id = 0xffffffff;
+static struct startup_param g_startup_param;
 
-static int 				g_change_core[RTE_MAX_LCORE];  /* TODO(yasufum) add desc how it is used and why changed component is kept */
-static int 				g_change_component[RTE_MAX_LCORE];
+static struct if_info            g_if_info;
+static struct spp_component_info g_component_info[RTE_MAX_LCORE];
+static struct core_mng_info      g_core_info[RTE_MAX_LCORE];
 
-static struct cancel_backup_info	g_backup_info;
+/*
+ * TODO(yasufum) add desc how it is used
+ * and why changed component is kept
+ */
+static int g_change_core[RTE_MAX_LCORE];
+static int g_change_component[RTE_MAX_LCORE];
+
+static struct cancel_backup_info g_backup_info;
 
 /* Print help message */
 static void
@@ -185,7 +190,8 @@ add_vhost_pmd(int index, int client)
 			name, iface, nr_queues, client);
 	ret = rte_eth_dev_attach(devargs, &vhost_port_id);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_attach error. (ret = %d)\n", ret);
+		RTE_LOG(ERR, APP, "rte_eth_dev_attach error. (ret = %d)\n",
+				ret);
 		return ret;
 	}
 
@@ -270,9 +276,8 @@ check_core_status_wait(enum spp_core_status status)
 	for (cnt = 0; cnt < SPP_CORE_STATUS_CHECK_MAX; cnt++) {
 		sleep(1);
 		int ret = check_core_status(status);
-		if (ret == 0) {
+		if (ret == 0)
 			return 0;
-		}
 	}
 
 	RTE_LOG(ERR, APP, "Status check time out. (status = %d)\n", status);
@@ -313,10 +318,10 @@ stop_process(int signal) {
 }
 
 /**
- * Convert string of given client id to inteter
+ * Convert string of given client id to integer
  *
- * If succeeded, client id of interger is assigned to client_id and
- * reuturn 0. Or return -1 if failed.
+ * If succeeded, client id of integer is assigned to client_id and
+ * return 0. Or return -1 if failed.
  */
 static int
 parse_app_client_id(const char *client_id_str, int *client_id)
@@ -336,7 +341,7 @@ parse_app_client_id(const char *client_id_str, int *client_id)
 	return 0;
 }
 
-/* Parse options for server ip and port */
+/* Parse options for server IP and port */
 static int
 parse_app_server(const char *server_str, char *server_ip, int *server_port)
 {
@@ -356,7 +361,7 @@ parse_app_server(const char *server_str, char *server_ip, int *server_port)
 	memcpy(server_ip, server_str, pos);
 	server_ip[pos] = '\0';
 	*server_port = port;
-	RTE_LOG(DEBUG, APP, "Set server ip   = %s\n", server_ip);
+	RTE_LOG(DEBUG, APP, "Set server IP   = %s\n", server_ip);
 	RTE_LOG(DEBUG, APP, "Set server port = %d\n", *server_port);
 	return 0;
 }
@@ -372,19 +377,20 @@ parse_app_args(int argc, char *argv[])
 	const int argcopt = argc;
 	char *argvopt[argcopt];
 	const char *progname = argv[0];
-	static struct option lgopts[] = { 
-			{ "client-id", required_argument, NULL, SPP_LONGOPT_RETVAL_CLIENT_ID },
-			{ "vhost-client", no_argument, NULL, SPP_LONGOPT_RETVAL_VHOST_CLIENT },
+	static struct option lgopts[] = {
+			{ "client-id", required_argument, NULL,
+					SPP_LONGOPT_RETVAL_CLIENT_ID },
+			{ "vhost-client", no_argument, NULL,
+					SPP_LONGOPT_RETVAL_VHOST_CLIENT },
 			{ 0 },
 	};
 
 	/**
-	 * Save argv to argvopt to aovid loosing the order of options
+	 * Save argv to argvopt to avoid losing the order of options
 	 * by getopt_long()
 	 */
-	for (cnt = 0; cnt < argcopt; cnt++) {
+	for (cnt = 0; cnt < argcopt; cnt++)
 		argvopt[cnt] = argv[cnt];
-	}
 
 	/* Clear startup parameters */
 	memset(&g_startup_param, 0x00, sizeof(g_startup_param));
@@ -396,7 +402,8 @@ parse_app_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (parse_app_client_id(optarg, &g_startup_param.client_id) != 0) {
+			if (parse_app_client_id(optarg,
+					&g_startup_param.client_id) != 0) {
 				usage(progname);
 				return -1;
 			}
@@ -416,7 +423,6 @@ parse_app_args(int argc, char *argv[])
 		default:
 			usage(progname);
 			return -1;
-			break;
 		}
 	}
 
@@ -448,16 +454,12 @@ get_if_area(enum port_type if_type, int if_no)
 	switch (if_type) {
 	case PHY:
 		return &g_if_info.nic[if_no];
-		break;
 	case VHOST:
 		return &g_if_info.vhost[if_no];
-		break;
 	case RING:
 		return &g_if_info.ring[if_no];
-		break;
 	default:
 		return NULL;
-		break;
 	}
 }
 
@@ -670,9 +672,8 @@ init_component_info(void)
 {
 	int cnt;
 	memset(&g_component_info, 0x00, sizeof(g_component_info));
-	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
+	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++)
 		g_component_info[cnt].component_id = cnt;
-	}
 	memset(g_change_component, 0x00, sizeof(g_change_component));
 }
 
@@ -704,9 +705,8 @@ set_nic_interface(void)
 
 	/* NIC Setting */
 	g_if_info.num_nic = rte_eth_dev_count();
-	if (g_if_info.num_nic > RTE_MAX_ETHPORTS) {
+	if (g_if_info.num_nic > RTE_MAX_ETHPORTS)
 		g_if_info.num_nic = RTE_MAX_ETHPORTS;
-	}
 
 	for (nic_cnt = 0; nic_cnt < g_if_info.num_nic; nic_cnt++) {
 		g_if_info.nic[nic_cnt].if_type   = PHY;
@@ -725,15 +725,14 @@ set_nic_interface(void)
 static int
 init_manage_data(void)
 {
-	/* Initialize interface and core infomation */
+	/* Initialize interface and core information */
 	init_if_info();
 	init_core_info();
 	init_component_info();
 
 	int ret_nic = set_nic_interface();
-	if (unlikely(ret_nic != 0)) {
+	if (unlikely(ret_nic != 0))
 		return -1;
-	}
 
 	return 0;
 }
@@ -759,27 +758,25 @@ print_ring_latency_stats(void)
 	printf("RING Latency\n");
 	printf(" RING");
 	for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-		if (g_if_info.ring[ring_cnt].if_type == UNDEF) {
+		if (g_if_info.ring[ring_cnt].if_type == UNDEF)
 			continue;
-		}
+
 		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
 		printf(", %-18d", ring_cnt);
 	}
 	printf("\n");
 
-	for (stats_cnt = 0; stats_cnt < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT; stats_cnt++) {
+	for (stats_cnt = 0; stats_cnt < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT;
+			stats_cnt++) {
 		printf("%3dns", stats_cnt);
 		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-			if (g_if_info.ring[ring_cnt].if_type == UNDEF) {
+			if (g_if_info.ring[ring_cnt].if_type == UNDEF)
 				continue;
-			}
 
 			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
 		}
 		printf("\n");
 	}
-
-	return;
 }
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -791,7 +788,7 @@ del_vhost_sockfile(struct spp_port_info *vhost)
 {
 	int cnt;
 
-	/* Do not rmeove for if it is running in vhost-client mode. */
+	/* Do not remove for if it is running in vhost-client mode. */
 	if (g_startup_param.vhost_client != 0)
 		return;
 
@@ -859,28 +856,33 @@ slave_main(void *arg __attribute__ ((unused)))
 	RTE_LOG(INFO, APP, "Core[%d] Start.\n", lcore_id);
 	set_core_status(lcore_id, SPP_CORE_IDLE);
 
-	while((status = spp_get_core_status(lcore_id)) != SPP_CORE_STOP_REQUEST) {
+	while ((status = spp_get_core_status(lcore_id)) !=
+			SPP_CORE_STOP_REQUEST) {
 		if (status != SPP_CORE_FORWARD)
 			continue;
 
 		if (spp_check_core_index(lcore_id)) {
 			/* Setting with the flush command trigger. */
-			info->ref_index = (info->upd_index+1)%SPP_INFO_AREA_MAX;
+			info->ref_index = (info->upd_index+1) %
+					SPP_INFO_AREA_MAX;
 			core = get_core_info(lcore_id);
 		}
 
 		for (cnt = 0; cnt < core->num; cnt++) {
-			if (spp_get_component_type(lcore_id) == SPP_COMPONENT_CLASSIFIER_MAC) {
+			if (spp_get_component_type(lcore_id) ==
+					SPP_COMPONENT_CLASSIFIER_MAC) {
 				/* Classifier loops inside the function. */
 				ret = spp_classifier_mac_do(core->id[cnt]);
 				break;
-			} else {
-				/* Forward / Merge returns at once.          */
-				/* It is for processing multiple components. */
-				ret = spp_forward(core->id[cnt]);
-				if (unlikely(ret != 0))
-					break;
 			}
+
+			/*
+			 * Forward / Merge returns at once.
+			 * It is for processing multiple components.
+			 */
+			ret = spp_forward(core->id[cnt]);
+			if (unlikely(ret != 0))
+				break;
 		}
 		if (unlikely(ret != 0)) {
 			RTE_LOG(ERR, APP, "Core[%d] Component Error. (id = %d)\n",
@@ -895,8 +897,11 @@ slave_main(void *arg __attribute__ ((unused)))
 }
 
 /* TODO(yasufum) refactor, change if to iface. */
-/* TODO(yasufum) change test using ut_main(), or add desccription for what and why use it */
-/* TODO(yasufum) change to return -1 explicity if error is occured. */
+/*
+ * TODO(yasufum) change test using ut_main(),
+ * or add description for what and why use it
+ */
+/* TODO(yasufum) change to return -1 explicitly if error is occurred. */
 int
 #ifndef USE_UT_SPP_VF
 main(int argc, char *argv[])
@@ -909,7 +914,8 @@ ut_main(int argc, char *argv[])
 	/* Daemonize process */
 	int ret_daemon = daemon(0, 0);
 	if (unlikely(ret_daemon != 0)) {
-		RTE_LOG(ERR, APP, "daemonize is faild. (ret = %d)\n", ret_daemon);
+		RTE_LOG(ERR, APP, "daemonize is failed. (ret = %d)\n",
+				ret_daemon);
 		return ret_daemon;
 	}
 #endif
@@ -918,11 +924,10 @@ ut_main(int argc, char *argv[])
 	signal(SIGTERM, stop_process);
 	signal(SIGINT,  stop_process);
 
-	while(1) {
+	while (1) {
 		int ret_dpdk = rte_eal_init(argc, argv);
-		if (unlikely(ret_dpdk < 0)) {
+		if (unlikely(ret_dpdk < 0))
 			break;
-		}
 
 		argc -= ret_dpdk;
 		argv += ret_dpdk;
@@ -932,22 +937,19 @@ ut_main(int argc, char *argv[])
 
 		/* Parse spp_vf specific parameters */
 		int ret_parse = parse_app_args(argc, argv);
-		if (unlikely(ret_parse != 0)) {
+		if (unlikely(ret_parse != 0))
 			break;
-		}
 
 		/* Get lcore id of main thread to set its status after */
 		g_main_lcore_id = rte_lcore_id();
 
 		int ret_manage = init_manage_data();
-		if (unlikely(ret_manage != 0)) {
+		if (unlikely(ret_manage != 0))
 			break;
-		}
 
 		int ret_classifier_mac_init = spp_classifier_mac_init();
-		if (unlikely(ret_classifier_mac_init != 0)) {
+		if (unlikely(ret_classifier_mac_init != 0))
 			break;
-		}
 
 		spp_forward_init();
 
@@ -955,16 +957,15 @@ ut_main(int argc, char *argv[])
 		int ret_command_init = spp_command_proc_init(
 				g_startup_param.server_ip,
 				g_startup_param.server_port);
-		if (unlikely(ret_command_init != 0)) {
+		if (unlikely(ret_command_init != 0))
 			break;
-		}
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 		int ret_ringlatency = spp_ringlatencystats_init(
-				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL, g_if_info.num_ring);
-		if (unlikely(ret_ringlatency != 0)) {
+				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
+				g_if_info.num_ring);
+		if (unlikely(ret_ringlatency != 0))
 			break;
-		}
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 		/* Start worker threads of classifier and forwarder */
@@ -976,9 +977,8 @@ ut_main(int argc, char *argv[])
 		/* Set the status of main thread to idle */
 		g_core_info[g_main_lcore_id].status = SPP_CORE_IDLE;
 		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
-		if (unlikely(ret_wait != 0)) {
+		if (unlikely(ret_wait != 0))
 			break;
-		}
 
 		/* Start forwarding */
 		set_all_core_status(SPP_CORE_FORWARD);
@@ -991,15 +991,15 @@ ut_main(int argc, char *argv[])
 		/* Enter loop for accepting commands */
 		int ret_do = 0;
 #ifndef USE_UT_SPP_VF
-		while(likely(g_core_info[g_main_lcore_id].status != SPP_CORE_STOP_REQUEST)) {
+		while (likely(g_core_info[g_main_lcore_id].status !=
+				SPP_CORE_STOP_REQUEST)) {
 #else
 		{
 #endif
 			/* Receive command */
 			ret_do = spp_command_proc_do();
-			if (unlikely(ret_do != 0)) {
+			if (unlikely(ret_do != 0))
 				break;
-			}
 
 			sleep(1);
 
@@ -1018,15 +1018,16 @@ ut_main(int argc, char *argv[])
 	}
 
 	/* Finalize to exit */
-	if (g_main_lcore_id == rte_lcore_id())
-	{
+	if (g_main_lcore_id == rte_lcore_id()) {
 		g_core_info[g_main_lcore_id].status = SPP_CORE_STOP;
 		int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
-		if (unlikely(ret_core_end != 0)) {
+		if (unlikely(ret_core_end != 0))
 			RTE_LOG(ERR, APP, "Core did not stop.\n");
-		}
 
-		/* Remove vhost sock file if it is not running in vhost-client mode */
+		/*
+		 * Remove vhost sock file if it is not running
+		 *  in vhost-client mode
+		 */
 		del_vhost_sockfile(g_if_info.vhost);
 	}
 
@@ -1119,13 +1120,15 @@ set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
 {
 	int ret = 0;
 	if ((rxtx == SPP_PORT_RXTX_RX) || (rxtx == SPP_PORT_RXTX_ALL)) {
-		ret = spp_check_used_port(port->if_type, port->if_no, SPP_PORT_RXTX_RX);
+		ret = spp_check_used_port(port->if_type, port->if_no,
+				SPP_PORT_RXTX_RX);
 		if (ret >= 0)
 			g_change_component[ret] = 1;
 	}
 
 	if ((rxtx == SPP_PORT_RXTX_TX) || (rxtx == SPP_PORT_RXTX_ALL)) {
-		ret = spp_check_used_port(port->if_type, port->if_no, SPP_PORT_RXTX_TX);
+		ret = spp_check_used_port(port->if_type, port->if_no,
+				SPP_PORT_RXTX_TX);
 		if (ret >= 0)
 			g_change_component[ret] = 1;
 	}
@@ -1148,7 +1151,8 @@ spp_update_classifier_table(
 
 		ret_mac = spp_change_mac_str_to_int64(data);
 		if (unlikely(ret_mac == -1)) {
-			RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n", data);
+			RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
+					data);
 			return SPP_RET_NG;
 		}
 		mac_addr = (uint64_t)ret_mac;
@@ -1168,7 +1172,8 @@ spp_update_classifier_table(
 		if (action == SPP_CMD_ACTION_DEL) {
 			/* Delete */
 			if ((port_info->mac_addr != 0) &&
-					unlikely(port_info->mac_addr != mac_addr)) {
+					unlikely(port_info->mac_addr !=
+							mac_addr)) {
 				RTE_LOG(ERR, APP, "MAC address is different. ( mac = %s )\n",
 						data);
 				return SPP_RET_NG;
@@ -1176,8 +1181,7 @@ spp_update_classifier_table(
 
 			port_info->mac_addr = 0;
 			memset(port_info->mac_addr_str, 0x00, SPP_MIN_STR_LEN);
-		}
-		else if (action == SPP_CMD_ACTION_ADD) {
+		} else if (action == SPP_CMD_ACTION_ADD) {
 			/* Setting */
 			if (unlikely(port_info->mac_addr != 0)) {
 				RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d )\n",
@@ -1240,9 +1244,8 @@ get_del_core_element(int info, int num, int *array)
 	/* Last element is excluded from movement. */
 	max--;
 
-	for (cnt = match; cnt < max; cnt++) {
+	for (cnt = match; cnt < max; cnt++)
 		array[cnt] = array[cnt+1];
-	}
 
 	/* Last element is cleared. */
 	array[cnt] = 0;
@@ -1286,7 +1289,8 @@ spp_update_component(
 		}
 
 		core = &info->core[info->upd_index];
-		if ((core->type != SPP_COMPONENT_UNUSE) && (core->type != type)) {
+		if ((core->type != SPP_COMPONENT_UNUSE) &&
+				(core->type != type)) {
 			RTE_LOG(ERR, APP, "Component type is error.\n");
 			return SPP_RET_NG;
 		}
@@ -1370,9 +1374,8 @@ get_del_port_element(
 	/* Last element is excluded from movement. */
 	max--;
 
-	for (cnt = match; cnt < max; cnt++) {
+	for (cnt = match; cnt < max; cnt++)
 		array[cnt] = array[cnt+1];
-	}
 
 	/* Last element is cleared. */
 	array[cnt] = NULL;
@@ -1456,7 +1459,8 @@ flush_port(void)
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &g_if_info.vhost[cnt];
 		if ((port->if_type != UNDEF) && (port->dpdk_port < 0)) {
-			ret = add_vhost_pmd(port->if_no, g_startup_param.vhost_client);
+			ret = add_vhost_pmd(port->if_no,
+					g_startup_param.vhost_client);
 			if (ret < 0)
 				return SPP_RET_NG;
 			port->dpdk_port = ret;
@@ -1495,17 +1499,17 @@ flush_core(void)
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		if (g_change_core[cnt] != 0) {
 			info = &g_core_info[cnt];
-			while(likely(info->ref_index == info->upd_index))
+			while (likely(info->ref_index == info->upd_index))
 				rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
 			memcpy(&info->core[info->upd_index],
 					&info->core[info->ref_index],
-					sizeof(struct core_info)); 
+					sizeof(struct core_info));
 		}
 	}
 }
 
-/* Flush chagned component */
+/* Flush changed component */
 static int
 flush_component(void)
 {
@@ -1513,19 +1517,20 @@ flush_component(void)
 	int cnt = 0;
 	struct spp_component_info *component_info = NULL;
 
-	for(cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
+	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		if (g_change_component[cnt] == 0)
 			continue;
 
 		component_info = &g_component_info[cnt];
-		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC) {
+		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
 			ret = spp_classifier_mac_update(component_info);
-		} else {
+		else
 			ret = spp_forward_update(component_info);
-		}
+
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, APP, "Flush error. ( component = %s, type = %d)\n",
-					component_info->name, component_info->type);
+					component_info->name,
+					component_info->type);
 			return SPP_RET_NG;
 		}
 	}
@@ -1560,7 +1565,7 @@ spp_cancel(void)
 	cancel_mng_info(&g_backup_info);
 }
 
-/* Iterate core infomartion */
+/* Iterate core information */
 int
 spp_iterate_core_info(struct spp_iterate_core_params *params)
 {
@@ -1620,7 +1625,7 @@ spp_iterate_classifier_table(
 
 	ret = spp_classifier_mac_iterate_table(params);
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, APP, "Cannot iterate classfier_mac_table.\n");
+		RTE_LOG(ERR, APP, "Cannot iterate classifier_mac_table.\n");
 		return SPP_RET_NG;
 	}
 
@@ -1628,8 +1633,8 @@ spp_iterate_classifier_table(
 }
 
 /**
- * Sepeparate port id of combination of iface type and number and
- * assign to given argment, if_type and if_no.
+ * Separate port id of combination of iface type and number and
+ * assign to given argument, if_type and if_no.
  *
  * For instance, 'ring:0' is separated to 'ring' and '0'.
  *
@@ -1643,21 +1648,25 @@ spp_get_if_info(const char *port, enum port_type *if_type, int *if_no)
 	char *endptr = NULL;
 
 	/* Find out which type of interface from port */
-	if (strncmp(port, SPP_IFTYPE_NIC_STR ":", strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
+	if (strncmp(port, SPP_IFTYPE_NIC_STR ":",
+			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
 		/* NIC */
 		type = PHY;
 		no_str = &port[strlen(SPP_IFTYPE_NIC_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_VHOST_STR ":", strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
+	} else if (strncmp(port, SPP_IFTYPE_VHOST_STR ":",
+			strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
 		/* VHOST */
 		type = VHOST;
 		no_str = &port[strlen(SPP_IFTYPE_VHOST_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_RING_STR ":", strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
+	} else if (strncmp(port, SPP_IFTYPE_RING_STR ":",
+			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
 		/* RING */
 		type = RING;
 		no_str = &port[strlen(SPP_IFTYPE_RING_STR)+1];
 	} else {
 		/* OTHER */
-		RTE_LOG(ERR, APP, "Unknown interface type. (port = %s)\n", port);
+		RTE_LOG(ERR, APP, "Unknown interface type. (port = %s)\n",
+				port);
 		return -1;
 	}
 
@@ -1678,12 +1687,12 @@ spp_get_if_info(const char *port, enum port_type *if_type, int *if_no)
 }
 
 /**
- * Generate a formatted string of conbination from interface type and
+ * Generate a formatted string of combination from interface type and
  * number and assign to given 'port'
  */
 int spp_format_port_string(char *port, enum port_type if_type, int if_no)
 {
-	const char* if_type_str;
+	const char *if_type_str;
 
 	switch (if_type) {
 	case PHY:
@@ -1721,25 +1730,23 @@ spp_change_mac_str_to_int64(const char *mac)
 	RTE_LOG(DEBUG, APP, "MAC address change. (mac = %s)\n", mac);
 
 	strcpy(tmp_mac, mac);
-	while(1) {
+	while (1) {
 		/* Split by colon(':') */
 		char *ret_tok = strtok_r(str, ":", &saveptr);
-		if (unlikely(ret_tok == NULL)) {
+		if (unlikely(ret_tok == NULL))
 			break;
-		}
 
 		/* Check for mal-formatted address */
 		if (unlikely(token_cnt >= ETHER_ADDR_LEN)) {
 			RTE_LOG(ERR, APP, "MAC address format error. (mac = %s)\n",
-					 mac);
+					mac);
 			return -1;
 		}
 
 		/* Convert string to hex value */
 		int ret_tol = strtol(ret_tok, &endptr, 16);
-		if (unlikely(ret_tok == endptr) || unlikely(*endptr != '\0')) {
+		if (unlikely(ret_tok == endptr) || unlikely(*endptr != '\0'))
 			break;
-		}
 
 		/* Append separated value to the result */
 		token_val = (int64_t)ret_tol;
@@ -1759,7 +1766,7 @@ spp_change_mac_str_to_int64(const char *mac)
 enum spp_component_type
 spp_change_component_type(const char *type_str)
 {
-	if(strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
+	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
 			 strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
 		/* Classifier */
 		return SPP_COMPONENT_CLASSIFIER_MAC;

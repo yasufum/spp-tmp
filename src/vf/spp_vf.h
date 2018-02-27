@@ -90,11 +90,11 @@ struct spp_port_index {
  * Port info
  */
 struct spp_port_info {
-	enum port_type	if_type;
-	int		if_no;
-	int		dpdk_port;
-	uint64_t	mac_addr;
-	char		mac_addr_str[SPP_MIN_STR_LEN];
+	enum port_type  if_type;
+	int             if_no;
+	int             dpdk_port;
+	uint64_t        mac_addr;
+	char            mac_addr_str[SPP_MIN_STR_LEN];
 };
 
 /*
@@ -110,17 +110,6 @@ struct spp_component_info {
 	struct spp_port_info *rx_ports[RTE_MAX_ETHPORTS];
 	struct spp_port_info *tx_ports[RTE_MAX_ETHPORTS];
 };
-
-#if 0
-/*
- * Core info
- */
-struct spp_core_info {
-	enum spp_core_status status;
-	int num_component;
-	int component_id[SPP_CONFIG_CORE_MAX];
-};
-#endif
 
 /*
  * Get client ID
@@ -190,7 +179,7 @@ struct spp_iterate_core_params {
 	spp_iterate_core_element_proc element_proc;
 };
 
-/* Iterate core infomartion */
+/* Iterate core information */
 int spp_iterate_core_info(struct spp_iterate_core_params *params);
 
 /* definition of iterated classifier element procedure function */
@@ -210,7 +199,8 @@ struct spp_iterate_classifier_table_params {
 /*
  * Iterate Classifier_table
  */
-int spp_iterate_classifier_table(struct spp_iterate_classifier_table_params *params);
+int spp_iterate_classifier_table(
+		struct spp_iterate_classifier_table_params *params);
 
 /* Get core status */
 enum spp_core_status spp_get_core_status(unsigned int lcore_id);
@@ -244,7 +234,10 @@ int spp_get_component_id(const char *name);
  * Check mac address used on the port for registering or removing
  * RETURN : True if target MAC address matches MAC address of port.
  */
-int spp_check_mac_used_port(uint64_t mac_addr, enum port_type if_type, int if_no);
+int spp_check_mac_used_port(
+		uint64_t mac_addr,
+		enum port_type if_type,
+		int if_no);
 
 /*
  * Check if port has been added.
@@ -263,7 +256,10 @@ int spp_check_flush_port(enum port_type if_type, int if_no);
  * OK : match component ID
  * NG : SPP_RET_NG
  */
-int spp_check_used_port(enum port_type if_type, int if_no, enum spp_port_rxtx rxtx);
+int spp_check_used_port(
+		enum port_type if_type,
+		int if_no,
+		enum spp_port_rxtx rxtx);
 
 /*
  * Change mac address string to int64

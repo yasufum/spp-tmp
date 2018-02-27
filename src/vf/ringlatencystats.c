@@ -20,19 +20,20 @@
 
 /** ring latency statistics information */
 struct ring_latency_stats_info {
-	uint64_t timer_tsc;   /**< sampling interval counter */
-	uint64_t prev_tsc;    /**< previous time */
-	struct spp_ringlatencystats_ring_latency_stats stats;  /**< ring latency statistics list */
+	uint64_t timer_tsc;     /**< sampling interval counter */
+	uint64_t prev_tsc;      /**< previous time */
+	struct spp_ringlatencystats_ring_latency_stats stats;
+				/**< ring latency statistics list */
 };
 
 /** sampling interval */
-static uint64_t g_samp_intvl = 0;
+static uint64_t g_samp_intvl;
 
 /** ring latency statistics information instance */
-static struct ring_latency_stats_info *g_stats_info = NULL;
+static struct ring_latency_stats_info *g_stats_info;
 
-/** number of ring latency statisics */
-static uint16_t g_stats_count = 0;
+/** number of ring latency statistics */
+static uint16_t g_stats_count;
 
 /* clock cycles per nano second */
 static inline uint64_t
@@ -44,10 +45,11 @@ cycles_per_ns(void)
 int
 spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 {
-	/* allocate memory for ring latency statisics infromation */
+	/* allocate memory for ring latency statistics information */
 	g_stats_info = rte_zmalloc(
 			"global ring_latency_stats_info",
-			sizeof(struct ring_latency_stats_info) * stats_count, 0);
+			sizeof(struct ring_latency_stats_info) * stats_count,
+			0);
 	if (unlikely(g_stats_info == NULL)) {
 		RTE_LOG(ERR, SPP_RING_LATENCY_STATS,
 				"Cannot allocate memory for ring latency stats info\n");
@@ -60,7 +62,8 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 
 	RTE_LOG(DEBUG, SPP_RING_LATENCY_STATS,
 			"g_samp_intvl=%lu, g_stats_count=%hu, cpns=%lu, NS_PER_SEC=%f\n",
-			g_samp_intvl, g_stats_count, cycles_per_ns(), NS_PER_SEC);
+			g_samp_intvl, g_stats_count,
+			cycles_per_ns(), NS_PER_SEC);
 
 	return 0;
 }
@@ -68,7 +71,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 void
 spp_ringlatencystats_uninit(void)
 {
-	/* free memory for ring latency statisics infromation */
+	/* free memory for ring latency statistics information */
 	if (likely(g_stats_info != NULL)) {
 		rte_free(g_stats_info);
 		g_stats_count = 0;
@@ -96,12 +99,13 @@ spp_ringlatencystats_add_time_stamp(int ring_id,
 		/* set tsc to mbuf::timestamp */
 		if (unlikely(stats_info->timer_tsc >= g_samp_intvl)) {
 			RTE_LOG(DEBUG, SPP_RING_LATENCY_STATS,
-					"Set timestamp. ring_id=%d, pkts_index=%u, timestamp=%lu\n", ring_id, i, now);
+					"Set timestamp. ring_id=%d, pkts_index=%u, timestamp=%lu\n",
+					ring_id, i, now);
 			pkts[i]->timestamp = now;
 			stats_info->timer_tsc = 0;
 		}
 
-		/* update previus tsc */
+		/* update previous tsc */
 		stats_info->prev_tsc = now;
 	}
 }
@@ -122,11 +126,14 @@ spp_ringlatencystats_calculate_latency(int ring_id,
 
 		/* when mbuf::timestamp is not zero */
 		/* calculate latency */
-		latency = (uint64_t)floor((now - pkts[i]->timestamp) / cycles_per_ns());
+		latency = (uint64_t)floor((now - pkts[i]->timestamp) /
+				cycles_per_ns());
 		if (likely(latency < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT-1))
 			stats_info->stats.slot[latency]++;
 		else
-			stats_info->stats.slot[SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT-1]++;
+			stats_info->stats.slot[
+					SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT
+					-1]++;
 	}
 }
 

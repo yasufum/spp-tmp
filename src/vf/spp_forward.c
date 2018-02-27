@@ -14,17 +14,18 @@ struct forward_rxtx {
 
 /* Information on the path used for forward. */
 struct forward_path {
-	char name[SPP_NAME_STR_LEN];	/* component name          */
-	volatile enum spp_component_type type;	/* component type          */
-	int num;			/* number of receive ports */
+	char name[SPP_NAME_STR_LEN];    /* component name          */
+	volatile enum spp_component_type type;
+					/* component type          */
+	int num;                        /* number of receive ports */
 	struct forward_rxtx ports[RTE_MAX_ETHPORTS];
 					/* port used for transfer  */
 };
 
 /* Information for forward. */
 struct forward_info {
-	volatile int ref_index;		/* index to reference area */
-	volatile int upd_index;		/* index to update area    */
+	volatile int ref_index; /* index to reference area */
+	volatile int upd_index; /* index to update area    */
 	struct forward_path path[SPP_INFO_AREA_MAX];
 };
 
@@ -61,15 +62,18 @@ spp_forward_update(struct spp_component_info *component)
 	struct forward_path *path = &info->path[info->upd_index];
 
 	/* Forward component allows only one receiving port. */
-	if ((component->type == SPP_COMPONENT_FORWARD) && unlikely(num_rx > 1)) {
-		RTE_LOG(ERR, FORWARD, "Component[%d] Setting error. (type = %d, rx = %d)\n",
+	if ((component->type == SPP_COMPONENT_FORWARD) &&
+			unlikely(num_rx > 1)) {
+		RTE_LOG(ERR, FORWARD,
+			"Component[%d] Setting error. (type = %d, rx = %d)\n",
 			component->component_id, component->type, num_rx);
 		return -1;
 	}
 
 	/* Component allows only one transmit port. */
 	if (unlikely(num_tx != 0) && unlikely(num_tx != 1)) {
-		RTE_LOG(ERR, FORWARD, "Component[%d] Setting error. (type = %d, tx = %d)\n",
+		RTE_LOG(ERR, FORWARD,
+			"Component[%d] Setting error. (type = %d, tx = %d)\n",
 			component->component_id, component->type, num_tx);
 		return -1;
 	}
@@ -78,7 +82,9 @@ spp_forward_update(struct spp_component_info *component)
 
 	RTE_LOG(INFO, FORWARD,
 			"Component[%d] Start update component. (name = %s, type = %d)\n",
-			component->component_id, component->name, component->type);
+			component->component_id,
+			component->name,
+			component->type);
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
 	path->type = component->type;
@@ -93,12 +99,14 @@ spp_forward_update(struct spp_component_info *component)
 				sizeof(struct spp_port_info));
 
 	info->upd_index = info->ref_index;
-	while(likely(info->ref_index == info->upd_index))
+	while (likely(info->ref_index == info->upd_index))
 		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, FORWARD,
 			"Component[%d] Complete update component. (name = %s, type = %d)\n",
-			component->component_id, component->name, component->type);
+			component->component_id,
+			component->name,
+			component->type);
 
 	return 0;
 }
