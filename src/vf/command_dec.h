@@ -31,7 +31,7 @@ enum spp_command_decode_error_code {
  *
  * @attention This enumerated type must have the same order of command_list
  *            defined in command_dec.c
-*/
+ */
 enum spp_command_type {
 	SPP_CMDTYPE_CLASSIFIER_TABLE,
 	SPP_CMDTYPE_FLUSH,
@@ -45,9 +45,16 @@ enum spp_command_type {
 
 /* "classifier_table" command specific parameters */
 struct spp_command_classifier_table {
+	/* Action identifier (add or del) */
 	enum spp_command_action action;
+
+	/* Classify type (currently only for mac) */
 	enum spp_classifier_type type;
+
+	/* Value to be classified */
 	char value[SPP_CMD_VALUE_BUFSZ];
+
+	/* Destination port type and number */
 	struct spp_port_index port;
 };
 
@@ -58,48 +65,56 @@ struct spp_command_flush {
 
 /* "component" command parameters */
 struct spp_command_component {
-	enum spp_command_action action;
-	char name[SPP_CMD_NAME_BUFSZ];
-	unsigned int core;
-	enum spp_component_type type;
+	enum spp_command_action action; /* Action identifier (start or stop) */
+	char name[SPP_CMD_NAME_BUFSZ];  /* Component name */
+	unsigned int core;              /* Logical core number */
+	enum spp_component_type type;   /* Component type */
 };
 
 /* "port" command parameters */
 struct spp_command_port {
-	enum spp_command_action action;
-	struct spp_port_index port;
-	enum spp_port_rxtx rxtx;
-	char name[SPP_CMD_NAME_BUFSZ];
+	enum spp_command_action action; /* Action identifier (add or del) */
+	struct spp_port_index port;     /* Port type and number */
+	enum spp_port_rxtx rxtx;        /* rx/tx identifier */
+	char name[SPP_CMD_NAME_BUFSZ];  /* Attached component name */
 };
 
 /* command parameters */
 struct spp_command {
-	enum spp_command_type type;
+	enum spp_command_type type; /* Command type */
 
 	union {
+		/* Structured data for classifier_table command  */
 		struct spp_command_classifier_table classifier_table;
+
+		/* Structured data for flush command  */
 		struct spp_command_flush flush;
+
+		/* Structured data for component command  */
 		struct spp_command_component component;
+
+		/* Structured data for port command  */
 		struct spp_command_port port;
 	} spec;
 };
 
 /* request parameters */
 struct spp_command_request {
-	int num_command;
-	int num_valid_command;
+	int num_command;                /* Number of accepted commands */
+	int num_valid_command;          /* Number of executed commands */
 	struct spp_command commands[SPP_CMD_MAX_COMMANDS];
+					/* Information of executed commands */
 
-	int is_requested_client_id;
-	int is_requested_status;
-	int is_requested_exit;
+	int is_requested_client_id;     /* Id for get_client_id command */
+	int is_requested_status;        /* Id for status command */
+	int is_requested_exit;          /* Id for exit command */
 };
 
 /* decode error information */
 struct spp_command_decode_error {
-	int code;
-	char value_name[SPP_CMD_NAME_BUFSZ];
-	char value[SPP_CMD_VALUE_BUFSZ];
+	int code;                            /* Error code */
+	char value_name[SPP_CMD_NAME_BUFSZ]; /* Error value name */
+	char value[SPP_CMD_VALUE_BUFSZ];     /* Error value */
 };
 
 /* decode request from no-null-terminated string */

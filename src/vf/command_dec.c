@@ -140,7 +140,7 @@ decode_port_value(void *output, const char *arg_val)
 {
 	int ret = 0;
 	struct spp_port_index *port = output;
-	ret = spp_get_if_info(arg_val, &port->if_type, &port->if_no);
+	ret = spp_get_iface_index(arg_val, &port->iface_type, &port->iface_no);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad port. val=%s\n", arg_val);
 		return -1;
@@ -292,9 +292,11 @@ decode_port_port_value(void *output, const char *arg_val)
 		return -1;
 
 	if ((port->action == SPP_CMD_ACTION_ADD) &&
-			(spp_check_used_port(tmp_port.if_type, tmp_port.if_no,
+			(spp_check_used_port(tmp_port.iface_type,
+					tmp_port.iface_no,
 					SPP_PORT_RXTX_RX) >= 0) &&
-			(spp_check_used_port(tmp_port.if_type, tmp_port.if_no,
+			(spp_check_used_port(tmp_port.iface_type,
+					tmp_port.iface_no,
 					SPP_PORT_RXTX_TX) >= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Port in used. (port command) val=%s\n",
@@ -302,8 +304,8 @@ decode_port_port_value(void *output, const char *arg_val)
 		return -1;
 	}
 
-	port->port.if_type = tmp_port.if_type;
-	port->port.if_no   = tmp_port.if_no;
+	port->port.iface_type = tmp_port.iface_type;
+	port->port.iface_no   = tmp_port.iface_no;
 	return 0;
 }
 
@@ -322,8 +324,8 @@ decode_port_rxtx_value(void *output, const char *arg_val)
 	}
 
 	if ((port->action == SPP_CMD_ACTION_ADD) &&
-			(spp_check_used_port(port->port.if_type,
-					port->port.if_no, ret) >= 0)) {
+			(spp_check_used_port(port->port.iface_type,
+					port->port.iface_no, ret) >= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Port in used. (port command) val=%s\n",
 				arg_val);
@@ -442,15 +444,15 @@ decode_classifier_port_value(void *output, const char *arg_val)
 	if (ret < 0)
 		return -1;
 
-	if (spp_check_added_port(tmp_port.if_type, tmp_port.if_no) == 0) {
+	if (spp_check_added_port(tmp_port.iface_type, tmp_port.iface_no) == 0) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Port not added. val=%s\n",
 				arg_val);
 		return -1;
 	}
 
 	if (unlikely(classifier_table->action == SPP_CMD_ACTION_ADD)) {
-		if (!spp_check_mac_used_port(0, tmp_port.if_type,
-				tmp_port.if_no)) {
+		if (!spp_check_mac_used_port(0, tmp_port.iface_type,
+				tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Port in used. (classifier_table command) val=%s\n",
 					arg_val);
@@ -462,7 +464,7 @@ decode_classifier_port_value(void *output, const char *arg_val)
 			return -1;
 
 		if (!spp_check_mac_used_port((uint64_t)mac_addr,
-				tmp_port.if_type, tmp_port.if_no)) {
+				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Port in used. (classifier_table command) val=%s\n",
 					arg_val);
@@ -470,8 +472,8 @@ decode_classifier_port_value(void *output, const char *arg_val)
 		}
 	}
 
-	classifier_table->port.if_type = tmp_port.if_type;
-	classifier_table->port.if_no   = tmp_port.if_no;
+	classifier_table->port.iface_type = tmp_port.iface_type;
+	classifier_table->port.iface_no   = tmp_port.iface_no;
 	return 0;
 }
 
@@ -479,9 +481,10 @@ decode_classifier_port_value(void *output, const char *arg_val)
 
 /* parameter list for decoding */
 struct decode_parameter_list {
-	const char *name;
-	size_t offset;
+	const char *name;       /* Parameter name */
+	size_t offset;          /* Offset value of struct spp_command */
 	int (*func)(void *output, const char *arg_val);
+				/* Pointer to parameter handling function */
 };
 
 /* parameter list for each command */
@@ -597,11 +600,12 @@ decode_command_parameter_in_list(struct spp_command_request *request,
 
 /* command list for decoding */
 struct decode_command_list {
-	const char *name;
-	int   param_min;
-	int   param_max;
+	const char *name;       /* Command name */
+	int   param_min;        /* Min number of parameters */
+	int   param_max;        /* Max number of parameters */
 	int (*func)(struct spp_command_request *request, int argc, char *argv[],
 			struct spp_command_decode_error *error);
+				/* Pointer to command handling function */
 };
 
 /* command list */

@@ -8,8 +8,8 @@
 
 /* A set of port info of rx and tx */
 struct forward_rxtx {
-	struct spp_port_info rx;
-	struct spp_port_info tx;
+	struct spp_port_info rx; /* rx port */
+	struct spp_port_info tx; /* tx port */
 };
 
 /* Information on the path used for forward. */
@@ -27,6 +27,7 @@ struct forward_info {
 	volatile int ref_index; /* index to reference area */
 	volatile int upd_index; /* index to update area    */
 	struct forward_path path[SPP_INFO_AREA_MAX];
+				/* Information of data path */
 };
 
 struct forward_info g_forward_info[RTE_MAX_LCORE];
@@ -151,12 +152,12 @@ spp_forward(int id)
 			continue;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-		if (rx->if_type == RING)
-			spp_ringlatencystats_calculate_latency(rx->if_no,
+		if (rx->iface_type == RING)
+			spp_ringlatencystats_calculate_latency(rx->iface_no,
 					bufs, nb_rx);
 
-		if (tx->if_type == RING)
-			spp_ringlatencystats_add_time_stamp(tx->if_no,
+		if (tx->iface_type == RING)
+			spp_ringlatencystats_add_time_stamp(tx->iface_no,
 					bufs, nb_rx);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -201,14 +202,14 @@ spp_forward_get_component_status(
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
 	for (cnt = 0; cnt < path->num; cnt++) {
-		rx_ports[cnt].if_type = path->ports[cnt].rx.if_type;
-		rx_ports[cnt].if_no   = path->ports[cnt].rx.if_no;
+		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
+		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
 	num_tx = (path->num > 0)?1:0;
-	tx_ports[0].if_type = path->ports[0].tx.if_type;
-	tx_ports[0].if_no   = path->ports[0].tx.if_no;
+	tx_ports[0].iface_type = path->ports[0].tx.iface_type;
+	tx_ports[0].iface_no   = path->ports[0].tx.iface_no;
 
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(

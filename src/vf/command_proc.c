@@ -36,14 +36,22 @@ enum command_result_code {
 
 /* command execution result information */
 struct command_result {
+	/* Response code */
 	int code;
+
+	/* Response message */
 	char result[SPP_CMD_NAME_BUFSZ];
+
+	/* Detailed response message */
 	char error_message[CMD_RES_ERR_MSG_SIZE];
 };
 
 /* command response list control structure */
 struct command_response_list {
+	/* Tag name */
 	char tag_name[SPP_CMD_NAME_BUFSZ];
+
+	/* Pointer to handling function */
 	int (*func)(const char *name, char **output, void *tmp);
 };
 
@@ -432,8 +440,8 @@ apeend_port_array(const char *name, char **output,
 	}
 
 	for (i = 0; i < num; i++) {
-		spp_format_port_string(port_str, ports[i].if_type,
-				ports[i].if_no);
+		spp_format_port_string(port_str, ports[i].iface_type,
+				ports[i].iface_no);
 
 		sprintf(append_str, "%s\"%s\"", JSON_APPEND_COMMA(i), port_str);
 
@@ -552,7 +560,7 @@ append_classifier_element_value(
 		return ret;
 	}
 
-	spp_format_port_string(port_str, port->if_type, port->if_no);
+	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 
 	ret = append_json_str_value("type", &tmp_buff, "mac");
 	if (unlikely(ret < 0))

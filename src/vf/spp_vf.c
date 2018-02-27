@@ -13,10 +13,13 @@
 #include "spp_forward.h"
 #include "command_proc.h"
 
-/* TODO(yasufum) add desc how there are used */
+/* Max number of core status check */
 #define SPP_CORE_STATUS_CHECK_MAX 5
+
+/* Sampling interval timer for latency evaluation */
 #define SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL 1000000
 
+/* Name string for each component */
 #define CORE_TYPE_CLASSIFIER_MAC_STR "classifier_mac"
 #define CORE_TYPE_MERGE_STR          "merge"
 #define CORE_TYPE_FORWARD_STR        "forward"
@@ -25,10 +28,12 @@
 enum SPP_LONGOPT_RETVAL {
 	SPP_LONGOPT_RETVAL__ = 127,
 
-	/* add below */
-	/* TODO(yasufum) add description what and why add below */
-	SPP_LONGOPT_RETVAL_CLIENT_ID,
-	SPP_LONGOPT_RETVAL_VHOST_CLIENT
+	/*
+	 * Return value definition for getopt_long()
+	 * Only for long option
+	 */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,   /* --client-id    */
+	SPP_LONGOPT_RETVAL_VHOST_CLIENT /* --vhost-client */
 };
 
 /* Flag of processing type to copy management information */
@@ -40,60 +45,84 @@ enum copy_mng_flg {
 
 /* Manage given options as global variable */
 struct startup_param {
-	int client_id;
+	int client_id;          /* Client ID of spp_vf */
 	char server_ip[INET_ADDRSTRLEN];
-	int server_port;
-	int vhost_client;
+				/* IP address sting of spp controller */
+	int server_port;        /* Port Number of spp controller */
+	int vhost_client;       /* Flag for --vhost-client option */
 };
 
 /* Manage number of interfaces  and port information as global variable */
-/* TODO(yasufum) refactor, change if to iface */
-struct if_info {
-	int num_nic;
-	int num_vhost;
-	int num_ring;
+struct iface_info {
+	int num_nic;            /* The number of phy */
+	int num_vhost;          /* The number of vhost */
+	int num_ring;           /* The number of ring */
 	struct spp_port_info nic[RTE_MAX_ETHPORTS];
+				/* Port information of phy */
 	struct spp_port_info vhost[RTE_MAX_ETHPORTS];
+				/* Port information of vhost */
 	struct spp_port_info ring[RTE_MAX_ETHPORTS];
+				/* Port information of ring */
 };
 
 /* Manage component running in core as global variable */
 struct core_info {
 	volatile enum spp_component_type type;
-	int num;
-	int id[RTE_MAX_LCORE];
+				/* Component type */
+	int num;                /* The number of IDs below */
+	int id[RTE_MAX_LCORE];  /* ID list of components executed on cpu core */
 };
 
 /* Manage core status and component information as global variable */
 struct core_mng_info {
+	/* Status of cpu core */
 	volatile enum spp_core_status status;
+
+	/* Index number of core information for reference */
 	volatile int ref_index;
+
+	/* Index number of core information for updating */
 	volatile int upd_index;
+
+	/* Core information of each cpu core */
 	struct core_info core[SPP_INFO_AREA_MAX];
 };
 
 /* Manage data to be backup */
 struct cancel_backup_info {
+	/* Backup data of core information */
 	struct core_mng_info core[RTE_MAX_LCORE];
+
+	/* Backup data of component information */
 	struct spp_component_info component[RTE_MAX_LCORE];
-	struct if_info interface;
+
+	/* Backup data of interface information */
+	struct iface_info interface;
 };
 
 /* Declare global variables */
-static unsigned int         g_main_lcore_id = 0xffffffff;
+/* Logical core ID for main process */
+static unsigned int g_main_lcore_id = 0xffffffff;
+
+/* Execution parameter of spp_vf */
 static struct startup_param g_startup_param;
 
-static struct if_info            g_if_info;
-static struct spp_component_info g_component_info[RTE_MAX_LCORE];
-static struct core_mng_info      g_core_info[RTE_MAX_LCORE];
+/* Interface management information */
+static struct iface_info g_iface_info;
 
-/*
- * TODO(yasufum) add desc how it is used
- * and why changed component is kept
- */
+/* Component management information */
+static struct spp_component_info g_component_info[RTE_MAX_LCORE];
+
+/* Core management information */
+static struct core_mng_info g_core_info[RTE_MAX_LCORE];
+
+/* Array of update indicator for core management information */
 static int g_change_core[RTE_MAX_LCORE];
+
+/* Array of update indicator for component management information */
 static int g_change_component[RTE_MAX_LCORE];
 
+/* Backup information for cancel command */
 static struct cancel_backup_info g_backup_info;
 
 /* Print help message */
@@ -444,20 +473,17 @@ parse_app_args(int argc, char *argv[])
  * Return port info of given type and num of interface
  *
  * It returns NULL value if given type is invalid.
- *
- * TODO(yasufum) refactor name of func to be more understandable (area?)
- * TODO(yasufum) refactor, change if to iface.
  */
 static struct spp_port_info *
-get_if_area(enum port_type if_type, int if_no)
+get_iface_info(enum port_type iface_type, int iface_no)
 {
-	switch (if_type) {
+	switch (iface_type) {
 	case PHY:
-		return &g_if_info.nic[if_no];
+		return &g_iface_info.nic[iface_no];
 	case VHOST:
-		return &g_if_info.vhost[if_no];
+		return &g_iface_info.vhost[iface_no];
 	case RING:
-		return &g_if_info.ring[if_no];
+		return &g_iface_info.ring[iface_no];
 	default:
 		return NULL;
 	}
@@ -516,44 +542,44 @@ dump_component_info(const struct spp_component_info *component_info)
 
 /* Dump of interface information */
 static void
-dump_interface_info(const struct if_info *if_info)
+dump_interface_info(const struct iface_info *iface_info)
 {
 	const struct spp_port_info *port = NULL;
 	int cnt = 0;
 	RTE_LOG(DEBUG, APP, "interface phy=%d, vhost=%d, ring=%d\n",
-			if_info->num_nic,
-			if_info->num_vhost,
-			if_info->num_ring);
+			iface_info->num_nic,
+			iface_info->num_vhost,
+			iface_info->num_ring);
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &if_info->nic[cnt];
-		if (port->if_type == UNDEF)
+		port = &iface_info->nic[cnt];
+		if (port->iface_type == UNDEF)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "phy  [%d] type=%d, no=%d, port=%d, "
 				"mac=%08lx(%s)\n",
-				cnt, port->if_type, port->if_no,
+				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
 				port->mac_addr, port->mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &if_info->vhost[cnt];
-		if (port->if_type == UNDEF)
+		port = &iface_info->vhost[cnt];
+		if (port->iface_type == UNDEF)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "vhost[%d] type=%d, no=%d, port=%d, "
 				"mac=%08lx(%s)\n",
-				cnt, port->if_type, port->if_no,
+				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
 				port->mac_addr, port->mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &if_info->ring[cnt];
-		if (port->if_type == UNDEF)
+		port = &iface_info->ring[cnt];
+		if (port->iface_type == UNDEF)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "ring [%d] type=%d, no=%d, port=%d, "
 				"mac=%08lx(%s)\n",
-				cnt, port->if_type, port->if_no,
+				cnt, port->iface_type, port->iface_no,
 				port->dpdk_port,
 				port->mac_addr, port->mac_addr_str);
 	}
@@ -564,7 +590,7 @@ static void
 dump_all_mng_info(
 		const struct core_mng_info *core,
 		const struct spp_component_info *component,
-		const struct if_info *interface)
+		const struct iface_info *interface)
 {
 	if (rte_log_get_global_level() < RTE_LOG_DEBUG)
 		return;
@@ -579,10 +605,10 @@ static void
 copy_mng_info(
 		struct core_mng_info *dst_core,
 		struct spp_component_info *dst_component,
-		struct if_info *dst_interface,
+		struct iface_info *dst_interface,
 		const struct core_mng_info *src_core,
 		const struct spp_component_info *src_component,
-		const struct if_info *src_interface,
+		const struct iface_info *src_interface,
 		enum copy_mng_flg flg)
 {
 	int upd_index = 0;
@@ -611,16 +637,16 @@ copy_mng_info(
 	memcpy(dst_component, src_component,
 			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
 	memcpy(dst_interface, src_interface,
-			sizeof(struct if_info));
+			sizeof(struct iface_info));
 }
 
 /* Backup the management information */
 static void
 backup_mng_info(struct cancel_backup_info *backup)
 {
-	dump_all_mng_info(g_core_info, g_component_info, &g_if_info);
+	dump_all_mng_info(g_core_info, g_component_info, &g_iface_info);
 	copy_mng_info(backup->core, backup->component, &backup->interface,
-			g_core_info, g_component_info, &g_if_info,
+			g_core_info, g_component_info, &g_iface_info,
 			COPY_MNG_FLG_ALLCOPY);
 	dump_all_mng_info(backup->core, backup->component, &backup->interface);
 	memset(g_change_core, 0x00, sizeof(g_change_core));
@@ -632,35 +658,34 @@ static void
 cancel_mng_info(struct cancel_backup_info *backup)
 {
 	dump_all_mng_info(backup->core, backup->component, &backup->interface);
-	copy_mng_info(g_core_info, g_component_info, &g_if_info,
+	copy_mng_info(g_core_info, g_component_info, &g_iface_info,
 			backup->core, backup->component, &backup->interface,
 			COPY_MNG_FLG_ALLCOPY);
-	dump_all_mng_info(g_core_info, g_component_info, &g_if_info);
+	dump_all_mng_info(g_core_info, g_component_info, &g_iface_info);
 	memset(g_change_core, 0x00, sizeof(g_change_core));
 	memset(g_change_component, 0x00, sizeof(g_change_component));
 }
 
 /**
- * Initialize g_if_info
+ * Initialize g_iface_info
  *
- * Clear g_if_info and set initial value.
- * TODO(yasufum) refactor, change if to iface.
+ * Clear g_iface_info and set initial value.
  */
 static void
-init_if_info(void)
+init_iface_info(void)
 {
 	int port_cnt;  /* increment ether ports */
-	memset(&g_if_info, 0x00, sizeof(g_if_info));
+	memset(&g_iface_info, 0x00, sizeof(g_iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		g_if_info.nic[port_cnt].if_type   = UNDEF;
-		g_if_info.nic[port_cnt].if_no     = port_cnt;
-		g_if_info.nic[port_cnt].dpdk_port = -1;
-		g_if_info.vhost[port_cnt].if_type   = UNDEF;
-		g_if_info.vhost[port_cnt].if_no     = port_cnt;
-		g_if_info.vhost[port_cnt].dpdk_port = -1;
-		g_if_info.ring[port_cnt].if_type   = UNDEF;
-		g_if_info.ring[port_cnt].if_no     = port_cnt;
-		g_if_info.ring[port_cnt].dpdk_port = -1;
+		g_iface_info.nic[port_cnt].iface_type   = UNDEF;
+		g_iface_info.nic[port_cnt].iface_no     = port_cnt;
+		g_iface_info.nic[port_cnt].dpdk_port = -1;
+		g_iface_info.vhost[port_cnt].iface_type   = UNDEF;
+		g_iface_info.vhost[port_cnt].iface_no     = port_cnt;
+		g_iface_info.vhost[port_cnt].dpdk_port = -1;
+		g_iface_info.ring[port_cnt].iface_type   = UNDEF;
+		g_iface_info.ring[port_cnt].iface_no     = port_cnt;
+		g_iface_info.ring[port_cnt].dpdk_port = -1;
 	}
 }
 
@@ -695,8 +720,6 @@ init_core_info(void)
 
 /**
  * Setup port info of port on host
- *
- * TODO(yasufum) refactor, change if to iface.
  */
 static int
 set_nic_interface(void)
@@ -704,13 +727,13 @@ set_nic_interface(void)
 	int nic_cnt = 0;
 
 	/* NIC Setting */
-	g_if_info.num_nic = rte_eth_dev_count();
-	if (g_if_info.num_nic > RTE_MAX_ETHPORTS)
-		g_if_info.num_nic = RTE_MAX_ETHPORTS;
+	g_iface_info.num_nic = rte_eth_dev_count();
+	if (g_iface_info.num_nic > RTE_MAX_ETHPORTS)
+		g_iface_info.num_nic = RTE_MAX_ETHPORTS;
 
-	for (nic_cnt = 0; nic_cnt < g_if_info.num_nic; nic_cnt++) {
-		g_if_info.nic[nic_cnt].if_type   = PHY;
-		g_if_info.nic[nic_cnt].dpdk_port = nic_cnt;
+	for (nic_cnt = 0; nic_cnt < g_iface_info.num_nic; nic_cnt++) {
+		g_iface_info.nic[nic_cnt].iface_type   = PHY;
+		g_iface_info.nic[nic_cnt].dpdk_port = nic_cnt;
 	}
 
 	return 0;
@@ -718,15 +741,12 @@ set_nic_interface(void)
 
 /**
  * Setup management info for spp_vf
- *
- * TODO(yasufum) refactor, change if to iface.
- * TODO(yasufum) refactor, change function name from manage to mng or management
  */
 static int
-init_manage_data(void)
+init_mng_data(void)
 {
 	/* Initialize interface and core information */
-	init_if_info();
+	init_iface_info();
 	init_core_info();
 	init_component_info();
 
@@ -740,8 +760,6 @@ init_manage_data(void)
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 /**
  * Print statistics of time for packet processing in ring interface
- *
- * TODO(yasufum) refactor, change if to iface.
  */
 static void
 print_ring_latency_stats(void)
@@ -758,7 +776,7 @@ print_ring_latency_stats(void)
 	printf("RING Latency\n");
 	printf(" RING");
 	for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-		if (g_if_info.ring[ring_cnt].if_type == UNDEF)
+		if (g_iface_info.ring[ring_cnt].iface_type == UNDEF)
 			continue;
 
 		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
@@ -770,7 +788,7 @@ print_ring_latency_stats(void)
 			stats_cnt++) {
 		printf("%3dns", stats_cnt);
 		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-			if (g_if_info.ring[ring_cnt].if_type == UNDEF)
+			if (g_iface_info.ring[ring_cnt].iface_type == UNDEF)
 				continue;
 
 			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
@@ -793,7 +811,7 @@ del_vhost_sockfile(struct spp_port_info *vhost)
 		return;
 
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		if (likely(vhost[cnt].if_type == UNDEF)) {
+		if (likely(vhost[cnt].iface_type == UNDEF)) {
 			/* Skip removing if it is not using vhost */
 			continue;
 		}
@@ -896,18 +914,13 @@ slave_main(void *arg __attribute__ ((unused)))
 	return ret;
 }
 
-/* TODO(yasufum) refactor, change if to iface. */
-/*
- * TODO(yasufum) change test using ut_main(),
- * or add description for what and why use it
+/**
+ * Main function
+ *
+ * Return -1 explicitly if error is occurred.
  */
-/* TODO(yasufum) change to return -1 explicitly if error is occurred. */
 int
-#ifndef USE_UT_SPP_VF
 main(int argc, char *argv[])
-#else /* ifndef USE_UT_SPP_VF */
-ut_main(int argc, char *argv[])
-#endif  /* ifndef USE_UT_SPP_VF */
 {
 	int ret = -1;
 #ifdef SPP_DEMONIZE
@@ -943,8 +956,8 @@ ut_main(int argc, char *argv[])
 		/* Get lcore id of main thread to set its status after */
 		g_main_lcore_id = rte_lcore_id();
 
-		int ret_manage = init_manage_data();
-		if (unlikely(ret_manage != 0))
+		int ret_mng = init_mng_data();
+		if (unlikely(ret_mng != 0))
 			break;
 
 		int ret_classifier_mac_init = spp_classifier_mac_init();
@@ -963,7 +976,7 @@ ut_main(int argc, char *argv[])
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				g_if_info.num_ring);
+				g_iface_info.num_ring);
 		if (unlikely(ret_ringlatency != 0))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
@@ -1028,7 +1041,7 @@ ut_main(int argc, char *argv[])
 		 * Remove vhost sock file if it is not running
 		 *  in vhost-client mode
 		 */
-		del_vhost_sockfile(g_if_info.vhost);
+		del_vhost_sockfile(g_iface_info.vhost);
 	}
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -1047,13 +1060,14 @@ spp_get_client_id(void)
 
 /**
  * Check mac address used on the port for registering or removing
- *
- * TODO(yasufum) refactor, change if to iface.
  */
 int
-spp_check_mac_used_port(uint64_t mac_addr, enum port_type if_type, int if_no)
+spp_check_mac_used_port(
+		uint64_t mac_addr,
+		enum port_type iface_type,
+		int iface_no)
 {
-	struct spp_port_info *port_info = get_if_area(if_type, if_no);
+	struct spp_port_info *port_info = get_iface_info(iface_type, iface_no);
 	return (mac_addr == port_info->mac_addr);
 }
 
@@ -1061,19 +1075,19 @@ spp_check_mac_used_port(uint64_t mac_addr, enum port_type if_type, int if_no)
  * Check if port has been added.
  */
 int
-spp_check_added_port(enum port_type if_type, int if_no)
+spp_check_added_port(enum port_type iface_type, int iface_no)
 {
-	struct spp_port_info *port = get_if_area(if_type, if_no);
-	return port->if_type != UNDEF;
+	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	return port->iface_type != UNDEF;
 }
 
 /*
  * Check if port has been flushed.
  */
 int
-spp_check_flush_port(enum port_type if_type, int if_no)
+spp_check_flush_port(enum port_type iface_type, int iface_no)
 {
-	struct spp_port_info *port = get_if_area(if_type, if_no);
+	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
 	return port->dpdk_port >= 0;
 }
 
@@ -1081,12 +1095,15 @@ spp_check_flush_port(enum port_type if_type, int if_no)
  * Check if component is using port.
  */
 int
-spp_check_used_port(enum port_type if_type, int if_no, enum spp_port_rxtx rxtx)
+spp_check_used_port(
+		enum port_type iface_type,
+		int iface_no,
+		enum spp_port_rxtx rxtx)
 {
 	int cnt, port_cnt, max = 0;
 	struct spp_component_info *component = NULL;
 	struct spp_port_info **port_array = NULL;
-	struct spp_port_info *port = get_if_area(if_type, if_no);
+	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
 
 	if (port == NULL)
 		return SPP_RET_NG;
@@ -1120,14 +1137,14 @@ set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
 {
 	int ret = 0;
 	if ((rxtx == SPP_PORT_RXTX_RX) || (rxtx == SPP_PORT_RXTX_ALL)) {
-		ret = spp_check_used_port(port->if_type, port->if_no,
+		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_RX);
 		if (ret >= 0)
 			g_change_component[ret] = 1;
 	}
 
 	if ((rxtx == SPP_PORT_RXTX_TX) || (rxtx == SPP_PORT_RXTX_ALL)) {
-		ret = spp_check_used_port(port->if_type, port->if_no,
+		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_TX);
 		if (ret >= 0)
 			g_change_component[ret] = 1;
@@ -1147,7 +1164,7 @@ spp_update_classifier_table(
 
 	if (type == SPP_CLASSIFIER_TYPE_MAC) {
 		RTE_LOG(DEBUG, APP, "update_classifier_table ( type = mac, data = %s, port = %d:%d )\n",
-				data, port->if_type, port->if_no);
+				data, port->iface_type, port->iface_no);
 
 		ret_mac = spp_change_mac_str_to_int64(data);
 		if (unlikely(ret_mac == -1)) {
@@ -1157,15 +1174,15 @@ spp_update_classifier_table(
 		}
 		mac_addr = (uint64_t)ret_mac;
 
-		port_info = get_if_area(port->if_type, port->if_no);
+		port_info = get_iface_info(port->iface_type, port->iface_no);
 		if (unlikely(port_info == NULL)) {
 			RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
-					port->if_type, port->if_no);
+					port->iface_type, port->iface_no);
 			return SPP_RET_NG;
 		}
-		if (unlikely(port_info->if_type == UNDEF)) {
+		if (unlikely(port_info->iface_type == UNDEF)) {
 			RTE_LOG(ERR, APP, "Port not added. ( port = %d:%d )\n",
-					port->if_type, port->if_no);
+					port->iface_type, port->iface_no);
 			return SPP_RET_NG;
 		}
 
@@ -1185,7 +1202,8 @@ spp_update_classifier_table(
 			/* Setting */
 			if (unlikely(port_info->mac_addr != 0)) {
 				RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d )\n",
-						 port->if_type, port->if_no);
+						port->iface_type,
+						port->iface_no);
 				return SPP_RET_NG;
 			}
 
@@ -1194,7 +1212,6 @@ spp_update_classifier_table(
 		}
 	}
 
-	/* TODO(yasufum) add desc how it is used and why changed core is kept */
 	set_component_change_port(port_info, SPP_PORT_RXTX_TX);
 	return SPP_RET_OK;
 }
@@ -1406,7 +1423,7 @@ spp_update_port(enum spp_command_action action,
 	}
 
 	component = &g_component_info[component_id];
-	port_info = get_if_area(port->if_type, port->if_no);
+	port_info = get_iface_info(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
 		num = &component->num_rx_port;
 		ports = component->rx_ports;
@@ -1426,7 +1443,7 @@ spp_update_port(enum spp_command_action action,
 			break;
 		}
 
-		port_info->if_type = port->if_type;
+		port_info->iface_type = port->iface_type;
 		ports[*num] = port_info;
 		(*num)++;
 
@@ -1457,9 +1474,9 @@ flush_port(void)
 
 	/* Initialize added vhost. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &g_if_info.vhost[cnt];
-		if ((port->if_type != UNDEF) && (port->dpdk_port < 0)) {
-			ret = add_vhost_pmd(port->if_no,
+		port = &g_iface_info.vhost[cnt];
+		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
+			ret = add_vhost_pmd(port->iface_no,
 					g_startup_param.vhost_client);
 			if (ret < 0)
 				return SPP_RET_NG;
@@ -1469,9 +1486,9 @@ flush_port(void)
 
 	/* Initialize added ring. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &g_if_info.ring[cnt];
-		if ((port->if_type != UNDEF) && (port->dpdk_port < 0)) {
-			ret = add_ring_pmd(port->if_no);
+		port = &g_iface_info.ring[cnt];
+		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
+			ret = add_ring_pmd(port->iface_no);
 			if (ret < 0)
 				return SPP_RET_NG;
 			port->dpdk_port = ret;
@@ -1634,14 +1651,12 @@ spp_iterate_classifier_table(
 
 /**
  * Separate port id of combination of iface type and number and
- * assign to given argument, if_type and if_no.
+ * assign to given argument, iface_type and iface_no.
  *
  * For instance, 'ring:0' is separated to 'ring' and '0'.
- *
- * TODO(yasufum) change if to iface
  */
 int
-spp_get_if_info(const char *port, enum port_type *if_type, int *if_no)
+spp_get_iface_index(const char *port, enum port_type *iface_type, int *iface_no)
 {
 	enum port_type type = UNDEF;
 	const char *no_str = NULL;
@@ -1678,11 +1693,11 @@ spp_get_if_info(const char *port, enum port_type *if_type, int *if_no)
 		return -1;
 	}
 
-	*if_type = type;
-	*if_no = ret_no;
+	*iface_type = type;
+	*iface_no = ret_no;
 
 	RTE_LOG(DEBUG, APP, "Port = %s => Type = %d No = %d\n",
-			port, *if_type, *if_no);
+			port, *iface_type, *iface_no);
 	return 0;
 }
 
@@ -1690,25 +1705,25 @@ spp_get_if_info(const char *port, enum port_type *if_type, int *if_no)
  * Generate a formatted string of combination from interface type and
  * number and assign to given 'port'
  */
-int spp_format_port_string(char *port, enum port_type if_type, int if_no)
+int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 {
-	const char *if_type_str;
+	const char *iface_type_str;
 
-	switch (if_type) {
+	switch (iface_type) {
 	case PHY:
-		if_type_str = SPP_IFTYPE_NIC_STR;
+		iface_type_str = SPP_IFTYPE_NIC_STR;
 		break;
 	case RING:
-		if_type_str = SPP_IFTYPE_RING_STR;
+		iface_type_str = SPP_IFTYPE_RING_STR;
 		break;
 	case VHOST:
-		if_type_str = SPP_IFTYPE_VHOST_STR;
+		iface_type_str = SPP_IFTYPE_VHOST_STR;
 		break;
 	default:
 		return -1;
 	}
 
-	sprintf(port, "%s:%d", if_type_str, if_no);
+	sprintf(port, "%s:%d", iface_type_str, iface_no);
 
 	return 0;
 }

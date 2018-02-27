@@ -82,33 +82,35 @@ enum spp_command_action {
  * Interface information structure
  */
 struct spp_port_index {
-	enum port_type  if_type;
-	int             if_no;
+	enum port_type  iface_type; /* Interface type (phy/vhost/ring) */
+	int             iface_no;   /* Interface number */
 };
 
 /*
  * Port info
  */
 struct spp_port_info {
-	enum port_type  if_type;
-	int             if_no;
-	int             dpdk_port;
-	uint64_t        mac_addr;
-	char            mac_addr_str[SPP_MIN_STR_LEN];
+	enum port_type iface_type; /* Interface type (phy/vhost/ring) */
+	int            iface_no;   /* Interface number */
+	int            dpdk_port;  /* DPDK port number */
+	uint64_t       mac_addr;   /* Mac address for classifying */
+	char           mac_addr_str[SPP_MIN_STR_LEN]; /* Mac address */
 };
 
 /*
  * Component info
  */
 struct spp_component_info {
-	char name[SPP_NAME_STR_LEN];
-	enum spp_component_type type;
-	unsigned int lcore_id;
-	int component_id;
-	int num_rx_port;
-	int num_tx_port;
+	char name[SPP_NAME_STR_LEN];    /* Component name */
+	enum spp_component_type type;   /* Component type */
+	unsigned int lcore_id;          /* Logical core ID for component */
+	int component_id;               /* Component ID */
+	int num_rx_port;                /* The number of rx ports */
+	int num_tx_port;                /* The number of tx ports */
 	struct spp_port_info *rx_ports[RTE_MAX_ETHPORTS];
+					/* Array of pointers to rx ports */
 	struct spp_port_info *tx_ports[RTE_MAX_ETHPORTS];
+					/* Array of pointers to tx ports */
 };
 
 /*
@@ -236,20 +238,20 @@ int spp_get_component_id(const char *name);
  */
 int spp_check_mac_used_port(
 		uint64_t mac_addr,
-		enum port_type if_type,
-		int if_no);
+		enum port_type iface_type,
+		int iface_no);
 
 /*
  * Check if port has been added.
  * RETURN : True if port has been added.
  */
-int spp_check_added_port(enum port_type if_type, int if_no);
+int spp_check_added_port(enum port_type iface_type, int iface_no);
 
 /*
  * Check if port has been flushed.
  * RETURN : True if port has been flushed.
  */
-int spp_check_flush_port(enum port_type if_type, int if_no);
+int spp_check_flush_port(enum port_type iface_type, int iface_no);
 
 /*
  * Check if component is using port.
@@ -257,8 +259,8 @@ int spp_check_flush_port(enum port_type if_type, int if_no);
  * NG : SPP_RET_NG
  */
 int spp_check_used_port(
-		enum port_type if_type,
-		int if_no,
+		enum port_type iface_type,
+		int iface_no,
 		enum spp_port_rxtx rxtx);
 
 /*
@@ -274,7 +276,10 @@ int64_t spp_change_mac_str_to_int64(const char *mac);
  * OK : 0
  * NG : -1
  */
-int spp_get_if_info(const char *port, enum port_type *if_type, int *if_no);
+int spp_get_iface_index(
+		const char *port,
+		enum port_type *iface_type,
+		int *iface_no);
 
 /*
  * Format port string form if-type/if-number
@@ -282,7 +287,7 @@ int spp_get_if_info(const char *port, enum port_type *if_type, int *if_no);
  * OK : 0
  * NG : -1
  */
-int spp_format_port_string(char *port, enum port_type if_type, int if_no);
+int spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 
 /*
  * Change component type from string to type value.
