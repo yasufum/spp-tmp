@@ -1,6 +1,13 @@
 #ifndef _COMMAND_CONN_H_
 #define _COMMAND_CONN_H_
 
+/**
+ * @file
+ * SPP Connection
+ *
+ * Command connection management.
+ */
+
 /** result code - temporary error. please retry */
 #define SPP_CONNERR_TEMPORARY -1
 /** result code - fatal error occurred. should terminate process. */
@@ -10,10 +17,9 @@
  * initialize command connection.
  *
  * @param controller_ip
- *  controller listen ip address.
- *
+ *  The controller's ip address.
  * @param controller_port
- *  controller listen port number.
+ *  The controller's port number.
  *
  * @retval 0  succeeded.
  * @retval -1 failed.
@@ -26,7 +32,7 @@ int spp_command_conn_init(const char *controller_ip, int controller_port);
  * @note bocking.
  *
  * @param sock
- *  socket that connect to controller.
+ *  Socket number for connecting to controller.
  *
  * @retval 0                     succeeded.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please retry.
@@ -39,7 +45,9 @@ int spp_connect_to_controller(int *sock);
  * @note non-blocking.
  *
  * @param sock
- *  socket that read data.
+ *  The socket number for the connection.
+ * @param msgbuf
+ *  The pointer to command message buffer.
  *
  * @retval 0 <                   succeeded. number of bytes received.
  * @retval 0                     no receive message.
@@ -54,13 +62,11 @@ int spp_receive_message(int *sock, char **msgbuf);
  * @note non-blocking.
  *
  * @param sock
- *  socket that write data.
- *
+ *  The socket number to be sent.
  * @param message
- *  send data.
- *
+ *  The pointer to the message to be sent.
  * @param message_len
- *  send data length.
+ *  The length of message.
  *
  * @retval 0                     succeeded.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.

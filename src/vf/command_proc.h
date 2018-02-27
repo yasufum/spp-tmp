@@ -2,13 +2,20 @@
 #define _COMMAND_PROC_H_
 
 /**
+ * @file
+ * SPP Command processing
+ *
+ * Receive and process the command message, then send back the
+ * result JSON formatted data.
+ */
+
+/**
  * initialize command processor.
  *
  * @param controller_ip
- *  controller listen IP address.
- *
+ *  The controller's ip address.
  * @param controller_port
- *  controller listen port number.
+ *  The controller's port number.
  *
  * @retval 0  succeeded.
  * @retval -1 failed.

@@ -1,6 +1,13 @@
 #ifndef _RINGLATENCYSTATS_H_
 #define _RINGLATENCYSTATS_H_
 
+/**
+ * @file
+ * SPP RING latency statistics
+ *
+ * Measure the latency through ring-PMD.
+ */
+
 #include <rte_mbuf.h>
 
 /** number of slots to save latency. 0ns~99ns and 100ns over */
@@ -8,7 +15,7 @@
 
 /** ring latency statistics */
 struct spp_ringlatencystats_ring_latency_stats {
-	/**< slots to save latency */
+	/** slots to save latency */
 	uint64_t slot[SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT];
 };
 
@@ -16,6 +23,11 @@ struct spp_ringlatencystats_ring_latency_stats {
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 /**
  * initialize ring latency statistics.
+ *
+ * @param samp_intvl
+ *  The interval timer(ns) to refer the counter.
+ * @param stats_count
+ *  The number of ring to be measured.
  *
  * @retval 0: succeeded.
  * @retval -1: failed.
@@ -30,7 +42,15 @@ void spp_ringlatencystats_uninit(void);
 /**
  * add time-stamp to mbuf's member.
  *
- * call at enqueue.
+ * @note call at enqueue.
+ *
+ * @param ring_id
+ *  The ring id.
+ * @param pkts
+ *  The address of an array of nb_pkts pointers to rte_mbuf structures
+ *  which contain the packets to be measured.
+ * @param nb_pkts
+ *  The maximum number of packets to be measured.
  */
 void spp_ringlatencystats_add_time_stamp(int ring_id,
 			struct rte_mbuf **pkts, uint16_t nb_pkts);
@@ -38,7 +58,15 @@ void spp_ringlatencystats_add_time_stamp(int ring_id,
 /**
  * calculate latency.
  *
- * call at dequeue.
+ * @note call at dequeue.
+ *
+ * @param ring_id
+ *  The ring id.
+ * @param pkts
+ *  The address of an array of nb_pkts pointers to rte_mbuf structures
+ *  which contain the packets to be measured.
+ * @param nb_pkts
+ *  The maximum number of packets to be measured.
  */
 void spp_ringlatencystats_calculate_latency(int ring_id,
 			struct rte_mbuf **pkts, uint16_t nb_pkts);
@@ -52,6 +80,11 @@ int spp_ringlatencystats_get_count(void);
 
 /**
  *get specific ring latency statistics.
+ *
+ * @param ring_id
+ *  The ring id.
+ * @param stats
+ *  The statistics values.
  */
 void spp_ringlatencystats_get_stats(int ring_id,
 		struct spp_ringlatencystats_ring_latency_stats *stats);

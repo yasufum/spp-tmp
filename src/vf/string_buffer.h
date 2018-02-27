@@ -2,6 +2,14 @@
 #define _STRING_BUFFER_H_
 
 /**
+ * @file
+ * SPP String buffer management
+ *
+ * Management features of string buffer which is used for communicating
+ * between spp_vf and controller.
+ */
+
+/**
  * allocate string buffer from heap memory.
  *
  * @attention allocated memory must free by spp_strbuf_free function.
@@ -28,10 +36,8 @@ void spp_strbuf_free(char *strbuf);
  * @param strbuf
  *  destination string buffer.
  *  spp_strbuf_allocate/spp_strbuf_append return value.
- *
  * @param append
  *  string to append. normal c-string.
- *
  * @param append_len
  *  length of append string.
  *
@@ -46,9 +52,11 @@ char *spp_strbuf_append(char *strbuf, const char *append, size_t append_len);
  * @param strbuf
  *  target string buffer.
  *  spp_strbuf_allocate/spp_strbuf_append return value.
- *
  * @param remove_len
  *  length of remove.
+ *
+ * @return
+ *  The pointer to removed string.
  */
 char *spp_strbuf_remove_front(char *strbuf, size_t remove_len);
 
