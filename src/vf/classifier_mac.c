@@ -53,7 +53,7 @@
 #include <rte_hash.h>
 
 #include "spp_vf.h"
-#include "ringlatencystats.h"
+#include "spp_port.h"
 #include "classifier_mac.h"
 
 #define RTE_LOGTYPE_SPP_CLASSIFIER_MAC RTE_LOGTYPE_USER1
@@ -367,16 +367,8 @@ transmit_packet(struct classified_data *classified_data)
 	int i;
 	uint16_t n_tx;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	if (classified_data->iface_type == RING)
-		/* if tx-if is ring, set ringlatencystats */
-		spp_ringlatencystats_add_time_stamp(classified_data->iface_no,
-				classified_data->pkts,
-				classified_data->num_pkt);
-#endif
-
 	/* transmit packets */
-	n_tx = rte_eth_tx_burst(classified_data->port, 0,
+	n_tx = spp_eth_tx_burst(classified_data->port, 0,
 			classified_data->pkts, classified_data->num_pkt);
 
 	/* free cannot transmit packets */
@@ -523,6 +515,8 @@ change_update_index(struct classifier_mac_mng_info *classifier_mng_info, int id)
 {
 	if (unlikely(classifier_mng_info->ref_index ==
 			classifier_mng_info->upd_index)) {
+		/* Change reference index of port ability. */
+		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
 
 		/* Transmit all packets for switching the using data. */
 		transmit_all_packet(classifier_mng_info->info +
@@ -652,17 +646,10 @@ spp_classifier_mac_do(int id)
 			continue;
 
 		/* retrieve packets */
-		n_rx = rte_eth_rx_burst(classified_data_rx->port, 0,
+		n_rx = spp_eth_rx_burst(classified_data_rx->port, 0,
 				rx_pkts, MAX_PKT_BURST);
 		if (unlikely(n_rx == 0))
 			continue;
-
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-		if (classified_data_rx->iface_type == RING)
-			spp_ringlatencystats_calculate_latency(
-					classified_data_rx->iface_no,
-					rx_pkts, n_rx);
-#endif
 
 		/* classify and transmit (filled) */
 		classify_packet(rx_pkts, n_rx, classifier_info,

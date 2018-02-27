@@ -35,7 +35,7 @@
 #include <rte_cycles.h>
 
 #include "spp_vf.h"
-#include "ringlatencystats.h"
+#include "spp_port.h"
 #include "spp_forward.h"
 
 #define RTE_LOGTYPE_FORWARD RTE_LOGTYPE_USER1
@@ -151,8 +151,12 @@ static inline void
 change_forward_index(int id)
 {
 	struct forward_info *info = &g_forward_info[id];
-	if (info->ref_index == info->upd_index)
+	if (info->ref_index == info->upd_index) {
+		/* Change reference index of port ability. */
+		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
+
 		info->ref_index = (info->upd_index+1)%SPP_INFO_AREA_MAX;
+	}
 }
 /**
  * Forwarding packets as forwarder or merger
@@ -181,23 +185,13 @@ spp_forward(int id)
 		tx = &path->ports[cnt].tx;
 
 		/* Receive packets */
-		nb_rx = rte_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
+		nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
 		if (unlikely(nb_rx == 0))
 			continue;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-		if (rx->iface_type == RING)
-			spp_ringlatencystats_calculate_latency(rx->iface_no,
-					bufs, nb_rx);
-
-		if (tx->iface_type == RING)
-			spp_ringlatencystats_add_time_stamp(tx->iface_no,
-					bufs, nb_rx);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
-
 		/* Send packets */
 		if (tx->dpdk_port >= 0)
-			nb_tx = rte_eth_tx_burst(tx->dpdk_port, 0, bufs, nb_rx);
+			nb_tx = spp_eth_tx_burst(tx->dpdk_port, 0, bufs, nb_rx);
 
 		/* Discard remained packets to release mbuf */
 		if (unlikely(nb_tx < nb_rx)) {

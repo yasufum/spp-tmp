@@ -46,6 +46,7 @@
 #include "classifier_mac.h"
 #include "spp_forward.h"
 #include "command_proc.h"
+#include "spp_port.h"
 
 /* Max number of core status check */
 #define SPP_CORE_STATUS_CHECK_MAX 5
@@ -999,6 +1000,7 @@ main(int argc, char *argv[])
 			break;
 
 		spp_forward_init();
+		spp_port_ability_init();
 
 		/* Setup connection for accepting commands from controller */
 		int ret_command_init = spp_command_proc_init(
@@ -1438,12 +1440,14 @@ int
 spp_update_port(enum spp_command_action action,
 		const struct spp_port_index *port,
 		enum spp_port_rxtx rxtx,
-		const char *name)
+		const char *name,
+		const struct spp_port_ability *ability)
 {
 	int ret = SPP_RET_NG;
 	int ret_check = -1;
 	int ret_del = -1;
 	int component_id = 0;
+	int cnt = 0;
 	struct spp_component_info *component = NULL;
 	struct spp_port_info *port_info = NULL;
 	int *num = NULL;
@@ -1477,6 +1481,20 @@ spp_update_port(enum spp_command_action action,
 			break;
 		}
 
+		if (ability->ope != SPP_PORT_ABILITY_OPE_NONE) {
+			while ((cnt < SPP_PORT_ABILITY_MAX) &&
+					(port_info->ability[cnt].ope !=
+					SPP_PORT_ABILITY_OPE_NONE)) {
+				cnt++;
+			}
+			if (cnt >= SPP_PORT_ABILITY_MAX) {
+				RTE_LOG(ERR, APP, "No space of port ability.\n");
+				return SPP_RET_NG;
+			}
+			memcpy(&port_info->ability[cnt], ability,
+					sizeof(struct spp_port_ability));
+		}
+
 		port_info->iface_type = port->iface_type;
 		ports[*num] = port_info;
 		(*num)++;
@@ -1485,9 +1503,20 @@ spp_update_port(enum spp_command_action action,
 		break;
 
 	case SPP_CMD_ACTION_DEL:
+		for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
+			if (port_info->ability[cnt].ope ==
+					SPP_PORT_ABILITY_OPE_NONE)
+				continue;
+
+			if (port_info->ability[cnt].rxtx == rxtx)
+				memset(&port_info->ability[cnt], 0x00,
+					sizeof(struct spp_port_ability));
+		}
+
 		ret_del = get_del_port_element(port_info, *num, ports);
 		if (ret_del == 0)
 			(*num)--; /* If deleted, decrement number. */
+
 		ret = SPP_RET_OK;
 		break;
 	default:
@@ -1573,6 +1602,8 @@ flush_component(void)
 			continue;
 
 		component_info = &g_component_info[cnt];
+		spp_port_ability_update(component_info);
+
 		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
 			ret = spp_classifier_mac_update(component_info);
 		else
@@ -1681,6 +1712,22 @@ spp_iterate_classifier_table(
 	}
 
 	return SPP_RET_OK;
+}
+
+/* Get the port number of DPDK. */
+int
+spp_get_dpdk_port(enum port_type iface_type, int iface_no)
+{
+	switch (iface_type) {
+	case PHY:
+		return g_iface_info.nic[iface_no].dpdk_port;
+	case RING:
+		return g_iface_info.ring[iface_no].dpdk_port;
+	case VHOST:
+		return g_iface_info.vhost[iface_no].dpdk_port;
+	default:
+		return -1;
+	}
 }
 
 /**

@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <rte_ether.h>
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
@@ -76,6 +77,18 @@ const char *PORT_RXTX_STRINGS[] = {
 	"none",
 	"rx",
 	"tx",
+
+	/* termination */ "",
+};
+
+/*
+ * port ability string list
+ * do it same as the order of enum spp_port_ability_type (spp_vf.h)
+ */
+const char *PORT_ABILITY_STRINGS[] = {
+	"none",
+	"add_vlantag",
+	"del_vlantag",
 
 	/* termination */ "",
 };
@@ -134,6 +147,27 @@ get_arrary_index(const char *match, const char *list[])
 			return i;
 	}
 	return -1;
+}
+
+/* Get int type value */
+static int
+get_int_value(
+		int *output,
+		const char *arg_val,
+		int min,
+		int max)
+{
+	int ret = 0;
+	char *endptr = NULL;
+	ret = strtol(arg_val, &endptr, 0);
+	if (unlikely(endptr == arg_val) || unlikely(*endptr != '\0'))
+		return -1;
+
+	if (unlikely(ret < min) || unlikely(ret > max))
+		return -1;
+
+	*output = ret;
+	return 0;
 }
 
 /* Get unsigned int type value */
@@ -386,6 +420,59 @@ decode_port_name_value(void *output, const char *arg_val)
 	return decode_str_value(output, arg_val);
 }
 
+#/* decoding procedure of port ability for port command */
+static int
+decode_port_ability_value(void *output, const char *arg_val)
+{
+	int ret = 0;
+	struct spp_command_port *port = output;
+	struct spp_port_ability *ability = &port->ability;
+
+	switch (ability->ope) {
+	case SPP_PORT_ABILITY_OPE_NONE:
+		ret = get_arrary_index(arg_val, PORT_ABILITY_STRINGS);
+		if (unlikely(ret <= 0)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
+					"Unknown port ability. val=%s\n",
+					arg_val);
+			return -1;
+		}
+		ability->ope  = ret;
+		ability->rxtx = port->rxtx;
+		break;
+	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+		if (ability->data.vlantag.pcp == 0) {
+			ret = get_int_value(&ability->data.vlantag.vid,
+					arg_val, 0, ETH_VLAN_ID_MAX);
+			if (unlikely(ret < 0)) {
+				RTE_LOG(ERR, SPP_COMMAND_PROC,
+						"Bad VLAN ID. val=%s\n",
+						arg_val);
+				return -1;
+			}
+			ability->data.vlantag.pcp = -1;
+		} else {
+			ret = get_int_value(&ability->data.vlantag.pcp,
+					arg_val, 0, SPP_VLAN_PCP_MAX);
+			if (unlikely(ret < 0)) {
+				RTE_LOG(ERR, SPP_COMMAND_PROC,
+						"Bad VLAN PCP. val=%s\n",
+						arg_val);
+				return -1;
+			}
+		}
+		break;
+	case SPP_PORT_ABILITY_OPE_DEL_VLANTAG:
+		/* Nothing to do. */
+		break;
+	default:
+		/* Not used. */
+		break;
+	}
+
+	return 0;
+}
+
 /* decoding procedure of mac address string */
 static int
 decode_mac_addr_str_value(void *output, const char *arg_val)
@@ -600,6 +687,21 @@ static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 			.offset = offsetof(struct spp_command, spec.port.name),
 			.func = decode_port_name_value
 		},
+		{
+			.name = "port ability 1",
+			.offset = offsetof(struct spp_command, spec.port),
+			.func = decode_port_ability_value
+		},
+		{
+			.name = "port ability 2",
+			.offset = offsetof(struct spp_command, spec.port),
+			.func = decode_port_ability_value
+		},
+		{
+			.name = "port ability 3",
+			.offset = offsetof(struct spp_command, spec.port),
+			.func = decode_port_ability_value
+		},
 		DECODE_PARAMETER_LIST_EMPTY,
 	},
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* cancel           */
@@ -652,7 +754,7 @@ static struct decode_command_list command_list[] = {
 	{ "exit",             1, 1, NULL },     /* exit             */
 	{ "component",        3, 5, decode_command_parameter_in_list },
 						/* component        */
-	{ "port",             5, 5, decode_command_parameter_in_list },
+	{ "port",             5, 8, decode_command_parameter_in_list },
 						/* port             */
 	{ "cancel",           1, 1, NULL },     /* cancel           */
 	{ "",                 0, 0, NULL }      /* termination      */

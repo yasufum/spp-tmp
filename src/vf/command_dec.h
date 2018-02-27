@@ -106,25 +106,35 @@ struct spp_command_flush {
 
 /** "component" command parameters */
 struct spp_command_component {
-	/**< Action identifier (start or stop) */
+	/** Action identifier (start or stop) */
 	enum spp_command_action action;
 
-	/**< Component name */
+	/** Component name */
 	char name[SPP_CMD_NAME_BUFSZ];
 
-	/**< Logical core number */
+	/** Logical core number */
 	unsigned int core;
 
-	/**< Component type */
+	/** Component type */
 	enum spp_component_type type;
 };
 
 /** "port" command parameters */
 struct spp_command_port {
-	enum spp_command_action action; /**< Action identifier (add or del) */
-	struct spp_port_index port;     /**< Port type and number */
-	enum spp_port_rxtx rxtx;        /**< rx/tx identifier */
-	char name[SPP_CMD_NAME_BUFSZ];  /**< Attached component name */
+	/** Action identifier (add or del) */
+	enum spp_command_action action;
+
+	/** Port type and number */
+	struct spp_port_index port;
+
+	/** rx/tx identifier */
+	enum spp_port_rxtx rxtx;
+
+	/** Attached component name */
+	char name[SPP_CMD_NAME_BUFSZ];
+
+	/** Port ability */
+	struct spp_port_ability ability;
 };
 
 /** command parameters */

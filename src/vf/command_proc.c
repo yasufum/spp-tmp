@@ -39,6 +39,7 @@
 #include <rte_branch_prediction.h>
 
 #include "spp_vf.h"
+#include "spp_port.h"
 #include "string_buffer.h"
 #include "command_conn.h"
 #include "command_dec.h"
@@ -87,6 +88,18 @@ struct command_response_list {
 
 	/* Pointer to handling function */
 	int (*func)(const char *name, char **output, void *tmp);
+};
+
+/*
+ * port ability string list
+ * do it same as the order of enum spp_port_ability_type (spp_vf.h)
+ */
+const char *PORT_ABILITY_STATUS_STRINGS[] = {
+	"none",
+	"add",
+	"del",
+
+	/* termination */ "",
 };
 
 /* append a comma for JSON format */
@@ -245,7 +258,8 @@ execute_command(const struct spp_command *command)
 				command->spec.port.action,
 				&command->spec.port.port,
 				command->spec.port.rxtx,
-				command->spec.port.name);
+				command->spec.port.name,
+				&command->spec.port.ability);
 		break;
 
 	case SPP_CMDTYPE_CANCEL:
@@ -456,15 +470,116 @@ append_interface_value(const char *name, char **output,
 	return ret;
 }
 
-/* append a list of port numbers for JSON format */
+/* append a value of vlan for JSON format */
 static int
-apeend_port_array(const char *name, char **output,
-		const int num, const struct spp_port_index *ports)
+append_vlan_value(char **output, const int ope, const int vid, const int pcp)
+{
+	int ret = 0;
+	ret = append_json_str_value("operation", output,
+			PORT_ABILITY_STATUS_STRINGS[ope]);
+	if (unlikely(ret < 0))
+		return -1;
+
+	ret = append_json_int_value("id", output, vid);
+	if (unlikely(ret < 0))
+		return -1;
+
+	ret = append_json_int_value("pcp", output, pcp);
+	if (unlikely(ret < 0))
+		return -1;
+
+	return 0;
+}
+
+/* append a block of vlan for JSON format */
+static int
+append_vlan_block(const char *name, char **output,
+		const int port_id, const enum spp_port_rxtx rxtx)
 {
 	int ret = -1;
 	int i = 0;
+	struct spp_port_ability *info = NULL;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"allocate error. (name = %s)\n",
+				name);
+		return -1;
+	}
+
+	spp_port_ability_get_info(port_id, rxtx, &info);
+	for (i = 0; i < SPP_PORT_ABILITY_MAX; i++) {
+		switch (info[i].ope) {
+		case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+		case SPP_PORT_ABILITY_OPE_DEL_VLANTAG:
+			ret = append_vlan_value(&tmp_buff, info[i].ope,
+					info[i].data.vlantag.vid,
+					info[i].data.vlantag.pcp);
+			if (unlikely(ret < 0))
+				return -1;
+
+			/*
+			 * Change counter to "maximum+1" for exit the loop.
+			 * An if statement after loop termination is false
+			 * by "maximum+1 ".
+			 */
+			i = SPP_PORT_ABILITY_MAX + 1;
+			break;
+		default:
+			/* not used */
+			break;
+		}
+	}
+	if (i == SPP_PORT_ABILITY_MAX) {
+		ret = append_vlan_value(&tmp_buff, SPP_PORT_ABILITY_OPE_NONE,
+				0, 0);
+		if (unlikely(ret < 0))
+			return -1;
+	}
+
+	ret = append_json_block_brackets(name, output, tmp_buff);
+	spp_strbuf_free(tmp_buff);
+	return ret;
+}
+
+/* append a block of port numbers for JSON format */
+static int
+append_port_block(char **output, const struct spp_port_index *port,
+		const enum spp_port_rxtx rxtx)
+{
+	int ret = -1;
 	char port_str[CMD_TAG_APPEND_SIZE];
-	char append_str[CMD_TAG_APPEND_SIZE];
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"allocate error. (name = port_block)\n");
+		return -1;
+	}
+
+	spp_format_port_string(port_str, port->iface_type, port->iface_no);
+	ret = append_json_str_value("port", &tmp_buff, port_str);
+	if (unlikely(ret < 0))
+		return -1;
+
+	ret = append_vlan_block("vlan", &tmp_buff,
+			spp_get_dpdk_port(port->iface_type, port->iface_no),
+			rxtx);
+	if (unlikely(ret < 0))
+		return -1;
+
+	ret = append_json_block_brackets("", output, tmp_buff);
+	spp_strbuf_free(tmp_buff);
+	return ret;
+}
+
+/* append a list of port numbers for JSON format */
+static int
+append_port_array(const char *name, char **output, const int num,
+		const struct spp_port_index *ports,
+		const enum spp_port_rxtx rxtx)
+{
+	int ret = -1;
+	int i = 0;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -474,14 +589,8 @@ apeend_port_array(const char *name, char **output,
 	}
 
 	for (i = 0; i < num; i++) {
-		spp_format_port_string(port_str, ports[i].iface_type,
-				ports[i].iface_no);
-
-		sprintf(append_str, "%s\"%s\"", JSON_APPEND_COMMA(i), port_str);
-
-		tmp_buff = spp_strbuf_append(tmp_buff, append_str,
-				strlen(append_str));
-		if (unlikely(tmp_buff == NULL))
+		ret = append_port_block(&tmp_buff, &ports[i], rxtx);
+		if (unlikely(ret < 0))
 			return -1;
 	}
 
@@ -529,13 +638,13 @@ append_core_element_value(
 		return ret;
 
 	if (unuse_flg) {
-		ret = apeend_port_array("rx_port", &tmp_buff,
-				num_rx, rx_ports);
+		ret = append_port_array("rx_port", &tmp_buff,
+				num_rx, rx_ports, SPP_PORT_RXTX_RX);
 		if (unlikely(ret < 0))
 			return ret;
 
-		ret = apeend_port_array("tx_port", &tmp_buff,
-				num_tx, tx_ports);
+		ret = append_port_array("tx_port", &tmp_buff,
+				num_tx, tx_ports, SPP_PORT_RXTX_TX);
 		if (unlikely(ret < 0))
 			return ret;
 	}
