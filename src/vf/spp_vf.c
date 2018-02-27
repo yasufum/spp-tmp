@@ -992,9 +992,6 @@ main(int argc, char *argv[])
 		argc -= ret_dpdk;
 		argv += ret_dpdk;
 
-		/* Set log level  */
-		rte_log_set_global_level(RTE_LOG_LEVEL);
-
 		/* Parse spp_vf specific parameters */
 		int ret_parse = parse_app_args(argc, argv);
 		if (unlikely(ret_parse != 0))
