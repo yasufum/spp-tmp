@@ -30,6 +30,7 @@ class Shell(cmd.Cmd, object):
     BYE_CMDS = ['sec', 'all']
 
     PLUGIN_DIR = 'command'
+    subgraphs = {}
 
     def default(self, line):
         """Define defualt behaviour
@@ -483,6 +484,87 @@ class Shell(cmd.Cmd, object):
         if args == '':
             pprint(vars(self))
 
+    def terms_topo_subgraph(self):
+        """Define terms of topo_subgraph command"""
+
+        return ['add', 'del']
+
+    def do_topo_subgraph(self, args):
+        """Subgarph manager for topo
+
+        Subgraph is a group of object defined in dot language.
+        For topo command, it is used for grouping resources of each
+        of VM or container to topology be more understandable.
+
+        Add subgraph labeled 'vm1'. Resource name is capitalized and
+        both of them is OK.
+        spp > topo_subgraph add vm1 VHOST1;VHOST2  # upper case
+        spp > topo_subgraph add vm1 vhost1;vhost2  # lower case
+
+        Delete subgraph 'vm1'.
+        spp > topo_subgraph del vm1
+
+        To show subgraphs, run topo_subgraph without args.
+        spp > topo_subgraph
+        {'vm1', 'VHOST1;VHOST2'}
+        """
+
+        args_cleaned = re.sub(r"\s+", ' ', args).strip()
+        # Show subgraphs if given no argments
+        if (args_cleaned == ''):
+            if len(self.subgraphs) == 0:
+                print("No subgraph.")
+            else:
+                for label, subg in self.subgraphs.items():
+                    print('label: %s\tsubgraph: "%s"' % (label, subg))
+        else:  # add or del
+            tokens = args_cleaned.split(' ')
+            # Add subgraph
+            if tokens[0] == 'add':
+                if len(tokens) == 3:
+                    label = tokens[1]
+                    subg = tokens[2].upper()
+                    if ',' in subg:
+                        subg = re.sub(r",", ";", subg)
+
+                    # TODO(yasufum) add validation for subgraph
+                    self.subgraphs[label] = subg
+                    print("Add subgraph '%s'" % label)
+                else:
+                    print("Invalid syntax '%s'!" % args_cleaned)
+            # Delete subgraph
+            elif ((tokens[0] == 'del') or
+                    (tokens[0] == 'delete') or
+                    (tokens[0] == 'remove')):
+                del(self.subgraphs[tokens[1]])
+                print("Delete subgraph '%s'" % tokens[1])
+
+            else:
+                print("Ivalid subcommand '%s'!" % tokens[0])
+
+    def complete_topo_subgraph(self, text, line, begidx, endidx):
+        terms = self.terms_topo_subgraph()
+
+        tokens = re.sub(r"\s+", ' ', line).strip().split(' ')
+        if text == '':
+            if len(tokens) == 1:
+                return terms
+            elif len(tokens) == 2 and tokens[1] == 'del':
+                return self.subgraphs.keys()
+        elif text != '':
+            completions = []
+            if len(tokens) == 3 and tokens[1] == 'del':
+                for t in self.subgraphs.keys():
+                    if t.startswith(tokens[2]):
+                        completions.append(t)
+            elif len(tokens) == 2:
+                for t in terms:
+                    if t.startswith(text):
+                        completions.append(t)
+            return completions
+        else:
+            pass
+
     def do_topo(self, args):
         """Output network topology
 
@@ -506,7 +588,8 @@ class Shell(cmd.Cmd, object):
             tp = topo.Topo(
                 spp_common.SECONDARY_LIST,
                 spp_common.MAIN2SEC,
-                spp_common.SEC2MAIN)
+                spp_common.SEC2MAIN,
+                self.subgraphs)
             args_ary = args.split()
             if len(args_ary) == 0:
                 print("Usage: topo dst [ftype]")

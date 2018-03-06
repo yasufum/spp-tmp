@@ -20,11 +20,12 @@ class Topo(object):
     * text (dot, json, yaml)
     """
 
-    def __init__(self, sec_ids, m2s_queues, s2m_queues):
+    def __init__(self, sec_ids, m2s_queues, s2m_queues, sub_graphs):
         logger.info("Topo initialized with sec IDs %s" % sec_ids)
         self.sec_ids = sec_ids
         self.m2s_queues = m2s_queues
         self.s2m_queues = s2m_queues
+        self.sub_graphs = sub_graphs
 
     def show(self, dtype):
         res_ary = []
@@ -153,26 +154,54 @@ class Topo(object):
         # rank
         output.append(
             '{rank=same; %s}' % ("; ".join(ring_labels)))
+        output.append(
+            '{rank=same; %s}' % ("; ".join(vhost_labels)))
+
         if len(phys) > 0:
             output.append(
                 '{rank=max; %s}' % (
                     phys[0]["iface"]["type"] + phys[0]["iface"]["id"]))
-        output.append(
-            '{rank=same; %s}' % ("; ".join(phy_labels)))
+        elif len(vhosts) > 0:
+            output.append(
+                '{rank=max; %s}' % (
+                    vhosts[0]["iface"]["type"] + vhosts[0]["iface"]["id"]))
 
-        # subgraph
+        if len(phy_labels) > 0:
+            output.append(
+                '{rank=same; %s}' % ("; ".join(phy_labels)))
+
+        # Add subgraph
+        ssgs = []
+        if len(self.sub_graphs) > 0:
+            cnt = 1
+            for label, val in self.sub_graphs.items():
+                cluster_id = "cluster%d" % cnt
+                ssg_label = label
+                ssg_ports = val
+                ssg = 'subgraph %s {label="%s" %s}' % (
+                        cluster_id, ssg_label, ssg_ports)
+                ssgs.append(ssg)
+                cnt += 1
+
         cluster_id = "cluster0"
         sg_label = "Host"
         sg_ports = "; ".join(phy_labels + ring_labels)
-        output.append(
-            'subgraph %s {label="%s" %s}' % (cluster_id, sg_label, sg_ports))
+        if len(ssgs) == 0:
+            output.append(
+                    'subgraph %s {label="%s" %s}' % (
+                        cluster_id, sg_label, sg_ports))
+        else:
+            tmp = 'label="%s" %s' % (sg_label, sg_ports)
+            contents = [tmp] + ssgs
+            output.append(
+                    'subgraph %s {%s}' % (cluster_id, '; '.join(contents)))
 
+        # Add links
         for link in links:
             output.append(link)
 
         output.append("}")
 
-        # remove duplicated entries
         f = open(output_fname, "w+")
         f.write("\n".join(output))
         f.close()
