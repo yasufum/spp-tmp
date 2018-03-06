@@ -691,6 +691,9 @@ class Shell(cmd.Cmd, object):
             print ("first %s" % cmds[1])
             self.response(self.CMD_ERROR, "invalid format")
 
+    def complete_record(self, text, line, begidx, endidx):
+        return self.compl_common(text, line)
+
     def do_record(self, fname):
         """Save future commands to filename:  RECORD filename.cmd"""
 
