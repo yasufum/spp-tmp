@@ -728,6 +728,12 @@ class Shell(cmd.Cmd, object):
                 for fn in res:
                     if fn[-1] == '/':
                         completions.append(fn)
+            elif ftype == 'file':
+                for fn in res:
+                    if fn[-1] != '/':
+                        completions.append(fn)
+            else:
+                completions = res
         else:
             completions = res
         return completions
