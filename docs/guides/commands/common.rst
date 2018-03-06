@@ -43,7 +43,7 @@ It also show a list of secondary IDs
     spp > status
     Soft Patch Panel Status :
     primary: 1
-    secondary count: 4
+    secondary count: 2
     Connected secondary id: 1
     Connected secondary id: 2
 
@@ -84,6 +84,67 @@ as a config, although you can use any of extensions such as ``.txt`` or
     spp> playback 2nfv_uni.config
 
 
+pwd
+---
+
+Show current path.
+
+.. code-block:: console
+
+    spp> pwd
+    /path/to/curdir
+
+
+cd
+--
+
+Change current directory.
+
+.. code-block:: console
+
+    spp> cd /path/to/dir
+
+
+ls
+--
+
+Show a list of directory contents.
+
+.. code-block:: console
+
+    spp> ls /path/to/dir
+
+
+mkdir
+-----
+
+Make a directory.
+
+.. code-block:: console
+
+    spp> mkdir /path/to/dir
+
+
+cat
+---
+
+Show contents of a file.
+
+.. code-block:: console
+
+    spp> cat /path/to/file
+
+
+less
+----
+
+Show contents of a file.
+
+.. code-block:: console
+
+    spp> less /path/to/file
+
+
 bye
 ---
 
@@ -111,6 +172,18 @@ Second one is for all SPP processes other than controller.
     closing:('127.0.0.1', 53620)
 
 
+exit
+----
+
+Same as ``bye`` command but just for terminating SPP controller and
+not for other processes.
+
+.. code-block:: console
+
+    spp > exit
+    Thank you for using Soft Patch Panel
+
+
 help
 ----
 
@@ -122,9 +195,20 @@ Show help message for SPP commands.
 
     Documented commands (type help <topic>):
     ========================================
-    bye  help  playback  pri  record  sec  status
+    bye  cd    help  load_cmd  mkdir     pri  record  status  topo_subgraph
+    cat  exit  less  ls        playback  pwd  sec     topo
 
     spp > help status
-    Display Soft Patch Panel Status
+    Display status info of SPP processes
+
+        spp > status
+
     spp > help sec
     Send command to secondary process
+
+        SPP secondary process is specified with secondary ID and takes
+        sub commands.
+
+        spp > sec 1;status
+        spp > sec 1;add ring 0
+        spp > sec 1;patch 0 2
