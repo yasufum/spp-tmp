@@ -163,7 +163,7 @@ class Shell(cmd.Cmd, object):
 
         return valid
 
-    def clean_sec_cmd(self, cmdstr):
+    def clean_cmd(self, cmdstr):
         """remove unwanted spaces to avoid invalid command error"""
 
         tmparg = re.sub(r'\s+', " ", cmdstr)
@@ -226,11 +226,17 @@ class Shell(cmd.Cmd, object):
         spp > pri;clear
         """
 
-        if command and command in self.PRI_CMDS:
+        # Remove unwanted spaces and first char ';'
+        command = self.clean_cmd(command)[1:]
+
+        if logger is not None:
+            logger.info("Receive pri command: '%s'" % command)
+
+        if command and (command in self.PRI_CMDS):
             result, message = self.command_primary(command)
             self.response(result, message)
         else:
-            message = "primary invalid command"
+            message = "Invalid pri command: '%s'" % command
             print(message)
             self.response(self.CMD_ERROR, message)
 
@@ -258,7 +264,7 @@ class Shell(cmd.Cmd, object):
         """
 
         # remove unwanted spaces to avoid invalid command error
-        tmparg = self.clean_sec_cmd(arg)
+        tmparg = self.clean_cmd(arg)
         cmds = tmparg.split(';')
         if len(cmds) < 2:
             message = "error"
@@ -282,7 +288,7 @@ class Shell(cmd.Cmd, object):
         """Completion for secondary process commands"""
 
         try:
-            cleaned_line = self.clean_sec_cmd(line)
+            cleaned_line = self.clean_cmd(line)
             if len(cleaned_line.split()) == 1:
                 completions = [str(i)+";" for i in spp_common.SECONDARY_LIST]
             elif len(cleaned_line.split()) == 2:
