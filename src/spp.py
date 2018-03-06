@@ -671,7 +671,10 @@ class Shell(cmd.Cmd, object):
 
     def precmd(self, line):
         if self.recorded_file:
-            if not (('playback' in line) or ('bye' in line)):
+            if not (
+                    ('playback' in line) or
+                    ('bye' in line) or
+                    ('exit' in line)):
                 print(line, file=self.recorded_file)
         return line
 
@@ -773,8 +776,8 @@ class Shell(cmd.Cmd, object):
             return True
 
     def do_exit(self, args):
-        print('Thank you for using Soft Patch Panel')
         self.close()
+        print('Thank you for using Soft Patch Panel')
         return True
 
 
