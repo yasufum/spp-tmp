@@ -20,6 +20,7 @@ import traceback
 
 # Turn true if activate logger to debug remote command.
 logger = None
+logger = True
 
 # Maximum num of sock queues for secondaries
 MAX_SECONDARY = 16
@@ -685,32 +686,25 @@ class Shell(cmd.Cmd, object):
     def do_pwd(self, args):
         print(os.getcwd())
 
-    def do_cd(self, args):
-        if os.path.isdir(args):
-            os.chdir(args)
-            print(os.getcwd())
-        else:
-            print("No such a directory.")
-
-    def ls_decorate_dir(self, filelist):
+    def decorate_dir(self, curdir, filelist):
         res = []
         for f in filelist:
-            if os.path.isdir(f):
+            if os.path.isdir('%s/%s' % (curdir, f)):
                 res.append('%s/' % f)
             else:
                 res.append(f)
         return res
 
-    def complete_ls(self, text, line, begidx, endidx):
+    def compl_common(self, text, line, ftype=None):
         if text == '':
             tokens = line.split(' ')
-            target = tokens[-1]
-            if target == '':
-                completions = self.ls_decorate_dir(
-                    os.listdir(os.getcwd()))
+            target_dir = tokens[-1]
+            if target_dir == '':
+                res = self.decorate_dir(
+                    '.', os.listdir(os.getcwd()))
             else:
-                completions = self.ls_decorate_dir(
-                    os.listdir(target))
+                res = self.decorate_dir(
+                    target_dir, os.listdir(target_dir))
         else:
             tokens = line.split(' ')
             target = tokens[-1]
@@ -726,13 +720,35 @@ class Shell(cmd.Cmd, object):
             for t in os.listdir(target_dir):
                 if seg in t:
                     matched.append(t)
-            completions = self.ls_decorate_dir(matched)
+            res = self.decorate_dir(target_dir, matched)
+
+        if ftype is not None:
+            if ftype == 'directory':
+                completions = []
+                for fn in res:
+                    if fn[-1] == '/':
+                        completions.append(fn)
+        else:
+            completions = res
         return completions
+
+    def complete_ls(self, text, line, begidx, endidx):
+        return self.compl_common(text, line)
 
     def do_ls(self, args):
         if args == '' or os.path.isdir(args):
             c = 'ls -F %s' % args
             subprocess.call(c, shell=True)
+        else:
+            print("No such a directory.")
+
+    def complete_cd(self, text, line, begidx, endidx):
+        return self.compl_common(text, line, 'directory')
+
+    def do_cd(self, args):
+        if os.path.isdir(args):
+            os.chdir(args)
+            print(os.getcwd())
         else:
             print("No such a directory.")
 
