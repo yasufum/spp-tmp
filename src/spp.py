@@ -13,6 +13,7 @@ import re
 import select
 import socket
 import SocketServer
+import subprocess
 import sys
 import threading
 import traceback
@@ -688,6 +689,13 @@ class Shell(cmd.Cmd, object):
         if os.path.isdir(args):
             os.chdir(args)
             print(os.getcwd())
+        else:
+            print("No such a directory.")
+
+    def do_ls(self, args):
+        if args == '' or os.path.isdir(args):
+            c = 'ls %s' % args
+            subprocess.call(c, shell=True)
         else:
             print("No such a directory.")
 
