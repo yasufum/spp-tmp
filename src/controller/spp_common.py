@@ -5,6 +5,8 @@ from Queue import Queue
 # Setup logger object
 logger = logging.getLogger(__name__)
 # handler = logging.StreamHandler()
+os.system("mkdir -p %s/log" % (os.path.dirname(__file__)))
+
 logfile = '%s/log/%s' % (os.path.dirname(__file__), 'spp.log')
 handler = logging.FileHandler(logfile)
 handler.setLevel(logging.DEBUG)
