@@ -468,6 +468,34 @@ class Shell(cmd.Cmd, object):
                            ]
         return completions
 
+    def do_cat(self, arg):
+        """View contents of a file
+
+        spp > cat file
+        """
+        if os.path.isfile(arg):
+            c = 'cat %s' % arg
+            subprocess.call(c, shell=True)
+        else:
+            print("No such a directory.")
+
+    def complete_cat(self, text, line, begidx, endidx):
+        return common.compl_common(text, line)
+
+    def do_less(self, arg):
+        """View contents of a file
+
+        spp > less file
+        """
+        if os.path.isfile(arg):
+            c = 'less %s' % arg
+            subprocess.call(c, shell=True)
+        else:
+            print("No such a directory.")
+
+    def complete_less(self, text, line, begidx, endidx):
+        return common.compl_common(text, line)
+
     def do_exit(self, args):
         """Terminate SPP controller
 
