@@ -43,6 +43,7 @@ topo
 Output network topology in several formats.
 
 Support four types of output.
+
 * terminal (but very few terminals supporting to display images)
 * browser (websocket server is required)
 * image file (jpg, png, bmp)
@@ -117,7 +118,7 @@ For example, ``hello`` command is loaded from
 
 .. code-block:: console
 
-    spp > load hello
+    spp > load_cmd hello
     Module 'command.hello' loaded.
     spp > hello alice
     Hello, alice!
