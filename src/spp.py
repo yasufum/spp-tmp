@@ -369,6 +369,11 @@ class Shell(cmd.Cmd, object):
     BYE_CMDS = ['sec', 'all']
 
     def decorate_dir(self, curdir, filelist):
+        """Add '/' the end of dirname for path completion
+
+        'filelist' is a list of files contained in a directory.
+        """
+
         res = []
         for f in filelist:
             if os.path.isdir('%s/%s' % (curdir, f)):
@@ -378,21 +383,38 @@ class Shell(cmd.Cmd, object):
         return res
 
     def compl_common(self, text, line, ftype=None):
-        if text == '':
+        """File path completion for 'complete_*' method
+
+        This method is called from 'complete_*' to complete 'do_*'.
+        'text' and 'line' are arguments of 'complete_*'.
+
+        `complete_*` is a member method of builtin Cmd class and
+        called if tab key is pressed in a command defiend by 'do_*'.
+        'text' and 'line' are contents of command line.
+        For example, if you type tab at 'command arg1 ar',
+        last token 'ar' is assigned to 'text' and whole line
+        'command arg1 ar' is assigned to 'line'.
+
+        NOTE:
+        If tab is typed after '/', empty text '' is assigned to
+        'text'. For example 'aaa b/', text is not 'b/' but ''.
+        """
+
+        if text == '':  # tab is typed after command name or '/'
             tokens = line.split(' ')
-            target_dir = tokens[-1]
-            if target_dir == '':
+            target_dir = tokens[-1]  # get dirname for competion
+            if target_dir == '':  # no dirname means current dir
                 res = self.decorate_dir(
                     '.', os.listdir(os.getcwd()))
-            else:
+            else:  # after '/'
                 res = self.decorate_dir(
                     target_dir, os.listdir(target_dir))
-        else:
+        else:  # tab is typed in the middle of a word
             tokens = line.split(' ')
-            target = tokens[-1]
+            target = tokens[-1]  # target dir for completion
 
-            if '/' in target:
-                seg = target.split('/')[-1]
+            if '/' in target:  # word is a path such as 'path/to/file'
+                seg = target.split('/')[-1]  # word to be completed
                 target_dir = '/'.join(target.split('/')[0:-1])
             else:
                 seg = text
@@ -400,11 +422,11 @@ class Shell(cmd.Cmd, object):
 
             matched = []
             for t in os.listdir(target_dir):
-                if t.find(seg) == 0:
+                if t.find(seg) == 0:  # get words matched with 'seg'
                     matched.append(t)
             res = self.decorate_dir(target_dir, matched)
 
-        if ftype is not None:
+        if ftype is not None:  # filtering by ftype
             completions = []
             if ftype == 'directory':
                 for fn in res:
@@ -421,6 +443,14 @@ class Shell(cmd.Cmd, object):
         return completions
 
     def is_comment_line(self, line):
+        """Find commend line to not to interpret as a command
+
+        Return True if given line is a comment, or False.
+        Supported comment styles are
+          * python ('#')
+          * C ('//')
+        """
+
         input_line = line.strip()
         if len(input_line) > 0:
             if (input_line[0] == '#') or (input_line[0:2] == '//'):
@@ -431,10 +461,8 @@ class Shell(cmd.Cmd, object):
     def default(self, line):
         """Define defualt behaviour
 
-        If user input is commend styled, controller simply echo as a comment.
-        Supported styles are
-          - python ('#')
-          - C ('//')
+        If user input is commend styled, controller simply echo
+        as a comment.
         """
 
         if self.is_comment_line(line):
@@ -451,7 +479,7 @@ class Shell(cmd.Cmd, object):
         pass
 
     def close_all_secondary(self):
-        """Exit all secondary processes"""
+        """Terminate all secondary processes"""
 
         global SECONDARY_COUNT
         global SECONDARY_LIST
@@ -464,13 +492,19 @@ class Shell(cmd.Cmd, object):
         SECONDARY_COUNT = 0
 
     def get_status(self):
+        """Return status of primary and secondary processes
+
+        It is called from do_status() method and return primary status
+        and a list of secondary processes as status.
+        """
+
         global SECONDARY_LIST
 
         secondary = []
         for i in SECONDARY_LIST:
             secondary.append("%d" % i)
         stat = {
-            "primary": "%d" % PRIMARY,
+            "primary": "%d" % PRIMARY,  # PRIMARY is 1 if it is running
             "secondary": secondary
             }
         return stat
@@ -637,6 +671,7 @@ class Shell(cmd.Cmd, object):
 
     def response(self, result, message):
         """Enqueue message from other than CLI"""
+
         try:
             rcmd = RCMD_EXECUTE_QUEUE.get(False)
         except Empty:
@@ -650,14 +685,23 @@ class Shell(cmd.Cmd, object):
                 logger.debug("unknown remote command = %s" % rcmd)
 
     def do_status(self, _):
-        """Display Soft Patch Panel Status"""
+        """Display status info of SPP processes
+
+        spp > status
+        """
 
         self.print_status()
         stat = self.get_status()
         self.response(self.CMD_OK, json.dumps(stat))
 
     def do_pri(self, command):
-        """Send command to primary process"""
+        """Send command to primary process
+
+        Spp primary takes sub commands.
+
+        spp > pri;status
+        spp > pri;clear
+        """
 
         if command and command in self.PRI_CMDS:
             result, message = self.command_primary(command)
@@ -668,7 +712,15 @@ class Shell(cmd.Cmd, object):
             self.response(self.CMD_ERROR, message)
 
     def do_sec(self, arg):
-        """Send command to secondary process"""
+        """Send command to secondary process
+
+        SPP secondary process is specified with secondary ID and takes
+        sub commands.
+
+        spp > sec 1;status
+        spp > sec 1;add ring 0
+        spp > sec 1;patch 0 2
+        """
 
         # remove unwanted spaces to avoid invalid command error
         tmparg = clean_sec_cmd(arg)
@@ -695,7 +747,15 @@ class Shell(cmd.Cmd, object):
         return self.compl_common(text, line)
 
     def do_record(self, fname):
-        """Save future commands to filename:  RECORD filename.cmd"""
+        """Save commands to a log file
+
+        Save command history to a log file for loading from playback
+        command later as a config file.
+        Config is a series of SPP command and you can also create it
+        from scratch without playback command.
+
+        spp > record path/to/file
+        """
 
         if fname == '':
             print("Record file is required!")
@@ -707,7 +767,13 @@ class Shell(cmd.Cmd, object):
         return self.compl_common(text, line)
 
     def do_playback(self, fname):
-        """Playback commands from a file:  PLAYBACK filename.cmd"""
+        """Load a config file to reproduce network configuration
+
+        Config is a series of SPP command and you can also create it
+        from scratch without playback command.
+
+        spp > playback path/to/config
+        """
 
         if fname == '':
             print("Record file is required!")
@@ -728,6 +794,11 @@ class Shell(cmd.Cmd, object):
                 self.response(self.CMD_NG, message)
 
     def precmd(self, line):
+        """Called before running a command
+
+        It is called for checking a contents of command line.
+        """
+
         if self.recorded_file:
             if not (
                     ('playback' in line) or
@@ -745,12 +816,26 @@ class Shell(cmd.Cmd, object):
             self.recorded_file = None
 
     def do_pwd(self, args):
+        """Show corrent directory
+
+        It behaves as UNIX's pwd command.
+
+        spp > pwd
+        """
+
         print(os.getcwd())
 
     def complete_ls(self, text, line, begidx, endidx):
         return self.compl_common(text, line)
 
     def do_ls(self, args):
+        """Show a list of specified directory
+
+        It behaves as UNIX's ls command.
+
+        spp > ls path/to/dir
+        """
+
         if args == '' or os.path.isdir(args):
             c = 'ls -F %s' % args
             subprocess.call(c, shell=True)
@@ -761,6 +846,11 @@ class Shell(cmd.Cmd, object):
         return self.compl_common(text, line, 'directory')
 
     def do_cd(self, args):
+        """Change current directory
+
+        spp > cd path/to/dir
+        """
+
         if os.path.isdir(args):
             os.chdir(args)
             print(os.getcwd())
@@ -771,11 +861,30 @@ class Shell(cmd.Cmd, object):
         return self.compl_common(text, line)
 
     def do_mkdir(self, args):
+        """Create a new directory
+
+        It behaves as 'mkdir -p'.
+
+        spp > mkdir path/to/dir
+        """
+
         c = 'mkdir -p %s' % args
         subprocess.call(c, shell=True)
 
     def do_bye(self, arg):
-        """Stop recording, close SPP, and exit: BYE"""
+        """Terminate SPP processes and controller
+
+        It also terminates logging if you activate recording.
+
+        (1) Terminate secondary processes
+        spp > bye sec
+
+        (2) Terminate primary and secondary processes
+        spp > bye all
+
+        (3) Terminate SPP controller (not for primary and secondary)
+        spp > bye
+        """
 
         cmds = arg.split(' ')
         if cmds[0] == 'sec':
@@ -789,6 +898,12 @@ class Shell(cmd.Cmd, object):
             return True
 
     def do_exit(self, args):
+        """Terminate SPP controller
+
+        It is an alias for bye command and same as bye command.
+
+        spp > exit
+        """
         self.close()
         print('Thank you for using Soft Patch Panel')
         return True
