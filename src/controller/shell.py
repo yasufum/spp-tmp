@@ -1,9 +1,9 @@
 import cmd
-# import importlib
 import json
 import os
 from Queue import Empty
 import re
+from shell_lib import common
 import spp_common
 from spp_common import logger
 import subprocess
@@ -28,96 +28,6 @@ class Shell(cmd.Cmd, object):
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
-    def decorate_dir(self, curdir, filelist):
-        """Add '/' the end of dirname for path completion
-
-        'filelist' is a list of files contained in a directory.
-        """
-
-        res = []
-        for f in filelist:
-            if os.path.isdir('%s/%s' % (curdir, f)):
-                res.append('%s/' % f)
-            else:
-                res.append(f)
-        return res
-
-    def compl_common(self, text, line, ftype=None):
-        """File path completion for 'complete_*' method
-
-        This method is called from 'complete_*' to complete 'do_*'.
-        'text' and 'line' are arguments of 'complete_*'.
-
-        `complete_*` is a member method of builtin Cmd class and
-        called if tab key is pressed in a command defiend by 'do_*'.
-        'text' and 'line' are contents of command line.
-        For example, if you type tab at 'command arg1 ar',
-        last token 'ar' is assigned to 'text' and whole line
-        'command arg1 ar' is assigned to 'line'.
-
-        NOTE:
-        If tab is typed after '/', empty text '' is assigned to
-        'text'. For example 'aaa b/', text is not 'b/' but ''.
-        """
-
-        if text == '':  # tab is typed after command name or '/'
-            tokens = line.split(' ')
-            target_dir = tokens[-1]  # get dirname for competion
-            if target_dir == '':  # no dirname means current dir
-                res = self.decorate_dir(
-                    '.', os.listdir(os.getcwd()))
-            else:  # after '/'
-                res = self.decorate_dir(
-                    target_dir, os.listdir(target_dir))
-        else:  # tab is typed in the middle of a word
-            tokens = line.split(' ')
-            target = tokens[-1]  # target dir for completion
-
-            if '/' in target:  # word is a path such as 'path/to/file'
-                seg = target.split('/')[-1]  # word to be completed
-                target_dir = '/'.join(target.split('/')[0:-1])
-            else:
-                seg = text
-                target_dir = os.getcwd()
-
-            matched = []
-            for t in os.listdir(target_dir):
-                if t.find(seg) == 0:  # get words matched with 'seg'
-                    matched.append(t)
-            res = self.decorate_dir(target_dir, matched)
-
-        if ftype is not None:  # filtering by ftype
-            completions = []
-            if ftype == 'directory':
-                for fn in res:
-                    if fn[-1] == '/':
-                        completions.append(fn)
-            elif ftype == 'file':
-                for fn in res:
-                    if fn[-1] != '/':
-                        completions.append(fn)
-            else:
-                completions = res
-        else:
-            completions = res
-        return completions
-
-    def is_comment_line(self, line):
-        """Find commend line to not to interpret as a command
-
-        Return True if given line is a comment, or False.
-        Supported comment styles are
-          * python ('#')
-          * C ('//')
-        """
-
-        input_line = line.strip()
-        if len(input_line) > 0:
-            if (input_line[0] == '#') or (input_line[0:2] == '//'):
-                return True
-            else:
-                return False
-
     def default(self, line):
         """Define defualt behaviour
 
@@ -125,7 +35,7 @@ class Shell(cmd.Cmd, object):
         as a comment.
         """
 
-        if self.is_comment_line(line):
+        if common.is_comment_line(line):
             print("%s" % line.strip())
         else:
             super(Shell, self).default(line)
@@ -401,7 +311,7 @@ class Shell(cmd.Cmd, object):
             self.response(self.CMD_ERROR, "invalid format")
 
     def complete_record(self, text, line, begidx, endidx):
-        return self.compl_common(text, line)
+        return common.compl_common(text, line)
 
     def do_record(self, fname):
         """Save commands to a log file
@@ -421,7 +331,7 @@ class Shell(cmd.Cmd, object):
             self.response(self.CMD_OK, "record")
 
     def complete_playback(self, text, line, begidx, endidx):
-        return self.compl_common(text, line)
+        return common.compl_common(text, line)
 
     def do_playback(self, fname):
         """Load a config file to reproduce network configuration
@@ -440,7 +350,7 @@ class Shell(cmd.Cmd, object):
                 with open(fname) as recorded_file:
                     lines = []
                     for line in recorded_file:
-                        if not self.is_comment_line(line):
+                        if not common.is_comment_line(line):
                             lines.append("# %s" % line)
                         lines.append(line)
                     self.cmdqueue.extend(lines)
@@ -483,7 +393,7 @@ class Shell(cmd.Cmd, object):
         print(os.getcwd())
 
     def complete_ls(self, text, line, begidx, endidx):
-        return self.compl_common(text, line)
+        return common.compl_common(text, line)
 
     def do_ls(self, args):
         """Show a list of specified directory
@@ -500,7 +410,7 @@ class Shell(cmd.Cmd, object):
             print("No such a directory.")
 
     def complete_cd(self, text, line, begidx, endidx):
-        return self.compl_common(text, line, 'directory')
+        return common.compl_common(text, line, 'directory')
 
     def do_cd(self, args):
         """Change current directory
@@ -515,7 +425,7 @@ class Shell(cmd.Cmd, object):
             print("No such a directory.")
 
     def complete_mkdir(self, text, line, begidx, endidx):
-        return self.compl_common(text, line)
+        return common.compl_common(text, line)
 
     def do_mkdir(self, args):
         """Create a new directory
