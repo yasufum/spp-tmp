@@ -368,6 +368,58 @@ class Shell(cmd.Cmd, object):
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
+    def decorate_dir(self, curdir, filelist):
+        res = []
+        for f in filelist:
+            if os.path.isdir('%s/%s' % (curdir, f)):
+                res.append('%s/' % f)
+            else:
+                res.append(f)
+        return res
+
+    def compl_common(self, text, line, ftype=None):
+        if text == '':
+            tokens = line.split(' ')
+            target_dir = tokens[-1]
+            if target_dir == '':
+                res = self.decorate_dir(
+                    '.', os.listdir(os.getcwd()))
+            else:
+                res = self.decorate_dir(
+                    target_dir, os.listdir(target_dir))
+        else:
+            tokens = line.split(' ')
+            target = tokens[-1]
+
+            if '/' in target:
+                seg = target.split('/')[-1]
+                target_dir = '/'.join(target.split('/')[0:-1])
+            else:
+                seg = text
+                target_dir = os.getcwd()
+
+            matched = []
+            for t in os.listdir(target_dir):
+                if t.find(seg) == 0:
+                    matched.append(t)
+            res = self.decorate_dir(target_dir, matched)
+
+        if ftype is not None:
+            completions = []
+            if ftype == 'directory':
+                for fn in res:
+                    if fn[-1] == '/':
+                        completions.append(fn)
+            elif ftype == 'file':
+                for fn in res:
+                    if fn[-1] != '/':
+                        completions.append(fn)
+            else:
+                completions = res
+        else:
+            completions = res
+        return completions
+
     def is_comment_line(self, line):
         input_line = line.strip()
         if len(input_line) > 0:
@@ -648,6 +700,9 @@ class Shell(cmd.Cmd, object):
             self.recorded_file = open(fname, 'w')
             self.response(self.CMD_OK, "record")
 
+    def complete_playback(self, text, line, begidx, endidx):
+        return self.compl_common(text, line)
+
     def do_playback(self, fname):
         """Playback commands from a file:  PLAYBACK filename.cmd"""
 
@@ -688,58 +743,6 @@ class Shell(cmd.Cmd, object):
 
     def do_pwd(self, args):
         print(os.getcwd())
-
-    def decorate_dir(self, curdir, filelist):
-        res = []
-        for f in filelist:
-            if os.path.isdir('%s/%s' % (curdir, f)):
-                res.append('%s/' % f)
-            else:
-                res.append(f)
-        return res
-
-    def compl_common(self, text, line, ftype=None):
-        if text == '':
-            tokens = line.split(' ')
-            target_dir = tokens[-1]
-            if target_dir == '':
-                res = self.decorate_dir(
-                    '.', os.listdir(os.getcwd()))
-            else:
-                res = self.decorate_dir(
-                    target_dir, os.listdir(target_dir))
-        else:
-            tokens = line.split(' ')
-            target = tokens[-1]
-
-            if '/' in target:
-                seg = target.split('/')[-1]
-                target_dir = '/'.join(target.split('/')[0:-1])
-            else:
-                seg = text
-                target_dir = os.getcwd()
-
-            matched = []
-            for t in os.listdir(target_dir):
-                if t.find(seg) == 0:
-                    matched.append(t)
-            res = self.decorate_dir(target_dir, matched)
-
-        if ftype is not None:
-            if ftype == 'directory':
-                completions = []
-                for fn in res:
-                    if fn[-1] == '/':
-                        completions.append(fn)
-            elif ftype == 'file':
-                for fn in res:
-                    if fn[-1] != '/':
-                        completions.append(fn)
-            else:
-                completions = res
-        else:
-            completions = res
-        return completions
 
     def complete_ls(self, text, line, begidx, endidx):
         return self.compl_common(text, line)
