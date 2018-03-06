@@ -1,4 +1,5 @@
 import cmd
+# import importlib
 import json
 import os
 from Queue import Empty
@@ -563,3 +564,23 @@ class Shell(cmd.Cmd, object):
         self.close()
         print('Thank you for using Soft Patch Panel')
         return True
+
+    def do_load(self, args):
+        """Load command plugin
+
+        Path of plugin file is 'spp/src/controller/command'.
+
+        spp > load hello
+        """
+
+        args = re.sub(',', ' ', args)
+        args = re.sub(r'\s+', ' ', args)
+        list_args = args.split(' ')
+
+        libdir = 'command'
+        loaded = '%s.%s' % (libdir, list_args[0])
+        # importlib.import_module(loaded)
+        exec('import %s' % loaded)
+        do_cmd = '%s.do_%s' % (loaded, list_args[0])
+        setattr(self, 'do_%s' % list_args[0], eval(do_cmd))
+        print("Module '%s' loaded." % loaded)
