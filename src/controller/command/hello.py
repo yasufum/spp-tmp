@@ -10,7 +10,7 @@ class Hello(object):
         print("Hello, %s!" % self.name)
 
 
-def do_hello(name):
+def do_hello(self, name):
     """Say hello to given user
 
     spp > hello alice

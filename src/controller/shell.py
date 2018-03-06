@@ -28,6 +28,8 @@ class Shell(cmd.Cmd, object):
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
+    PLUGIN_DIR = 'command'
+
     def default(self, line):
         """Define defualt behaviour
 
@@ -159,6 +161,77 @@ class Shell(cmd.Cmd, object):
 
         return valid
 
+    def clean_sec_cmd(self, cmdstr):
+        """remove unwanted spaces to avoid invalid command error"""
+
+        tmparg = re.sub(r'\s+', " ", cmdstr)
+        res = re.sub(r'\s?;\s?', ";", tmparg)
+        return res
+
+    def response(self, result, message):
+        """Enqueue message from other than CLI"""
+
+        try:
+            rcmd = spp_common.RCMD_EXECUTE_QUEUE.get(False)
+        except Empty:
+            return
+
+        if (rcmd == spp_common.REMOTE_COMMAND):
+            param = result + '\n' + message
+            spp_common.RCMD_RESULT_QUEUE.put(param)
+        else:
+            if logger is not None:
+                logger.debug("unknown remote command = %s" % rcmd)
+
+    def precmd(self, line):
+        """Called before running a command
+
+        It is called for checking a contents of command line.
+        """
+
+        if self.recorded_file:
+            if not (
+                    ('playback' in line) or
+                    ('bye' in line) or
+                    ('exit' in line)):
+                self.recorded_file.write("%s\n" % line)
+        return line
+
+    def close(self):
+        """Close record file"""
+
+        if self.recorded_file:
+            print("closing file")
+            self.recorded_file.close()
+            self.recorded_file = None
+
+    def do_status(self, _):
+        """Display status info of SPP processes
+
+        spp > status
+        """
+
+        self.print_status()
+        stat = self.get_status()
+        self.response(self.CMD_OK, json.dumps(stat))
+
+    def do_pri(self, command):
+        """Send command to primary process
+
+        Spp primary takes sub commands.
+
+        spp > pri;status
+        spp > pri;clear
+        """
+
+        if command and command in self.PRI_CMDS:
+            result, message = self.command_primary(command)
+            self.response(result, message)
+        else:
+            message = "primary invalid command"
+            print(message)
+            self.response(self.CMD_ERROR, message)
+
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands"""
 
@@ -171,12 +244,37 @@ class Shell(cmd.Cmd, object):
                            ]
         return completions
 
-    def clean_sec_cmd(self, cmdstr):
-        """remove unwanted spaces to avoid invalid command error"""
+    def do_sec(self, arg):
+        """Send command to secondary process
 
-        tmparg = re.sub(r'\s+', " ", cmdstr)
-        res = re.sub(r'\s?;\s?', ";", tmparg)
-        return res
+        SPP secondary process is specified with secondary ID and takes
+        sub commands.
+
+        spp > sec 1;status
+        spp > sec 1;add ring 0
+        spp > sec 1;patch 0 2
+        """
+
+        # remove unwanted spaces to avoid invalid command error
+        tmparg = self.clean_sec_cmd(arg)
+        cmds = tmparg.split(';')
+        if len(cmds) < 2:
+            message = "error"
+            print(message)
+            self.response(self.CMD_ERROR, message)
+        elif str.isdigit(cmds[0]):
+            sec_id = int(cmds[0])
+            if self.check_sec_cmds(cmds[1]):
+                result, message = self.command_secondary(sec_id, cmds[1])
+                self.response(result, message)
+            else:
+                message = "invalid cmd"
+                print(message)
+                self.response(self.CMD_ERROR, message)
+        else:
+            print (cmds[0])
+            print ("first %s" % cmds[1])
+            self.response(self.CMD_ERROR, "invalid format")
 
     def complete_sec(self, text, line, begidx, endidx):
         """Completion for secondary process commands"""
@@ -224,95 +322,6 @@ class Shell(cmd.Cmd, object):
             print(len(cleaned_line.split()))
             print(e)
 
-    def complete_bye(self, text, line, begidx, endidx):
-        """Completion for bye commands"""
-
-        if not text:
-            completions = self.BYE_CMDS[:]
-        else:
-            completions = [p
-                           for p in self.BYE_CMDS
-                           if p.startswith(text)
-                           ]
-        return completions
-
-    def response(self, result, message):
-        """Enqueue message from other than CLI"""
-
-        try:
-            rcmd = spp_common.RCMD_EXECUTE_QUEUE.get(False)
-        except Empty:
-            return
-
-        if (rcmd == spp_common.REMOTE_COMMAND):
-            param = result + '\n' + message
-            spp_common.RCMD_RESULT_QUEUE.put(param)
-        else:
-            if logger is not None:
-                logger.debug("unknown remote command = %s" % rcmd)
-
-    def do_status(self, _):
-        """Display status info of SPP processes
-
-        spp > status
-        """
-
-        self.print_status()
-        stat = self.get_status()
-        self.response(self.CMD_OK, json.dumps(stat))
-
-    def do_pri(self, command):
-        """Send command to primary process
-
-        Spp primary takes sub commands.
-
-        spp > pri;status
-        spp > pri;clear
-        """
-
-        if command and command in self.PRI_CMDS:
-            result, message = self.command_primary(command)
-            self.response(result, message)
-        else:
-            message = "primary invalid command"
-            print(message)
-            self.response(self.CMD_ERROR, message)
-
-    def do_sec(self, arg):
-        """Send command to secondary process
-
-        SPP secondary process is specified with secondary ID and takes
-        sub commands.
-
-        spp > sec 1;status
-        spp > sec 1;add ring 0
-        spp > sec 1;patch 0 2
-        """
-
-        # remove unwanted spaces to avoid invalid command error
-        tmparg = self.clean_sec_cmd(arg)
-        cmds = tmparg.split(';')
-        if len(cmds) < 2:
-            message = "error"
-            print(message)
-            self.response(self.CMD_ERROR, message)
-        elif str.isdigit(cmds[0]):
-            sec_id = int(cmds[0])
-            if self.check_sec_cmds(cmds[1]):
-                result, message = self.command_secondary(sec_id, cmds[1])
-                self.response(result, message)
-            else:
-                message = "invalid cmd"
-                print(message)
-                self.response(self.CMD_ERROR, message)
-        else:
-            print (cmds[0])
-            print ("first %s" % cmds[1])
-            self.response(self.CMD_ERROR, "invalid format")
-
-    def complete_record(self, text, line, begidx, endidx):
-        return common.compl_common(text, line)
-
     def do_record(self, fname):
         """Save commands to a log file
 
@@ -330,7 +339,7 @@ class Shell(cmd.Cmd, object):
             self.recorded_file = open(fname, 'w')
             self.response(self.CMD_OK, "record")
 
-    def complete_playback(self, text, line, begidx, endidx):
+    def complete_record(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_playback(self, fname):
@@ -360,27 +369,8 @@ class Shell(cmd.Cmd, object):
                 print(message)
                 self.response(self.CMD_NG, message)
 
-    def precmd(self, line):
-        """Called before running a command
-
-        It is called for checking a contents of command line.
-        """
-
-        if self.recorded_file:
-            if not (
-                    ('playback' in line) or
-                    ('bye' in line) or
-                    ('exit' in line)):
-                self.recorded_file.write("%s\n" % line)
-        return line
-
-    def close(self):
-        """Close record file"""
-
-        if self.recorded_file:
-            print("closing file")
-            self.recorded_file.close()
-            self.recorded_file = None
+    def complete_playback(self, text, line, begidx, endidx):
+        return common.compl_common(text, line)
 
     def do_pwd(self, args):
         """Show corrent directory
@@ -391,9 +381,6 @@ class Shell(cmd.Cmd, object):
         """
 
         print(os.getcwd())
-
-    def complete_ls(self, text, line, begidx, endidx):
-        return common.compl_common(text, line)
 
     def do_ls(self, args):
         """Show a list of specified directory
@@ -409,8 +396,8 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
-    def complete_cd(self, text, line, begidx, endidx):
-        return common.compl_common(text, line, 'directory')
+    def complete_ls(self, text, line, begidx, endidx):
+        return common.compl_common(text, line)
 
     def do_cd(self, args):
         """Change current directory
@@ -424,8 +411,8 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
-    def complete_mkdir(self, text, line, begidx, endidx):
-        return common.compl_common(text, line)
+    def complete_cd(self, text, line, begidx, endidx):
+        return common.compl_common(text, line, 'directory')
 
     def do_mkdir(self, args):
         """Create a new directory
@@ -437,6 +424,9 @@ class Shell(cmd.Cmd, object):
 
         c = 'mkdir -p %s' % args
         subprocess.call(c, shell=True)
+
+    def complete_mkdir(self, text, line, begidx, endidx):
+        return common.compl_common(text, line)
 
     def do_bye(self, arg):
         """Terminate SPP processes and controller
@@ -464,6 +454,18 @@ class Shell(cmd.Cmd, object):
             self.close()
             return True
 
+    def complete_bye(self, text, line, begidx, endidx):
+        """Completion for bye commands"""
+
+        if not text:
+            completions = self.BYE_CMDS[:]
+        else:
+            completions = [p
+                           for p in self.BYE_CMDS
+                           if p.startswith(text)
+                           ]
+        return completions
+
     def do_exit(self, args):
         """Terminate SPP controller
 
@@ -475,7 +477,13 @@ class Shell(cmd.Cmd, object):
         print('Thank you for using Soft Patch Panel')
         return True
 
-    def do_load(self, args):
+    def do_inspect(self, args):
+        from pprint import pprint
+        if args == '':
+            pprint(vars(self))
+            pprint(self.__class__.__name__)
+
+    def do_load_cmd(self, args):
         """Load command plugin
 
         Path of plugin file is 'spp/src/controller/command'.
@@ -488,9 +496,35 @@ class Shell(cmd.Cmd, object):
         list_args = args.split(' ')
 
         libdir = 'command'
-        loaded = '%s.%s' % (libdir, list_args[0])
-        # importlib.import_module(loaded)
+        mod_name = list_args[0]
+        method_name = 'do_%s' % mod_name
+        loaded = '%s.%s' % (libdir, mod_name)
         exec('import %s' % loaded)
-        do_cmd = '%s.do_%s' % (loaded, list_args[0])
-        setattr(self, 'do_%s' % list_args[0], eval(do_cmd))
+        do_cmd = '%s.%s' % (loaded, method_name)
+        exec('Shell.%s = %s' % (method_name, do_cmd))
+
         print("Module '%s' loaded." % loaded)
+
+    def complete_load_cmd(self, text, line, begidx, endidx):
+        """Complete command plugins
+
+        Search under PLUGIN_DIR with compl_common() method.
+        This method is intended to be used for searching current
+        directory, but not in this case. If text is not '',
+        compl_common() does not work correctly and do filtering
+        for the result by self.
+        """
+
+        curdir = os.path.dirname(__file__)
+        res = common.compl_common(
+            '', '%s/%s' % (curdir, self.PLUGIN_DIR), 'py')
+
+        completions = []
+        for t in res:
+            if text == '':
+                if t[:2] != '__':
+                    completions.append(t[:-3])
+            else:
+                if t[:len(text)] == text:
+                    completions.append(t[:-3])
+        return completions
