@@ -767,6 +767,13 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
+    def complete_mkdir(self, text, line, begidx, endidx):
+        return self.compl_common(text, line)
+
+    def do_mkdir(self, args):
+        c = 'mkdir -p %s' % args
+        subprocess.call(c, shell=True)
+
     def do_bye(self, arg):
         """Stop recording, close SPP, and exit: BYE"""
 
