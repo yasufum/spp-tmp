@@ -1,3 +1,5 @@
-.*.swp
+*.swp
 *.pyc
+*.log
 docs/guides/_build/*
+src/controller/3rd_party/*
