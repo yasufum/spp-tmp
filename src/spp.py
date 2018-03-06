@@ -20,7 +20,17 @@ import traceback
 
 # Turn true if activate logger to debug remote command.
 logger = None
-logger = True
+
+if logger is True:
+    import logging
+    logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
+    handler.setFormatter(formatter)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
 # Maximum num of sock queues for secondaries
 MAX_SECONDARY = 16
@@ -971,18 +981,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    if logger is True:
-        from logging import DEBUG
-        from logging import Formatter
-        from logging import getLogger
-        from logging import StreamHandler
-        logger = getLogger(__name__)
-        handler = StreamHandler()
-        handler.setLevel(DEBUG)
-        formatter = Formatter(
-            '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
-        handler.setFormatter(formatter)
-        logger.setLevel(DEBUG)
-        logger.addHandler(handler)
 
     main(sys.argv[1:])
