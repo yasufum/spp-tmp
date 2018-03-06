@@ -692,9 +692,46 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
+    def ls_decorate_dir(self, filelist):
+        res = []
+        for f in filelist:
+            if os.path.isdir(f):
+                res.append('%s/' % f)
+            else:
+                res.append(f)
+        return res
+
+    def complete_ls(self, text, line, begidx, endidx):
+        if text == '':
+            tokens = line.split(' ')
+            target = tokens[-1]
+            if target == '':
+                completions = self.ls_decorate_dir(
+                    os.listdir(os.getcwd()))
+            else:
+                completions = self.ls_decorate_dir(
+                    os.listdir(target))
+        else:
+            tokens = line.split(' ')
+            target = tokens[-1]
+
+            if '/' in target:
+                seg = target.split('/')[-1]
+                target_dir = '/'.join(target.split('/')[0:-1])
+            else:
+                seg = text
+                target_dir = os.getcwd()
+
+            matched = []
+            for t in os.listdir(target_dir):
+                if seg in t:
+                    matched.append(t)
+            completions = self.ls_decorate_dir(matched)
+        return completions
+
     def do_ls(self, args):
         if args == '' or os.path.isdir(args):
-            c = 'ls %s' % args
+            c = 'ls -F %s' % args
             subprocess.call(c, shell=True)
         else:
             print("No such a directory.")
