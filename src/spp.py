@@ -718,7 +718,7 @@ class Shell(cmd.Cmd, object):
 
             matched = []
             for t in os.listdir(target_dir):
-                if seg in t:
+                if t.find(seg) == 0:
                     matched.append(t)
             res = self.decorate_dir(target_dir, matched)
 
