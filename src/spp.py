@@ -6,6 +6,7 @@ from __future__ import print_function
 import argparse
 import cmd
 import json
+import os
 from Queue import Empty
 from Queue import Queue
 import re
@@ -680,6 +681,16 @@ class Shell(cmd.Cmd, object):
             self.recorded_file.close()
             self.recorded_file = None
 
+    def do_pwd(self, args):
+        print(os.getcwd())
+
+    def do_cd(self, args):
+        if os.path.isdir(args):
+            os.chdir(args)
+            print(os.getcwd())
+        else:
+            print("No such a directory.")
+
     def do_bye(self, arg):
         """Stop recording, close SPP, and exit: BYE"""
 
@@ -693,6 +704,11 @@ class Shell(cmd.Cmd, object):
             print('Thank you for using Soft Patch Panel')
             self.close()
             return True
+
+    def do_exit(self, args):
+        print('Thank you for using Soft Patch Panel')
+        self.close()
+        return True
 
 
 def main(argv):
