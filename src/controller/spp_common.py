@@ -1,5 +1,19 @@
 from Queue import Queue
 
+# Turn true if activate logger to debug remote command.
+logger = None
+
+if logger is True:
+    import logging
+    logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
+    handler.setFormatter(formatter)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+
 PRIMARY = ''
 SECONDARY_LIST = []
 

@@ -4,21 +4,8 @@ import os
 from Queue import Empty
 import re
 import spp_common
+from spp_common import logger
 import subprocess
-
-# Turn true if activate logger to debug remote command.
-logger = None
-
-if logger is True:
-    import logging
-    logger = logging.getLogger(__name__)
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        '%(asctime)s,[%(filename)s][%(name)s][%(levelname)s]%(message)s')
-    handler.setFormatter(formatter)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
 
 
 class Shell(cmd.Cmd, object):
