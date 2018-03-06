@@ -66,6 +66,10 @@ def compl_common(text, line, ftype=None):
             for fn in res:
                 if fn[-1] == '/':
                     completions.append(fn)
+        elif ftype == 'py' or ftype == 'python':
+            for fn in res:
+                if fn[-3:] == '.py':
+                    completions.append(fn)
         elif ftype == 'file':
             for fn in res:
                 if fn[-1] != '/':
