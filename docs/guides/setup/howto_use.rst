@@ -98,23 +98,25 @@ To launch primary, run ``spp_primary`` with options.
 
 .. code-block:: console
 
-    $ sudo ./src/primary/src/primary/x86_64-native-linuxapp-gcc/spp_primary \
-        -c 0x02 -n 4 \
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 1 -n 4 \
         --socket-mem 512,512 \
         --huge-dir=/dev/hugepages \
         --proc-type=primary \
         -- \
         -p 0x03 \
-        -n 4 \
+        -n 10 \
         -s 192.168.122.1:5555
 
 SPP primary is a DPDK application and it takes EAL options before
 application specific options.
 Briefly describe about supported options.
+You can use ``-m`` instead of ``--socket-mem`` if you use single NUMA
+node.
 
 - EAL options:
 
-  - -c: core mask (one or two cores required)
+  - -l: core list (two cores required for displaying status)
   - --socket-mem: memory size on each of NUMA nodes
   - --huge-dir: path of hugepage dir
   - --proc-type: process type
@@ -153,8 +155,8 @@ Run ``spp_nfv`` with options.
 .. code-block:: console
 
     $ cd /path/to/spp
-    $ sudo ./src/nfv/src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
-        -c 0x06 -n 4 \
+    $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+        -l 2-3 -n 4 \
         --proc-type=secondary \
         -- \
         -n 1 \
@@ -162,7 +164,7 @@ Run ``spp_nfv`` with options.
 
 - EAL options:
 
-  - -c: core mask (two cores required)
+  - -l: core list (two cores required)
   - --proc-type: process type
 
 - Application options:
@@ -247,8 +249,8 @@ Run ``spp_vm`` with options.
 .. code-block:: console
 
     $ cd /path/to/spp
-    $ sudo ./src/vm/src/vm/x86_64-native-linuxapp-gcc/spp_vm \
-        -c 0x03 -n 4 \
+    $ sudo ./src/vm/x86_64-native-linuxapp-gcc/spp_vm \
+        -l 0-1 -n 4 \
         --proc-type=primary \
         -- \
         -p 0x01 \
@@ -257,7 +259,7 @@ Run ``spp_vm`` with options.
 
 - EAL options:
 
-  - -c: core mask (two cores required)
+  - -l: core list (two cores required)
   - --proc-type: process type
 
 - Application options:
