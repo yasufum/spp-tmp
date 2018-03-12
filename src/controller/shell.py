@@ -550,17 +550,15 @@ class Shell(cmd.Cmd, object):
         For topo command, it is used for grouping resources of each
         of VM or container to topology be more understandable.
 
-        Add subgraph labeled 'vm1'. Resource name is capitalized and
-        both of them is OK.
-        spp > topo_subgraph add vm1 VHOST1;VHOST2  # upper case
-        spp > topo_subgraph add vm1 vhost1;vhost2  # lower case
+        Add subgraph labeled 'vm1'.
+        spp > topo_subgraph add vm1 vhost:1;vhost:2
 
         Delete subgraph 'vm1'.
         spp > topo_subgraph del vm1
 
         To show subgraphs, run topo_subgraph without args.
         spp > topo_subgraph
-        {'vm1', 'VHOST1;VHOST2'}
+        label: vm1	subgraph: "vhost:1;vhost:2"
         """
 
         args_cleaned = re.sub(r"\s+", ' ', args).strip()
@@ -577,8 +575,11 @@ class Shell(cmd.Cmd, object):
             if tokens[0] == 'add':
                 if len(tokens) == 3:
                     label = tokens[1]
-                    subg = tokens[2].upper()
+                    subg = tokens[2]
                     if ',' in subg:
+                        subg = re.sub(
+                            r'%s' % spp_common.delim_node,
+                            spp_common.delim_label, subg)
                         subg = re.sub(r",", ";", subg)
 
                     # TODO(yasufum) add validation for subgraph
