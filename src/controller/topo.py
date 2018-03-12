@@ -3,11 +3,13 @@
 
 import os
 import re
+import spp_common
 from spp_common import logger
 import subprocess
 import traceback
 import uuid
 import websocket
+import yaml
 
 
 class Topo(object):
@@ -31,7 +33,8 @@ class Topo(object):
         res_ary = []
         for sec_id in self.sec_ids:
             self.m2s_queues[sec_id].put("status")
-            res = self.format_sec_status(self.s2m_queues[sec_id].get(True))
+            res = self.format_sec_status(
+                sec_id, self.s2m_queues[sec_id].get(True))
             res_ary.append(res)
         if dtype == "http":
             self.to_http(res_ary)
@@ -45,7 +48,8 @@ class Topo(object):
         res_ary = []
         for sec_id in self.sec_ids:
             self.m2s_queues[sec_id].put("status")
-            res = self.format_sec_status(self.s2m_queues[sec_id].get(True))
+            res = self.format_sec_status(
+                sec_id, self.s2m_queues[sec_id].get(True))
             res_ary.append(res)
 
         if ftype == "dot":
@@ -64,58 +68,63 @@ class Topo(object):
 
     def to_dot(self, sec_list, output_fname):
         # Label given if outport is "none"
-        NO_PORT = "none"
+        NO_PORT = None
 
         # Graphviz params
+        # TODO(yasufum) consider to move gviz params to config file.
         SEC_COLORS = [
             "blue", "green", "orange", "chocolate", "black",
             "cyan3", "green3", "indianred", "lawngreen", "limegreen"]
         PORT_COLORS = {
-            "PHY": "white",
-            "RING": "yellow",
-            "VHOST": "limegreen"}
+            "phy": "white",
+            "ring": "yellow",
+            "vhost": "limegreen"}
         LINE_STYLE = {
-            "RUNNING": "solid",
-            "IDLING": "dashed"}
+            "running": "solid",
+            "idling": "dashed"}
         GRAPH_TYPE = "digraph"
         LINK_TYPE = "->"
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
+
+        node_template = '%s' + spp_common.delim_node + '%s'
 
         phys = []
         rings = []
         vhosts = []
         links = []
 
+        # parse status message from sec.
         for sec in sec_list:
             for port in sec["ports"]:
-                if port["iface"]["type"] == "PHY":
+                if port["iface"]["type"] == "phy":
                     phys.append(port)
-                elif port["iface"]["type"] == "RING":
+                elif port["iface"]["type"] == "ring":
                     rings.append(port)
-                elif port["iface"]["type"] == "VHOST":
+                elif port["iface"]["type"] == "vhost":
                     vhosts.append(port)
                 else:
                     raise ValueError(
                         "Invaid interface type: %s" % port["iface"]["type"])
 
-                if port["out"] != NO_PORT:
-                    out_id = int(port["out"])
-                    if sec["forward"] is True:
-                        l_style = LINE_STYLE["RUNNING"]
+                if port['out'] != NO_PORT:
+                    out_type, out_id = port['out'].split(':')
+                    if sec['status'] == 'running':
+                        l_style = LINE_STYLE["running"]
                     else:
-                        l_style = LINE_STYLE["IDLING"]
+                        l_style = LINE_STYLE["idling"]
                     attrs = '[label="%s", color="%s", style="%s"]' % (
-                        "sec" + sec["sec_id"],
-                        SEC_COLORS[int(sec["sec_id"])],
+                        "sec%d" % sec["sec_id"],
+                        SEC_COLORS[sec["sec_id"]],
                         l_style
                     )
-                    tmp = "%s%s %s %s%s%s;" % (
+                    link_style = node_template + ' %s ' + node_template + '%s;'
+                    tmp = link_style % (
                         port["iface"]["type"],
                         port["iface"]["id"],
                         LINK_TYPE,
-                        sec["ports"][out_id]["iface"]["type"],
-                        sec["ports"][out_id]["iface"]["id"],
+                        out_type,
+                        out_id,
                         attrs
                     )
                     links.append(tmp)
@@ -124,51 +133,61 @@ class Topo(object):
         output.append("newrank=true;")
         output.append(node_attrs)
 
-        phy_labels = []
-        for p in phys:
-            phy_labels.append(p["iface"]["type"] + p["iface"]["id"])
-        phy_labels = list(set(phy_labels))
-        for l in phy_labels:
+        phy_nodes = []
+        for node in phys:
+            phy_nodes.append(
+                node_template % (node['iface']['type'], node['iface']['id']))
+        phy_nodes = list(set(phy_nodes))
+        for node in phy_nodes:
+            label = re.sub(
+                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
             output.append(
-                    '%s[label="%s", fillcolor="%s"];' % (
-                        l, l, PORT_COLORS["PHY"]))
+                '%s[label="%s", fillcolor="%s"];' % (
+                    node, label, PORT_COLORS["phy"]))
 
-        ring_labels = []
+        ring_nodes = []
         for p in rings:
-            ring_labels.append(p["iface"]["type"] + p["iface"]["id"])
-        ring_labels = list(set(ring_labels))
-        for l in ring_labels:
+            ring_nodes.append(
+                node_template % (p['iface']['type'], p['iface']['id']))
+        ring_nodes = list(set(ring_nodes))
+        for node in ring_nodes:
+            label = re.sub(
+                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
             output.append(
                 '%s[label="%s", fillcolor="%s"];' % (
-                    l, l, PORT_COLORS["RING"]))
+                    node, label, PORT_COLORS["ring"]))
 
-        vhost_labels = []
+        vhost_nodes = []
         for p in vhosts:
-            vhost_labels.append(p["iface"]["type"] + p["iface"]["id"])
-        vhost_labels = list(set(vhost_labels))
-        for l in vhost_labels:
+            vhost_nodes.append(
+                node_template % (p["iface"]["type"], p["iface"]["id"]))
+        vhost_nodes = list(set(vhost_nodes))
+        for node in vhost_nodes:
+            label = re.sub(
+                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
             output.append(
                 '%s[label="%s", fillcolor="%s"];' % (
-                    l, l, PORT_COLORS["VHOST"]))
+                    node, label, PORT_COLORS["vhost"]))
 
         # rank
         output.append(
-            '{rank=same; %s}' % ("; ".join(ring_labels)))
+            '{rank=same; %s}' % ("; ".join(ring_nodes)))
         output.append(
-            '{rank=same; %s}' % ("; ".join(vhost_labels)))
+            '{rank=same; %s}' % ("; ".join(vhost_nodes)))
 
+        rank_style = '{rank=max; %s}' % node_template
         if len(phys) > 0:
             output.append(
-                '{rank=max; %s}' % (
-                    phys[0]["iface"]["type"] + phys[0]["iface"]["id"]))
+                rank_style % (
+                    phys[0]["iface"]["type"], phys[0]["iface"]["id"]))
         elif len(vhosts) > 0:
             output.append(
-                '{rank=max; %s}' % (
-                    vhosts[0]["iface"]["type"] + vhosts[0]["iface"]["id"]))
+                rank_style % (
+                    vhosts[0]["iface"]["type"], vhosts[0]["iface"]["id"]))
 
-        if len(phy_labels) > 0:
+        if len(phy_nodes) > 0:
             output.append(
-                '{rank=same; %s}' % ("; ".join(phy_labels)))
+                '{rank=same; %s}' % ("; ".join(phy_nodes)))
 
         # Add subgraph
         ssgs = []
@@ -177,24 +196,26 @@ class Topo(object):
             for label, val in self.sub_graphs.items():
                 cluster_id = "cluster%d" % cnt
                 ssg_label = label
-                ssg_ports = val
+                ssg_ports = re.sub(
+                    r'%s' % spp_common.delim_label,
+                    spp_common.delim_node, val)
                 ssg = 'subgraph %s {label="%s" %s}' % (
-                        cluster_id, ssg_label, ssg_ports)
+                    cluster_id, ssg_label, ssg_ports)
                 ssgs.append(ssg)
                 cnt += 1
 
         cluster_id = "cluster0"
         sg_label = "Host"
-        sg_ports = "; ".join(phy_labels + ring_labels)
+        sg_ports = "; ".join(phy_nodes + ring_nodes)
         if len(ssgs) == 0:
             output.append(
-                    'subgraph %s {label="%s" %s}' % (
-                        cluster_id, sg_label, sg_ports))
+                'subgraph %s {label="%s" %s}' % (
+                    cluster_id, sg_label, sg_ports))
         else:
             tmp = 'label="%s" %s' % (sg_label, sg_ports)
             contents = [tmp] + ssgs
             output.append(
-                    'subgraph %s {%s}' % (cluster_id, '; '.join(contents)))
+                'subgraph %s {%s}' % (cluster_id, '; '.join(contents)))
 
         # Add links
         for link in links:
@@ -255,85 +276,65 @@ class Topo(object):
         subprocess.call("%s %s" % (img_cmd, tmpfile), shell=True)
         subprocess.call(["rm", "-f", tmpfile])
 
-    def format_sec_status(self, stat):
+    def format_sec_status(self, sec_id, stat):
         """Return formatted secondary status as a hash
 
         By running status command on controller, status is sent from
         secondary process and receiving message is displayed.
 
         This is an example of receiving status message.
-            recv:8:{Client ID 1 Idling
-            client_id:1
-            port_id:0,on,PHY,outport:2
-            port_id:1,on,PHY,outport:none
-            port_id:2,on,RING(0),outport:3
-            port_id:3,on,VHOST(1),outport:none
-            }
 
-        This method returns as following.
-            {
-            'forward': False,
+        spp > sec 1;status
+        status: idling
+        ports:
+          - 'phy:0 -> vhost:1'
+          - 'phy:1'
+          - 'ring:0'
+          - 'vhost:1 -> ring:0'
+
+        This method returns a result as following.
+        {
+            'sec_id': '1',
+            'status': 'idling',
             'ports': [
-                {
-                    'out': 'none',
-                    'id': '0',
-                    'iface': {'type': 'PHY', 'id': '0'}
-                },
-                {
-                    'out': 'none',
-                    'id': '1',
-                    'iface': {'type': 'PHY', 'id': '1'}
-                }
+                 {
+                     'rid': 'phy:0',
+                     'out': 'vhost:0',
+                     'iface': {'type': 'phy', 'id': '0'}
+                 },
+                 {
+                     'rid': 'phy:1',
+                     'out': None,
+                     'iface': {'type': 'phy', 'id': '1'}
+                 }
             ],
-            'sec_id': '2'
-            }
+            'sec_id': '2',
+            ...
+        }
         """
 
-        stat_ary = stat.split("\n")
+        stat_obj = yaml.load(stat)
         res = {}
+        res['sec_id'] = sec_id
+        res['status'] = stat_obj['status']
 
+        port_list = []
         try:
-            # Check running status
-            if "Idling" in stat_ary[0]:
-                res["forward"] = False
-            elif "Running" in stat_ary[0]:
-                res["forward"] = True
-            else:
-                print("Invalid forwarding status:", stat_ary[0])
+            ports = stat_obj['ports'].split(',')
+            for port_info in ports:
+                rid, outport = port_info.split('-')
+                if outport == 'null':
+                    outport = None
 
-            ptn = re.compile(r"clinet_id:(\d+)")
-            m = ptn.match(stat_ary[1])
-            if m is not None:
-                res["sec_id"] = m.group(1)
-            else:
-                raise Exception("No client ID matched!")
+                itype, pid = rid.split(':')
+                iface = {'type': itype, 'id': pid}
+                port_list.append({
+                    'rid': rid,
+                    'out': outport,
+                    'iface': iface
+                })
 
-            ports = []
-            # match PHY, for exp. 'port_id:0,on,PHY,outport:none'
-            ptn_p = re.compile(r"port_id:(\d+),on,(\w+),outport:(\w+)")
-
-            # match RING for exp. 'port_id:2,on,RING(0),outport:3'
-            # or VHOST for exp. 'port_id:3,on,VHOST(1),outport:none'
-            ptn_v = re.compile(
-                r"port_id:(\d+),on,(\w+)\((\d+)\),outport:(\w+)")
-
-            for i in range(2, len(stat_ary)-1):
-                m = ptn_p.match(stat_ary[i])
-                if m is not None:
-                    ports.append({
-                        "id": m.group(1),
-                        "iface": {"type": m.group(2), "id": m.group(1)},
-                        "out": m.group(3)})
-                    continue
-
-                m = ptn_v.match(stat_ary[i])
-                if m is not None:
-                    ports.append({
-                        "id": m.group(1),
-                        "iface": {"type": m.group(2), "id": m.group(3)},
-                        "out": m.group(4)})
-
-            res["ports"] = ports
+            res["ports"] = port_list
             return res
 
         except Exception:
