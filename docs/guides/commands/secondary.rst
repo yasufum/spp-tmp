@@ -53,11 +53,10 @@ Show running status and resources.
 .. code-block:: console
 
     spp > sec 1;status
-    recv:7:{Client ID 1 Idling
-    1
-    port id: 0,on,PHY,outport: none
-    port id: 1,on,PHY,outport: none
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
 
 
 add
@@ -70,27 +69,23 @@ Adding ring 0 by
 .. code-block:: console
 
     spp> sec 1;add ring 0
-    recv:7:{addring0}
 
 Or adding vhost 0 by
 
 .. code-block:: console
 
     spp> sec 1;add vhost 0
-    recv:7:{addvhost0}
 
 
 patch
 ------
 
 Create a path between two ports, source and destination ports.
-Port ID is referred by status sub commnad.
 This command just creates path and does not start forwarding.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 2
-    recv:7:{patch02}
+    spp > sec 1;patch phy:0 ring:0
 
 
 forward
@@ -101,19 +96,17 @@ Start forwarding.
 .. code-block:: console
 
     spp > sec 1;forward
-    recv:7:{start forwarding}
 
-Running status is changed from ``Idling`` to ``Running`` by
+Running status is changed from ``idling`` to ``running`` by
 executing it.
 
 .. code-block:: console
 
     spp > sec 1;status
-    recv:7:{Client ID 1 Running
-    1
-    port id: 0,on,PHY,outport: none
-    port id: 1,on,PHY,outport: none
-    }
+    status: running
+    ports:
+      - 'phy:0'
+      - 'phy:1'
 
 
 stop
@@ -124,19 +117,17 @@ Stop forwarding.
 .. code-block:: console
 
     spp > sec 1;stop
-    recv:7:{start forwarding}
 
-Running status is changed from ``Running`` to ``Idling`` by
+Running status is changed from ``running`` to ``idling`` by
 executing it.
 
 .. code-block:: console
 
     spp > sec 1;status
-    recv:7:{Client ID 1 Running
-    1
-    port id: 0,on,PHY,outport: none
-    port id: 1,on,PHY,outport: none
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
 
 
 del
@@ -147,7 +138,6 @@ Delete PMD added by ``add`` subcommand from the secondary.
 .. code-block:: console
 
     spp> sec 1;del ring 0
-    recv:7:{delring0}
 
 
 exit
@@ -159,4 +149,3 @@ command instead of it.
 .. code-block:: console
 
     spp> sec 1;exit
-    recv:7:{delring0}
