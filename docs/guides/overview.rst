@@ -40,7 +40,7 @@ Overview
 functionality for Service Function Chaining in
 NFV (Network Function Virtualization).
 
-.. image:: images/spp_overview.svg
+.. image:: images/overview/spp_overview.svg
    :height: 350 em
    :width: 350 em
 
