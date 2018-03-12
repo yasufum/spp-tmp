@@ -33,6 +33,9 @@ REMOTE_COMMAND = "RCMD"
 RCMD_EXECUTE_QUEUE = Queue()
 RCMD_RESULT_QUEUE = Queue()
 
+delim_node = '_'
+delim_label = ':'
+
 
 class GrowingList(list):
     """Growing List
