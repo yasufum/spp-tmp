@@ -41,31 +41,110 @@ topo
 ----
 
 Output network topology in several formats.
-
 Support four types of output.
 
-* terminal (but very few terminals supporting to display images)
-* browser (websocket server is required)
-* image file (jpg, png, bmp)
-* text (dot, json, yaml)
-
-Most used format migth be ``term`` for output an image of network
-configuration in terminal.
-``topo`` command also show an image in a browser.
+* Terminal
+* Browser (websocket server is required)
+* Text (dot, json, yaml)
+* Image file (jpg, png, bmp)
 
 This command uses `graphviz
 <https://www.graphviz.org/>`_
-for generating topology file and you can
-also generate a dot formatted file directory.
+gfor generating topology file.
+You can also generate a dot formatted file or image files supported by
+graphviz.
 
-There are some usecases.
+Here is a list of required tools for 'topo'.
+MacOS is also supported optionally for which SPP controller
+runs on a remote host.
+
+* graphviz
+* imagemagick
+* libsixel-bin (for Ubuntu) and terminal app supporting img2sixel
+* iTerm2 and imgcat (for MacOS)
+
+Output to Terminal
+~~~~~~~~~~~~~~~~~~
+
+Output an image of network configuration in terminal.
 
 .. code-block:: console
 
-    spp > topo term  # terminal
-    spp > topo http  # browser
-    spp > topo network_conf.jpg  # image
-    spp > topo network_conf.dot  # text
+    spp > topo term
+
+There are few terminal applications to output image with ``topo``.
+You can use mlterm, xterm or other terminals supported by `img2sixel
+<https://github.com/saitoha/libsixel>`_.
+You can also use `iTerm2
+<https://iterm2.com/index.html>`_ on MacOS.
+If you use iTerm2, you have to get a shell script
+``imgcat`` from `iTerm2's displaying support site
+<https://iterm2.com/documentation-images.html>`_
+and save this script as
+``spp/src/controller/3rd_party/imgcat.sh``.
+
+.. _figure_topo_term_exp:
+
+.. figure:: ../images/commands/expr/topo_term_exp.*
+   :width: 440 em
+
+   topo term example
+
+
+Output to Browser
+~~~~~~~~~~~~~~~~~
+
+Output an image of network configuration in a browser.
+
+.. code-block:: console
+
+    spp > topo http
+
+[TODO] Add explanation.
+
+
+Output to File
+~~~~~~~~~~~~~~
+
+Output a text or image of network configuration to a file.
+
+.. code-block:: console
+
+    spp > topo [FILE_NAME] [FILE_TYPE]
+
+You do not need to specify ``FILE_TYPE`` because ``topo`` is able to
+decide file type from ``FILE_NAME``. It is optional.
+This is a list of supported file type.
+
+* dot
+* js (or json)
+* yml (or yaml)
+* jpg
+* png
+* bmp
+
+To generate a DOT file ``network.dot``, run ``topo`` command with
+file name.
+
+.. code-block:: console
+
+    # generate DOT file
+    spp > topo network.dot
+    Create topology: 'network.dot'
+    # show contents of the file
+    spp > cat network.dot
+    digraph spp{
+    newrank=true;
+    node[shape="rectangle", style="filled"];
+    ...
+
+To generate a jpg image, run ``topo`` with the name ``network.jpg``.
+
+.. code-block:: console
+
+    spp > topo network.jpg
+    spp > ls
+    ...  network.jpg  ...
 
 
 topo_subgraph
@@ -74,47 +153,115 @@ topo_subgraph
 ``topo_subgraph`` is a supplemental command for manageing subgraphs
 for ``topo``.
 
+.. code-block:: console
+
+    spp > topo_subgraph [VERB] [LABEL] [RES_ID1,RES_ID2,...]
+
+Each of options are:
+
+* VERB: ``add`` or ``del``
+* LABEL: Arbitrary text, such as ``guest_vm1`` or ``container1``
+* RES_ID: Series of Resource ID consists of type and ID such as
+  ``vhost:1``. Each of resource IDs are separated with ``,`` or
+  ``;``.
+
 Subgraph is a group of object defined in dot language. Grouping objects
 helps your understanding relationship or hierarchy of each of objects.
-For topo command, it is used for grouping resources of each
-of VM or container to topology be more understandable.
+It is used for grouping resources on VM or container to be more
+understandable.
 
-For example, add subgraph labeled ``vm1`` for a VM which has two vhost
-interfaces ``VHOST1`` and ``VHOST2``.
-You do not need to use upper case for resource names because
-``topo_subgraph`` command capitalizes given names internally.
+For example, if you create two vhost interfaces for a guest VM and patch
+them to physical ports, ``topo term`` shows a network configuration as
+following.
+
+.. _figure_topo_subg_before:
+
+.. figure:: ../images/commands/expr/topo_subg_before.*
+   :width: 440 em
+
+   Before using topo_subgraph
+
+Two of vhost interfaces are placed outside of ``Host`` while the guest
+VM runs on ``Host``.
+However, ``vhost:1`` and ``vhost:2`` should be placed inside ``Host``
+actually. It is required to use subgraph!
+
+To include guest VM and its resources inside the ``Host``,
+use ``topo_subgraph`` with options.
+In this case, add subgraph ``guest_vm`` and includes resoures
+``vhost:1`` and ``vhost:2`` into the subgraph.
 
 .. code-block:: console
 
-    spp > topo_subgraph add vm1 VHOST1;VHOST2  # upper case
-    spp > topo_subgraph add vm1 vhost1;vhost2  # lower case
+    spp > topo_subgraph add guest_vm vhost:1,vhost:2
 
-If VM is shut down and subgraph is not needed anymore,
-delete subgraph 'vm1'.
+.. _figure_topo_subg_after:
 
-.. code-block:: console
+.. figure:: ../images/commands/expr/topo_subg_after.*
+   :width: 440 em
 
-    spp > topo_subgraph del vm1
+   After using topo_subgraph
 
-To show all of subgraphs, run topo_subgraph without args.
+All of registered subgraphs are listed by using ``topo_subgraph``
+with no options.
 
 .. code-block:: console
 
     spp > topo_subgraph
-    label: vm2    subgraph: "VHOST3;VHOST4"
-    label: vm1    subgraph: "VHOST1;VHOST2"
+    label: guest_vm subgraph: "vhost:1,vhost:2"
+
+If guest VM is shut down and subgraph is not needed anymore,
+delete subgraph ``guest_vm``.
+
+.. code-block:: console
+
+    spp > topo_subgraph del guest_vm
 
 
 load_cmd
 --------
 
-Load a command plugin dynamically while running SPP controller.
+Load command plugin dynamically while running SPP controller.
 
+.. code-block:: console
 
+    spp > load_cmd [CMD_NAME]
+
+CLI of SPP controller is implemented with ``Shell`` class which is
+derived from Python standard library ``Cmd``.
+It means that subcommands of SPP controller must be implemented as
+a member method named as ``do_xxx``.
+For instance, ``status`` subcommand is implemented as ``do_status``
+method.
+
+``load_cmd`` is for providing a way to define user specific command
+as a plugin.
 Plugin file must be placed in ``spp/src/controller/command`` and
 command name must be the same as file name.
-For example, ``hello`` command is loaded from
-``spp/src/controller/command/hello.py``.
+In addition, ``do_xxx`` method must be defined which is called from
+SPP controller.
+
+For example, ``hello`` sample plugin is defined as
+``spp/src/controller/command/hello.py`` and ``do_hello`` is defined
+in this plugin.
+Comment for ``do_hello`` is used as help message for ``hello`` command.
+
+.. code-block:: python
+
+    def do_hello(self, name):
+        """Say hello to given user
+
+        spp > hello alice
+        Hello, alice!
+        """
+
+        if name == '':
+            print('name is required!')
+        else:
+            hl = Hello(name)
+            hl.say()
+
+``hello`` is loaded and called as following.
 
 .. code-block:: console
 
