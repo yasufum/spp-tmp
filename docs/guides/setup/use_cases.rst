@@ -51,15 +51,12 @@ First of all, Check the status of ``spp_nfv`` from SPP controller.
 .. code-block:: console
 
     spp > sec 1;status
-    recv:6:{Client ID 1 Idling
-    1
-    port id: 0,on,PHY,outport: -99
-    port id: 1,on,PHY,outport: -99
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
 
-This message explains that ``sec 1`` has two physical ports refered as
-port id 0 and 1.
-``outpport: -99`` means that destionation port is not assigned.
+This message explains that ``sec 1`` has two physical ports.
 
 
 Configure spp_nfv as L2fwd
@@ -67,13 +64,13 @@ Configure spp_nfv as L2fwd
 
 Assing the destination of ports with ``patch`` subcommand and
 start forwarding.
-Patch from ``port 0`` to ``port 1`` and ``port 1`` to ``port 0``,
+Patch from ``phy:0`` to ``phy:1`` and ``phy:1`` to ``phy:0``,
 which means it is bi-directional connection.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 1
-    spp > sec 1;patch 1 0
+    spp > sec 1;patch phy:0 phy:1
+    spp > sec 1;patch phy:1 phy:0
     spp > sec 1;forward
 
 Confirm that status of ``sec 1`` is updated.
@@ -81,34 +78,19 @@ Confirm that status of ``sec 1`` is updated.
 .. code-block:: console
 
     spp > sec 1;status
-    recv:6:{Client ID 1 Running
-    1
-    port id: 0,on,PHY,outport: 1
-    port id: 1,on,PHY,outport: 0
-    }
+    status: running
+    ports:
+      - 'phy:0 -> phy:1'
+      - 'phy:1 -> phy:0'
 
-.. code-block:: console
+.. _figure_spp_nfv_as_l2fwd:
 
-                                                                        __
-                                    +--------------+                      |
-                                    |    spp_nfv   |                      |
-                                    |    (sec 1)   |                      |
-                                    +--------------+                      |
-                                         ^      :                         |
-                                         |      |                         |
-                                         :      v                         |
-    +----+----------+-------------------------------------------------+   |
-    |    | primary  |                    ^      :                     |   |
-    |    +----------+                    :      :                     |   |
-    |                                    :      :                     |   |
-    |                         +----------+      +---------+           |   |  host
-    |                         :                           v           |   |
-    |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |            |   phy port 1 |   |   |
-    +------------------+--------------+------------+--------------+---+ __|
-                              ^                           :
-                              |                           |
-                              :                           v
+.. figure:: ../images/setup/use_cases/spp_nfv_l2fwd.*
+   :height: 380 em
+   :width: 380 em
+
+   spp_nfv as l2fwd
+
 
 Stop forwarding and reset patch to clear configuration.
 
@@ -121,13 +103,13 @@ Stop forwarding and reset patch to clear configuration.
 Configure spp_nfv for Loopback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Patch ``port 0`` to ``port 0`` and ``port 1`` to ``port 1``
+Patch ``phy:0`` to ``phy:0`` and ``phy:1`` to ``phy:1``
 for loopback.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 0
-    spp > sec 1;patch 1 1
+    spp > sec 1;patch phy:0 phy:0
+    spp > sec 1;patch phy:1 phy:1
     spp > sec 1;forward
 
 
@@ -154,75 +136,45 @@ Configure Two spp_nfv as L2fwd
 
 Assing the destination of ports with ``patch`` subcommand and
 start forwarding.
-Patch from ``port 0`` to ``port 1`` for ``sec 1`` and
-from ``port 1`` to ``port 0`` for ``sec 2``.
+Patch from ``phy:0`` to ``phy:1`` for ``sec 1`` and
+from ``phy:1`` to ``phy:0`` for ``sec 2``.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 1
-    spp > sec 2;patch 1 0
+    spp > sec 1;patch phy:0 phy:1
+    spp > sec 2;patch phy:1 phy:0
     spp > sec 1;forward
     spp > sec 2;forward
 
-.. code-block:: console
+.. _figure_spp_two_nfv_as_l2fwd:
 
-                                                                        __
-                         +--------------+          +--------------+       |
-                         |    spp_nfv   |          |    spp_nfv   |       |
-                         |    (sec 1)   |          |    (sec 2)   |       |
-                         +--------------+          +--------------+       |
-                            ^        :               :         :          |
-                            |        |      +--------+         |          |
-                            :        v      |                  v          |
-    +----+----------+-----------------------+-------------------------+   |
-    |    | primary  |       ^        :      |                  :      |   |
-    |    +----------+       |        +------+--------+         :      |   |
-    |                       :               |        :         :      |   |
-    |                       :        +------+        :         |      |   |  host
-    |                       :        v               v         v      |   |
-    |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |            |   phy port 1 |   |   |
-    +------------------+--------------+------------+--------------+---+ __|
-                              ^                           :
-                              |                           |
-                              :                           v
+.. figure:: ../images/setup/use_cases/spp_two_nfv_l2fwd.*
+   :height: 420 em
+   :width: 420 em
+
+   Two spp_nfv as l2fwd
 
 
 Configure two spp_nfv for Loopback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Patch ``port 0`` to ``port 0`` for ``sec 1`` and
-``port 1`` to ``port 1`` for ``sec 2`` for loopback.
+Patch ``phy:0`` to ``phy:0`` for ``sec 1`` and
+``phy:1`` to ``phy:1`` for ``sec 2`` for loopback.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 0
-    spp > sec 2;patch 1 1
+    spp > sec 1;patch phy:0 phy:0
+    spp > sec 2;patch phy:1 phy:1
     spp > sec 1;forward
     spp > sec 2;forward
 
-.. code-block:: console
+.. _figure_spp_two_nfv_loopback:
 
-                                                                        __
-                         +--------------+          +--------------+       |
-                         |    spp_nfv   |          |    spp_nfv   |       |
-                         |    (sec 1)   |          |    (sec 2)   |       |
-                         +--------------+          +--------------+       |
-                            ^        :               ^         :          |
-                            |        |               |         |          |
-                            :        v               :         v          |
-    +----+----------+-------------------------------------------------+   |
-    |    | primary  |       ^        :               ^         :      |   |
-    |    +----------+       |        :               |         :      |   |
-    |                       :        :               :         :      |   |
-    |                       :        |               :         |      |   |  host
-    |                       :        v               :         v      |   |
-    |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |            |   phy port 1 |   |   |
-    +------------------+--------------+------------+--------------+---+ __|
-                              ^                           ^
-                              |                           |
-                              v                           v
+.. figure:: ../images/setup/use_cases/spp_two_nfv_loopback.*
+   :height: 420 em
+   :width: 420 em
+
+   Two spp_nfv for loopback
 
 
 Dual spp_nfv with Ring PMD
@@ -240,36 +192,33 @@ Ring PMD is an interface for communicating between secondaries on host.
 The maximum number of ring PMDs is defined as ``-n``  option of
 ``spp_primary`` and ring ID is started from 0.
 
-A reference of a ring PMD is added by using ``add`` subcommand.
-All of ring PMDs is showed by ``status`` subcommand.
+Ring PMD is added by using ``add`` subcommand.
+All of ring PMDs is showed with ``status`` subcommand.
 
 .. code-block:: console
 
     spp > sec 1;add ring 0
     recv:6:{addring0}
     spp > sec 1;status
-    recv:6:{Client ID 1 Idling
-    1
-    port id: 0,on,PHY,outport: -99
-    port id: 1,on,PHY,outport: -99
-    port id: 2,on,RING(0),outport: -99
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
+      - 'ring:0'
 
-Notice that ring 0 is added to ``sec 1`` and it is referred as
-port id 2.
-
-To clear the configuration, delete ``ring 0``.
+Notice that ``ring:0`` is added to ``sec 1``.
+You can delete it with ``del`` command if you do not need to
+use it anymore.
 
 .. code-block:: console
 
     spp > sec 1;del ring 0
     recv:6:{delring0}
     spp > sec 1;status
-    recv:6:{Client ID 1 Idling
-    1
-    port id: 0,on,PHY,outport: -99
-    port id: 1,on,PHY,outport: -99
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
 
 
 Uni-Directional L2fwd
@@ -283,33 +232,18 @@ Then, connect it with ``patch`` subcommand.
 
     spp > sec 1;add ring 0
     spp > sec 2;add ring 0
-    spp > sec 1;patch 0 2
-    spp > sec 2;patch 2 1
+    spp > sec 1;patch phy:0 ring:0
+    spp > sec 2;patch ring:0 phy:1
     spp > sec 1;forward
     spp > sec 2;forward
 
-.. code-block:: console
+.. _figure_spp_uni_directional_l2fwd:
 
-                                                                        __
-                       +----------+      ring 0      +----------+         |
-                       |  spp_nfv |    +--------+    |  spp_nfv |         |
-                       |  (sec 1) | -> |  |  |  |- > |  (sec 2) |         |
-                       +----------+    +--------+    +----------+         |
-                          ^                                   :           |
-                          |                                   |           |
-                          :                                   v           |
-    +----+----------+-------------------------------------------------+   |
-    |    | primary  |       ^                               :         |   |
-    |    +----------+       |                               :         |   |
-    |                       :                               :         |   |
-    |                       :                               |         |   |  host
-    |                       :                               v         |   |
-    |                  +--------------+            +--------------+   |   |
-    |                  |   phy port 0 |            |   phy port  1|   |   |
-    +------------------+--------------+------------+--------------+---+ __|
-                              ^                           :
-                              |                           |
-                              :                           v
+.. figure:: ../images/setup/use_cases/spp_unidir_l2fwd.*
+   :height: 460 em
+   :width: 460 em
+
+   Uni-Directional l2fwd
 
 
 Bi-Directional L2fwd
@@ -326,14 +260,12 @@ First, add ``ring 0`` and ``ring 1`` to ``sec 1``.
 
     spp > sec 1;add ring 0
     spp > sec 1;add ring 1
-    spp > sec 1;status
-    recv:6:{Client ID 1 Idling
-    1
-    port id: 0,on,PHY,outport: -99
-    port id: 1,on,PHY,outport: -99
-    port id: 2,on,RING(0),outport: -99
-    port id: 3,on,RING(1),outport: -99
-    }
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
+      - 'ring:0'
+      - 'ring:1'
 
 
 Then, add ``ring 0`` and ``ring 1`` to ``sec 2``.
@@ -342,38 +274,29 @@ Then, add ``ring 0`` and ``ring 1`` to ``sec 2``.
 
     spp > sec 2;add ring 0
     spp > sec 2;add ring 1
-    spp > sec 1;patch 0 2
-    spp > sec 1;patch 3 0
-    spp > sec 2;patch 1 3
-    spp > sec 2;patch 2 1
-    spp > sec 1;forward
-    spp > sec 2;forward
+    status: idling
+    ports:
+      - 'phy:0'
+      - 'phy:1'
+      - 'ring:0'
+      - 'ring:1'
 
 .. code-block:: console
 
-                                                                        __
-                                        ring 0                            |
-                                      +--------+                          |
-                    +------------+ <--|  |  |  |<-- +-----------+         |
-                    |          p3|    +--------+    |p3         |         |
-                    |  spp_nfv   |                  |  spp_nfv  |         |
-                    |  (sec 1) p2|--> +--------+ -->|p2 (sec 2) |         |
-                    +------------+    |  |  |  |    +-----------+         |
-                            ^         +--------+          ^               |
-                            |           ring 1            |               |
-                            v                             v               |
-    +---+----------+--------------------------------------------------+   |
-    |   | primary  |        ^                             ^           |   |
-    |   +----------+        |                             :           |   |
-    |                       :                             :           |   |
-    |                       :                             |           |   |  host
-    |                       v                             v           |   |
-    |                  +--------------+            +--------------+   |   |
-    |                  |  phy port 0  |            |  phy port 1  |   |   |
-    +------------------+--------------+------------+--------------+---+ __|
-                              ^                           ^
-                              |                           |
-                              v                           v
+    spp > sec 1;patch phy:0 ring:0
+    spp > sec 1;patch ring:1 phy:0
+    spp > sec 2;patch phy:1 ring:1
+    spp > sec 2;patch ring:0 phy:1
+    spp > sec 1;forward
+    spp > sec 2;forward
+
+.. _figure_spp_bi_directional_l2fwd:
+
+.. figure:: ../images/setup/use_cases/spp_bidir_l2fwd.*
+   :height: 460 em
+   :width: 460 em
+
+   Bi-Directional l2fwd
 
 
 Single spp_nfv with Vhost PMD
@@ -420,48 +343,23 @@ Start a VM with vhost interface as described in
 and launch ``spp_vm`` with secondary ID 2.
 You find ``sec 2`` from controller after launched.
 
-Patch ``port 0`` and ``port 1`` to ``vhost 0`` with ``sec 1``
+Patch ``phy:0`` and ``phy:1`` to ``vhost:0`` with ``sec 1``
 running on host.
-Inside VM, configure loopback by patching ``port 0`` and ``port 0``
+Inside VM, configure loopback by patching ``phy:0`` and ``phy:0``
 with ``sec 2``.
 
 .. code-block:: console
 
-    spp > sec 1;patch 0 2
-    spp > sec 1;patch 2 1
-    spp > sec 2;patch 0 0
+    spp > sec 1;patch phy:0 vhost:0
+    spp > sec 1;patch vhost:0 phy:1
+    spp > sec 2;patch phy:0 phy:0
     spp > sec 1;forward
     spp > sec 2;forward
 
-.. code-block:: console
+.. _figure_spp_uni_directional_l2fwd_vhost:
 
-                                                    __
-                          +-----------------------+   |
-                          | guest                 |   |
-                          |                       |   |
-                          |   +--------------+    |   |  guest
-                          |   |    spp_vm    |    |   |  192.168.122.51
-                          |   |    (sec 2)   |    |   |
-                          |   |      p0      |    |   |
-                          +---+--------------+----+ __|
-                               ^           :
-                               |  virtio   |
-                               |           V                          __
-                           +--------------------+                       |
-                           |      spp_nfv       |                       |
-                           | p2   (sec 1)       |                       |
-                           +--------------------+                       |
-                               ^           :                            |
-                               |           +---------- +                |
-                               :                       v                |
-    +----+----------+--------------------------------------------+      |
-    |    | primary  |       ^                          :         |      |
-    |    +----------+       |                          :         |      |
-    |                       :                          |         |      | host
-    |                       :                          v         |      | 192.168.122.1
-    |                  +--------------+       +--------------+   |      |
-    |                  |   phy port 0 |       |  phy port  1 |   |      |
-    +------------------+--------------+-------+--------------+---+    __|
-                              ^                           :
-                              |                           |
-                              :                           v
+.. figure:: ../images/setup/use_cases/spp_unidir_l2fwd_vhost.*
+   :height: 460 em
+   :width: 460 em
+
+   Uni-Directional l2fwd with vhost
