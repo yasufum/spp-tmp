@@ -96,6 +96,8 @@ class Topo(object):
 
         # parse status message from sec.
         for sec in sec_list:
+            if sec is None:
+                continue
             for port in sec["ports"]:
                 if port["iface"]["type"] == "phy":
                     phys.append(port)
@@ -313,6 +315,10 @@ class Topo(object):
         }
         """
 
+        # Clean sec stat message
+        stat = stat.replace("\x00", "")
+        stat = stat.replace("'", "")
+
         stat_obj = yaml.load(stat)
         res = {}
         res['sec_id'] = sec_id
@@ -320,6 +326,9 @@ class Topo(object):
 
         port_list = []
         try:
+            if stat_obj['ports'] is None:
+                return None
+
             ports = stat_obj['ports'].split(',')
             for port_info in ports:
                 rid, outport = port_info.split('-')
