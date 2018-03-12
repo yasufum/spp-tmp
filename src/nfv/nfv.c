@@ -713,10 +713,10 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, APP, "status\n");
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
-			i = sprintf(str, "Client ID %d Running\n", client_id);
+			i = sprintf(str, "status: running\n");
 		else
-			i = sprintf(str, "Client ID %d Idling\n", client_id);
-		print_active_ports(str + i, client_id, ports_fwd_array, port_map);
+			i = sprintf(str, "status: idling\n");
+		print_active_ports(str + i, ports_fwd_array, port_map);
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
