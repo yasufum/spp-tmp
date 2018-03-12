@@ -49,8 +49,8 @@ class ConnectionThread(threading.Thread):
                 # 1024 stands for bytes of data to be received
                 data = self.conn.recv(1024)
                 if data:
-                    spp_common.SEC2MAIN[self.client_id].put(
-                        "recv:%s:{%s}" % (str(self.conn.fileno()), data))
+                    msg = "%s" % data
+                    spp_common.SEC2MAIN[self.client_id].put(msg)
                 else:
                     spp_common.SEC2MAIN[self.client_id].put(
                         "closing:" + str(self.conn))

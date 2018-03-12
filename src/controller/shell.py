@@ -88,6 +88,23 @@ class Shell(cmd.Cmd, object):
         for i in spp_common.SECONDARY_LIST:
             print ("Connected secondary id: %d" % i)
 
+    def print_sec_status(self, msg):
+        msg = msg.replace("\x00", "")  # remove null chars in msg from sec
+        status, ports = msg.split("\n")
+        res = "%s\nports:\n" % status
+        port_list = ports.split(' ')[1].split(',')
+
+        tmp = []
+        for p in port_list:
+            p1, p2 = p.split('-')
+            if p2 == 'null':
+                tmp.append("  - '%s'" % p1)
+            else:
+                tmp.append("  - '%s -> %s'" % (p1, p2))
+        tmp.sort()
+        res += "\n".join(tmp)
+        print(res)
+
     def command_primary(self, command):
         """Send command to primary process"""
 
@@ -107,7 +124,10 @@ class Shell(cmd.Cmd, object):
         if sec_id in spp_common.SECONDARY_LIST:
             spp_common.MAIN2SEC[sec_id].put(command)
             recv = spp_common.SEC2MAIN[sec_id].get(True)
-            print (recv)
+            if command == 'status':
+                self.print_sec_status(recv)
+            else:
+                print(recv)
             return self.CMD_OK, recv
         else:
             message = "secondary id %d not exist" % sec_id
