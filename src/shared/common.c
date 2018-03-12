@@ -32,7 +32,6 @@
  */
 
 #include <rte_cycles.h>
-
 #include "common.h"
 
 /* Check the link status of all ports in up to 9s, and print them finally */
@@ -263,9 +262,10 @@ print_active_ports(char *str,
 		struct port_map *port_map)
 {
 	unsigned int i;
+	const char *port_prefix = "ports: '";
 
 	/* Every elements value */
-	sprintf(str, "ports: ");
+	sprintf(str, "%s",  port_prefix);
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
@@ -313,7 +313,7 @@ print_active_ports(char *str,
 			break;
 		case UNDEF:
 			RTE_LOG(INFO, APP, "Type: UDF\n");
-			/* TODO(yasufum) remove print for undefined ? */
+			/* TODO(yasufum) Need to remove print for undefined ? */
 			sprintf(str + strlen(str), "udf-");
 			break;
 		}
@@ -352,11 +352,22 @@ print_active_ports(char *str,
 				break;
 			case UNDEF:
 				RTE_LOG(INFO, APP, "Type: UDF\n");
-				/* TODO(yasufum) remove print for undefined ? */
+				/**
+				 * TODO(yasufum) Need to remove print for
+				 * undefined ?
+				 */
 				sprintf(str + strlen(str), "udf,");
 				break;
 			}
 		}
 	}
-	sprintf(str + strlen(str) - 1, "%c", '\0');
+
+	// If there are no ports, it's formatted as "ports: ''"
+	if (strcmp(str, port_prefix) == 0) {
+		sprintf(str + strlen(str), "'");
+	} else {  // Remove last ','
+		sprintf(str + strlen(str) - 1, "'");
+	}
+	// make sure to be terminated with null character
+	sprintf(str + strlen(str), "%c", '\0');
 }
