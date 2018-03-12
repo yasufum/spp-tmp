@@ -216,7 +216,7 @@ int parse_portmask(struct port_info *ports, uint16_t max_ports,
 int parse_num_clients(uint16_t *num_clients, const char *clients);
 int parse_server(char **server_ip, int *server_port, char *server_addr);
 
-void print_active_ports(char *str, uint16_t client_id,
+void print_active_ports(char *str,
 		struct port *ports_fwd_array,
 		struct port_map *port_map);
 

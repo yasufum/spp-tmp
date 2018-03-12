@@ -258,15 +258,14 @@ spp_atoi(const char *str, int *val)
  * "port_id:[PORT_ID],[IN_PORT_STAT],[TYPE],output:[OUTPORT_STAT]"
  */
 void
-print_active_ports(char *str, uint16_t client_id,
+print_active_ports(char *str,
 		struct port *ports_fwd_array,
 		struct port_map *port_map)
 {
 	unsigned int i;
 
-	sprintf(str, "clinet_id:%d\n", client_id);
-
 	/* Every elements value */
+	sprintf(str, "ports: ");
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
@@ -275,51 +274,89 @@ print_active_ports(char *str, uint16_t client_id,
 		RTE_LOG(INFO, APP, "Status %d\n",
 			ports_fwd_array[i].in_port_id);
 
-		sprintf(str + strlen(str), "port_id:%d,", i);
 		/* in_port_id is same value as port_id */
-		if (ports_fwd_array[i].in_port_id != PORT_RESET)
-			sprintf(str + strlen(str), "on,");
-		else
-			sprintf(str + strlen(str), "off,");
+		/**
+		 * NOTE(yasuufm)
+		 * in_port_id cannot be PORT_RESET currently and it is
+		 * meaningless, but not remove for future possible change
+		 */
+		// if (ports_fwd_array[i].in_port_id != PORT_RESET)
+		// 	sprintf(str + strlen(str), "on,");
+		// else
+		// 	sprintf(str + strlen(str), "off,");
 
 		switch (port_map[i].port_type) {
 		case PHY:
 			RTE_LOG(INFO, APP, "Type: PHY\n");
-			sprintf(str + strlen(str), "PHY,");
+			sprintf(str + strlen(str), "phy:%u-",
+					port_map[i].id);
 			break;
 		case RING:
 			RTE_LOG(INFO, APP, "Type: RING\n");
-			sprintf(str + strlen(str), "RING(%u),",
+			sprintf(str + strlen(str), "ring:%u-",
 				port_map[i].id);
 			break;
 		case VHOST:
 			RTE_LOG(INFO, APP, "Type: VHOST\n");
-			sprintf(str + strlen(str), "VHOST(%u),",
+			sprintf(str + strlen(str), "vhost:%u-",
 				port_map[i].id);
 			break;
 		case PCAP:
 			RTE_LOG(INFO, APP, "Type: PCAP\n");
-			sprintf(str + strlen(str), "PCAP(%u),",
+			sprintf(str + strlen(str), "pcap:%u-",
 					port_map[i].id);
 			break;
 		case NULLPMD:
 			RTE_LOG(INFO, APP, "Type: NULLPMD\n");
-			sprintf(str + strlen(str), "NULLPMD(%u),",
+			sprintf(str + strlen(str), "nullpmd:%u-",
 					port_map[i].id);
 			break;
 		case UNDEF:
 			RTE_LOG(INFO, APP, "Type: UDF\n");
-			sprintf(str + strlen(str), "UDF,");
+			/* TODO(yasufum) remove print for undefined ? */
+			sprintf(str + strlen(str), "udf-");
 			break;
 		}
 
 		RTE_LOG(INFO, APP, "Out Port ID %d\n",
 				ports_fwd_array[i].out_port_id);
 		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
-			sprintf(str + strlen(str), "outport:%s\n", "none");
+			sprintf(str + strlen(str), "%s", "null,");
 		} else {
-			sprintf(str + strlen(str), "outport:%d\n",
-					ports_fwd_array[i].out_port_id);
+			unsigned int j = ports_fwd_array[i].out_port_id;
+			switch (port_map[j].port_type) {
+			case PHY:
+				RTE_LOG(INFO, APP, "Type: PHY\n");
+				sprintf(str + strlen(str), "phy:%u,",
+						port_map[j].id);
+				break;
+			case RING:
+				RTE_LOG(INFO, APP, "Type: RING\n");
+				sprintf(str + strlen(str), "ring:%u,",
+					port_map[j].id);
+				break;
+			case VHOST:
+				RTE_LOG(INFO, APP, "Type: VHOST\n");
+				sprintf(str + strlen(str), "vhost:%u,",
+						port_map[j].id);
+				break;
+			case PCAP:
+				RTE_LOG(INFO, APP, "Type: PCAP\n");
+				sprintf(str + strlen(str), "pcap:%u,",
+						port_map[j].id);
+				break;
+			case NULLPMD:
+				RTE_LOG(INFO, APP, "Type: NULLPMD\n");
+				sprintf(str + strlen(str), "nullpmd:%u,",
+						port_map[j].id);
+				break;
+			case UNDEF:
+				RTE_LOG(INFO, APP, "Type: UDF\n");
+				/* TODO(yasufum) remove print for undefined ? */
+				sprintf(str + strlen(str), "udf,");
+				break;
+			}
 		}
 	}
+	sprintf(str + strlen(str) - 1, "%c", '\0');
 }
