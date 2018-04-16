@@ -52,7 +52,7 @@
 #define SPP_CMD_NAME_BUFSZ  32
 
 /** command value string buffer size (include null char) */
-#define SPP_CMD_VALUE_BUFSZ 128
+#define SPP_CMD_VALUE_BUFSZ 111
 
 /** string that specify unused */
 #define SPP_CMD_UNUSE "unuse"
