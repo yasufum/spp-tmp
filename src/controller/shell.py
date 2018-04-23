@@ -31,6 +31,7 @@ class Shell(cmd.Cmd, object):
 
     PLUGIN_DIR = 'command'
     subgraphs = {}
+    topo_size = '60%'
 
     def default(self, line):
         """Define defualt behaviour
@@ -646,6 +647,21 @@ class Shell(cmd.Cmd, object):
         else:
             pass
 
+    def do_topo_resize(self, args):
+        if args == '':
+            print(self.topo_size)
+        else:
+            if '%' in args:
+                self.topo_size = args
+                print(self.topo_size)
+            elif '.' in args:
+                ii = float(args) * 100
+                self.topo_size = str(ii) + '%'
+                print(self.topo_size)
+            else:  # TODO(yasufum) add check for no number
+                self.topo_size = str(float(args) * 100) + '%'
+                print(self.topo_size)
+
     def do_topo(self, args):
         """Output network topology
 
@@ -676,7 +692,7 @@ class Shell(cmd.Cmd, object):
                 print("Usage: topo dst [ftype]")
                 return False
             elif (args_ary[0] == "term") or (args_ary[0] == "http"):
-                res_ary = tp.show(args_ary[0])
+                res_ary = tp.show(args_ary[0], self.topo_size)
             elif len(args_ary) == 1:
                 ftype = args_ary[0].split(".")[-1]
                 res_ary = tp.output(args_ary[0], ftype)

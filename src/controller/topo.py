@@ -28,7 +28,7 @@ class Topo(object):
         self.s2m_queues = s2m_queues
         self.sub_graphs = sub_graphs
 
-    def show(self, dtype):
+    def show(self, dtype, size):
         res_ary = []
         for sec_id in self.sec_ids:
             self.m2s_queues[sec_id].put("status")
@@ -38,7 +38,7 @@ class Topo(object):
         if dtype == "http":
             self.to_http(res_ary)
         elif dtype == "term":
-            self.to_term(res_ary)
+            self.to_term(res_ary, size)
         else:
             print("Invalid file type")
             return res_ary
@@ -259,7 +259,7 @@ class Topo(object):
         ws.send(msg)
         ws.close()
 
-    def to_term(self, sec_list):
+    def to_term(self, sec_list, size):
         tmpfile = "%s.jpg" % uuid.uuid4().hex
         self.to_img(sec_list, tmpfile)
         from distutils import spawn
@@ -272,7 +272,7 @@ class Topo(object):
             img_cmd = "%s/%s/imgcat.sh" % (
                 os.path.dirname(__file__), '3rd_party')
         # Resize image to fit the terminal
-        img_size = "60%"
+        img_size = size
         cmd = "convert -resize %s %s %s" % (img_size, tmpfile, tmpfile)
         subprocess.call(cmd, shell=True)
         subprocess.call("%s %s" % (img_cmd, tmpfile), shell=True)
