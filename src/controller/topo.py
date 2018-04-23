@@ -8,7 +8,6 @@ from spp_common import logger
 import subprocess
 import traceback
 import uuid
-import websocket
 import yaml
 
 
@@ -250,6 +249,7 @@ class Topo(object):
         subprocess.call("rm -f %s" % tmpfile, shell=True)
 
     def to_http(self, sec_list):
+        import websocket
         tmpfile = "%s.dot" % uuid.uuid4().hex
         self.to_dot(sec_list, tmpfile)
         msg = open(tmpfile).read()
