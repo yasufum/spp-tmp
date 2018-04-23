@@ -150,7 +150,7 @@ To generate a jpg image, run ``topo`` with the name ``network.jpg``.
 topo_subgraph
 -------------
 
-``topo_subgraph`` is a supplemental command for manageing subgraphs
+``topo_subgraph`` is a supplemental command for managing subgraphs
 for ``topo``.
 
 .. code-block:: console
@@ -216,6 +216,42 @@ delete subgraph ``guest_vm``.
 .. code-block:: console
 
     spp > topo_subgraph del guest_vm
+
+
+topo_resize
+-----------
+
+``topo_resize`` is a supplemental command for changing the size of
+images displayed on the terminal with ``topo``.
+
+``topo`` displays an image generated from graphviz with default size.
+However, it is too small or large for some environments because it
+depends on the resolution actually.
+
+To check default size, run ``topo_resize`` with no arguments.
+It shows current size of the image.
+
+.. code-block:: console
+
+    # shows current size
+    spp > topo_resize
+    60%
+
+You can resize it with percentage
+
+.. code-block:: console
+
+    # resize with percentage
+    spp > topo_resize 80%
+    80%
+
+or ratio.
+
+.. code-block:: console
+
+    # resize with ratio
+    spp > topo_resize 0.8
+    80%
 
 
 load_cmd
