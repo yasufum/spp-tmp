@@ -145,6 +145,7 @@ You can check the value as following.
 
     $ sysctl -n kernel.randomize_va_space
 
+.. _install_dpdk_spp:
 
 Install DPDK and SPP
 --------------------

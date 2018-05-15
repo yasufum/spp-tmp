@@ -363,3 +363,108 @@ with ``sec 2``.
    :width: 460 em
 
    Uni-Directional l2fwd with vhost
+
+Single spp_nfv with PCAP PMD
+-----------------------------
+
+PCAP PMD
+~~~~~~~~
+
+Pcap PMD is an interface for capturing or restoring traffic.
+For usign pcap PMD, you should set ``CONFIG_RTE_LIBRTE_PMD_PCAP``
+to ``y`` and compile DPDK before SPP.
+Refer to
+:ref:`Install DPDK and SPP<install_dpdk_spp>`
+for details of setting up.
+
+Pcap PMD has two different streams for rx and tx.
+Tx device is for capturing packets and rx is for restoring captured
+packets.
+For rx device, you can use any of pcap files other than SPP's pcap PMD.
+
+To start using pcap pmd, just using ``add`` subcommand as ring.
+Here is an example for creating pcap PMD with index ``1``.
+
+.. code-block:: console
+
+    spp > sec 1;add pcap 1
+
+After running it, you can find two of pcap files in ``/tmp``.
+
+.. code-block:: console
+
+    $ ls /tmp | grep pcap$
+    spp-rx1.pcap
+    spp-tx1.pcap
+
+If you already have a dumped file, you can use it by it putting as
+``/tmp/spp-rx1.pcap`` before running the ``add`` subcommand.
+SPP does not overwrite rx pcap file if it already exist,
+and it just overwrites tx pcap file.
+
+Capture Incoming Packets
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+As the first usecase, add a pcap PMD and capture incoming packets from
+``phy:0``.
+
+.. code-block:: console
+
+    spp > sec 1;add pcap 1
+    spp > sec 1;patch phy:0 pcap:1
+    spp > sec 1;forward
+
+In this example, we use pktgen.
+Once you start forwarding packets from pktgen, you can see
+that the size of ``/tmp/spp-tx1.pcap`` is increased rapidly
+(or gradually, it depends on the rate).
+
+.. code-block:: console
+
+    Pktgen:/> set 0 size 1024
+    Pktgen:/> start 0
+
+To stop capturing, simply stop forwarding of ``spp_nfv``.
+
+.. code-block:: console
+
+    spp > sec 1;stop
+
+You can analyze the dumped pcap file with other tools like as wireshark.
+
+Restore dumped Packets
+~~~~~~~~~~~~~~~~~~~~~~
+
+In this usecase, use dumped file in previsou section.
+Copy ``spp-tx1.pcap`` to ``spp-rx2.pcap`` first.
+
+.. code-block:: console
+
+    $ sudo cp /tmp/spp-tx1.pcap /tmp/spp-rx2.pcap
+
+Then, add pcap PMD to another ``spp_nfv`` with index ``2``.
+
+.. code-block:: console
+
+    spp > sec 2;add pcap 2
+
+You can find that ``spp-tx2.pcap`` is creaeted and ``spp-rx2.pcap``
+still remained.
+
+.. code-block:: console
+
+    $ ls -al /tmp/spp*.pcap
+    -rw-r--r-- 1 root root         24  ...  /tmp/spp-rx1.pcap
+    -rw-r--r-- 1 root root 2936703640  ...  /tmp/spp-rx2.pcap
+    -rw-r--r-- 1 root root 2936703640  ...  /tmp/spp-tx1.pcap
+    -rw-r--r-- 1 root root          0  ...  /tmp/spp-tx2.pcap
+
+To confirm packets are restored, patch ``pcap:2`` to ``phy:1``
+and watch received packets on pktgen.
+
+.. code-block:: console
+
+    spp > sec 2;patch phy:1 pcap:2
+    spp > sec 2;forward
+
+After started forwarding, you can see that packet count is increased.
