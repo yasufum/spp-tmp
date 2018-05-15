@@ -159,7 +159,7 @@ For Linux, see `Getting Started Guide for Linux
 DPDK
 ~~~~
 
-First, download and compile DPDK in any directory.
+Clone repository and compile DPDK in any directory.
 
 .. code-block:: console
 
@@ -169,22 +169,35 @@ First, download and compile DPDK in any directory.
 
 SPP provides libpcap-based PMD for dumping packet to a file or retrieve
 it from the file.
-You should enable pcap while compiling DPDK because it is disabled as
-default.
-Compiling DPDK takes a few minutes.
+To use PCAP PMD, install ``libpcap-dev`` and enable it.
+
+.. code-block:: console
+
+    $ sudo apt install libpcap-dev
+
+PCAP is disabled by default in DPDK configuration.
+``CONFIG_RTE_LIBRTE_PMD_PCAP`` defines the configuration and enabled
+it to ``y``.
+
+.. code-block:: console
+
+    # dpdk/config/common_base
+    CONFIG_RTE_LIBRTE_PMD_PCAP=y
+
+Compile DPDK with target environment.
 
 .. code-block:: console
 
     $ cd dpdk
     $ export RTE_SDK=$(pwd)
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
-    $ make install T=$RTE_TARGET CONFIG_RTE_LIBRTE_PMD_PCAP=y
+    $ make install T=$RTE_TARGET
 
 
 SPP
 ~~~
 
-Then, download and compile SPP in any directory.
+Clone repository and compile SPP in any directory.
 
 .. code-block:: console
 
