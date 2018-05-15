@@ -26,7 +26,7 @@ class Shell(cmd.Cmd, object):
     CMD_NOTREADY = "NOTREADY"
     CMD_ERROR = "ERROR"
 
-    PORT_TYPES = ['phy', 'ring', 'vhost']
+    PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
     PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
