@@ -114,9 +114,14 @@ struct port {
 #define VM_PKTMBUF_POOL_NAME "VM_Proc_pktmbuf_pool"
 #define VM_MZ_PORT_INFO "VM_Proc_port_info"
 #define MZ_PORT_INFO "MProc_port_info"
+
 #define VHOST_BACKEND_NAME "eth_vhost%u"
 #define VHOST_IFACE_NAME "/tmp/sock%u"
+
 #define PCAP_PMD_DEV_NAME "eth_pcap%u"
+#define PCAP_IFACE_RX "/tmp/spp-rx%d.pcap"
+#define PCAP_IFACE_TX "/tmp/spp-tx%d.pcap"
+
 #define NULL_PMD_DEV_NAME "eth_null%u"
 
 /*

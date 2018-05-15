@@ -480,6 +480,50 @@ add_vhost_pmd(int index)
 	return vhost_port_id;
 }
 
+/*
+ * Create an empty rx pcap file to given path if it does not exit
+ * Return 0 for succeeded, or -1 for failed.
+ */
+static int
+create_pcap_rx(char *rx_fpath)
+{
+	int res;
+	FILE *tmp_fp;
+	char cmd_str[256];
+
+	// empty file is required for 'text2pcap' command for
+	// creating a pcap file.
+	char template[] = "/tmp/spp-emptyfile.txt";
+
+	// create empty file if it is not exist
+	tmp_fp = fopen(template, "r");
+	if (tmp_fp == NULL) {
+		(tmp_fp = fopen(template, "w"));
+		if (tmp_fp == NULL) {
+			RTE_LOG(ERR, APP, "Failed to open %s\n", template);
+			return -1;
+		}
+	}
+
+	sprintf(cmd_str, "text2pcap %s %s", template, rx_fpath);
+	res = system(cmd_str);
+	if (res != 0) {
+		RTE_LOG(ERR, APP,
+				"Failed to create pcap device %s\n",
+				rx_fpath);
+		return -1;
+	}
+	RTE_LOG(INFO, APP, "PCAP device created\n");
+	fclose(tmp_fp);
+	return 0;
+}
+
+/*
+ * Open pcap files with given index for rx and tx.
+ * Index is given as a argument of 'patch' command.
+ * This function returns a port ID if it is succeeded,
+ * or negative int if failed.
+ */
 static int
 add_pcap_pmd(int index)
 {
@@ -492,8 +536,24 @@ add_pcap_pmd(int index)
 	char devargs[256];
 	uint16_t pcap_pmd_port_id;
 	uint16_t nr_queues = 1;
-
 	int ret;
+
+	// PCAP file path
+	char rx_fpath[128];
+	char tx_fpath[128];
+
+	FILE *rx_fp;
+
+	sprintf(rx_fpath, PCAP_IFACE_RX, index);
+	sprintf(tx_fpath, PCAP_IFACE_TX, index);
+
+	// create rx pcap file if it does not exist
+	rx_fp = fopen(rx_fpath, "r");
+	if (rx_fp == NULL) {
+		ret = create_pcap_rx(rx_fpath);
+		if (ret < 0)
+			return ret;
+	}
 
 	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
 	if (mp == NULL)
@@ -501,8 +561,8 @@ add_pcap_pmd(int index)
 
 	name = get_pcap_pmd_name(index);
 	sprintf(devargs,
-		"%s,rx_pcap=/tmp/rx_%d.pcap,tx_pcap=/tmp/tx_%d.pcap",
-		name, index, index);
+			"%s,rx_pcap=%s,tx_pcap=%s",
+			name, rx_fpath, tx_fpath);
 	ret = rte_eth_dev_attach(devargs, &pcap_pmd_port_id);
 
 	if (ret < 0)
