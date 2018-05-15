@@ -414,6 +414,14 @@ As the first usecase, add a pcap PMD and capture incoming packets from
     spp > sec 1;patch phy:0 pcap:1
     spp > sec 1;forward
 
+.. _figure_spp_pcap_incoming:
+
+.. figure:: ../images/setup/use_cases/spp_pcap_incoming.*
+   :height: 380 em
+   :width: 380 em
+
+   Rapture incoming packets
+
 In this example, we use pktgen.
 Once you start forwarding packets from pktgen, you can see
 that the size of ``/tmp/spp-tx1.pcap`` is increased rapidly
@@ -447,6 +455,14 @@ Then, add pcap PMD to another ``spp_nfv`` with index ``2``.
 .. code-block:: console
 
     spp > sec 2;add pcap 2
+
+.. _figure_spp_pcap_restoring:
+
+.. figure:: ../images/setup/use_cases/spp_pcap_restoring.*
+   :height: 380 em
+   :width: 380 em
+
+   Restore dumped packets
 
 You can find that ``spp-tx2.pcap`` is creaeted and ``spp-rx2.pcap``
 still remained.
