@@ -53,11 +53,12 @@ For 1GB page, hugepage setting must be activated while booting system.
 It must be defined in boot loader configuration, usually is
 ``/etc/default/grub``.
 Add an entry to define pagesize and the number of pages.
-Here is an example. `` hugepagesz`` is for the size and ``hugepages``
+Here is an example. ``hugepagesz`` is for the size and ``hugepages``
 is for the number of pages.
 
 .. code-block:: console
 
+    # /etc/default/grub
     GRUB_CMDLINE_LINUX="default_hugepagesz=1G hugepagesz=1G hugepages=8"
 
 .. note::
@@ -90,8 +91,8 @@ Make the memory available for using hugepages from DPDK.
 
 .. code-block:: console
 
-    mkdir /mnt/huge
-    mount -t hugetlbfs nodev /mnt/huge
+    $ mkdir /mnt/huge
+    $ mount -t hugetlbfs nodev /mnt/huge
 
 It is also available while booting by adding a configuration of mount
 point in ``/etc/fstab``, or after booted.
@@ -101,12 +102,14 @@ For 2MB, it is no need to declare the size of hugepages explicity.
 
 .. code-block:: console
 
+    # /etc/fstab
     nodev /mnt/huge hugetlbfs defaults 0 0
 
 For 1GB, the size of hugepage must be specified.
 
 .. code-block:: console
 
+    # /etc/fstab
     nodev /mnt/huge_1GB hugetlbfs pagesize=1GB 0 0
 
 
@@ -125,13 +128,22 @@ mapping while starting multi-process application as discussed in
 <http://dpdk.org/ml/archives/dev/2014-September/005236.html>`_
 .
 
-ASLR can be disabled by assigning `kernel.randomize_va_space` to `0`,
-or be enabled by assigning to `2`.
+ASLR can be disabled by assigning ``kernel.randomize_va_space`` to
+``0``, or be enabled by assigning it to ``2``.
 
 .. code-block:: console
 
     # disable ASLR
     $ sudo sysctl -w kernel.randomize_va_space=0
+
+    # enable ASLR
+    $ sudo sysctl -w kernel.randomize_va_space=2
+
+You can check the value as following.
+
+.. code-block:: console
+
+    $ sysctl -n kernel.randomize_va_space
 
 
 Install DPDK and SPP
@@ -148,16 +160,26 @@ DPDK
 ~~~~
 
 First, download and compile DPDK in any directory.
-Compiling DPDK takes a few minutes.
 
 .. code-block:: console
 
     $ cd /path/to/any
     $ git clone http://dpdk.org/git/dpdk
+
+
+SPP provides libpcap-based PMD for dumping packet to a file or retrieve
+it from the file.
+You should enable pcap while compiling DPDK because it is disabled as
+default.
+Compiling DPDK takes a few minutes.
+
+.. code-block:: console
+
     $ cd dpdk
     $ export RTE_SDK=$(pwd)
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
-    $ make install T=$RTE_TARGET
+    $ make install T=$RTE_TARGET CONFIG_RTE_LIBRTE_PMD_PCAP=y
+
 
 SPP
 ~~~
@@ -206,8 +228,8 @@ or ``vfio-pci``.
 
 .. code-block:: console
 
-    sudo modprobe uio
-    sudo insmod kmod/igb_uio.ko
+    $ sudo modprobe uio
+    $ sudo insmod kmod/igb_uio.ko
 
 Binding Network Ports
 ~~~~~~~~~~~~~~~~~~~~~
@@ -278,10 +300,8 @@ cannot find it by using ``ifconfig`` or ``ip``.
 Confirm DPDK is setup properly
 ------------------------------
 
-You had better to run DPDK sample application before SPP
-as checking DPDK is setup properly.
-
-Try ``l2fwd`` as an example.
+You should run DPDK sample application ``l2fwd`` before SPP
+to confirm that DPDK is setup properly.
 
 .. code-block:: console
 
@@ -294,13 +314,13 @@ Try ``l2fwd`` as an example.
 
 In this case, run this application with two options.
 
-  - -c: core mask
+  - -l: core list
   - -p: port mask
 
 .. code-block:: console
 
    $ sudo ./build/app/l2fwd \
-     -c 0x03 \
+     -l 1-2 \
      -- -p 0x3
 
 It must be separated with ``--`` to specify which option is
