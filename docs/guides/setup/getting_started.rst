@@ -110,6 +110,30 @@ For 1GB, the size of hugepage must be specified.
     nodev /mnt/huge_1GB hugetlbfs pagesize=1GB 0 0
 
 
+Disable ASLR
+~~~~~~~~~~~~
+
+SPP is a DPDK multi-process application and there are a number of
+`limitations
+<https://dpdk.org/doc/guides/prog_guide/multi_proc_support.html#multi-process-limitations>`_
+.
+
+Address-Space Layout Randomization (ASLR) is a security feature for
+memory protection, but may cause a failure of memory
+mapping while starting multi-process application as discussed in
+`dpdk-dev
+<http://dpdk.org/ml/archives/dev/2014-September/005236.html>`_
+.
+
+ASLR can be disabled by assigning `kernel.randomize_va_space` to `0`,
+or be enabled by assigning to `2`.
+
+.. code-block:: console
+
+    # disable ASLR
+    $ sudo sysctl -w kernel.randomize_va_space=0
+
+
 Install DPDK and SPP
 --------------------
 
