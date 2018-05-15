@@ -40,6 +40,8 @@ struct porttype_map portmap[] = {
 	{ .port_name = "phy",   .port_type = PHY, },
 	{ .port_name = "ring",  .port_type = RING, },
 	{ .port_name = "vhost", .port_type = VHOST, },
+	{ .port_name = "pcap", .port_type = PCAP, },
+	{ .port_name = "nullpmd", .port_type = NULLPMD, },
 	{ .port_name = NULL,    .port_type = UNDEF, },
 };
 
