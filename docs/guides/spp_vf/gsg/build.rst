@@ -30,7 +30,7 @@
 
 .. _spp_vf_gsg_build:
 
-Build
+Setup
 =====
 
 Environment
@@ -165,12 +165,43 @@ Then, bind it with PCI_Number.
 
 virsh setup
 -----------
+``virsh`` is a command line interface that can be used to create, destroy, stop start and edit VMs and configure. After create an image file, you can setup it with ``virt-install``.
+
+.. code-block:: console
+
+   virt-install \
+   --name [VM_NAME] \
+   --ram 4096 \
+   --disk path=/var/lib/libvirt/images/[VM_NAME].img,size=30 \
+   --vcpus 4 \
+   --os-type linux \
+   --os-variant ubuntu16.04 \
+   --network network=default \
+   --graphics none \
+   --console pty,target_type=serial \
+   --location 'http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/' \
+   --extra-args 'console=ttyS0,115200n8 serial'
+
+You may need type the following commands through ssh to activate console.
+
+.. code-block:: console
+
+    $sudo systemctl enable serial-getty@ttyS0.service
+    $sudo systemctl start serial-getty@ttyS0.service
+
 
 Edit VM configuration with virsh.
 
 .. code-block:: console
 
     $ virsh edit [VM_NAME]
+
+You need to add ``xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'`` into the domain tag because of adding ``<qemu:commandline>`` tag.
+In addition, you need to add the tag enclosed by ``<memoryBacking>`` and ``</memoryBacking>``, ``<qemu:commandline>`` and ``</qemu:commandline>`` because SPP uses vhost-user as interface with VM.
+Note that number used in those tags should be the same value (e.g. chr0,sock0,vhost-net0) and these values should correspond to "add vhost N" (in this example 0).
+MAC address used in ``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>`` can be specified when registering MAC address to classifier using Secondary command.
+
+        The following is an example of modified xml file:
 
 .. code-block:: xml
 
@@ -266,13 +297,13 @@ In this case, you should try it.
 
 .. code-block:: console
 
-    $ sudo ln -s /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper /etc/apparmor.d/disable/usr.lib.libvirt.virt-aa-helper
-    $ sudo ln -s /etc/apparmor.d/usr.sbin.libvirtd /etc/apparmor.d/disable/usr.sbin.libvirtd
-    $ sudo apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
-    $ sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd
-    $ sudo service apparmor reload
-    $ sudo service apparmor restart
-    $ sudo service libvirt-bin restart
+    #Edit /etc/libvirt/qemu.conf and set security_driver to none:
+    $sudo vi /etc/libvirt/qemu.conf
+    ...
+    security_driver = "none"
+    ...
+    #Restart libvirtd:
+    $sudo systemctl restart libvirtd.service
 
 Or, you remove appamor.
 

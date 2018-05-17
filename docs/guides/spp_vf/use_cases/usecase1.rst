@@ -186,6 +186,10 @@ In this usecase, you need to register two MAC addresses for merger1.
     spp > sec 1;classifier_table add mac 52:54:00:12:34:56 ring:0
     spp > sec 1;classifier_table add mac 52:54:00:12:34:58 ring:1
 
+.. note::
+
+    Please verify that MAC address of target VM is specified in
+    [MACADDRESS] parameter.
 
 Configuration for the second login path is almost similar to the first
 path.
@@ -233,6 +237,11 @@ Register entries to classifier_table for classifier2.
     # Register MAC address to classifier
     spp > sec 1;classifier_table add mac 52:54:00:12:34:57 ring:4
     spp > sec 1;classifier_table add mac 52:54:00:12:34:59 ring:5
+
+.. note::
+
+    Please verify that MAC address of target VM is specified in
+    [MACADDRESS] parameter.
 
 Finally, activate all of settings by doign `flush` subcommand.
 
