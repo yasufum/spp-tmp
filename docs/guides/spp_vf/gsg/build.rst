@@ -79,7 +79,7 @@ You need to run ``update-grub`` and reboot to activate grub config.
 
 .. code-block:: console
 
-    $ sudo upadte-grub
+    $ sudo update-grub
     $ sudo reboot
 
 
@@ -101,11 +101,11 @@ You can check hugepage settings as following.
     hugetlbfs-kvm on /run/hugepages/kvm type hugetlbfs (rw,relatime,mode=775,gid=117)
     hugetlb on /run/lxcfs/controllers/hugetlb type cgroup (rw,relatime,hugetlb,release_agent=/run/cgmanager/agents/cgm-release-agent.hugetlb,nsroot=/)
 
-Finally, you unmount default hugepage.
+Finally, you umount default hugepage.
 
 .. code-block:: console
 
-    $ sudo unmount /dev/hugepages
+    $ sudo umount /dev/hugepages
 
 
 Install DPDK

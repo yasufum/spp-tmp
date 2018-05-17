@@ -82,7 +82,7 @@ After ``spp_primary`` is launched, run secondary process ``spp_vf``.
 .. code-block:: console
 
     $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
-        -c 0x00fe -n 4 --proc-type=secondary \
+        -c 0x3ffd -n 4 --proc-type=secondary \
         -- \
         --client-id 1 \
         -s 127.0.0.1:6666 \
@@ -156,14 +156,14 @@ merger has two rx ports.
     spp > sec 1;port add ring:0 rx forwarder1
     spp > sec 1;port add vhost:0 tx forwarder1
     # forwarder2
-    spp > sec 1;port add vhost:0 rx forwarder2
-    spp > sec 1;port add ring:2 tx forwarder2
+    spp > sec 1;port add ring:1 rx forwarder2
+    spp > sec 1;port add vhost:2 tx forwarder2
     # forwarder3
-    spp > sec 1;port add ring:1 rx forwarder3
-    spp > sec 1;port add vhost:2 rx forwarder3
+    spp > sec 1;port add vhost:0 rx forwarder3
+    spp > sec 1;port add ring:2 tx forwarder3
     # forwarder4
-    spp > sec 1;port add vhost:2 tx forwarder4
-    spp > sec 1;port add ring:3 rx forwarder4
+    spp > sec 1;port add vhost:2 rx forwarder4
+    spp > sec 1;port add ring:3 tx forwarder4
     # merger1
     spp > sec 1;port add ring:2 rx merger1
     spp > sec 1;port add ring:3 rx merger1
@@ -213,14 +213,14 @@ Add ports to each of components.
     spp > sec 1;port add ring:4 rx forwarder5
     spp > sec 1;port add vhost:1 tx forwarder5
     # forwarder6
-    spp > sec 1;port add vhost:1 rx forwarder6
-    spp > sec 1;port add ring:6 tx forwarder6
+    spp > sec 1;port add ring:5 rx forwarder6
+    spp > sec 1;port add vhost:3 tx forwarder6
     # forwarder7
-    spp > sec 1;port add ring:5 rx forwarder7
-    spp > sec 1;port add vhost:3 rx forwarder7
+    spp > sec 1;port add vhost:1 rx forwarder7
+    spp > sec 1;port add ring:6 tx forwarder7
     # forwarder8
-    spp > sec 1;port add vhost:3 tx forwarder8
-    spp > sec 1;port add ring:7 rx forwarder8
+    spp > sec 1;port add vhost:3 rx forwarder8
+    spp > sec 1;port add ring:7 tx forwarder8
     # merger2
     spp > sec 1;port add ring:6 rx merger2
     spp > sec 1;port add ring:7 rx merger2
@@ -287,8 +287,6 @@ Configurations also for ``spp-vm2`` as ``spp-vm1``.
 
 .. code-block:: console
 
-    $ ssh -oStrictHostKeyChecking=no sppuser@192.168.122.32
-
     # up interfaces
     $ sudo ifconfig ens4 inet 192.168.140.31 netmask 255.255.255.0 up
     $ sudo ifconfig ens5 inet 192.168.150.32 netmask 255.255.255.0 up
@@ -340,21 +338,21 @@ for the first SSH login path.
     spp > sec 1;port del ring:0 tx classifier1
     spp > sec 1;port del ring:1 tx classifier1
     # forwarder1
-    spp > sec 1;port del ring:0 rx forward1
-    spp > sec 1;port del vhost:0 tx forward1
+    spp > sec 1;port del ring:0 rx forwarder1
+    spp > sec 1;port del vhost:0 tx forwarder1
     # forwarder2
-    spp > sec 1;port del vhost:0 rx forward2
-    spp > sec 1;port del ring:2 tx forward2
+    spp > sec 1;port del ring:1 rx forwarder2
+    spp > sec 1;port del vhost:2 tx forwarder2
     # forwarder3
-    spp > sec 1;port del ring:1 rx forward3
-    spp > sec 1;port del vhost:2 rx forward3
+    spp > sec 1;port del vhost:0 rx forwarder3
+    spp > sec 1;port del ring:2 tx forwarder3
     # forwarder4
-    spp > sec 1;port del vhost:2 tx forward4
-    spp > sec 1;port del ring:3 rx forward4
+    spp > sec 1;port del vhost:2 rx forwarder4
+    spp > sec 1;port del ring:3 tx forwarder4
     # merger1
-    spp > sec 1;port del ring:2 rx merge1
-    spp > sec 1;port del ring:3 rx merge1
-    spp > sec 1;port del phy:0 tx merge1
+    spp > sec 1;port del ring:2 rx merger1
+    spp > sec 1;port del ring:3 rx merger1
+    spp > sec 1;port del phy:0 tx merger1
 
 Then, stop components.
 
@@ -362,11 +360,11 @@ Then, stop components.
 
     # Stop component to spp_vf
     spp > sec 1;component stop classifier1
-    spp > sec 1;component stop forward1
-    spp > sec 1;component stop forward2
-    spp > sec 1;component stop forward3
-    spp > sec 1;component stop forward4
-    spp > sec 1;component stop merge1
+    spp > sec 1;component stop forwarder1
+    spp > sec 1;component stop forwarder2
+    spp > sec 1;component stop forwarder3
+    spp > sec 1;component stop forwarder4
+    spp > sec 1;component stop merger1
 
 Second, do termination for the second path.
 Delete entries from ``classifier_table`` and ports from each of
@@ -388,11 +386,11 @@ components.
     spp > sec 1;port del ring:4 rx forwarder5
     spp > sec 1;port del vhost:1 tx forwarder5
     # forwarder6
-    spp > sec 1;port del vhost:1 rx forwarder6
-    spp > sec 1;port del ring:6 tx forwarder6
+    spp > sec 1;port del ring:5 rx forwarder6
+    spp > sec 1;port del vhost:3 tx forwarder6
     # forwarder7
-    spp > sec 1;port del ring:5 rx forwarder7
-    spp > sec 1;port del vhost:3 rx forwarder7
+    spp > sec 1;port del vhost:1 rx forwarder7
+    spp > sec 1;port del ring:6 tx forwarder7
     # forwarder8
     spp > sec 1;port del vhost:3 tx forwarder8
     spp > sec 1;port del ring:7 rx forwarder8
@@ -406,12 +404,12 @@ Then, stop components.
 .. code-block:: console
 
     # Stop component to spp_vf
-    spp > sec 1;component stop classifier2 8 classifier_mac
-    spp > sec 1;component stop forward5 9 forward
-    spp > sec 1;component stop forward6 10 forward
-    spp > sec 1;component stop forward7 11 forward
-    spp > sec 1;component stop forward8 12 forward
-    spp > sec 1;component stop merge2 13 merge
+    spp > sec 1;component stop classifier2
+    spp > sec 1;component stop forwarder5
+    spp > sec 1;component stop forwarder6
+    spp > sec 1;component stop forwarder7
+    spp > sec 1;component stop forwarder8
+    spp > sec 1;component stop merger2
 
 Finally, run ``flush`` subcommand.
 
