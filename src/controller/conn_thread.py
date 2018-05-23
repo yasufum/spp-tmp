@@ -55,7 +55,7 @@ class ConnectionThread(threading.Thread):
                 # 1024 stands for bytes of data to be received
                 data = self.conn.recv(1024)
                 if data:
-                    msg = "%s" % data
+                    msg = "%s" % data.decode('utf-8')
                     spp_common.SEC2MAIN[self.client_id].put(msg)
                 else:
                     spp_common.SEC2MAIN[self.client_id].put(
@@ -95,7 +95,7 @@ class AcceptThread(threading.Thread):
         """Get client_id from client"""
 
         try:
-            conn.send("_get_client_id")
+            conn.send(b'_get_client_id')
         except KeyError:
             return -1
 
@@ -105,7 +105,7 @@ class AcceptThread(threading.Thread):
 
         if logger is not None:
             logger.debug("data: %s" % data)
-        client_id = int(data.strip('\0'))
+        client_id = int(data.decode('utf-8').strip('\0'))
 
         if client_id < 0 or client_id > spp_common.MAX_SECONDARY:
             logger.debug("Failed to get client_id: %d" % client_id)
@@ -138,7 +138,8 @@ class AcceptThread(threading.Thread):
         if free_client_id < 0:
             return -1
 
-        conn.send("_set_client_id %u" % free_client_id)
+        msg = "_set_client_id %u" % free_client_id
+        conn.send(msg.encode('utf-8'))
         data = conn.recv(1024)
 
         return free_client_id
@@ -239,7 +240,7 @@ class PrimaryThread(threading.Thread):
                     data = conn.recv(1024)
                     if data:
                         spp_common.PRIMARY2MAIN.put(
-                            "recv:%s:{%s}" % (str(addr), data))
+                            "recv:%s:{%s}" % (str(addr), data.decode('utf-8')))
                     else:
                         spp_common.PRIMARY2MAIN.put("closing:" + str(addr))
                         conn.close()

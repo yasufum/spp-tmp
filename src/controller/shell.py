@@ -142,7 +142,7 @@ class Shell(cmd.Cmd, object):
         """Send command to primary process"""
 
         if spp_common.PRIMARY:
-            spp_common.MAIN2PRIMARY.put(command)
+            spp_common.MAIN2PRIMARY.put(command.encode('utf-8'))
             recv = spp_common.PRIMARY2MAIN.get(True)
             print(recv)
             return self.CMD_OK, recv
@@ -155,7 +155,7 @@ class Shell(cmd.Cmd, object):
         """Send command to secondary process with sec_id"""
 
         if sec_id in spp_common.SECONDARY_LIST:
-            spp_common.MAIN2SEC[sec_id].put(command)
+            spp_common.MAIN2SEC[sec_id].put(command.encode('utf-8'))
             recv = spp_common.SEC2MAIN[sec_id].get(True)
             if command == 'status':
                 self.print_sec_status(recv)
@@ -233,7 +233,7 @@ class Shell(cmd.Cmd, object):
 
         if (rcmd == spp_common.REMOTE_COMMAND):
             param = result + '\n' + message
-            spp_common.RCMD_RESULT_QUEUE.put(param)
+            spp_common.RCMD_RESULT_QUEUE.put(param.encode('utf-8'))
         else:
             if logger is not None:
                 logger.debug("unknown remote command = %s" % rcmd)
