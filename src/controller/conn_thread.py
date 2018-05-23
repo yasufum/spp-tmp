@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2015-2016 Intel Corporation
 
-from Queue import Queue
+from __future__ import absolute_import
+
+from queue import Queue
 import select
 import socket
-import spp_common
-from spp_common import logger
+from . import spp_common
+from .spp_common import logger
 import threading
 import traceback
 

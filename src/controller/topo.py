@@ -4,8 +4,8 @@
 
 import os
 import re
-import spp_common
-from spp_common import logger
+from . import spp_common
+from .spp_common import logger
 import subprocess
 import traceback
 import uuid

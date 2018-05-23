@@ -2,22 +2,23 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2015-2016 Intel Corporation
 
-from __future__ import print_function
+from __future__ import absolute_import
+# from __future__ import print_function
 
 import argparse
-from conn_thread import AcceptThread
-from conn_thread import PrimaryThread
-from shell import Shell
+from .conn_thread import AcceptThread
+from .conn_thread import PrimaryThread
+from .shell import Shell
 import socket
-import SocketServer
-import spp_common
-from spp_common import logger
+import socketserver
+from . import spp_common
+from .spp_common import logger
 import sys
 import threading
 import traceback
 
 
-class CmdRequestHandler(SocketServer.BaseRequestHandler):
+class CmdRequestHandler(socketserver.BaseRequestHandler):
     """Request handler for getting message from remote entities"""
 
     CMD = None  # contains a instance of Shell class
@@ -87,9 +88,9 @@ def main(argv):
     shell = Shell()
 
     # Run request handler as a TCP server thread
-    SocketServer.ThreadingTCPServer.allow_reuse_address = True
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
     CmdRequestHandler.CMD = shell
-    command_server = SocketServer.ThreadingTCPServer(
+    command_server = socketserver.ThreadingTCPServer(
         (host, management_port), CmdRequestHandler)
 
     t = threading.Thread(target=command_server.serve_forever)

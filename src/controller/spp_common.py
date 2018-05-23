@@ -4,7 +4,7 @@
 
 import logging
 import os
-from Queue import Queue
+from queue import Queue
 
 # Setup logger object
 logger = logging.getLogger(__name__)

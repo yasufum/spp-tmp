@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2015-2016 Intel Corporation
 
+from __future__ import absolute_import
+
 import cmd
 import json
 import os
-from Queue import Empty
+from queue import Empty
 import re
-from shell_lib import common
-import spp_common
-from spp_common import logger
+from .shell_lib import common
+from . import spp_common
+from .spp_common import logger
 import subprocess
-import topo
+from . import topo
 
 
 class Shell(cmd.Cmd, object):
@@ -87,11 +89,11 @@ class Shell(cmd.Cmd, object):
     def print_status(self):
         """Display information about connected clients"""
 
-        print ("Soft Patch Panel Status :")
-        print ("primary: %d" % spp_common.PRIMARY)  # it is 1 if PRIMA == True
-        print ("secondary count: %d" % len(spp_common.SECONDARY_LIST))
+        print("Soft Patch Panel Status :")
+        print("primary: %d" % spp_common.PRIMARY)  # it is 1 if PRIMA == True
+        print("secondary count: %d" % len(spp_common.SECONDARY_LIST))
         for i in spp_common.SECONDARY_LIST:
-            print ("Connected secondary id: %d" % i)
+            print("Connected secondary id: %d" % i)
 
     def print_sec_status(self, msg):
         """Parse and print message from SPP secondary
@@ -142,11 +144,11 @@ class Shell(cmd.Cmd, object):
         if spp_common.PRIMARY:
             spp_common.MAIN2PRIMARY.put(command)
             recv = spp_common.PRIMARY2MAIN.get(True)
-            print (recv)
+            print(recv)
             return self.CMD_OK, recv
         else:
             recv = "primary not started"
-            print (recv)
+            print(recv)
             return self.CMD_NOTREADY, recv
 
     def command_secondary(self, sec_id, command):
@@ -331,8 +333,8 @@ class Shell(cmd.Cmd, object):
                 print(message)
                 self.response(self.CMD_ERROR, message)
         else:
-            print (cmds[0])
-            print ("first %s" % cmds[1])
+            print(cmds[0])
+            print("first %s" % cmds[1])
             self.response(self.CMD_ERROR, "invalid format")
 
     def complete_sec(self, text, line, begidx, endidx):
