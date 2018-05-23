@@ -1,5 +1,6 @@
-#!/usr/bin/python
-"""Soft Patch Panel"""
+#!/usr/bin/env python
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
 
 from __future__ import print_function
 from Queue import Queue
