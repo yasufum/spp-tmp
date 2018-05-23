@@ -120,6 +120,9 @@ Refer to `DPDK documentation
 For Linux, see `Getting Started Guide for Linux
 <http://www.dpdk.org/doc/guides/linux_gsg/index.html>`_ .
 
+DPDK
+~~~~
+
 First, download and compile DPDK in any directory.
 Compiling DPDK takes a few minutes.
 
@@ -132,6 +135,9 @@ Compiling DPDK takes a few minutes.
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
     $ make install T=$RTE_TARGET
 
+SPP
+~~~
+
 Then, download and compile SPP in any directory.
 
 .. code-block:: console
@@ -140,6 +146,13 @@ Then, download and compile SPP in any directory.
     $ git clone http://dpdk.org/git/apps/spp
     $ cd spp
     $ make  # Confirm that $RTE_SDK and $RTE_TARGET are set
+
+
+Python 2 or 3 ?
+~~~~~~~~~~~~~~~
+
+You need to install Python for using usertools of DPDK or SPP controller.
+DPDK and SPP support both of Python2 and 3.
 
 
 Binding Network Ports to DPDK
@@ -238,8 +251,8 @@ cannot find it by using ``ifconfig`` or ``ip``.
     ....
 
 
-Run DPDK Sample Application
----------------------------
+Confirm DPDK is setup properly
+------------------------------
 
 You had better to run DPDK sample application before SPP
 as checking DPDK is setup properly.
