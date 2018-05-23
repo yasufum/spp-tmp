@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # SPDX-License-Identifier: BSD-3-Clause
+# Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
 
 class Hello(object):
     def __init__(self, name):
