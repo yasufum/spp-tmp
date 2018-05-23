@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# coding: utf-8
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright(c) 2015-2016 Intel Corporation
 
 from controller import spp
 import sys

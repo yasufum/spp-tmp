@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Soft Patch Panel"""
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright(c) 2015-2016 Intel Corporation
 
 from __future__ import print_function
 

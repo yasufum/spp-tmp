@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
-
+# SPDX-License-Identifier: BSD-3-Clause
 
 class Hello(object):
     def __init__(self, name):
