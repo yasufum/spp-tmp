@@ -81,7 +81,7 @@ If you use iTerm2, you have to get a shell script
 ``imgcat`` from `iTerm2's displaying support site
 <https://iterm2.com/documentation-images.html>`_
 and save this script as
-``spp/src/controller/3rd_party/imgcat.sh``.
+``spp/src/controller/3rd_party/imgcat``.
 
 .. _figure_topo_term_exp:
 

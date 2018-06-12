@@ -270,14 +270,25 @@ class Topo(object):
         if spawn.find_executable("img2sixel") is not None:
             img_cmd = "img2sixel"
         else:
-            img_cmd = "%s/%s/imgcat.sh" % (
+            imgcat = "%s/%s/imgcat" % (
                 os.path.dirname(__file__), '3rd_party')
-        # Resize image to fit the terminal
-        img_size = size
-        cmd = "convert -resize %s %s %s" % (img_size, tmpfile, tmpfile)
-        subprocess.call(cmd, shell=True)
-        subprocess.call("%s %s" % (img_cmd, tmpfile), shell=True)
-        subprocess.call(["rm", "-f", tmpfile])
+            if os.path.exists(imgcat) is True:
+                img_cmd = imgcat
+            else:
+                img_cmd = None
+
+        if img_cmd is not None:
+            # Resize image to fit the terminal
+            img_size = size
+            cmd = "convert -resize %s %s %s" % (img_size, tmpfile, tmpfile)
+            subprocess.call(cmd, shell=True)
+            subprocess.call("%s %s" % (img_cmd, tmpfile), shell=True)
+            subprocess.call(["rm", "-f", tmpfile])
+        else:
+            print("img2sixel (or imgcat.sh for MacOS) not found!")
+            topo_doc = "https://spp.readthedocs.io/en/latest/"
+            topo_doc += "commands/experimental.html"
+            print("See '%s' for required packages." % topo_doc)
 
     def format_sec_status(self, sec_id, stat):
         """Return formatted secondary status as a hash
