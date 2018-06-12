@@ -32,7 +32,8 @@ class Topo(object):
     def show(self, dtype, size):
         res_ary = []
         for sec_id in self.sec_ids:
-            self.m2s_queues[sec_id].put("status")
+            msg = "status"
+            self.m2s_queues[sec_id].put(msg.encode('utf-8'))
             res = self.format_sec_status(
                 sec_id, self.s2m_queues[sec_id].get(True))
             res_ary.append(res)
@@ -47,7 +48,8 @@ class Topo(object):
     def output(self, fname, ftype="dot"):
         res_ary = []
         for sec_id in self.sec_ids:
-            self.m2s_queues[sec_id].put("status")
+            msg = "status"
+            self.m2s_queues[sec_id].put(msg.encode('utf-8'))
             res = self.format_sec_status(
                 sec_id, self.s2m_queues[sec_id].get(True))
             res_ary.append(res)
@@ -266,7 +268,6 @@ class Topo(object):
         from distutils import spawn
 
         # TODO(yasufum) Add check for using only supported terminal
-
         if spawn.find_executable("img2sixel") is not None:
             img_cmd = "img2sixel"
         else:
