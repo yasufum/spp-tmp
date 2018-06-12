@@ -260,6 +260,7 @@ First, add ``ring 0`` and ``ring 1`` to ``sec 1``.
 
     spp > sec 1;add ring 0
     spp > sec 1;add ring 1
+    spp > sec 1;status
     status: idling
     ports:
       - 'phy:0'
@@ -274,6 +275,7 @@ Then, add ``ring 0`` and ``ring 1`` to ``sec 2``.
 
     spp > sec 2;add ring 0
     spp > sec 2;add ring 1
+    spp > sec 2;status
     status: idling
     ports:
       - 'phy:0'
@@ -326,7 +328,7 @@ creation.
     sock0 ...
 
     # remove it if exist
-    $ rm /tmp/sock0
+    $ sudo rm /tmp/sock0
 
 Create ``/tmp/sock0`` from ``sec 1``.
 
@@ -480,7 +482,7 @@ and watch received packets on pktgen.
 
 .. code-block:: console
 
-    spp > sec 2;patch phy:1 pcap:2
+    spp > sec 2;patch pcap:2 phy:1
     spp > sec 2;forward
 
 After started forwarding, you can see that packet count is increased.

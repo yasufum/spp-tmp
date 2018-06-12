@@ -53,7 +53,8 @@ SPP controller is implemented as a python script ``spp.py``.
 
 .. code-block:: console
 
-    $ python spp.py
+    $ cd /path/to/spp
+    $ python src/spp.py
     primary port : 5555
     secondary port : 6666
     Welcome to the spp.   Type help or ? to list commands.
@@ -67,7 +68,7 @@ Please refer help message for options.
 
 .. code-block:: console
 
-    $ ./src/spp.py -h
+    $ python src/spp.py -h
     usage: spp.py [-h] [-p PRI_PORT] [-s SEC_PORT] [-m MNG_PORT] [-ip IPADDR]
 
     SPP Controller
