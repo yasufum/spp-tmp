@@ -54,14 +54,22 @@ gfor generating topology file.
 You can also generate a dot formatted file or image files supported by
 graphviz.
 
-Here is a list of required tools for 'topo'.
+Here is a list of required tools for ``topo term`` command to output
+in terminal.
 MacOS is also supported optionally for which SPP controller
 runs on a remote host.
 
 * graphviz
 * imagemagick
-* libsixel-bin (for Ubuntu) and terminal app supporting img2sixel
+* libsixel-bin (for Ubuntu)
 * iTerm2 and imgcat (for MacOS)
+
+To output in browser with ``topo http`` command,
+install packages for websocket with pip or pip3.
+
+* tornado
+* websocket-client
+
 
 Output to Terminal
 ~~~~~~~~~~~~~~~~~~
@@ -94,13 +102,30 @@ and save this script as
 Output to Browser
 ~~~~~~~~~~~~~~~~~
 
-Output an image of network configuration in a browser.
+Output an image of network configuration in browser.
 
 .. code-block:: console
 
     spp > topo http
 
-[TODO] Add explanation.
+``topo term`` is useful to understand network configuration intuitively.
+However, it should be executed on a node running SPP controller.
+You cannnot see the image if you login remote node via ssh and running
+SPP controller on remote.
+
+Websocket server is launched from ``src/controller/websocket/spp_ws.py``
+to accept client messages.
+You should start it before using ``topo term`` command.
+Then, open url shown in the terminal (default is
+``http://127.0.0.1:8989``).
+
+Browser and SPP controller behave as clients, but have different roles.
+Browser behaves as a viwer and SPP controller behaves as a udpater.
+If you update network configuration and run ``topo http`` command,
+SPP controller sends a message containing network configuration
+as DOT language format.
+Once the message is accepted, websocket server sends it to viewer clients
+immediately.
 
 
 Output to File
