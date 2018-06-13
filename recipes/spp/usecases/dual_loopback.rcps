@@ -1,0 +1,4 @@
+sec 1;patch phy:0 phy:0
+sec 2;patch phy:1 phy:1
+sec 1;forward
+sec 2;forward
