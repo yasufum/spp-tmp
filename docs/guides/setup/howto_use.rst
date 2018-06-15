@@ -84,8 +84,7 @@ Please refer help message for options.
       -ip IPADDR, --ipaddr IPADDR
                             IP address
 
-`SPP commands
-<http://spp.readthedocs.io/en/doc_rst/commands/index.html>`_ describes
+:doc:`../../commands/index` describes
 how to manage SPP processes from SPP controller.
 
 
