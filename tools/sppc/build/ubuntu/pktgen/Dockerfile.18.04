@@ -1,0 +1,48 @@
+FROM ubuntu:18.04
+
+ARG rte_sdk
+ARG rte_target
+ARG home_dir
+ARG dpdk_repo
+ARG dpdk_branch
+ARG pktgen_repo
+ARG pktgen_branch
+
+ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
+ENV http_proxy ${http_proxy}
+ENV https_proxy $https_proxy
+ENV no_proxy ${no_proxy}
+ENV RTE_SDK ${rte_sdk}
+ENV RTE_TARGET ${rte_target}
+
+RUN apt-get update && apt-get install -y \
+    git \
+    gcc \
+    python \
+    pciutils \
+    make \
+    libnuma-dev \
+    gcc-multilib \
+    libarchive-dev \
+    linux-headers-$(uname -r) \
+    libpcap-dev \
+    pkg-config \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR $home_dir
+RUN git clone $dpdk_branch $dpdk_repo
+RUN git clone $pktgen_branch $pktgen_repo
+
+# Compile DPDK and pktgen
+WORKDIR $rte_sdk
+RUN make install T=$rte_target
+
+WORKDIR ${home_dir}/pktgen-dpdk
+RUN make
+
+# Set working directory when container is launched
+WORKDIR ${home_dir}
+ADD env.sh ${home_dir}/env.sh
+RUN echo "source ${home_dir}/env.sh" >> ${home_dir}/.bashrc
