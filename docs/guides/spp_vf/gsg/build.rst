@@ -135,10 +135,9 @@ Clone SPP in any directory and compile it.
 
 .. code-block:: console
 
-    $ cd /path/to/spp_home/
-    $ git clone https://github.com/ntt-ns/Soft-Patch-Panel.git
-    export SPP_HOME=/path/to/spp_home/Soft-Patch-Panel
-    $ cd $SPP_HOME
+    $ cd /path/to/any_dir
+    $ git clone http://dpdk.org/git/apps/spp
+    $ cd spp
     $ make
 
 Setup for DPDK
