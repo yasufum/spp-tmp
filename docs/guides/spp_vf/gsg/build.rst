@@ -37,7 +37,7 @@ Environment
 -----------
 
 * Ubuntu 16.04
-* qemu-kvm 2.7 or later
+* qemu-kvm 2.7 or later(if you use vhost reconnect feature described in 3.2.3)
 * DPDK v17.11 or later
 
 
@@ -165,7 +165,23 @@ Then, bind it with PCI_Number.
 
 virsh setup
 -----------
-``virsh`` is a command line interface that can be used to create, destroy, stop start and edit VMs and configure. After create an image file, you can setup it with ``virt-install``.
+First of all, please check version of qemu-kvm.
+
+.. code-block:: console
+
+    $ qemu-system-x86_64 --version
+
+If your system does not have qemu-kvm or the version of qemu is less than 2.7,
+then please install qemu following
+the instruction of https://wiki.qemu.org/index.php/Hosts/Linux
+to install qemu 2.7.
+You may need to install libvirt-bin,
+virtinst, bridge-utils packages via ``apt-get`` install to run ``virt-install``.
+
+
+``virsh`` is a command line interface that can be used to create, destroy,
+stop start and edit VMs and configure. After create an image file,
+you can setup it with ``virt-install``.
 
 .. code-block:: console
 
