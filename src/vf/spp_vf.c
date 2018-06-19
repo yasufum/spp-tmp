@@ -744,7 +744,7 @@ set_nic_interface(void)
 	int nic_cnt = 0;
 
 	/* NIC Setting */
-	g_iface_info.num_nic = rte_eth_dev_count();
+	g_iface_info.num_nic = rte_eth_dev_count_avail();
 	if (g_iface_info.num_nic > RTE_MAX_ETHPORTS)
 		g_iface_info.num_nic = RTE_MAX_ETHPORTS;
 
