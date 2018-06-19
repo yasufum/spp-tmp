@@ -311,19 +311,22 @@ get_memzone_by_addr(const void *addr)
 {
 	struct rte_memzone *tmp, *mz;
 	struct rte_mem_config *mcfg;
+	struct rte_fbarray *arr;
 	int i;
 
 	mcfg = rte_eal_get_configuration()->mem_config;
+	arr = &mcfg->memzones;
 	mz = NULL;
 
 	/* find memzone for the ring */
-	for (i = 0; i < RTE_MAX_MEMZONE; i++) {
-		tmp = &mcfg->memzone[i];
-
-		if (tmp->addr_64 == (uint64_t) addr) {
+	i = rte_fbarray_find_next_used(arr, 0);
+	while (i >= 0) {
+		tmp = rte_fbarray_get(arr, i);
+		if (mz->addr_64 == (uint64_t) addr) {
 			mz = tmp;
 			break;
 		}
+		i = rte_fbarray_find_next_used(arr, i+1);
 	}
 
 	return mz;
