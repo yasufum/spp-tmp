@@ -86,9 +86,20 @@ init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 	const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
 	uint16_t q;
 	int retval;
+	struct rte_eth_dev_info dev_info;
+	struct rte_eth_conf local_port_conf = port_conf;
+	struct rte_eth_txconf txq_conf;
 
 	RTE_LOG(INFO, APP, "Port %u init ... ", port_num);
 	fflush(stdout);
+
+	rte_eth_dev_info_get(port_num, &dev_info);
+	if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_MBUF_FAST_FREE)
+		local_port_conf.txmode.offloads |=
+			DEV_TX_OFFLOAD_MBUF_FAST_FREE;
+	txq_conf = dev_info.default_txconf;
+	txq_conf.txq_flags = ETH_TXQ_FLAGS_IGNORE;
+	txq_conf.offloads = local_port_conf.txmode.offloads;
 
 	/*
 	 * Standard DPDK port initialisation - config port, then set up
@@ -108,7 +119,7 @@ init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 
 	for (q = 0; q < tx_rings; q++) {
 		retval = rte_eth_tx_queue_setup(port_num, q, tx_ring_size,
-			rte_eth_dev_socket_id(port_num), NULL);
+			rte_eth_dev_socket_id(port_num), &txq_conf);
 		if (retval < 0)
 			return retval;
 	}
