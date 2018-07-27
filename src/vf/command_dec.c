@@ -642,7 +642,6 @@ static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		},
 		DECODE_PARAMETER_LIST_EMPTY,
 	},
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* flush            */
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* _get_client_id   */
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* status           */
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* exit             */
@@ -709,7 +708,6 @@ static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		},
 		DECODE_PARAMETER_LIST_EMPTY,
 	},
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* cancel           */
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* termination      */
 };
 
@@ -755,7 +753,6 @@ static struct decode_command_list command_list[] = {
 						/* classifier_table(mac) */
 	{ "classifier_table", 6, 6, decode_command_parameter_in_list },
 						/* classifier_table(vlan) */
-	{ "flush",            1, 1, NULL },     /* flush            */
 	{ "_get_client_id",   1, 1, NULL },     /* _get_client_id   */
 	{ "status",           1, 1, NULL },     /* status           */
 	{ "exit",             1, 1, NULL },     /* exit             */
@@ -763,7 +760,6 @@ static struct decode_command_list command_list[] = {
 						/* component        */
 	{ "port",             5, 8, decode_command_parameter_in_list },
 						/* port             */
-	{ "cancel",           1, 1, NULL },     /* cancel           */
 	{ "",                 0, 0, NULL }      /* termination      */
 };
 

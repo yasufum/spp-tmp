@@ -664,19 +664,6 @@ backup_mng_info(struct cancel_backup_info *backup)
 	memset(g_change_component, 0x00, sizeof(g_change_component));
 }
 
-/* Cancel update of management information */
-static void
-cancel_mng_info(struct cancel_backup_info *backup)
-{
-	dump_all_mng_info(backup->core, backup->component, &backup->interface);
-	copy_mng_info(g_core_info, g_component_info, &g_iface_info,
-			backup->core, backup->component, &backup->interface,
-			COPY_MNG_FLG_ALLCOPY);
-	dump_all_mng_info(g_core_info, g_component_info, &g_iface_info);
-	memset(g_change_core, 0x00, sizeof(g_change_core));
-	memset(g_change_component, 0x00, sizeof(g_change_component));
-}
-
 /**
  * Initialize g_iface_info
  *
@@ -1633,13 +1620,6 @@ spp_flush(void)
 
 	backup_mng_info(&g_backup_info);
 	return ret;
-}
-
-/* Cancel data that is not flushing */
-void
-spp_cancel(void)
-{
-	cancel_mng_info(&g_backup_info);
 }
 
 /* Iterate core information */

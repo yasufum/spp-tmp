@@ -218,11 +218,11 @@ execute_command(const struct spp_command *command)
 				command->spec.classifier_table.vid,
 				command->spec.classifier_table.mac,
 				&command->spec.classifier_table.port);
-		break;
-
-	case SPP_CMDTYPE_FLUSH:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute flush command.\n");
-		ret = spp_flush();
+		if (ret == 0) {
+			RTE_LOG(INFO, SPP_COMMAND_PROC,
+					"Execute flush.\n");
+			ret = spp_flush();
+		}
 		break;
 
 	case SPP_CMDTYPE_COMPONENT:
@@ -232,6 +232,11 @@ execute_command(const struct spp_command *command)
 				command->spec.component.name,
 				command->spec.component.core,
 				command->spec.component.type);
+		if (ret == 0) {
+			RTE_LOG(INFO, SPP_COMMAND_PROC,
+					"Execute flush.\n");
+			ret = spp_flush();
+		}
 		break;
 
 	case SPP_CMDTYPE_PORT:
@@ -244,11 +249,11 @@ execute_command(const struct spp_command *command)
 				command->spec.port.rxtx,
 				command->spec.port.name,
 				&command->spec.port.ability);
-		break;
-
-	case SPP_CMDTYPE_CANCEL:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute cancel command.\n");
-		spp_cancel();
+		if (ret == 0) {
+			RTE_LOG(INFO, SPP_COMMAND_PROC,
+					"Execute flush.\n");
+			ret = spp_flush();
+		}
 		break;
 
 	default:

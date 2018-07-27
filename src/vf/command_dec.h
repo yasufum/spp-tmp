@@ -50,9 +50,6 @@ enum spp_command_type {
 	/** classifier_table command(VLAN) */
 	SPP_CMDTYPE_CLASSIFIER_TABLE_VLAN,
 
-	/** flush command */
-	SPP_CMDTYPE_FLUSH,
-
 	/** get_client_id command */
 	SPP_CMDTYPE_CLIENT_ID,
 
@@ -67,9 +64,6 @@ enum spp_command_type {
 
 	/** port command */
 	SPP_CMDTYPE_PORT,
-
-	/** cancel command */
-	SPP_CMDTYPE_CANCEL,
 };
 
 /** "classifier_table" command specific parameters */
