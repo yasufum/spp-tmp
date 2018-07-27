@@ -243,19 +243,6 @@ Register entries to classifier_table for classifier2.
     Please verify that MAC address of target VM is specified in
     [MACADDRESS] parameter.
 
-Finally, activate all of settings by doign `flush` subcommand.
-
-.. code-block:: console
-
-    spp > sec 1;flush
-
-.. note::
-
-    Commands for SPP VF Controller are accepted but not activated until
-    user inputs ``flush`` subcommand.
-    You can cancel all of commands before doing ``flush``.
-
-
 Setup for VMs
 ~~~~~~~~~~~~~
 
@@ -337,8 +324,8 @@ for the first SSH login path.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > sec 1;classifier_table del mac 51:54:00:12:34:56 ring:0
-    spp > sec 1;classifier_table del mac 51:54:00:12:34:58 ring:1
+    spp > sec 1;classifier_table del mac 52:54:00:12:34:56 ring:0
+    spp > sec 1;classifier_table del mac 52:54:00:12:34:58 ring:1
 
 .. code-block:: console
 
@@ -382,8 +369,8 @@ components.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > sec 1;classifier_table del mac 51:54:00:12:34:57 ring:4
-    spp > sec 1;classifier_table del mac 51:54:00:12:34:59 ring:5
+    spp > sec 1;classifier_table del mac 52:54:00:12:34:57 ring:4
+    spp > sec 1;classifier_table del mac 52:54:00:12:34:59 ring:5
 
 .. code-block:: console
 
@@ -419,9 +406,3 @@ Then, stop components.
     spp > sec 1;component stop forwarder7
     spp > sec 1;component stop forwarder8
     spp > sec 1;component stop merger2
-
-Finally, run ``flush`` subcommand.
-
-.. code-block:: console
-
-    spp > sec 1;flush

@@ -251,34 +251,3 @@ This is an example to delete an entry with VLAN ID 101.
 .. code-block:: console
 
     spp > sec 0;classifier_table del vlan 101 52:54:00:01:00:01 ring:0
-
-
-flush
------
-
-.. note::
-    This command is only supported for spp_vf.
-
-Activate series of commands for a SPP VF secondary process
-(``component``, ``port`` or ``classifier`` command).
-
-You can cancel commands any time until
-before running ``cancel`` command.
-
-.. code-block:: console
-
-    spp > sec 1;flush
-
-
-cancel
-------
-
-.. note::
-    This command is only supported for spp_vf.
-
-Cancel all of commands for a SPP VF secondary process
-before running ``flush`` command.
-
-.. code-block:: console
-
-    spp > sec 1;cancel
