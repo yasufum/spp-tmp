@@ -21,7 +21,8 @@ struct forward_path {
 	char name[SPP_NAME_STR_LEN];    /* component name          */
 	volatile enum spp_component_type type;
 					/* component type          */
-	int num;                        /* number of receive ports */
+	int num_rx;                     /* number of receive ports */
+	int num_tx;                     /* number of trans ports   */
 	struct forward_rxtx ports[RTE_MAX_ETHPORTS];
 					/* port used for transfer  */
 };
@@ -93,7 +94,8 @@ spp_forward_update(struct spp_component_info *component)
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
 	path->type = component->type;
-	path->num = component->num_rx_port;
+	path->num_rx = component->num_rx_port;
+	path->num_tx = component->num_tx_port;
 	for (cnt = 0; cnt < num_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
 				sizeof(struct spp_port_info));
@@ -137,7 +139,7 @@ change_forward_index(int id)
 int
 spp_forward(int id)
 {
-	int cnt, num, buf;
+	int cnt, buf;
 	int nb_rx = 0;
 	int nb_tx = 0;
 	struct forward_info *info = &g_forward_info[id];
@@ -148,9 +150,8 @@ spp_forward(int id)
 
 	change_forward_index(id);
 	path = &info->path[info->ref_index];
-	num = path->num;
 
-	for (cnt = 0; cnt < num; cnt++) {
+	for (cnt = 0; cnt < path->num_rx; cnt++) {
 		rx = &path->ports[cnt].rx;
 		tx = &path->ports[cnt].tx;
 
@@ -179,7 +180,7 @@ spp_forward_get_component_status(
 		struct spp_iterate_core_params *params)
 {
 	int ret = -1;
-	int cnt, num_tx;
+	int cnt;
 	const char *component_type = NULL;
 	struct forward_info *info = &g_forward_info[id];
 	struct forward_path *path = &info->path[info->ref_index];
@@ -199,21 +200,22 @@ spp_forward_get_component_status(
 		component_type = SPP_TYPE_FORWARD_STR;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < path->num; cnt++) {
+	for (cnt = 0; cnt < path->num_rx; cnt++) {
 		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
 		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	num_tx = (path->num > 0)?1:0;
-	tx_ports[0].iface_type = path->ports[0].tx.iface_type;
-	tx_ports[0].iface_no   = path->ports[0].tx.iface_no;
+	for (cnt = 0; cnt < path->num_tx; cnt++) {
+		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
+		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
+	}
 
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(
 		params, lcore_id,
 		path->name, component_type,
-		path->num, rx_ports, num_tx, tx_ports);
+		path->num_rx, rx_ports, path->num_tx, tx_ports);
 	if (unlikely(ret != 0))
 		return -1;
 
