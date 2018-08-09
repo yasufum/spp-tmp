@@ -49,13 +49,6 @@ spp_forward_init(void)
 	}
 }
 
-/* Clear info for one element. */
-static void
-clear_forward_info(int id)
-{
-	memset(&g_forward_info[id].path, 0x00, sizeof(struct forward_path));
-}
-
 /* Update forward info */
 int
 spp_forward_update(struct spp_component_info *component)
@@ -84,7 +77,7 @@ spp_forward_update(struct spp_component_info *component)
 		return -1;
 	}
 
-	clear_forward_info(component->component_id);
+	memset(path, 0x00, sizeof(struct forward_path));
 
 	RTE_LOG(INFO, FORWARD,
 			"Component[%d] Start update component. (name = %s, type = %d)\n",
