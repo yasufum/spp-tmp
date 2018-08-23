@@ -98,7 +98,6 @@ init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 		local_port_conf.txmode.offloads |=
 			DEV_TX_OFFLOAD_MBUF_FAST_FREE;
 	txq_conf = dev_info.default_txconf;
-	txq_conf.txq_flags = ETH_TXQ_FLAGS_IGNORE;
 	txq_conf.offloads = local_port_conf.txmode.offloads;
 
 	/*
