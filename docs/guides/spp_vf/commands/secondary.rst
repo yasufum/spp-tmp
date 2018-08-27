@@ -209,11 +209,22 @@ to classifier table.
 
     spp > sec [SEC_ID];classifier_table add mac [MAC_ADDRESS] [RES_ID]
 
-This is an example to register an entry for port ``ring:0``.
+This is an example to register MAC address ``52:54:00:01:00:01``
+with resource ID ``ring:0``.
 
 .. code-block:: console
 
     spp > sec 1;classifier_table add mac 52:54:00:01:00:01 ring:0
+
+Here is another example in which using keyword ``default`` instead of
+``52:54:00:01:00:01``.
+``default`` is applied for packets which are not matched any of registered
+MAC addresses.
+In this case, all of not matched packets are sent to ``ring:0``.
+
+.. code-block:: console
+
+    spp > sec 0;classifier_table add mac default ring:0
 
 Register an entry with a VLAN ID to classifier table.
 
@@ -221,12 +232,22 @@ Register an entry with a VLAN ID to classifier table.
 
     spp > sec 1;classifier_table add vlan [VLAN_ID] [MAC_ADDRESS] [RES_ID]
 
-This is an example to register an entry with VLAN ID 101
-for port ``ring:0``.
+This is an example to register MAC address ``52:54:00:01:00:01``
+with VLAN ID and resource ID ``ring:0``.
 
 .. code-block:: console
 
     spp > sec 0;classifier_table add vlan 101 52:54:00:01:00:01 ring:0
+
+Here is another example in which using keyword ``default`` instead of
+``52:54:00:01:00:01``.
+``default`` is applied for packets which are not matched any of registered
+MAC addresses for specified VLAN ID.
+In this case, all of not matched packets are sent to ``ring:0``.
+
+.. code-block:: console
+
+    spp > sec 0;classifier_table add vlan 101 default ring:1
 
 Delete an entry.
 
