@@ -195,7 +195,7 @@ All of ring PMDs is showed with ``status`` subcommand.
 .. code-block:: console
 
     spp > sec 1;add ring 0
-    recv:6:{addring0}
+    addring0
     spp > sec 1;status
     status: idling
     ports:
@@ -210,7 +210,7 @@ use it anymore.
 .. code-block:: console
 
     spp > sec 1;del ring 0
-    recv:6:{delring0}
+    delring0
     spp > sec 1;status
     status: idling
     ports:
