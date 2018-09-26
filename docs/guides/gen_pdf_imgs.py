@@ -45,6 +45,10 @@ def main():
                 print(cmd)
                 subprocess.call(cmd, shell=True)
 
+    # Ensure PDF img is generated.
+    while os.path.exists(pdf_fpath) == False:
+        pass
+
 
 if __name__ == "__main__":
     main()
