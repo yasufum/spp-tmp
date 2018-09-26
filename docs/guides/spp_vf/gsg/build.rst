@@ -67,13 +67,16 @@ Change grub config for hugepages and isolcpus.
 
     # /etc/default/grub
 
-    GRUB_CMDLINE_LINUX_DEFAULT="isolcpus=2,4,6,8,10,12-18,20,22,24,26-42,44,46 hugepagesz=1G hugepages=36 default_hugepagesz=1G"
+    GRUB_CMDLINE_LINUX_DEFAULT="isolcpus=2,...,46 hugepagesz=1G hugepages=36 default_hugepagesz=1G"
 
 For hugepages, isolcpus, refer to the dpdk documentation below.
 
-* `Use of Hugepages in the Linux Environment <http://dpdk.org/doc/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`_
-* `Using Linux Core Isolation to Reduce Context Switches <http://dpdk.org/doc/guides/linux_gsg/enable_func.html#using-linux-core-isolation-to-reduce-context-switches>`_
-* `Linux boot command line <http://dpdk.org/doc/guides/linux_gsg/nic_perf_intel_platform.html#linux-boot-command-line>`_
+* `Use of Hugepages in the Linux Environment
+  <http://dpdk.org/doc/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`_
+* `Using Linux Core Isolation to Reduce Context Switches
+  <http://dpdk.org/doc/guides/linux_gsg/enable_func.html#using-linux-core-isolation-to-reduce-context-switches>`_
+* `Linux boot command line
+  <http://dpdk.org/doc/guides/linux_gsg/nic_perf_intel_platform.html#linux-boot-command-line>`_
 
 You need to run ``update-grub`` and reboot to activate grub config.
 
@@ -96,10 +99,10 @@ You can check hugepage settings as following.
     Hugepagesize:    1048576 kB		#	/etc/default/grub
 
     $ mount | grep -i huge
-    cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,hugetlb,release_agent=/run/cgmanager/agents/cgm-release-agent.hugetlb,nsroot=/)
+    cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,...,nsroot=/)
     hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime)
-    hugetlbfs-kvm on /run/hugepages/kvm type hugetlbfs (rw,relatime,mode=775,gid=117)
-    hugetlb on /run/lxcfs/controllers/hugetlb type cgroup (rw,relatime,hugetlb,release_agent=/run/cgmanager/agents/cgm-release-agent.hugetlb,nsroot=/)
+    hugetlbfs-kvm on /run/hugepages/kvm type hugetlbfs (rw,...,gid=117)
+    hugetlb on /run/lxcfs/controllers/hugetlb type cgroup (rw,...,nsroot=/)
 
 Finally, you umount default hugepage.
 
@@ -181,6 +184,9 @@ virtinst, bridge-utils packages via ``apt-get`` install to run ``virt-install``.
 ``virsh`` is a command line interface that can be used to create, destroy,
 stop start and edit VMs and configure. After create an image file,
 you can setup it with ``virt-install``.
+``--location`` is a URL of installer and it should be
+``http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/``
+for amd64.
 
 .. code-block:: console
 
@@ -194,7 +200,7 @@ you can setup it with ``virt-install``.
    --network network=default \
    --graphics none \
    --console pty,target_type=serial \
-   --location 'http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/' \
+   --location '[LOCATION]' \
    --extra-args 'console=ttyS0,115200n8 serial'
 
 You may need type the following commands through ssh to activate console.
@@ -211,10 +217,18 @@ Edit VM configuration with virsh.
 
     $ virsh edit [VM_NAME]
 
-You need to add ``xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'`` into the domain tag because of adding ``<qemu:commandline>`` tag.
-In addition, you need to add the tag enclosed by ``<memoryBacking>`` and ``</memoryBacking>``, ``<qemu:commandline>`` and ``</qemu:commandline>`` because SPP uses vhost-user as interface with VM.
-Note that number used in those tags should be the same value (e.g. chr0,sock0,vhost-net0) and these values should correspond to "add vhost N" (in this example 0).
-MAC address used in ``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>`` can be specified when registering MAC address to classifier using Secondary command.
+You need to add ``xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'``
+into the domain tag because of adding ``<qemu:commandline>`` tag.
+In addition, you need to add the tag enclosed by ``<memoryBacking>`` and
+``</memoryBacking>``, ``<qemu:commandline>`` and ``</qemu:commandline>``
+because SPP uses vhost-user as interface with VM.
+Note that number used in those tags should be the same value
+(e.g. chr0,sock0,vhost-net0) and these values should correspond
+to "add vhost N" (in this example 0).
+MAC address used in
+``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>``
+can be specified when registering MAC address to classifier
+using Secondary command.
 
         The following is an example of modified xml file:
 
@@ -257,17 +271,20 @@ MAC address used in ``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:5
           <address type='drive' controller='0' bus='1' target='0' unit='0'/>
         </disk>
         <controller type='usb' index='0'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='0x01'
+          function='0x2'/>
         </controller>
         <controller type='pci' index='0' model='pci-root'/>
         <controller type='ide' index='0'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='0x01'
+          function='0x1'/>
         </controller>
         <interface type='network'>
           <mac address='52:54:00:99:aa:7f'/>
           <source network='default'/>
           <model type='rtl8139'/>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='0x02'
+          function='0x0'/>
         </interface>
         <serial type='pty'>
           <target type='isa-serial' port='0'/>
@@ -276,27 +293,31 @@ MAC address used in ``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:5
           <target type='serial' port='0'/>
         </console>
         <memballoon model='virtio'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='0x03'
+          function='0x0'/>
         </memballoon>
       </devices>
       <qemu:commandline>
         <qemu:arg value='-cpu'/>
         <qemu:arg value='host'/>
         <qemu:arg value='-object'/>
-        <qemu:arg value='memory-backend-file,id=mem,size=4096M,mem-path=/run/hugepages/kvm,share=on'/>
+        <qemu:arg
+        value='memory-backend-file,id=mem,size=4096M,mem-path=/run/hugepages/kvm,share=on'/>
         <qemu:arg value='-numa'/>
         <qemu:arg value='node,memdev=mem'/>
         <qemu:arg value='-mem-prealloc'/>
         <qemu:arg value='-chardev'/>
         <qemu:arg value='socket,id=chr0,path=/tmp/sock0,server'/>
         <qemu:arg value='-device'/>
-        <qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>
+        <qemu:arg
+        value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>
         <qemu:arg value='-netdev'/>
         <qemu:arg value='vhost-user,id=vhost-net0,chardev=chr0,vhostforce'/>
         <qemu:arg value='-chardev'/>
         <qemu:arg value='socket,id=chr1,path=/tmp/sock1,server'/>
         <qemu:arg value='-device'/>
-        <qemu:arg value='virtio-net-pci,netdev=vhost-net1,mac=52:54:00:12:34:57'/>
+        <qemu:arg
+        value='virtio-net-pci,netdev=vhost-net1,mac=52:54:00:12:34:57'/>
         <qemu:arg value='-netdev'/>
         <qemu:arg value='vhost-user,id=vhost-net1,chardev=chr1,vhostforce'/>
       </qemu:commandline>

@@ -62,8 +62,8 @@ and ``pstree`` command for threads launched from QEMU process.
 .. code-block:: console
 
     $ ps ea
-       PID TTY      STAT   TIME COMMAND
-    192606 pts/11   Sl+    4:42 ./x86_64-softmmu/qemu-system-x86_64 -cpu host ...
+       PID TTY     STAT  TIME COMMAND
+    192606 pts/11  Sl+   4:42 ./x86_64-softmmu/qemu-system-x86_64 -cpu host ...
 
 Run ``pstree`` with ``-p`` and this PID to find all threads launched from QEMU.
 
@@ -100,7 +100,11 @@ and so on.
 Reference
 ---------
 
-* [1] `Best pinning strategy for latency/performance trade-off <https://www.redhat.com/archives/vfio-users/2017-February/msg00010.html>`_
-* [2] `PVP reference benchmark setup using testpmd <http://dpdk.org/doc/guides/howto/pvp_reference_benchmark.html>`_
-* [3] `Enabling Additional Functionality <http://dpdk.org/doc/guides/linux_gsg/enable_func.html>`_
-* [4] `How to get best performance with NICs on Intel platforms <http://dpdk.org/doc/guides/linux_gsg/nic_perf_intel_platform.html>`_
+* [1] `Best pinning strategy for latency/performance trade-off
+  <https://www.redhat.com/archives/vfio-users/2017-February/msg00010.html>`_
+* [2] `PVP reference benchmark setup using testpmd
+  <http://dpdk.org/doc/guides/howto/pvp_reference_benchmark.html>`_
+* [3] `Enabling Additional Functionality
+  <http://dpdk.org/doc/guides/linux_gsg/enable_func.html>`_
+* [4] `How to get best performance with NICs on Intel platforms
+  <http://dpdk.org/doc/guides/linux_gsg/nic_perf_intel_platform.html>`_

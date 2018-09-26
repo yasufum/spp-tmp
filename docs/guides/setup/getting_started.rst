@@ -266,10 +266,10 @@ Find ports for binding to DPDK by running the tool with ``-s`` option.
 
     Network devices using kernel driver
     ===================================
-    0000:29:00.0 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp41s0f0 drv=e1000e unused=
-    0000:29:00.1 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp41s0f1 drv=e1000e unused=
-    0000:2a:00.0 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp42s0f0 drv=e1000e unused=
-    0000:2a:00.1 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp42s0f1 drv=e1000e unused=
+    0000:29:00.0 '82571EB ... 10bc' if=enp41s0f0 drv=e1000e unused=
+    0000:29:00.1 '82571EB ... 10bc' if=enp41s0f1 drv=e1000e unused=
+    0000:2a:00.0 '82571EB ... 10bc' if=enp42s0f0 drv=e1000e unused=
+    0000:2a:00.1 '82571EB ... 10bc' if=enp42s0f1 drv=e1000e unused=
 
     Other Network devices
     =====================
@@ -300,13 +300,13 @@ cannot find it by using ``ifconfig`` or ``ip``.
 
     Network devices using DPDK-compatible driver
     ============================================
-    0000:2a:00.0 '82571EB Gigabit Ethernet Controller (Copper) 10bc' drv=uio_pci_generic unused=vfio-pci
-    0000:2a:00.1 '82571EB Gigabit Ethernet Controller (Copper) 10bc' drv=uio_pci_generic unused=vfio-pci
+    0000:2a:00.0 '82571EB ... 10bc' drv=uio_pci_generic unused=vfio-pci
+    0000:2a:00.1 '82571EB ... 10bc' drv=uio_pci_generic unused=vfio-pci
 
     Network devices using kernel driver
     ===================================
-    0000:29:00.0 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp41s0f0 drv=e1000e unused=vfio-pci,uio_pci_generic
-    0000:29:00.1 '82571EB Gigabit Ethernet Controller (Copper) 10bc' if=enp41s0f1 drv=e1000e unused=vfio-pci,uio_pci_generic
+    0000:29:00.0 '...' if=enp41s0f0 drv=e1000e unused=vfio-pci,uio_pci_generic
+    0000:29:00.1 '...' if=enp41s0f1 drv=e1000e unused=vfio-pci,uio_pci_generic
 
     Other Network devices
     =====================

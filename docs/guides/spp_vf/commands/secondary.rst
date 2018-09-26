@@ -44,7 +44,7 @@ owned by secondary process.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];[SUB_CMD]
+    spp > sec [SID];[SUB_CMD]
 
 
 status
@@ -76,7 +76,7 @@ options.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];component start [NAME] [CORE_ID] [DIRECTIVE]
+    spp > sec [SID];component start [NAME] [CORE_ID] [DIRECTIVE]
 
 * ``NAME`` is used as an identifier of the component.
 * ``DIRECTIVE`` is a role of the component and corresponds to three types
@@ -99,7 +99,7 @@ same as ``component start`` command..
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];component stop [NAME] [CORE_ID] [DIRECTIVE]
+    spp > sec [SID];component stop [NAME] [CORE_ID] [DIRECTIVE]
 
 This is an example for stopping three types of components.
 
@@ -123,7 +123,7 @@ SPP VF is able to treat VLAN tag by adding port with VLAN options.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];port add [RES_ID] [PORT_TYPE] [NAME]
+    spp > sec [SID];port add [RES_ID] [PORT_TYPE] [NAME]
 
 * ``RES_ID`` is a resource ID and defined as a combination of resource
   type and number separated with delimiter ``:``.
@@ -146,11 +146,11 @@ This is an example for adding port ``phy:0`` to ``classifier1`` as
 
 For VLAN support, you need to add options for ``port add`` command.
 To add VLAN tag, additional option ``add_vlantag`` with its options
-``VLAN_ID`` and ``PCP`` are required.
+``VID`` and ``PCP`` are required.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];port add [RES_ID] [PORT_TYPE] [NAME] add_vlantag [VLAN_ID] [PCP]
+    spp > sec [SID];port add [RES_ID] [PORT_TYPE] [NAME] add_vlantag [VID] [PCP]
 
 * ``PCP`` (Priority Code Point) is an attribute for priority defined in
   IEEE 802.1p standard. It is ranged from 0 to 7 and
@@ -160,7 +160,7 @@ Or to delete VLAN tag, ``del_vlantag`` option is required.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];port add [RES_ID] [PORT_TYPE] [NAME] del_vlantag
+    spp > sec [SID];port add [RES_ID] [PORT_TYPE] [NAME] del_vlantag
 
 This is an example for adding a port with ``add_vlantag`` or
 ``del_vlantag``.
@@ -186,7 +186,7 @@ same as ``port add`` command..
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];port del [RES_ID] [PORT_TYPE] [NAME]
+    spp > sec [SID];port del [RES_ID] [PORT_TYPE] [NAME]
 
 This is an example for deleting port added in previous example.
 
@@ -207,7 +207,7 @@ to classifier table.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];classifier_table add mac [MAC_ADDRESS] [RES_ID]
+    spp > sec [SID];classifier_table add mac [MAC_ADDRESS] [RES_ID]
 
 This is an example to register MAC address ``52:54:00:01:00:01``
 with resource ID ``ring:0``.
@@ -230,7 +230,7 @@ Register an entry with a VLAN ID to classifier table.
 
 .. code-block:: console
 
-    spp > sec 1;classifier_table add vlan [VLAN_ID] [MAC_ADDRESS] [RES_ID]
+    spp > sec 1;classifier_table add vlan [VID] [MAC_ADDRESS] [RES_ID]
 
 This is an example to register MAC address ``52:54:00:01:00:01``
 with VLAN ID and resource ID ``ring:0``.
@@ -265,7 +265,7 @@ Delete an entry with a VLAN ID.
 
 .. code-block:: console
 
-    spp > sec 1;classifier_table del vlan [VLAN_ID] [MAC_ADDRESS] [RES_ID]
+    spp > sec 1;classifier_table del vlan [VID] [MAC_ADDRESS] [RES_ID]
 
 This is an example to delete an entry with VLAN ID 101.
 

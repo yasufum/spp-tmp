@@ -71,4 +71,5 @@ interface to the manager.
 Reference
 ---------
 
-* [1] `Implementation and Testing of Soft Patch Panel <https://dpdksummit.com/Archive/pdf/2017USA/Implementation%20and%20Testing%20of%20Soft%20Patch%20Panel.pdf>`_
+* [1] `Implementation and Testing of Soft Patch Panel
+  <https://dpdksummit.com/Archive/pdf/2017USA/Implementation%20and%20Testing%20of%20Soft%20Patch%20Panel.pdf>`_

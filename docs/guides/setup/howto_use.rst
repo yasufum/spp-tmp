@@ -212,13 +212,14 @@ devices.
         -hda /path/to/image.qcow2 \
         -m 4096 \
         -smp cores=4,threads=1,sockets=1 \
-        -object memory-backend-file,id=mem,size=4096M,mem-path=/dev/hugepages,share=on \
+        -object \
+        memory-backend-file,id=mem,size=4096M,mem-path=/dev/hugepages,share=on \
         -device e1000,netdev=net0,mac=00:AD:BE:B3:11:00 \
         -netdev tap,id=net0,ifname=net0,script=/path/to/qemu-ifup \
         -nographic \
-        -chardev socket,id=chr0,path=/tmp/sock0 \                   # /tmp/sock0
-        -netdev vhost-user,id=net1,chardev=chr0,vhostforce \        # netdev for vhost-user
-        -device virtio-net-pci,netdev=net1,mac=00:AD:BE:B4:11:00 \  # device for virtio-net-pci
+        -chardev socket,id=chr0,path=/tmp/sock0 \  # /tmp/sock0
+        -netdev vhost-user,id=net1,chardev=chr0,vhostforce \
+        -device virtio-net-pci,netdev=net1,mac=00:AD:BE:B4:11:00 \
         -monitor telnet::44911,server,nowait
 
 This VM has two network interfaces.

@@ -512,7 +512,7 @@ It shows options without of EAL and container.
                       [--eth-peer ETH_PEER] [--pkt-filter-mode PKT_FILTER_MODE]
                       [--pkt-filter-report-hash PKT_FILTER_REPORT_HASH]
                       [--pkt-filter-size PKT_FILTER_SIZE]
-                      [--pkt-filter-flexbytes-offset PKT_FILTER_FLEXBYTES_OFFSET]
+                      [--pkt-filter-flexbytes-offset PKT_FILTER_FLEXBYTES...]
                       [--pkt-filter-drop-queue PKT_FILTER_DROP_QUEUE]
                       [--disable-crc-strip] [--enable-lro] [--enable-rx-cksum]
                       [--enable-scatter] [--enable-hw-vlan]
@@ -548,7 +548,7 @@ It shows options without of EAL and container.
       --no-privileged       Disable docker's privileged mode if it's needed
       --pci                 Enable PCI (default is None)
       -i, --interactive     Run in interactive mode (default is None)
-      -a, --auto-start      Start forwarding on initialization (default is None)
+      -a, --auto-start      Start forwarding on initialization (default ...)
       --tx-first            Start forwarding, after sending a burst of packets
                             first
       --stats-period STATS_PERIOD
@@ -616,10 +616,10 @@ It shows options without of EAL and container.
                             'ieee1588', 'tm'
       --rss-ip              Set RSS functions for IPv4/IPv6 only
       --rss-udp             Set RSS functions for IPv4/IPv6 and UDP
-      --rxq RXQ             Number of RX queues per port, 1-65535 (default is 1)
+      --rxq RXQ             Number of RX queues per port, 1-65535 (default ...)
       --rxd RXD             Number of descriptors in the RX rings
                             (default is 128)
-      --txq TXQ             Number of TX queues per port, 1-65535 (default is 1)
+      --txq TXQ             Number of TX queues per port, 1-65535 (default ...)
       --txd TXD             Number of descriptors in the TX rings
                             (default is 512)
       --burst BURST         Number of packets per burst, 1-512 (default is 32)
@@ -627,17 +627,13 @@ It shows options without of EAL and container.
       --rxpt RXPT           Prefetch threshold register of RX rings
                             (default is 8)
       --rxht RXHT           Host threshold register of RX rings (default is 8)
-      --rxfreet RXFREET     Free threshold of RX descriptors,0-'rxd' (default is
-                            0)
+      --rxfreet RXFREET     Free threshold of RX descriptors,0-'rxd' (...)
       --rxwt RXWT           Write-back threshold register of RX rings
                             (default is 4)
-      --txpt TXPT           Prefetch threshold register of TX rings (default is
-                            36)
+      --txpt TXPT           Prefetch threshold register of TX rings (...)
       --txht TXHT           Host threshold register of TX rings (default is 0)
-      --txwt TXWT           Write-back threshold register of TX rings (default
-                            is 0)
-      --txfreet TXFREET     Free threshold of RX descriptors, 0-'txd' (default
-                            is 0)
+      --txwt TXWT           Write-back threshold register of TX rings (...)
+      --txfreet TXFREET     Free threshold of RX descriptors, 0-'txd' (...)
       --txrst TXRST         Transmit RS bit threshold of TX rings, 0-'txd'
                             (default is 0)
       --rx-queue-stats-mapping RX_QUEUE_STATS_MAPPING
