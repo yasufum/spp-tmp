@@ -56,6 +56,6 @@ Incoming packets from rx on host1 are sent to each of vhosts of VM
 by looking up destination MAC address in the packet.
 
 .. figure:: ../images/spp_vf/spp_vf_overview.*
-    :width: 80%
+    :width: 70%
 
     Overview of SPP VF

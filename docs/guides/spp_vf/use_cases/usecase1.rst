@@ -42,7 +42,7 @@ port.
 .. _figure_simple_ssh_login:
 
 .. figure:: ../../images/spp_vf/usecase1_overview.*
-    :width: 60%
+    :width: 55%
 
     Simple SSH Login
 
