@@ -86,8 +86,7 @@ Confirm that status of ``sec 1`` is updated.
 .. _figure_spp_nfv_as_l2fwd:
 
 .. figure:: ../images/setup/use_cases/spp_nfv_l2fwd.*
-   :height: 380 em
-   :width: 380 em
+   :width: 52%
 
    spp_nfv as l2fwd
 
@@ -149,8 +148,7 @@ from ``phy:1`` to ``phy:0`` for ``sec 2``.
 .. _figure_spp_two_nfv_as_l2fwd:
 
 .. figure:: ../images/setup/use_cases/spp_two_nfv_l2fwd.*
-   :height: 420 em
-   :width: 420 em
+   :width: 52%
 
    Two spp_nfv as l2fwd
 
@@ -171,8 +169,7 @@ Patch ``phy:0`` to ``phy:0`` for ``sec 1`` and
 .. _figure_spp_two_nfv_loopback:
 
 .. figure:: ../images/setup/use_cases/spp_two_nfv_loopback.*
-   :height: 420 em
-   :width: 420 em
+   :width: 52%
 
    Two spp_nfv for loopback
 
@@ -240,8 +237,7 @@ Then, connect it with ``patch`` subcommand.
 .. _figure_spp_uni_directional_l2fwd:
 
 .. figure:: ../images/setup/use_cases/spp_unidir_l2fwd.*
-   :height: 460 em
-   :width: 460 em
+   :width: 52%
 
    Uni-Directional l2fwd
 
@@ -295,8 +291,7 @@ Then, add ``ring 0`` and ``ring 1`` to ``sec 2``.
 .. _figure_spp_bi_directional_l2fwd:
 
 .. figure:: ../images/setup/use_cases/spp_bidir_l2fwd.*
-   :height: 460 em
-   :width: 460 em
+   :width: 52%
 
    Bi-Directional l2fwd
 
@@ -361,8 +356,7 @@ with ``sec 2``.
 .. _figure_spp_uni_directional_l2fwd_vhost:
 
 .. figure:: ../images/setup/use_cases/spp_unidir_l2fwd_vhost.*
-   :height: 460 em
-   :width: 460 em
+   :width: 52%
 
    Uni-Directional l2fwd with vhost
 
@@ -419,8 +413,7 @@ As the first usecase, add a pcap PMD and capture incoming packets from
 .. _figure_spp_pcap_incoming:
 
 .. figure:: ../images/setup/use_cases/spp_pcap_incoming.*
-   :height: 380 em
-   :width: 380 em
+   :width: 50%
 
    Rapture incoming packets
 
@@ -461,8 +454,7 @@ Then, add pcap PMD to another ``spp_nfv`` with index ``2``.
 .. _figure_spp_pcap_restoring:
 
 .. figure:: ../images/setup/use_cases/spp_pcap_restoring.*
-   :height: 380 em
-   :width: 380 em
+   :width: 52%
 
    Restore dumped packets
 

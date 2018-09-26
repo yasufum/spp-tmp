@@ -94,7 +94,7 @@ and save this script as
 .. _figure_topo_term_exp:
 
 .. figure:: ../images/commands/expr/topo_term_exp.*
-   :width: 440 em
+   :width: 67%
 
    topo term example
 
@@ -202,7 +202,7 @@ following.
 .. _figure_topo_subg_before:
 
 .. figure:: ../images/commands/expr/topo_subg_before.*
-   :width: 440 em
+   :width: 67%
 
    Before using topo_subgraph
 
@@ -223,7 +223,7 @@ In this case, add subgraph ``guest_vm`` and includes resoures
 .. _figure_topo_subg_after:
 
 .. figure:: ../images/commands/expr/topo_subg_after.*
-   :width: 440 em
+   :width: 67%
 
    After using topo_subgraph
 

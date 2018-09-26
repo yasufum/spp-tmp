@@ -40,9 +40,10 @@ Overview
 functionality for Service Function Chaining in
 NFV (Network Function Virtualization).
 
-.. image:: images/overview/spp_overview.svg
-   :height: 350 em
-   :width: 350 em
+.. figure:: images/overview/spp_overview.*
+    :width: 50%
+
+    SPP overview
 
 With SPP, user is able to configure network easily and dynamically
 via simple patch panel like interface.
