@@ -38,8 +38,8 @@ examples are compiled while building DPDK's image.
 Create App Container Script
 ---------------------------
 
-As explained in :ref:`sppc_appl_appl`, app container script shold be
-prepared for each of applications.
+As explained in :ref:`spp_container_app_launcher`, app container script
+shold be prepared for each of applications.
 Application of SPP container is roughly categorized as DPDK sample apps
 or not. The former case is like that you change an existing DPDK sample
 application and run as a app container.
