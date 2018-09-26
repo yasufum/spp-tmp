@@ -44,11 +44,20 @@ DIRS-y += src
 
 include $(RTE_SDK)/mk/rte.extsubdir.mk
 
+DOC_ROOT = docs/guides
+
 # Compile RST documents
 .PHONY: doc-html
 doc-html:
-	sh docs/guides/compile-doc.sh doc-html
+	sh $(DOC_ROOT)/compile-doc.sh doc-html
+
+.PHONY: doc-pdf
+doc-pdf:
+	python $(DOC_ROOT)/gen_pdf_imgs.py
+	sh $(DOC_ROOT)/compile-doc.sh doc-pdf
+	find $(DOC_ROOT)/images/ -type f -name "*.pdf" -delete
+	@echo "Succeeded to generate '$(DOC_ROOT)/_build/latex/SoftPatchPanel.pdf'"
 
 .PHONY: doc-clean
 doc-clean:
-	sh docs/guides/compile-doc.sh clean
+	sh $(DOC_ROOT)/compile-doc.sh clean
