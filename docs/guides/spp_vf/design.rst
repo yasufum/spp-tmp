@@ -41,9 +41,10 @@ threads called component.
 There are three types of components, ``forwarder``,
 ``merger`` and ``classifier``.
 
-.. image:: images/spp_vf_overview.svg
-   :height: 550 em
-   :width: 550 em
+.. figure:: ../images/spp_vf/spp_vf_overview.*
+    :width: 70%
+
+    SPP VF components
 
 Forwarder
 ~~~~~~~~~

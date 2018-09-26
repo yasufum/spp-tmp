@@ -41,9 +41,8 @@ port.
 
 .. _figure_simple_ssh_login:
 
-.. figure:: ../images/usecase1_overview.*
-    :height: 400 em
-    :width: 400 em
+.. figure:: ../../images/spp_vf/usecase1_overview.*
+    :width: 60%
 
     Simple SSH Login
 
@@ -106,9 +105,8 @@ sent to SSH clinet via NIC0.
 
 .. _figure_network_config:
 
-.. figure:: ../images/usecase1_nwconfig.*
-    :height: 720 em
-    :width: 720 em
+.. figure:: ../../images/spp_vf/usecase1_nwconfig.*
+    :width: 100%
 
     Network Configuration
 

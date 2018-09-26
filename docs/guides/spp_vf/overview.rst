@@ -55,6 +55,7 @@ for two destinations of vhost interface.
 Incoming packets from rx on host1 are sent to each of vhosts of VM
 by looking up destination MAC address in the packet.
 
-.. image:: images/spp_vf_overview.svg
-   :height: 550 em
-   :width: 550 em
+.. figure:: ../images/spp_vf/spp_vf_overview.*
+    :width: 80%
+
+    Overview of SPP VF
