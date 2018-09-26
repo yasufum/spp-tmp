@@ -268,8 +268,7 @@ and start forwarding from testpmd.
 .. _figure_sppc_gsg_testpmd:
 
 .. figure:: ../../images/tools/sppc/sppc_gsg_testpmd.*
-   :height: 340em
-   :width: 340em
+   :width: 50%
 
    SPP and testpmd on containers
 

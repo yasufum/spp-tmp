@@ -44,8 +44,7 @@ all of app container processes run on a single node.
 .. _figure_sppc_usecase_vhost:
 
 .. figure:: ../../images/tools/sppc/sppc_usecase_vhost.*
-    :height: 340em
-    :width: 340em
+    :width: 50%
 
     Test of vhost PMD in a single node
 
@@ -139,8 +138,7 @@ with ring PMDs in serial.
 .. _figure_sppc_usecase_ring:
 
 .. figure:: ../../images/tools/sppc/sppc_usecase_ring.*
-   :height: 480em
-   :width: 680em
+   :width: 100%
 
    Test of ring PMD
 
@@ -274,8 +272,7 @@ as described in next sections.
 .. _figure_sppc_usecase_l2fwdpktgen:
 
 .. figure:: ../../images/tools/sppc/sppc_usecase_l2fwdpktgen.*
-    :height: 640em
-    :width: 640em
+    :width: 85%
 
     Chainning pktgen and l2fwd
 
@@ -391,8 +388,7 @@ It is totally 7 lcores while the maximum number is 14.
 .. _figure_sppc_usecase_l2fwdpktgen_less:
 
 .. figure:: ../../images/tools/sppc/sppc_usecase_l2fwdpktgen_less.*
-    :height: 640em
-    :width: 640em
+    :width: 85%
 
     Pktgen and l2fwd using less lcores
 
@@ -497,8 +493,7 @@ lcores to share IP addressing.
 .. _figure_sppc_usecase_lb_pktgen:
 
 .. figure:: ../../images/tools/sppc/sppc_usecase_lb_pktgen.*
-    :height: 580em
-    :width: 720em
+    :width: 100%
 
     Multi-path configuration with load_balancer and pktgen
 
