@@ -143,18 +143,18 @@ It is included in a future release.
 
     $ tree build/ubuntu/
     build/ubuntu/
-    ├── dpdk
-    │   ├── Dockerfile.16.04
-    │   ├── Dockerfile.18.04
-    │   └── Dockerfile.latest
-    ├── pktgen
-    │   ├── Dockerfile.16.04
-    │   ├── Dockerfile.18.04
-    │   └── Dockerfile.latest
-    └── spp
-        ├── Dockerfile.16.04
-        ├── Dockerfile.18.04
-        └── Dockerfile.latest
+    |--- dpdk
+    |    |--- Dockerfile.16.04
+    |    |--- Dockerfile.18.04
+    |    ---- Dockerfile.latest
+    |--- pktgen
+    |    |--- Dockerfile.16.04
+    |    |--- Dockerfile.18.04
+    |    ---- Dockerfile.latest
+    ---- spp
+         |--- Dockerfile.16.04
+         |--- Dockerfile.18.04
+         ---- Dockerfile.latest
 
 
 .. _sppc_build_img_inspect:

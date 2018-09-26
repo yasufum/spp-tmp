@@ -17,15 +17,15 @@ inside a container.
     $ tree app/
     app/
     ...
-    ├── helloworld.py
-    ├── l2fwd.py
-    ├── l3fwd.py
-    ├── load-balancer.py
-    ├── pktgen.py
-    ├── spp-nfv.py
-    ├── spp-primary.py
-    ├── spp-vm.py
-    └── testpmd.py
+    |--- helloworld.py
+    |--- l2fwd.py
+    |--- l3fwd.py
+    |--- load-balancer.py
+    |--- pktgen.py
+    |--- spp-nfv.py
+    |--- spp-primary.py
+    |--- spp-vm.py
+    ---- testpmd.py
 
 
 .. note::
