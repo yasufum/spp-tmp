@@ -29,7 +29,7 @@ class ConnectionThread(threading.Thread):
         self.stop_event.set()
 
     def run(self):
-        cmd_str = 'hello'
+        cmd_str = ''
 
         # infinite loop so that function do not terminate and thread do not
         # end.
@@ -238,9 +238,9 @@ class PrimaryThread(threading.Thread):
                     data = conn.recv(spp_common.SOCK_BUF_SIZE)
                     if data:
                         spp_common.PRIMARY2MAIN.put(
-                            "recv:%s:{%s}" % (str(addr), data.decode('utf-8')))
+                                    data.decode('utf-8').strip('\0'))
                     else:
-                        spp_common.PRIMARY2MAIN.put("closing:" + str(addr))
+                        spp_common.PRIMARY2MAIN.put('{"status": "closed"}')
                         conn.close()
                         self.sock_opened = False
                         break
