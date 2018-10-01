@@ -74,16 +74,16 @@ def main():
     sock_files = app_helper.sock_files(dev_ids_list)
 
     # Setup docker command.
+    if args.workdir is not None:
+        wd = args.workdir
+    else:
+        wd = '/root/pktgen-dpdk'
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(
-        args, target_name, sock_files,
-        '%s/../pktgen-dpdk' % env.RTE_SDK)
-
-    cmd_path = '%s/../pktgen-dpdk/app/%s/pktgen' % (
-        env.RTE_SDK, env.RTE_TARGET)
+            args, target_name, sock_files, wd)
 
     # Setup pktgen command
-    pktgen_cmd = [cmd_path, '\\']
+    pktgen_cmd = ['pktgen', '\\']
 
     file_prefix = 'spp-pktgen-container%d' % dev_ids_list[0]
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
