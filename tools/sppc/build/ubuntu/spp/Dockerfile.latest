@@ -9,12 +9,17 @@ ARG spp_repo
 ARG spp_branch
 ARG spp_dir
 
-ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
 ENV http_proxy ${http_proxy}
-ENV https_proxy $https_proxy
+ENV https_proxy ${https_proxy}
 ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
+ENV SPP_DIR ${spp_dir}
+ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
+ENV PATH ${home_dir}/${spp_dir}/src/primary/${rte_target}/:${PATH}
+ENV PATH ${home_dir}/${spp_dir}/src/nfv/${rte_target}/:${PATH}
+ENV PATH ${home_dir}/${spp_dir}/src/vf/${rte_target}/:${PATH}
+ENV PATH ${home_dir}/${spp_dir}/src/vm/${rte_target}/:${PATH}
 
 RUN apt-get update && apt-get install -y \
     git \
