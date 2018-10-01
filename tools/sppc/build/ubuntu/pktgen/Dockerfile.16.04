@@ -16,6 +16,8 @@ ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
 ENV PKTGEN_DIR ${pktgen_dir}
+ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
+ENV PATH ${home_dir}/${pktgen_dir}/app/${rte_target}/:${PATH}
 
 RUN apt-get update && apt-get install -y \
     git \
