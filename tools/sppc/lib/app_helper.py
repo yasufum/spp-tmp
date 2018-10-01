@@ -102,6 +102,10 @@ def add_sppc_args(parser):
         default='latest',
         help="Version of Linux distribution")
     parser.add_argument(
+        '--workdir',
+        type=str,
+        help="Path of directory in which the command is launched")
+    parser.add_argument(
         '-ci', '--container-image',
         type=str,
         help="Name of container image")
