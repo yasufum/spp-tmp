@@ -95,6 +95,62 @@ class Shell(cmd.Cmd, object):
         for i in spp_common.SECONDARY_LIST:
             print("Connected secondary id: %d" % i)
 
+    def print_pri_status(self, json_obj):
+        """Parse SPP primary's status and print.
+
+        Primary returns the status as JSON format, but it is just a little
+        long.
+
+            {
+                "phy_ports": [
+                    {
+                        "eth": "56:48:4f:12:34:00",
+                        "id": 0,
+                        "rx": 78932932,
+                        "tx": 78932931,
+                        "tx_drop": 1,
+                    }
+                    ...
+                ],
+                "ring_ports": [
+                    {
+                        "id": 0,
+                        "rx": 89283,
+                        "rx_drop": 0,
+                        "tx": 89283,
+                        "tx_drop": 0
+                    },
+                    ...
+                ]
+            }
+
+        It is formatted to be simple and more understandable.
+
+            Physical Ports:
+              ID          rx          tx     tx_drop  mac_addr
+               0    78932932    78932931           1  56:48:4f:53:54:00
+            Ring Ports:
+              ID          rx          tx     rx_drop     rx_drop
+               0       89283       89283           0           0
+               ...
+        """
+
+        if json_obj.has_key('phy_ports'):
+            print('Physical Ports:')
+            print('  ID          rx          tx     tx_drop  mac_addr')
+            for pports in json_obj['phy_ports']:
+                print('  %2d  %10d  %10d  %10d  %s' % (
+                    pports['id'], pports['rx'],  pports['tx'],
+                    pports['tx_drop'], pports['eth']))
+
+        if json_obj.has_key('ring_ports'):
+            print('Ring Ports:')
+            print('  ID          rx          tx     rx_drop     rx_drop')
+            for rports in json_obj['ring_ports']:
+                print('  %2d  %10d  %10d  %10d  %10d' % (
+                    rports['id'], rports['rx'],  rports['tx'],
+                    rports['rx_drop'], rports['tx_drop']))
+
     def print_sec_status(self, msg):
         """Parse and print message from SPP secondary
 
@@ -144,7 +200,8 @@ class Shell(cmd.Cmd, object):
         if spp_common.PRIMARY:
             spp_common.MAIN2PRIMARY.put(command.encode('utf-8'))
             recv = spp_common.PRIMARY2MAIN.get(True)
-            print(recv)
+            json_obj = json.loads(recv)
+            self.print_pri_status(json_obj)
             return self.CMD_OK, recv
         else:
             recv = "primary not started"
@@ -508,7 +565,9 @@ class Shell(cmd.Cmd, object):
         if cmds[0] == 'sec':
             self.close_all_secondary()
         elif cmds[0] == 'all':
+            print('Closing secondary ...')
             self.close_all_secondary()
+            print('Closing primary ...')
             self.command_primary('exit')
         elif cmds[0] == '':
             print('Thank you for using Soft Patch Panel')
