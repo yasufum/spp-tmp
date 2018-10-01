@@ -152,6 +152,81 @@ do_send(int *connected, int *sock, char *str)
 	return 0;
 }
 
+/**
+ * Retrieve all of statu of ports as JSON format managed by primary.
+ *
+ * Here is an exmaple.
+ *
+ * {
+ *     "ring_ports": [
+ *     {
+ *         "id": 0,
+ *             "rx": 0,
+ *             "rx_drop": 0,
+ *             "tx": 0,
+ *             "tx_drop": 0
+ *     },
+ *     ...
+ *     ],
+ *     "phy_ports": [
+ *     {
+ *         "eth": "56:48:4f:53:54:00",
+ *         "id": 0,
+ *         "rx": 0,
+ *         "tx": 0,
+ *         "tx_drop": 0
+ *     },
+ *     ...
+ *     ]
+ * }
+ */
+static int
+get_status_json(char *str)
+{
+	int i;
+	char phy_ports[512];
+	char ring_ports[1024];
+	memset(phy_ports, '\0', 512);
+	memset(ring_ports, '\0', 1024);
+
+	for (i = 0; i < ports->num_ports; i++) {
+		sprintf(phy_ports, "%s{\"id\": %u, \"eth\": \"%s\", "
+				"\"rx\": %"PRIu64", \"tx\": %"PRIu64", "
+				"\"tx_drop\": %"PRIu64"}",
+				phy_ports,
+				ports->id[i],
+				get_printable_mac_addr(ports->id[i]),
+				ports->port_stats[i].rx,
+				ports->port_stats[i].tx,
+				ports->client_stats[i].tx_drop);
+
+		if (i < ports->num_ports - 1)
+			sprintf(phy_ports, "%s,", phy_ports);
+	}
+
+	for (i = 0; i < num_clients; i++) {
+		sprintf(ring_ports, "%s{\"id\": %u, \"rx\": %"PRIu64", "
+			"\"rx_drop\": %"PRIu64", "
+			"\"tx\": %"PRIu64", \"tx_drop\": %"PRIu64"}",
+			ring_ports,
+			i,
+			ports->client_stats[i].rx,
+			ports->client_stats[i].rx_drop,
+			ports->client_stats[i].tx,
+			ports->client_stats[i].tx_drop);
+
+		if (i < num_clients - 1)
+			sprintf(ring_ports, "%s,", ring_ports);
+	}
+
+	RTE_LOG(DEBUG, APP, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
+			phy_ports, ring_ports);
+	sprintf(str, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
+			phy_ports, ring_ports);
+
+	return 0;
+}
+
 static int
 parse_command(char *str)
 {
@@ -171,10 +246,7 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, APP, "status\n");
 
 		memset(str, '\0', MSG_SIZE);
-		if (cmd == START)
-			sprintf(str, "Server Running\n");
-		else
-			sprintf(str, "Server Idling\n");
+		ret = get_status_json(str);
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, APP, "exit\n");
@@ -183,6 +255,7 @@ parse_command(char *str)
 		ret = -1;
 
 	} else if (!strcmp(token_list[0], "clear")) {
+		sprintf(str, "{\"status\": \"cleared\"}");
 		clear_stats();
 	}
 
