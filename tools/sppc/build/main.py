@@ -73,14 +73,18 @@ def parse_args():
     return parser.parse_args()
 
 
-def create_env_sh(dst_dir):
+def create_env_sh(dst_dir, rte_sdk, target, target_dir):
     """Create config file for DPDK environment variables
 
     Create 'env.sh' which defines $RTE_SDK and $RTE_TARGET inside a
     container to be referredd from 'run.sh' and Dockerfile.
     """
-    contents = "export RTE_SDK=%s\n" % env.RTE_SDK
-    contents += "export RTE_TARGET=%s" % env.RTE_TARGET
+    contents = "export RTE_SDK=%s\n" % rte_sdk
+    contents += "export RTE_TARGET=%s\n" % env.RTE_TARGET
+    if target == 'pktgen':
+        contents += "export PKTGEN_DIR=%s" % target_dir
+    elif target == 'spp':
+        contents += "export SPP_DIR=%s" % target_dir
 
     f = open('%s/env.sh' % dst_dir, 'w')
     f.write(contents)
@@ -91,7 +95,7 @@ def main():
     args = parse_args()
 
     if args.target is not None:
-        target_dir = '%s/%s/%s' % (  # Dockerfile is contained here
+        dockerfile_dir = '%s/%s/%s' % (  # Dockerfile is contained here
             work_dir, args.dist_name, args.target)
         # Container image name, for exp 'sppc/dpdk-ubuntu:18.04'
         container_image = common.container_img_name(
@@ -103,7 +107,7 @@ def main():
         exit()
 
     # Decide which of Dockerfile with given base image version
-    dockerfile = '%s/Dockerfile.%s' % (target_dir, args.dist_ver)
+    dockerfile = '%s/Dockerfile.%s' % (dockerfile_dir, args.dist_ver)
 
     # Overwrite container's name if it is given.
     if args.container_image is not None:
@@ -125,18 +129,34 @@ def main():
     else:
         spp_branch = ''
 
+    # Setup project directory by extracting from any of git URL.
+    # If DPDK is hosted on 'https://github.com/user/custom-dpdk.git',
+    # the directory is 'custom-dpdk'.
+    dpdk_dir = args.dpdk_repo.split('/')[-1].split('.')[0]
+    pktgen_dir = args.pktgen_repo.split('/')[-1].split('.')[0]
+    spp_dir = args.spp_repo.split('/')[-1].split('.')[0]
+
+    # RTE_SDK is decided with DPDK's dir.
+    rte_sdk = '%s/%s' % (env.HOMEDIR, dpdk_dir)
+
     # Check for just creating env.sh, or run docker build.
     if args.only_envsh is True:
         if args.dry_run is False:
-            create_env_sh(target_dir)
-            print("Info: '%s/env.sh' created." % target_dir)
+            if target == 'pktgen':
+                create_env_sh(dockerfile_dir, rte_sdk, target, pktgen_dir)
+            elif target == 'spp':
+                create_env_sh(dockerfile_dir, rte_sdk, target, spp_dir)
+            print("Info: '%s/env.sh' created." % dockerfile_dir)
             exit()
         else:
             print("Info: Nothin done because you gave %s with %s." % (
                 '--only-envsh', '--dry-run'))
             exit()
     else:
-        create_env_sh(target_dir)
+        if args.target == 'pktgen':
+            create_env_sh(dockerfile_dir, rte_sdk, args.target, pktgen_dir)
+        elif args.target == 'spp':
+            create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
 
     # Setup environment variables on host to pass 'docker build'.
     env_opts = [
@@ -154,7 +174,7 @@ def main():
 
     docker_cmd += [
         '--build-arg', 'home_dir=%s' % env.HOMEDIR, '\\',
-        '--build-arg', 'rte_sdk=%s' % env.RTE_SDK, '\\',
+        '--build-arg', 'rte_sdk=%s' % rte_sdk, '\\',
         '--build-arg', 'rte_target=%s' % env.RTE_TARGET, '\\',
         '--build-arg', 'dpdk_repo=%s' % args.dpdk_repo, '\\',
         '--build-arg', 'dpdk_branch=%s' % dpdk_branch, '\\']
@@ -162,16 +182,18 @@ def main():
     if args.target == 'pktgen':
         docker_cmd += [
             '--build-arg', 'pktgen_repo=%s' % args.pktgen_repo, '\\',
-            '--build-arg', 'pktgen_branch=%s' % pktgen_branch, '\\']
+            '--build-arg', 'pktgen_branch=%s' % pktgen_branch, '\\',
+            '--build-arg', 'pktgen_dir=%s' % pktgen_dir, '\\']
     elif args.target == 'spp':
         docker_cmd += [
             '--build-arg', 'spp_repo=%s' % args.spp_repo, '\\',
-            '--build-arg', 'spp_branch=%s' % spp_branch, '\\']
+            '--build-arg', 'spp_branch=%s' % spp_branch, '\\',
+            '--build-arg', 'spp_dir=%s' % spp_dir, '\\']
 
     docker_cmd += [
         '-f', '%s' % dockerfile, '\\',
         '-t', container_image, '\\',
-        target_dir]
+        dockerfile_dir]
 
     common.print_pretty_commands(docker_cmd)
 
