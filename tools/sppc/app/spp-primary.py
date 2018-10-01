@@ -106,10 +106,7 @@ def main():
         container_image, '\\']
 
     # Setup spp primary command.
-    cmd_path = '%s/../spp/src/primary/%s/spp_primary' % (
-        env.RTE_SDK, env.RTE_TARGET)
-
-    spp_cmd = [cmd_path, '\\']
+    spp_cmd = ['spp_primary', '\\']
 
     # Do not use 'app_helper.setup_eal_opts()' because spp_primary does
     # not use virtio vdev but TAP or vhost, which should be added manually.

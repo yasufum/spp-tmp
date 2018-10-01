@@ -79,10 +79,7 @@ def main():
         docker_run_opt = '-it'
 
     # Setup spp_nfv command.
-    cmd_path = '%s/../spp/src/nfv/%s/spp_nfv' % (
-        env.RTE_SDK, env.RTE_TARGET)
-
-    spp_cmd = [cmd_path, '\\']
+    spp_cmd = ['spp_nfv', '\\']
 
     # Do not use 'app_helper.setup_eal_opts()' because spp_nfv does
     # not use virtio.

@@ -75,10 +75,7 @@ def main():
         common.error_exit('SPP_CTRL_IP')
 
     # Setup spp_vm command.
-    cmd_path = '%s/../spp/src/vm/%s/spp_vm' % (
-        env.RTE_SDK, env.RTE_TARGET)
-
-    spp_cmd = [cmd_path, '\\']
+    spp_cmd = ['spp_vm', '\\']
 
     file_prefix = 'spp-l2fwd-container%d' % dev_ids_list[0]
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
