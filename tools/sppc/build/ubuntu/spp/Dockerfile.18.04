@@ -7,6 +7,7 @@ ARG dpdk_repo
 ARG dpdk_branch
 ARG spp_repo
 ARG spp_branch
+ARG spp_dir
 
 ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
 ENV http_proxy ${http_proxy}
@@ -14,6 +15,7 @@ ENV https_proxy $https_proxy
 ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
+ENV SPP_DIR ${spp_dir}
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -31,14 +33,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $home_dir
-RUN git clone $dpdk_branch $dpdk_repo
-RUN git clone $spp_branch $spp_repo
+RUN git clone ${dpdk_branch} ${dpdk_repo}
+RUN git clone ${spp_branch} ${spp_repo}
 
 # Compile DPDK and SPP
-WORKDIR $rte_sdk
-RUN make install T=$rte_target
+WORKDIR ${rte_sdk}
+RUN make install T=${rte_target}
 
-WORKDIR ${home_dir}/spp
+WORKDIR ${home_dir}/${spp_dir}
 RUN make
 
 # Set working directory when container is launched
