@@ -27,7 +27,7 @@
 #include <rte_ring.h>
 
 #define MAX_CLIENT  99
-#define MSG_SIZE    1000
+#define MSG_SIZE 2048  /* socket buffer len */
 #define SOCK_RESET  -1
 #define PORT_RESET  UINT16_MAX
 
