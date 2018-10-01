@@ -52,8 +52,7 @@ class ConnectionThread(threading.Thread):
 
             # Receiving from secondary
             try:
-                # 1024 stands for bytes of data to be received
-                data = self.conn.recv(1024)
+                data = self.conn.recv(spp_common.SOCK_BUF_SIZE)
                 if data:
                     msg = "%s" % data.decode('utf-8')
                     spp_common.SEC2MAIN[self.client_id].put(msg)
@@ -99,7 +98,7 @@ class AcceptThread(threading.Thread):
         except KeyError:
             return -1
 
-        data = conn.recv(1024)
+        data = conn.recv(spp_common.SOCK_BUF_SIZE)
         if data is None:
             return -1
 
@@ -140,7 +139,7 @@ class AcceptThread(threading.Thread):
 
         msg = "_set_client_id %u" % free_client_id
         conn.send(msg.encode('utf-8'))
-        data = conn.recv(1024)
+        data = conn.recv(spp_common.SOCK_BUF_SIZE)
 
         return free_client_id
 
@@ -236,8 +235,7 @@ class PrimaryThread(threading.Thread):
 
                 # Receiving from primary
                 try:
-                    # 1024 stands for bytes of data to be received
-                    data = conn.recv(1024)
+                    data = conn.recv(spp_common.SOCK_BUF_SIZE)
                     if data:
                         spp_common.PRIMARY2MAIN.put(
                             "recv:%s:{%s}" % (str(addr), data.decode('utf-8')))

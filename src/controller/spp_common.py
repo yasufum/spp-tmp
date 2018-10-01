@@ -30,6 +30,9 @@ PRIMARY2MAIN = Queue()
 # Maximum num of sock queues for secondaries
 MAX_SECONDARY = 16
 
+# Should be as same as MSG_SIZE in src/shared/common.h
+SOCK_BUF_SIZE = 2048
+
 PRIMARY = ''
 SECONDARY_COUNT = 0
 

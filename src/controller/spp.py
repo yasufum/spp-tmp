@@ -24,7 +24,7 @@ class CmdRequestHandler(socketserver.BaseRequestHandler):
     CMD = None  # contains a instance of Shell class
 
     def handle(self):
-        self.data = self.request.recv(1024).strip()
+        self.data = self.request.recv(spp_common.SOCK_BUF_SIZE).strip()
         cur_thread = threading.currentThread()
         print(cur_thread.getName())
         print(self.client_address[0])
