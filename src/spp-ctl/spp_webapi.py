@@ -318,50 +318,40 @@ class V1NFVHandler(BaseHandler):
         self.route('/<sec_id:int>/patches', 'DELETE',
                    callback=self.nfv_patch_del)
 
-    def convert_nfv_info(self, data):
+    def convert_nfv_info(self, sec_id, data):
         nfv = {}
-        lines = data.splitlines()
-        if len(lines) < 3:
-            return {}
-        p = re.compile("Client ID (\d+) (\w+)")
-        m = p.match(lines[0])
-        if m:
-            nfv['client_id'] = int(m.group(1))
-            nfv['status'] = m.group(2)
 
-        ports = {}
-        outs = []
-        for line in lines[2:]:
-            if not line.startswith("port_id"):
-                break
-            arg1, _, arg2, arg3 = line.split(",")
-            _, port_id = arg1.split(":")
-            if arg2 == "PHY":
-                port = "phy:" + port_id
-            else:
-                if_type, rest = arg2.split("(")
-                if_num = rest.rstrip(")")
-                if if_type == "RING":
-                    port = "ring:" + if_num
-                elif if_type == "VHOST":
-                    port = "vhost:" + if_num
-                else:
-                    port = if_type + ":" + if_num
-            ports[port_id] = port
-            _, out_id = arg3.split(":")
-            if out_id != "none":
-                outs.append((port_id, out_id))
-        nfv['ports'] = list(ports.values())
-        patches = []
-        if outs:
-            for src_id, dst_id in outs:
-                patches.append({"src": ports[src_id], "dst": ports[dst_id]})
-        nfv['patches'] = patches
+        # spp_nfv returns status info in two lines. First line is
+        # status of running or idling, and second is patch info.
+        # 'null' means that it has no dst port.
+        #   "status: idling\nports: 'phy:0-phy:1,phy:1-null'\x00\x00.."
+        entries = data.split('\n')
+        if len(entries) != 2:
+            return {}
+
+        nfv['client_id'] = int(sec_id)
+        nfv['status'] = entries[0].split()[1]
+
+        patch_list = entries[1].split()[1].replace("'", '')
+
+        ports = []
+        nfv['patches'] = []
+
+        for port_cmb in patch_list.split(','):
+            p_src, p_dst = port_cmb.split('-')
+            if p_src != 'null' and p_dst != 'null':
+                nfv['patches'].append({'src': p_src, 'dst': p_dst})
+
+            for port in [p_src, p_dst]:
+                if port != 'null':
+                    ports.append(port)
+
+        nfv['ports'] = list(set(ports))
 
         return nfv
 
     def nfv_get(self, proc):
-        return self.convert_nfv_info(proc.get_status())
+        return self.convert_nfv_info(proc.id, proc.get_status())
 
     def _validate_nfv_forward(self, body):
         if 'action' not in body:
