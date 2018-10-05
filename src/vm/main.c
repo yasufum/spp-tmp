@@ -397,7 +397,6 @@ parse_command(char *str)
 	char *token_list[MAX_PARAMETER] = {NULL};
 	int max_token = 0;
 	int ret = 0;
-	int i;
 
 	if (!str)
 		return 0;
@@ -418,14 +417,15 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, APP, "status\n");
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
-			i = sprintf(str, "status: running\n");
+			get_sec_stats_json(str, "running", ports_fwd_array,
+					port_map);
 		else
-			i = sprintf(str, "status: idling\n");
-		print_active_ports(str + i, ports_fwd_array, port_map);
+			get_sec_stats_json(str, "idling", ports_fwd_array,
+					port_map);
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
-		i = sprintf(str, "%d", client_id);
+		sprintf(str, "%d", client_id);
 
 	} else if (!strcmp(token_list[0], "_set_client_id")) {
 		int id;
