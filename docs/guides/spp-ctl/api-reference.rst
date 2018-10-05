@@ -3,17 +3,16 @@
 
 .. _spp_ctl_api_ref:
 
-=============
 API Reference
 =============
 
 Overview
-========
+--------
 
 ``spp-ctl`` provides simple REST like API. It supports http only, not https.
 
 Request and Response
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Request body is JSON format.
 It is accepted both ``text/plain`` and ``application/json``
@@ -26,7 +25,8 @@ If a request fails, the response is a text which shows error reason
 and the content-type is ``text/plain``.
 
 Error code
-----------
+~~~~~~~~~~
+
 
 ``spp-ctl`` does basic syntax and lexical check of a request.
 
@@ -42,10 +42,10 @@ Error code
 
 
 API independent of the process type
-===================================
+-----------------------------------
 
 GET /v1/processes
------------------
+~~~~~~~~~~~~~~~~~
 
 Show the SPP processes connected to the ``spp-ctl``.
 
@@ -77,7 +77,7 @@ process object:
 Response example
 ^^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: json
 
     [
       {
@@ -95,10 +95,10 @@ Response example
 
 
 API for spp_primary
-===================
+-------------------
 
 GET /v1/primary/status
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 Show statistical information.
 
@@ -120,7 +120,7 @@ when ``spp_primary`` implements it.
 
 
 DELETE /v1/primary/status
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Clear statistical information.
 
@@ -141,10 +141,10 @@ There is no body content for the response of a successful ``PUT`` request.
 
 
 API for spp_nfv/spp_vm
-======================
+----------------------
 
 GET /v1/nfvs/{client_id}
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Get the information of the ``spp_nfv`` or ``spp_vm`` process.
 
@@ -196,7 +196,7 @@ patch objest
 Response example
 ^^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: json
 
     {
       "client-id": 1,
@@ -217,13 +217,13 @@ Response example
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};status
 
 
 PUT /v1/nfvs/{client_id}/forward
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Start or Stop forwarding.
 
@@ -267,19 +267,19 @@ Equivalent CLI command
 
 action is ``start``
 
-.. code-block:: yaml
+.. code-block:: none
 
     sec {client_id};forward
 
 action is ``stop``
 
-.. code-block:: yaml
+.. code-block:: none
 
     sec {client_id};stop
 
 
 PUT /v1/nfvs/{client_id}/ports
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add or Delete port.
 
@@ -323,13 +323,13 @@ There is no body content for the response of a successful ``PUT`` request.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};{action} {interface_type} {interface_id}
 
 
 PUT /v1/nfvs/{client_id}/patches
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add a patch.
 
@@ -373,13 +373,13 @@ There is no body content for the response of a successful ``PUT`` request.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};patch {src} {dst}
 
 
 DELETE /v1/nfvs/{client_id}/patches
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reset patches.
 
@@ -411,16 +411,16 @@ There is no body content for the response of a successful ``DELETE`` request.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};patch reset
 
 
 API for spp_vf
-==============
+--------------
 
 GET /v1/vfs/{client_id}
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Get the information of the ``spp_vf`` process.
 
@@ -512,7 +512,7 @@ classifier table:
 Response example
 ^^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: json
 
     {
       "client-id": 1,
@@ -619,13 +619,13 @@ The component which type is ``unused`` is to indicate unused core.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};status
 
 
 POST /v1/vfs/{client_id}/components
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Start the component.
 
@@ -672,13 +672,13 @@ There is no body content for the response of a successful ``POST`` request.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};component start {name} {core} {type}
 
 
 DELETE /v1/vfs/{sec id}/components/{name}
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Stop the component.
 
@@ -712,13 +712,13 @@ There is no body content for the response of a successful ``POST`` request.
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};component stop {name}
 
 
 PUT /v1/vfs/{client_id}/components/{name}/ports
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add or Delete port to the component.
 
@@ -789,19 +789,19 @@ Equivalent CLI command
 
 action is ``attach``
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};port add {port} {dir} {name} [add_vlantag {id} {pcp} | del_vlantag]
 
 action is ``detach``
 
-.. code-block:: console
+.. code-block:: none
 
     sec {client_id};port del {port} {dir} {name}
 
 
 PUT /v1/vfs/{sec id}/classifier_table
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Set or Unset classifier table.
 
@@ -861,12 +861,12 @@ Equivalent CLI command
 
 type is ``mac``
 
-.. code-block:: console
+.. code-block:: none
 
     classifier_table {action} mac {mac_address} {port}
 
 type is ``vlan``
 
-.. code-block:: console
+.. code-block:: none
 
     classifier_table {action} vlan {vlan} {mac_address} {port}
