@@ -39,3 +39,4 @@ SPP documentation
    commands/index
    tools/index
    spp_vf/index
+   spp-ctl/index
