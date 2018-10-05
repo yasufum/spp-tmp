@@ -1,0 +1,4 @@
+# spp-ctl
+eventlet
+bottle
+netaddr
