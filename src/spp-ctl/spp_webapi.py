@@ -171,7 +171,7 @@ class V1VFHandler(BaseHandler):
                    callback=self.vf_comp_start)
         self.route('/<sec_id:int>/components/<name>', 'DELETE',
                    callback=self.vf_comp_stop)
-        self.route('/<sec_id:int>/components/<name>', 'PUT',
+        self.route('/<sec_id:int>/components/<name>/ports', 'PUT',
                    callback=self.vf_comp_port)
         self.route('/<sec_id:int>/classifier_table', 'PUT',
                    callback=self.vf_classifier)
