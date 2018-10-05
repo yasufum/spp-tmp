@@ -51,6 +51,14 @@ Show the SPP processes connected to the ``spp-ctl``.
 
 * Normarl response codes: 200
 
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X GET -H 'application/json' \
+    http://127.0.0.1:7777/v1/processes
+
 Response
 ^^^^^^^^
 
@@ -86,6 +94,328 @@ Response example
     ]
 
 
+API for spp_primary
+===================
+
+GET /v1/primary/status
+----------------------
+
+Show statistical information.
+
+* Normal response codes: 200
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X GET -H 'application/json' \
+    http://127.0.0.1:7777/v1/primary/status
+
+Response
+^^^^^^^^
+
+There is no data at the moment. The statistical information will be returned
+when ``spp_primary`` implements it.
+
+
+DELETE /v1/primary/status
+-------------------------
+
+Clear statistical information.
+
+* Normal response codes: 204
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X DELETE -H 'application/json' \
+    http://127.0.0.1:7777/v1/primary/status
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``PUT`` request.
+
+
+API for spp_nfv/spp_vm
+======================
+
+GET /v1/nfvs/{client_id}
+------------------------
+
+Get the information of the ``spp_nfv`` or ``spp_vm`` process.
+
+* Normal response codes: 200
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
++-----------+---------+-------------+
+| Name      | Type    | Description |
++===========+=========+=============+
+| client_id | integer | client id.  |
++-----------+---------+-------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X GET -H 'application/json' \
+    http://127.0.0.1:7777/v1/nfvs/1
+
+Response
+^^^^^^^^
+
++-----------+---------+-------------------------------------------+
+| Name      | Type    | Description                               |
++===========+=========+===========================================+
+| client-id | integer | client id.                                |
++-----------+---------+-------------------------------------------+
+| status    | string  | ``Running`` or ``Idle``.                  |
++-----------+---------+-------------------------------------------+
+| ports     | array   | an array of port ids used by the process. |
++-----------+---------+-------------------------------------------+
+| patches   | array   | an array of patches.                      |
++-----------+---------+-------------------------------------------+
+
+patch objest
+
++------+--------+----------------------+
+| Name | Type   | Description          |
++======+========+======================+
+| src  | string | source port id.      |
++------+--------+----------------------+
+| dst  | string | destination port id. |
++------+--------+----------------------+
+
+Response example
+^^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    {
+      "client-id": 1,
+      "status": "Running",
+      "ports": [
+        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1", "ring:2", "ring:3"
+      ],
+      "patches": [
+        {
+          "src": "vhost:0", "dst": "ring:0"
+        },
+        {
+          "src": "ring:1", "dst": "vhost:1"
+        }
+      ]
+    }
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    sec {client_id};status
+
+
+PUT /v1/nfvs/{client_id}/forward
+--------------------------------
+
+Start or Stop forwarding.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
++-----------+---------+-------------+
+| Name      | Type    | Description |
++===========+=========+=============+
+| client_id | integer | client id.  |
++-----------+---------+-------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "start"}' \
+    http://127.0.0.1:7777/v1/nfvs/1/forward
+
+Request(body)
+^^^^^^^^^^^^^
+
++--------+--------+------------------------+
+| Name   | Type   | Description            |
++========+========+========================+
+| action | string | ``start`` or ``stop``. |
++--------+--------+------------------------+
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``PUT`` request.
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+action is ``start``
+
+.. code-block:: yaml
+
+    sec {client_id};forward
+
+action is ``stop``
+
+.. code-block:: yaml
+
+    sec {client_id};stop
+
+
+PUT /v1/nfvs/{client_id}/ports
+------------------------------
+
+Add or Delete port.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
++-----------+---------+-------------+
+| Name      | Type    | Description |
++===========+=========+=============+
+| client_id | integer | client id.  |
++-----------+---------+-------------+
+
+Request(body)
+^^^^^^^^^^^^^
+
++--------+--------+---------------------------------------------------------------+
+| Name   | Type   | Description                                                   |
++========+========+===============================================================+
+| action | string | ``add`` or ``del``.                                           |
++--------+--------+---------------------------------------------------------------+
+| port   | string | port id. port id is the form {interface_type}:{interface_id}. |
++--------+--------+---------------------------------------------------------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "add", "port": "ring:0"}' \
+    http://127.0.0.1:7777/v1/nfvs/1/ports
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``PUT`` request.
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    sec {client_id};{action} {interface_type} {interface_id}
+
+
+PUT /v1/nfvs/{client_id}/patches
+--------------------------------
+
+Add a patch.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
++-----------+---------+-------------+
+| Name      | Type    | Description |
++===========+=========+=============+
+| client_id | integer | client id.  |
++-----------+---------+-------------+
+
+Request(body)
+^^^^^^^^^^^^^
+
++------+--------+----------------------+
+| Name | Type   | Description          |
++======+========+======================+
+| src  | string | source port id.      |
++------+--------+----------------------+
+| dst  | string | destination port id. |
++------+--------+----------------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X PUT -H 'application/json' \
+    -d '{"src": "ring:0", "dst": "ring:1"}' \
+    http://127.0.0.1:7777/v1/nfvs/1/patches
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``PUT`` request.
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    sec {client_id};patch {src} {dst}
+
+
+DELETE /v1/nfvs/{client_id}/patches
+-----------------------------------
+
+Reset patches.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
++-----------+---------+-------------+
+| Name      | Type    | Description |
++===========+=========+=============+
+| client_id | integer | client id.  |
++-----------+---------+-------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X DELETE -H 'application/json' \
+    http://127.0.0.1:7777/v1/nfvs/1/patches
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``DELETE`` request.
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    sec {client_id};patch reset
+
+
 API for spp_vf
 ==============
 
@@ -105,6 +435,14 @@ Request(path)
 +===========+=========+=============+
 | client_id | integer | client id.  |
 +-----------+---------+-------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X GET -H 'application/json' \
+    http://127.0.0.1:7777/v1/vfs/1
 
 Response
 ^^^^^^^^
@@ -320,13 +658,11 @@ Request(body)
 Request example
 ^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: console
 
-    {
-      "name": "forwarder1",
-      "core": 12,
-      "type": "forward"
-    }
+    curl -X POST -H 'application/json' \
+    -d '{"name": "forwarder1", "core": 12, "type": "forward"}' \
+    http://127.0.0.1:7777/v1/vfs/1/components
 
 Response
 ^^^^^^^^
@@ -359,6 +695,14 @@ Request(path)
 +-----------+---------+-----------------+
 | name      | string  | component name. |
 +-----------+---------+-----------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X DELETE -H 'application/json' \
+    http://127.0.0.1:7777/v1/vfs/1/components/forwarder1
 
 Response
 ^^^^^^^^
@@ -422,33 +766,23 @@ vlan object:
 Request example
 ^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: console
 
-    {
-      "action": "attach",
-      "port": "vhost:1",
-      "dir": "rx",
-      "vlan": {
-        "operation": "add",
-        "id": 677,
-        "pcp": 0
-      }
-    }
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "attach", "port": "vhost:1", "dir": "rx", \
+         "vlan": {"operation": "add", "id": 677, "pcp": 0}}' \
+    http://127.0.0.1:7777/v1/vfs/1/components/forwarder1/ports
 
-.. code-block:: yaml
+.. code-block:: console
 
-    {
-      "action": "detach",
-      "port": "vhost:0",
-      "dir": "tx"
-    }
-
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "detach", "port": "vhost:0", "dir": "tx"} \
+    http://127.0.0.1:7777/v1/vfs/1/components/forwarder1/ports
 
 Response
 ^^^^^^^^
 
 There is no body content for the response of a successful ``PUT`` request.
-
 
 Equivalent CLI command
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -503,25 +837,19 @@ Request(body)
 Request example
 ^^^^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: console
 
-    {
-      "action": "add",
-      "type": "mac",
-      "mac_address": "FA:16:3E:7D:CC:35",
-      "port": "ring:0"
-    }
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "add", "type": "mac", "mac_address": "FA:16:3E:7D:CC:35", \
+       "port": "ring:0"}' \
+    http://127.0.0.1:7777/v1/vfs/1/classifier_table
 
-.. code-block:: yaml
+.. code-block:: console
 
-    {
-      "action": "del",
-      "type": "vlan",
-      "vlan": 475,
-      "mac_address": "FA:16:3E:7D:CC:35",
-      "port": "ring:0"
-    }
-
+    curl -X PUT -H 'application/json' \
+    -d '{"action": "del", "type": "vlan", "vlan": 475, \
+       "mac_address": "FA:16:3E:7D:CC:35", "port": "ring:0"}' \
+    http://127.0.0.1:7777/v1/vfs/1/classifier_table
 
 Response
 ^^^^^^^^
@@ -542,288 +870,3 @@ type is ``vlan``
 .. code-block:: console
 
     classifier_table {action} vlan {vlan} {mac_address} {port}
-
-
-API for spp_nfv/spp_vm
-======================
-
-GET /v1/nfvs/{client_id}
-------------------------
-
-Get the information of the ``spp_nfv`` or ``spp_vm`` process.
-
-* Normal response codes: 200
-* Error response codes: 400, 404
-
-Request(path)
-^^^^^^^^^^^^^
-
-+-----------+---------+-------------+
-| Name      | Type    | Description |
-+===========+=========+=============+
-| client_id | integer | client id.  |
-+-----------+---------+-------------+
-
-Response
-^^^^^^^^
-
-+-----------+---------+-------------------------------------------+
-| Name      | Type    | Description                               |
-+===========+=========+===========================================+
-| client-id | integer | client id.                                |
-+-----------+---------+-------------------------------------------+
-| status    | string  | ``Running`` or ``Idle``.                  |
-+-----------+---------+-------------------------------------------+
-| ports     | array   | an array of port ids used by the process. |
-+-----------+---------+-------------------------------------------+
-| patches   | array   | an array of patches.                      |
-+-----------+---------+-------------------------------------------+
-
-patch objest
-
-+------+--------+----------------------+
-| Name | Type   | Description          |
-+======+========+======================+
-| src  | string | source port id.      |
-+------+--------+----------------------+
-| dst  | string | destination port id. |
-+------+--------+----------------------+
-
-Response example
-^^^^^^^^^^^^^^^^
-
-.. code-block:: yaml
-
-    {
-      "client-id": 1,
-      "status": "Running",
-      "ports": [
-        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1", "ring:2", "ring:3"
-      ],
-      "patches": [
-        {
-          "src": "vhost:0", "dst": "ring:0"
-        },
-        {
-          "src": "ring:1", "dst": "vhost:1"
-        }
-      ]
-    }
-
-Equivalent CLI command
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: console
-
-    sec {client_id};status
-
-
-PUT /v1/nfvs/{client_id}/forward
---------------------------------
-
-Start or Stop forwarding.
-
-* Normal response codes: 204
-* Error response codes: 400, 404
-
-Request(path)
-^^^^^^^^^^^^^
-
-+-----------+---------+-------------+
-| Name      | Type    | Description |
-+===========+=========+=============+
-| client_id | integer | client id.  |
-+-----------+---------+-------------+
-
-Request(body)
-^^^^^^^^^^^^^
-
-+--------+--------+------------------------+
-| Name   | Type   | Description            |
-+========+========+========================+
-| action | string | ``start`` or ``stop``. |
-+--------+--------+------------------------+
-
-Request example
-^^^^^^^^^^^^^^^
-
-.. code-block:: yaml
-
-    {"action": "start"}
-
-Response
-^^^^^^^^
-
-There is no body content for the response of a successful ``PUT`` request.
-
-Equivalent CLI command
-^^^^^^^^^^^^^^^^^^^^^^
-
-action is ``start``
-
-.. code-block:: yaml
-
-    sec {client_id};forward
-
-action is ``stop``
-
-.. code-block:: yaml
-
-    sec {client_id};stop
-
-
-PUT /v1/nfvs/{client_id}/ports
-------------------------------
-
-Add or Delete port.
-
-* Normal response codes: 204
-* Error response codes: 400, 404
-
-Request(path)
-^^^^^^^^^^^^^
-
-+-----------+---------+-------------+
-| Name      | Type    | Description |
-+===========+=========+=============+
-| client_id | integer | client id.  |
-+-----------+---------+-------------+
-
-Request(body)
-^^^^^^^^^^^^^
-
-+--------+--------+---------------------------------------------------------------+
-| Name   | Type   | Description                                                   |
-+========+========+===============================================================+
-| action | string | ``add`` or ``del``.                                           |
-+--------+--------+---------------------------------------------------------------+
-| port   | string | port id. port id is the form {interface_type}:{interface_id}. |
-+--------+--------+---------------------------------------------------------------+
-
-Request example
-^^^^^^^^^^^^^^^
-
-.. code-block:: yaml
-
-    {"action": "add", "port": "vhost:0"}
-
-
-Response
-^^^^^^^^
-
-There is no body content for the response of a successful ``PUT`` request.
-
-Equivalent CLI command
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: console
-
-    sec {client_id};{action} {interface_type} {interface_id}
-
-
-PUT /v1/nfvs/{client_id}/patches
---------------------------------
-
-Add a patch.
-
-* Normal response codes: 204
-* Error response codes: 400, 404
-
-Request(path)
-^^^^^^^^^^^^^
-
-+-----------+---------+-------------+
-| Name      | Type    | Description |
-+===========+=========+=============+
-| client_id | integer | client id.  |
-+-----------+---------+-------------+
-
-Request(body)
-^^^^^^^^^^^^^
-
-+------+--------+----------------------+
-| Name | Type   | Description          |
-+======+========+======================+
-| src  | string | source port id.      |
-+------+--------+----------------------+
-| dst  | string | destination port id. |
-+------+--------+----------------------+
-
-Request example
-^^^^^^^^^^^^^^^
-
-.. code-block:: yaml
-
-    {"src": "vhost:0", "dst": "ring:0"}
-
-Response
-^^^^^^^^
-
-There is no body content for the response of a successful ``PUT`` request.
-
-Equivalent CLI command
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: console
-
-    sec {client_id};patch {src} {dst}
-
-
-DELETE /v1/nfvs/{client_id}/patches
------------------------------------
-
-Reset patches.
-
-* Normal response codes: 204
-* Error response codes: 400, 404
-
-Request(path)
-^^^^^^^^^^^^^
-
-+-----------+---------+-------------+
-| Name      | Type    | Description |
-+===========+=========+=============+
-| client_id | integer | client id.  |
-+-----------+---------+-------------+
-
-Response
-^^^^^^^^
-
-There is no body content for the response of a successful ``DELETE`` request.
-
-Equivalent CLI command
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: console
-
-    sec {client_id};patch reset
-
-
-API for spp_primary
-===================
-
-GET /v1/primary/status
-----------------------
-
-Show statistical information.
-
-* Normal response codes: 200
-
-Response
-^^^^^^^^
-
-There is no data at the moment. The statistical information will be returned
-when ``spp_primary`` implements it.
-
-
-DELETE /v1/primary/status
--------------------------
-
-Clear statistical information.
-
-* Normal response codes: 204
-
-Response
-^^^^^^^^
-
-There is no body content for the response of a successful ``PUT`` request.
