@@ -152,47 +152,38 @@ class Shell(cmd.Cmd, object):
                     rports['rx_drop'], rports['tx_drop']))
 
     def print_sec_status(self, msg):
-        """Parse and print message from SPP secondary
+        """Parse and print message from SPP secondary.
 
-        The format of sent message is expected as YAML like format as
+        Print status received from secondary.
 
-        status: idling\nports: 'phy:0-phy:1,phy:1-null'\x00\x00..
+          spp > sec 1;status
+          - status: idling
+          - ports:
+            - phy:0 -> ring:0
+            - phy:1
 
-        'ports' is a set of combinations of patches. The value is
-        encapsulated with "'" and ended series of null character "\x00".
-        If the destination is not defined, null is assigned.
+        The format of the received message is JSON and ended with
+        series of null character "\x00". The value of "ports" attribute
+        is a set of combinations of patches. If a port is not patched,
+        the "dst" is set to "null".
+
+          {"status":"idling","ports":[{"src":"phy:0", "dst": ...,]}'\x00\x00..
         """
 
-        msg = msg.replace("\x00", "").replace("'", "")  # clean sec's msg
-        sec_attr = msg.split("\n")
+        msg = msg.replace("\x00", "")  # clean sec's msg
 
-        # Do nothing if returned msg is not valid format.
-        if len(sec_attr) < 2:
-            return None
-
-        status = sec_attr[0]
-        ports = sec_attr[1]
-
-        # Printed result to which port info is appended.
-        res = status
-
-        port_list = ports.split(' ')[1].split(',')
-        if port_list[0] == '':  # port_list is [''] if there are no ports
-            res = '%s\nports: "no ports"' % res
-        else:
-            res = "%s\nports:\n" % res
-            tmp_list = []
-            for port_ent in port_list:
-                if '-' in port_ent:
-                    p1, p2 = port_ent.split('-')
-                    if p2 == 'null':
-                        tmp_list.append("  - '%s'" % p1)
-                    else:
-                        tmp_list.append("  - '%s -> %s'" % (p1, p2))
-            tmp_list.sort()
-            res += "\n".join(tmp_list)
-
-        print(res)
+        try:
+            sec_attr = json.loads(msg)
+            print('- status: %s' % sec_attr['status'])
+            print('- ports:')
+            for port in sec_attr['ports']:
+                if port['dst'] == 'null':
+                    print('  - %s' % port['src'])
+                else:
+                    print('  - %s -> %s' % (port['src'], port['dst']))
+        except ValueError as err:
+            print('Invalid format: {0}.'.format(err))
+            print("  '%s'" % msg)
 
     def command_primary(self, command):
         """Send command to primary process"""
