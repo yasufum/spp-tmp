@@ -233,21 +233,33 @@ spp_atoi(const char *str, int *val)
 }
 
 /*
- * Print port status in forward array
+ * Get status of spp_nfv or spp_vm as JSON format. It consists of running
+ * status and patch info of ports.
  *
- * Each of port status is formatted as
- * "port_id:[PORT_ID],[IN_PORT_STAT],[TYPE],output:[OUTPORT_STAT]"
+ * Here is an example of well-formatted JSON status to better understand.
+ * Actual status has no spaces and new lines inserted as
+ * '{"status":"running","ports":[{"src":"phy:0","dst":"ring:0"},...]}'
+ *
+ *   {
+ *     "status": "running",
+ *     "ports": [
+ *       {"src":"phy:0","dst": "ring:0"},
+ *       {"src":"ring:0","dst": "null"}
+ *     ]
+ *   }
  */
 void
-print_active_ports(char *str,
+get_sec_stats_json(char *str, const char *running_stat,
 		struct port *ports_fwd_array,
 		struct port_map *port_map)
 {
 	unsigned int i;
-	const char *port_prefix = "ports: '";
+	unsigned int has_ports = 0;  // for checking having port at last
 
-	/* Every elements value */
-	sprintf(str, "%s",  port_prefix);
+	sprintf(str, "%s",  "{\"status\":");
+	sprintf(str + strlen(str), "\"%s\",", running_stat);
+	sprintf(str + strlen(str), "\"ports\":[");
+
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
@@ -256,80 +268,79 @@ print_active_ports(char *str,
 		RTE_LOG(INFO, APP, "Status %d\n",
 			ports_fwd_array[i].in_port_id);
 
-		/* in_port_id is same value as port_id */
-		/**
-		 * NOTE(yasuufm)
-		 * in_port_id cannot be PORT_RESET currently and it is
-		 * meaningless, but not remove for future possible change
-		 */
-		// if (ports_fwd_array[i].in_port_id != PORT_RESET)
-		// 	sprintf(str + strlen(str), "on,");
-		// else
-		// 	sprintf(str + strlen(str), "off,");
+		sprintf(str + strlen(str), "{\"src\":");
 
 		switch (port_map[i].port_type) {
 		case PHY:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: PHY\n");
-			sprintf(str + strlen(str), "phy:%u-",
+			sprintf(str + strlen(str), "\"phy:%u\",",
 					port_map[i].id);
 			break;
 		case RING:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: RING\n");
-			sprintf(str + strlen(str), "ring:%u-",
+			sprintf(str + strlen(str), "\"ring:%u\",",
 				port_map[i].id);
 			break;
 		case VHOST:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: VHOST\n");
-			sprintf(str + strlen(str), "vhost:%u-",
+			sprintf(str + strlen(str), "{\"vhost:%u\",",
 				port_map[i].id);
 			break;
 		case PCAP:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: PCAP\n");
-			sprintf(str + strlen(str), "pcap:%u-",
+			sprintf(str + strlen(str), "\"pcap:%u\",",
 					port_map[i].id);
 			break;
 		case NULLPMD:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: NULLPMD\n");
-			sprintf(str + strlen(str), "nullpmd:%u-",
+			sprintf(str + strlen(str), "\"nullpmd:%u\",",
 					port_map[i].id);
 			break;
 		case UNDEF:
+			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: UDF\n");
 			/* TODO(yasufum) Need to remove print for undefined ? */
-			sprintf(str + strlen(str), "udf-");
+			sprintf(str + strlen(str), "\"udf\",");
 			break;
 		}
+
+		sprintf(str + strlen(str), "\"dst\":");
 
 		RTE_LOG(INFO, APP, "Out Port ID %d\n",
 				ports_fwd_array[i].out_port_id);
 		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
-			sprintf(str + strlen(str), "%s", "null,");
+			sprintf(str + strlen(str), "%s", "\"null\"");
 		} else {
 			unsigned int j = ports_fwd_array[i].out_port_id;
 			switch (port_map[j].port_type) {
 			case PHY:
 				RTE_LOG(INFO, APP, "Type: PHY\n");
-				sprintf(str + strlen(str), "phy:%u,",
+				sprintf(str + strlen(str), "\"phy:%u\"",
 						port_map[j].id);
 				break;
 			case RING:
 				RTE_LOG(INFO, APP, "Type: RING\n");
-				sprintf(str + strlen(str), "ring:%u,",
+				sprintf(str + strlen(str), "\"ring:%u\"",
 					port_map[j].id);
 				break;
 			case VHOST:
 				RTE_LOG(INFO, APP, "Type: VHOST\n");
-				sprintf(str + strlen(str), "vhost:%u,",
+				sprintf(str + strlen(str), "\"vhost:%u\"",
 						port_map[j].id);
 				break;
 			case PCAP:
 				RTE_LOG(INFO, APP, "Type: PCAP\n");
-				sprintf(str + strlen(str), "pcap:%u,",
+				sprintf(str + strlen(str), "\"pcap:%u\"",
 						port_map[j].id);
 				break;
 			case NULLPMD:
 				RTE_LOG(INFO, APP, "Type: NULLPMD\n");
-				sprintf(str + strlen(str), "nullpmd:%u,",
+				sprintf(str + strlen(str), "\"nullpmd:%u\"",
 						port_map[j].id);
 				break;
 			case UNDEF:
@@ -338,18 +349,23 @@ print_active_ports(char *str,
 				 * TODO(yasufum) Need to remove print for
 				 * undefined ?
 				 */
-				sprintf(str + strlen(str), "udf,");
+				sprintf(str + strlen(str), "\"udf\"");
 				break;
 			}
 		}
+
+		sprintf(str + strlen(str), "},");
 	}
 
-	// If there are no ports, it's formatted as "ports: ''"
-	if (strcmp(str, port_prefix) == 0) {
-		sprintf(str + strlen(str), "'");
+	// Check the number of ports to remove "," if it has one or more ports.
+	if (has_ports == 0) {
+		sprintf(str + strlen(str), "]");
 	} else {  // Remove last ','
-		sprintf(str + strlen(str) - 1, "'");
+		sprintf(str + strlen(str) - 1, "]");
 	}
+
+	sprintf(str + strlen(str), "}");
+
 	// make sure to be terminated with null character
 	sprintf(str + strlen(str), "%c", '\0');
 }
