@@ -5,3 +5,4 @@ docs/guides/_build/*
 docs/guides/images/**/*.pdf
 src/controller/3rd_party/*
 tools/sppc/build/*/*/env.sh
+.spp_history

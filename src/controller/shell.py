@@ -9,6 +9,7 @@ import json
 import os
 from queue import Empty
 import re
+import readline
 from .shell_lib import common
 from . import spp_common
 from .spp_common import logger
@@ -18,6 +19,8 @@ from . import topo
 
 class Shell(cmd.Cmd, object):
     """SPP command prompt"""
+
+    hist_file = '.spp_history'
 
     intro = 'Welcome to the spp.   Type help or ? to list commands.\n'
     prompt = 'spp > '
@@ -35,9 +38,17 @@ class Shell(cmd.Cmd, object):
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
+    HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
+
     PLUGIN_DIR = 'command'
     subgraphs = {}
     topo_size = '60%'
+
+    # setup history file
+    if os.path.exists(hist_file):
+        readline.read_history_file(hist_file)
+    else:
+        readline.write_history_file(hist_file)
 
     def default(self, line):
         """Define defualt behaviour
@@ -48,6 +59,7 @@ class Shell(cmd.Cmd, object):
 
         if common.is_comment_line(line):
             print("%s" % line.strip())
+
         else:
             super(Shell, self).default(line)
 
@@ -58,6 +70,25 @@ class Shell(cmd.Cmd, object):
         to do nothing.
         """
         pass
+
+    def clean_hist_file(self):
+        """Remove useless entries in history file."""
+
+        entries = []
+
+        try:
+            for line in open(self.hist_file):
+                l = line.strip()
+                if not (l.split(' ')[0] in self.HIST_EXCEPT):
+                    entries.append(l)
+            f = open(self.hist_file, "w+")
+            contents = '\n'.join(entries)
+            contents += '\n'
+            f.write(contents)
+            f.close()
+        except IOError:
+            print('Error: Cannot open history file "%s"' %
+                    self.hist_file)
 
     def close_all_secondary(self):
         """Terminate all secondary processes"""
@@ -578,7 +609,7 @@ class Shell(cmd.Cmd, object):
         return completions
 
     def do_cat(self, arg):
-        """View contents of a file
+        """View contents of a file.
 
         spp > cat file
         """
@@ -587,6 +618,64 @@ class Shell(cmd.Cmd, object):
             subprocess.call(c, shell=True)
         else:
             print("No such a directory.")
+
+    def do_redo(self, args):
+        """Execute command of index of history."""
+
+        idx = int(args)
+        cmdline = None
+        cnt = 1
+        try:
+            for line in open(self.hist_file):
+                if cnt == idx:
+                    cmdline = line.strip()
+                    break
+                cnt += 1
+
+            if cmdline.find('pri;') > -1:
+                cmdline = cmdline.replace(';', ' ;')
+                print(cmdline)
+            cmd_ary = cmdline.split(' ')
+            cmd = cmd_ary.pop(0)
+            cmd_options = ' '.join(cmd_ary)
+            eval('self.do_%s(cmd_options)' % cmd)
+        except IOError:
+            print('Error: Cannot open history file "%s"' %
+                    self.hist_file)
+
+    def do_history(self, arg):
+        """Show history.
+
+        spp > history
+          1  ls
+          2  cat file.txt
+          ...
+        """
+
+        # flush all of history to the hist_file.
+        readline.write_history_file(self.hist_file)
+
+        # remove commands defined in `self.HIST_EXCEPT`
+        self.clean_hist_file()
+
+        try:
+            f = open(self.hist_file)
+
+            # setup output format
+            nof_lines = len(f.readlines())
+            f.seek(0)
+            lines_digit = len(str(nof_lines))
+            hist_format = '  %' + str(lines_digit) + 'd  %s'
+
+            cnt = 1
+            for line in f:
+                l = line.strip()
+                print(hist_format % (cnt, l))
+                cnt += 1
+            f.close()
+        except IOError:
+            print('Error: Cannot open history file "%s"' %
+                    self.hist_file)
 
     def complete_cat(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
@@ -612,6 +701,7 @@ class Shell(cmd.Cmd, object):
 
         spp > exit
         """
+
         self.close()
         print('Thank you for using Soft Patch Panel')
         return True
