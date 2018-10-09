@@ -402,6 +402,7 @@ do_add(char *res_uid)
 	return 0;
 }
 
+/* Return -1 if exit command is called to terminate the process */
 static int
 parse_command(char *str)
 {
@@ -473,23 +474,52 @@ parse_command(char *str)
 			/* reset forward array*/
 			forward_array_reset();
 		} else {
-			int in_port;
-			int out_port;
+			uint16_t in_port;
+			uint16_t out_port;
 
 			if (max_token <= 2)
 				return 0;
 
-			char *p_type;
-			int p_id;
+			char *in_p_type;
+			char *out_p_type;
+			int in_p_id;
+			int out_p_id;
 
-			parse_resource_uid(token_list[1], &p_type, &p_id);
-			in_port = find_port_id(p_id, get_port_type(p_type));
+			parse_resource_uid(token_list[1], &in_p_type, &in_p_id);
+			in_port = find_port_id(in_p_id,
+					get_port_type(in_p_type));
 
-			parse_resource_uid(token_list[2], &p_type, &p_id);
-			out_port = find_port_id(p_id, get_port_type(p_type));
+			parse_resource_uid(token_list[2],
+					&out_p_type, &out_p_id);
+			out_port = find_port_id(out_p_id,
+					get_port_type(out_p_type));
 
-			if (in_port < 0 || out_port < 0)
+			if (in_port == PORT_RESET && out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' and '%s:%d' %s",
+						"Failed to patch, both of",
+						in_p_type, in_p_id,
+						out_p_type, out_p_id,
+						"not found");
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
 				return 0;
+			} else if (in_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' not found",
+						"Failed to patch, in_port",
+						in_p_type, in_p_id);
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
+				return 0;
+			} else if (out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' not found",
+						"Failed to patch, out_port",
+						out_p_type, out_p_id);
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
+			}
 
 			add_patch(in_port, out_port);
 		}
