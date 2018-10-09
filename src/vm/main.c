@@ -315,32 +315,47 @@ get_memzone_by_addr(const void *addr)
 	return mz;
 }
 
+/*
+ * Create ring PMD with given ring_id.
+ */
 static int
 add_ring_pmd(int ring_id)
 {
 	const struct rte_memzone *memzone;
 	struct rte_ring *ring;
-	int ring_port_id;
+	int res;
+	char rx_queue_name[32];  /* Prefix and number like as 'eth_ring_0' */
 
-	/* look up ring, based on user's provided id*/
-	ring = rte_ring_lookup(get_rx_queue_name(ring_id));
+	memset(rx_queue_name, '\0', sizeof(rx_queue_name));
+	sprintf(rx_queue_name, "%s", get_rx_queue_name(ring_id));
+
+	/* Look up ring with provided ring_id */
+	ring = rte_ring_lookup(rx_queue_name);
 	if (ring == NULL) {
 		RTE_LOG(ERR, APP,
-			"Cannot get RX ring - is server process running?\n");
+			"Failed to get RX ring %s - is primary running?\n",
+			rx_queue_name);
+		return -1;
+	}
+	RTE_LOG(INFO, APP, "Looked up ring '%s'\n", rx_queue_name);
+
+	memzone = get_memzone_by_addr(ring);
+	if (memzone == NULL) {
+		RTE_LOG(ERR, APP, "Cannot get memzone\n");
 		return -1;
 	}
 
-	memzone = get_memzone_by_addr(ring);
-	if (memzone == NULL)
-		return -1;
-
-	/* create ring pmd*/
+	/* Create ring pmd */
 	ring->memzone = memzone;
-	ring_port_id = rte_eth_from_ring(ring);
+	res = rte_eth_from_ring(ring);
+	if (res < 0) {
+		RTE_LOG(ERR, APP,
+			"Cannot create eth dev with rte_eth_from_ring()\n");
+		return -1;
+	}
+	RTE_LOG(INFO, APP, "Created ring PMD: %d\n", res);
 
-	RTE_LOG(DEBUG, APP, "ring port id %d\n", ring_port_id);
-
-	return ring_port_id;
+	return res;
 }
 
 /**
