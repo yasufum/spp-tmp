@@ -44,23 +44,6 @@ static enum port_type get_port_type(char *portname)
 	return UNDEF;
 }
 
-/*
- * Split a token into words  with given separator and return the number of
- * splitted words.
- */
-static int spp_split(char *splitted_words[], char *token, const char *sep)
-{
-	int cnt = 0;
-	splitted_words[cnt] = strtok(token, sep);
-	while (splitted_words[cnt] != NULL) {
-		RTE_LOG(DEBUG, APP, "token %d = %s\n",
-				cnt, splitted_words[cnt]);
-		cnt++;
-		splitted_words[cnt] = strtok(NULL, sep);
-	}
-	return cnt;
-}
-
 static void
 forward(void)
 {
@@ -242,22 +225,19 @@ find_port_id(int id, enum port_type type)
 }
 
 static int
-do_del(char *token_list[], int max_token)
+do_del(char *res_uid)
 {
 	int port_id = PORT_RESET;
-	int id;
+	char *p_type;
+	int p_id;
 
-	if (max_token <= 2)
-		return -1;
+	parse_resource_uid(res_uid, &p_type, &p_id);
 
-	if (!strcmp(token_list[1], "ring")) {
+	if (!strcmp(p_type, "ring")) {
 		char name[RTE_ETH_NAME_MAX_LEN];
 
-		if (spp_atoi(token_list[2], &id) < 0)
-			return 0;
-
-		RTE_LOG(DEBUG, APP, "Del ring id %d\n", id);
-		port_id = find_port_id(id, RING);
+		RTE_LOG(DEBUG, APP, "Del ring id %d\n", p_id);
+		port_id = find_port_id(p_id, RING);
 		if (port_id < 0)
 			return -1;
 
@@ -360,30 +340,32 @@ add_ring_pmd(int ring_id)
 	return ring_port_id;
 }
 
+/**
+ * Add a port to this process. Port is described with resource UID which is a
+ * combination of port type and ID like as 'ring:0'.
+ */
 static int
-do_add(char *token_list[], int max_token)
+do_add(char *res_uid)
 {
 	enum port_type type = UNDEF;
 	int port_id = PORT_RESET;
-	int id;
 
-	if (max_token <= 2)
-		return -1;
+	char *p_type;
+	int p_id;
 
-	if (!strcmp(token_list[1], "ring")) {
-		if (spp_atoi(token_list[2], &id) < 0)
-			return 0;
+	parse_resource_uid(res_uid, &p_type, &p_id);
 
+	if (!strcmp(p_type, "ring")) {
 		type = RING;
-		port_id = add_ring_pmd(id);
+		port_id = add_ring_pmd(p_id);
 	}
 
 	if (port_id < 0)
 		return -1;
 
-	port_map[port_id].id = id;
+	port_map[port_id].id = p_id;
 	port_map[port_id].port_type = type;
-	port_map[port_id].stats = &ports->client_stats[id];
+	port_map[port_id].stats = &ports->client_stats[p_id];
 
 	/* Update ports_fwd_array with port id */
 	ports_fwd_array[port_id].in_port_id = port_id;
@@ -449,7 +431,7 @@ parse_command(char *str)
 
 	} else if (strncmp(token_list[0], "add", 3) == 0) {
 		RTE_LOG(DEBUG, APP, "add\n");
-		do_add(token_list, max_token);
+		do_add(token_list[1]);
 
 	} else if (!strcmp(token_list[0], "patch")) {
 		RTE_LOG(DEBUG, APP, "patch\n");
@@ -467,41 +449,14 @@ parse_command(char *str)
 			if (max_token <= 2)
 				return 0;
 
-			if (spp_atoi(token_list[1], &in_port) < 0) {
-				char *param_list[MAX_PARAMETER] = { 0 };
-				int param_count = spp_split(
-						param_list, token_list[1], ":");
-				if (param_count == 2) {
-					int in_port_id;
-					if (spp_atoi(
-						param_list[1], &in_port_id) < 0)
-						return 0;
-					in_port = find_port_id(
-						in_port_id,
-						get_port_type(param_list[0]));
-				} else {
-					return 0;
-				}
-			}
+			char *p_type;
+			int p_id;
 
-			if (spp_atoi(token_list[2], &out_port) < 0) {
-				char *param_list[MAX_PARAMETER] = { 0 };
-				int param_count = spp_split(
-						param_list,
-						token_list[2], ":");
-				if (param_count == 2) {
-					int out_port_id;
-					if (spp_atoi(
-						param_list[1],
-						&out_port_id) < 0)
-						return 0;
-					out_port = find_port_id(
-						out_port_id,
-						get_port_type(param_list[0]));
-				} else {
-					return 0;
-				}
-			}
+			parse_resource_uid(token_list[1], &p_type, &p_id);
+			in_port = find_port_id(p_id, get_port_type(p_type));
+
+			parse_resource_uid(token_list[2], &p_type, &p_id);
+			out_port = find_port_id(p_id, get_port_type(p_type));
 
 			if (in_port < 0 || out_port < 0)
 				return 0;
@@ -512,7 +467,7 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, APP, "del\n");
 
 		cmd = STOP;
-		do_del(token_list, max_token);
+		do_del(token_list[1]);
 	}
 
 	return ret;
