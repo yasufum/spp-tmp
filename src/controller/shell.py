@@ -249,7 +249,7 @@ class Shell(cmd.Cmd, object):
     def is_patched_ids_valid(self, id1, id2, delim=':'):
         """Check if port IDs are valid
 
-        Supported format is port ID of integer or resource ID such as
+        Supported format is port ID of integer or resource UID such as
         'phy:0' or 'ring:1'. Default delimiter ':' can be overwritten
         by giving 'delim' option.
         """
@@ -279,17 +279,21 @@ class Shell(cmd.Cmd, object):
         if length == 1:
             if cmdlist[0] in level1:
                 valid = 1
+
         elif length == 2:
             if cmdlist[0] == 'patch':
                 if cmdlist[1] in patch_args:
                     valid = 1
+
+            elif cmdlist[0] == 'add' or cmdlist[0] == 'del':
+                p_type, p_id = cmdlist[1].split(':')
+                if p_type in add_del_args:
+                    if str.isdigit(p_id):
+                        valid = 1
+
         elif length == 3:
             if cmdlist[0] in level2:
-                if cmdlist[0] == 'add' or cmdlist[0] == 'del':
-                    if cmdlist[1] in add_del_args:
-                        if str.isdigit(cmdlist[2]):
-                            valid = 1
-                elif cmdlist[0] == 'patch':
+                if cmdlist[0] == 'patch':
                     if self.is_patched_ids_valid(cmdlist[1], cmdlist[2]):
                         valid = 1
 
