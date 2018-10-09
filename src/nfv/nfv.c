@@ -265,11 +265,15 @@ forward_array_remove(int port_id)
 	}
 }
 
-static int
+/*
+ * Return actual port ID which is assigned by system internally, or PORT_RESET
+ * if port is not found.
+ */
+static uint16_t
 find_port_id(int id, enum port_type type)
 {
-	int port_id = PORT_RESET;
-	unsigned int i;
+	uint16_t port_id = PORT_RESET;
+	uint16_t i;
 
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (port_map[i].port_type != type)
@@ -287,18 +291,21 @@ find_port_id(int id, enum port_type type)
 static int
 do_del(char *res_uid)
 {
-	int port_id = PORT_RESET;
+	uint16_t port_id = PORT_RESET;
 	char *p_type;
 	int p_id;
 	int res;
 
 	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0)
+	if (res < 0) {
+		RTE_LOG(ERR, APP,
+			"Failed to parse resource UID\n");
 		return -1;
+	}
 
 	if (!strcmp(p_type, "vhost")) {
 		port_id = find_port_id(p_id, VHOST);
-		if (port_id < 0)
+		if (port_id == PORT_RESET)
 			return -1;
 
 	} else if (!strcmp(p_type, "ring")) {
@@ -306,7 +313,7 @@ do_del(char *res_uid)
 
 		RTE_LOG(DEBUG, APP, "Del ring id %d\n", p_id);
 		port_id = find_port_id(p_id, RING);
-		if (port_id < 0)
+		if (port_id == PORT_RESET)
 			return -1;
 
 		rte_eth_dev_detach(port_id, name);
@@ -315,7 +322,7 @@ do_del(char *res_uid)
 		char name[RTE_ETH_NAME_MAX_LEN];
 
 		port_id = find_port_id(p_id, PCAP);
-		if (port_id < 0)
+		if (port_id == PORT_RESET)
 			return -1;
 
 		rte_eth_dev_detach(port_id, name);
@@ -324,7 +331,7 @@ do_del(char *res_uid)
 		char name[RTE_ETH_NAME_MAX_LEN];
 
 		port_id = find_port_id(p_id, NULLPMD);
-		if (port_id < 0)
+		if (port_id == PORT_RESET)
 			return -1;
 
 		rte_eth_dev_detach(port_id, name);
@@ -694,7 +701,7 @@ do_add(char *res_uid)
 	else
 		port_id = (uint16_t) res;
 
-	port_map[port_id].id = (uint16_t) p_id;
+	port_map[port_id].id = p_id;
 	port_map[port_id].port_type = type;
 	port_map[port_id].stats = &ports->client_stats[p_id];
 
@@ -775,23 +782,52 @@ parse_command(char *str)
 			/* reset forward array*/
 			forward_array_reset();
 		} else {
-			int in_port;
-			int out_port;
+			uint16_t in_port;
+			uint16_t out_port;
 
 			if (max_token <= 2)
 				return 0;
 
-			char *p_type;
-			int p_id;
+			char *in_p_type;
+			char *out_p_type;
+			int in_p_id;
+			int out_p_id;
 
-			parse_resource_uid(token_list[1], &p_type, &p_id);
-			in_port = find_port_id(p_id, get_port_type(p_type));
+			parse_resource_uid(token_list[1], &in_p_type, &in_p_id);
+			in_port = find_port_id(in_p_id,
+					get_port_type(in_p_type));
 
-			parse_resource_uid(token_list[2], &p_type, &p_id);
-			out_port = find_port_id(p_id, get_port_type(p_type));
+			parse_resource_uid(token_list[2],
+					&out_p_type, &out_p_id);
+			out_port = find_port_id(out_p_id,
+					get_port_type(out_p_type));
 
-			if (in_port < 0 || out_port < 0)
+			if (in_port == PORT_RESET && out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' and '%s:%d' %s",
+					"Failed to patch, both of",
+					in_p_type, in_p_id,
+					out_p_type, out_p_id,
+					"not found");
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
 				return 0;
+			} else if (in_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' not found",
+					"Failed to patch, in_port",
+					in_p_type, in_p_id);
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
+				return 0;
+			} else if (out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' not found",
+					"Failed to patch, out_port",
+					out_p_type, out_p_id);
+				RTE_LOG(ERR, APP, "%s\n", err_msg);
+			}
 
 			add_patch(in_port, out_port);
 		}
