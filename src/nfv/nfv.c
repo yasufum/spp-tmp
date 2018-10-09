@@ -290,8 +290,11 @@ do_del(char *res_uid)
 	int port_id = PORT_RESET;
 	char *p_type;
 	int p_id;
+	int res;
 
-	parse_resource_uid(res_uid, &p_type, &p_id);
+	res = parse_resource_uid(res_uid, &p_type, &p_id);
+	if (res < 0)
+		return -1;
 
 	if (!strcmp(p_type, "vhost")) {
 		port_id = find_port_id(p_id, VHOST);
@@ -647,11 +650,13 @@ do_add(char *res_uid)
 {
 	enum port_type type = UNDEF;
 	int port_id = PORT_RESET;
-
 	char *p_type;
 	int p_id;
+	int res;
 
-	parse_resource_uid(res_uid, &p_type, &p_id);
+	res = parse_resource_uid(res_uid, &p_type, &p_id);
+	if (res < 0)
+		return -1;
 
 	if (!strcmp(p_type, "vhost")) {
 		type = VHOST;
@@ -740,8 +745,9 @@ parse_command(char *str)
 		cmd = FORWARD;
 
 	} else if (!strcmp(token_list[0], "add")) {
-		RTE_LOG(DEBUG, APP, "add\n");
-		do_add(token_list[1]);
+		RTE_LOG(DEBUG, APP, "Received add command\n");
+		if (do_add(token_list[1]) < 0)
+			RTE_LOG(ERR, APP, "Failed to do_add()\n");
 
 	} else if (!strcmp(token_list[0], "patch")) {
 		RTE_LOG(DEBUG, APP, "patch\n");
@@ -775,10 +781,12 @@ parse_command(char *str)
 		}
 
 	} else if (!strcmp(token_list[0], "del")) {
-		RTE_LOG(DEBUG, APP, "del\n");
+		RTE_LOG(DEBUG, APP, "Received del command\n");
 
 		cmd = STOP;
-		do_del(token_list[1]);
+
+		if (do_del(token_list[1]) < 0)
+			RTE_LOG(ERR, APP, "Failed to do_del()\n");
 	}
 
 	return ret;
