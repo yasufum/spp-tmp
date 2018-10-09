@@ -344,17 +344,19 @@ do_del(char *res_uid)
 	return 0;
 }
 
+/* Return 0 if invalid */
 static int
-is_valid_port(int port_id)
+is_valid_port(uint16_t port_id)
 {
-	if (port_id < 0 || port_id > RTE_MAX_ETHPORTS)
+	if (port_id > RTE_MAX_ETHPORTS)
 		return 0;
 
 	return port_map[port_id].id != PORT_RESET;
 }
 
+/* Return -1 as an error if given patch is invalid */
 static int
-add_patch(int in_port, int out_port)
+add_patch(uint16_t in_port, uint16_t out_port)
 {
 	if (!is_valid_port(in_port) || !is_valid_port(out_port))
 		return -1;
@@ -711,6 +713,7 @@ do_add(char *res_uid)
 	return 0;
 }
 
+/* Return -1 if exit command is called to terminate the process */
 static int
 parse_command(char *str)
 {
@@ -805,31 +808,36 @@ parse_command(char *str)
 			if (in_port == PORT_RESET && out_port == PORT_RESET) {
 				char err_msg[128];
 				memset(err_msg, '\0', sizeof(err_msg));
-				sprintf(err_msg, "%s '%s:%d' and '%s:%d' %s",
-					"Failed to patch, both of",
+				sprintf(err_msg, "%s '%s:%d' and '%s:%d'",
+					"Patch not found, both of",
 					in_p_type, in_p_id,
-					out_p_type, out_p_id,
-					"not found");
+					out_p_type, out_p_id);
 				RTE_LOG(ERR, APP, "%s\n", err_msg);
-				return 0;
 			} else if (in_port == PORT_RESET) {
 				char err_msg[128];
 				memset(err_msg, '\0', sizeof(err_msg));
-				sprintf(err_msg, "%s '%s:%d' not found",
-					"Failed to patch, in_port",
+				sprintf(err_msg, "%s '%s:%d'",
+					"Patch not found, in_port",
 					in_p_type, in_p_id);
 				RTE_LOG(ERR, APP, "%s\n", err_msg);
-				return 0;
 			} else if (out_port == PORT_RESET) {
 				char err_msg[128];
 				memset(err_msg, '\0', sizeof(err_msg));
-				sprintf(err_msg, "%s '%s:%d' not found",
-					"Failed to patch, out_port",
+				sprintf(err_msg, "%s '%s:%d'",
+					"Patch not found, out_port",
 					out_p_type, out_p_id);
 				RTE_LOG(ERR, APP, "%s\n", err_msg);
 			}
 
-			add_patch(in_port, out_port);
+			if (add_patch(in_port, out_port) == 0)
+				RTE_LOG(INFO, APP,
+					"Patched '%s:%d' and '%s:%d'\n",
+					in_p_type, in_p_id,
+					out_p_type, out_p_id);
+
+			else
+				RTE_LOG(ERR, APP, "Failed to patch\n");
+			ret = 0;
 		}
 
 	} else if (!strcmp(token_list[0], "del")) {
@@ -993,7 +1001,7 @@ main(int argc, char *argv[])
 		RTE_LOG(DEBUG, APP, "Received string: %s\n", str);
 
 		ret = parse_command(str);
-		if (ret < 0)
+		if (ret < 0)  /* terminate process if exit is called */
 			break;
 
 		/*Send the message back to client*/
