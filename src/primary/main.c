@@ -184,36 +184,75 @@ static int
 get_status_json(char *str)
 {
 	int i;
-	char phy_ports[512];
-	char ring_ports[1024];
-	memset(phy_ports, '\0', 512);
-	memset(ring_ports, '\0', 1024);
+	int phyp_buf_size = PRI_BUF_SIZE_PHY;
+	int ringp_buf_size = PRI_BUF_SIZE_RING;
+	char phy_ports[phyp_buf_size];
+	char ring_ports[ringp_buf_size];
+	memset(phy_ports, '\0', phyp_buf_size);
+	memset(ring_ports, '\0', ringp_buf_size);
 
+	int buf_size = 256;
+	char phy_port[buf_size];
 	for (i = 0; i < ports->num_ports; i++) {
-		sprintf(phy_ports, "%s{\"id\": %u, \"eth\": \"%s\", "
+
+		RTE_LOG(DEBUG, APP, "Size of phy_ports str: %d\n",
+				(int)strlen(phy_ports));
+
+		memset(phy_port, '\0', buf_size);
+
+		sprintf(phy_port, "{\"id\": %u, \"eth\": \"%s\", "
 				"\"rx\": %"PRIu64", \"tx\": %"PRIu64", "
 				"\"tx_drop\": %"PRIu64"}",
-				phy_ports,
 				ports->id[i],
 				get_printable_mac_addr(ports->id[i]),
 				ports->port_stats[i].rx,
 				ports->port_stats[i].tx,
 				ports->client_stats[i].tx_drop);
 
+		int cur_buf_size = (int)strlen(phy_ports) +
+			(int)strlen(phy_port);
+		if (cur_buf_size > phyp_buf_size - 1) {
+			RTE_LOG(ERR, APP,
+				"Cannot send all of phy_port stats (%d/%d)\n",
+				i, ports->num_ports);
+			sprintf(phy_ports + strlen(phy_ports) - 1, "%s", "");
+			break;
+		}
+
+		sprintf(phy_ports + strlen(phy_ports), "%s", phy_port);
+
 		if (i < ports->num_ports - 1)
 			sprintf(phy_ports, "%s,", phy_ports);
 	}
 
+	char ring_port[buf_size];
 	for (i = 0; i < num_clients; i++) {
-		sprintf(ring_ports, "%s{\"id\": %u, \"rx\": %"PRIu64", "
+
+		RTE_LOG(DEBUG, APP, "Size of ring_ports str: %d\n",
+				(int)strlen(ring_ports));
+
+		memset(ring_port, '\0', buf_size);
+
+		sprintf(ring_port, "{\"id\": %u, \"rx\": %"PRIu64", "
 			"\"rx_drop\": %"PRIu64", "
 			"\"tx\": %"PRIu64", \"tx_drop\": %"PRIu64"}",
-			ring_ports,
 			i,
 			ports->client_stats[i].rx,
 			ports->client_stats[i].rx_drop,
 			ports->client_stats[i].tx,
 			ports->client_stats[i].tx_drop);
+
+		int cur_buf_size = (int)strlen(ring_ports) +
+			(int)strlen(ring_port);
+		if (cur_buf_size > ringp_buf_size - 1) {
+			RTE_LOG(ERR, APP,
+				"Cannot send all of ring_port stats (%d/%d)\n",
+				i, num_clients);
+			sprintf(ring_ports + strlen(ring_ports) - 1, "%s", "");
+			break;
+		}
+
+		sprintf(ring_ports + strlen(ring_ports), "%s", ring_port);
 
 		if (i < num_clients - 1)
 			sprintf(ring_ports, "%s,", ring_ports);
@@ -221,6 +260,7 @@ get_status_json(char *str)
 
 	RTE_LOG(DEBUG, APP, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
 			phy_ports, ring_ports);
+
 	sprintf(str, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
 			phy_ports, ring_ports);
 

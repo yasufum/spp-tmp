@@ -31,6 +31,10 @@
 #define SOCK_RESET  -1
 #define PORT_RESET  UINT16_MAX
 
+/* Buffer sizes of status message of primary. Total must be equal to MSG_SIZE */
+#define PRI_BUF_SIZE_PHY 512
+#define PRI_BUF_SIZE_RING 1512
+
 /*
  * When doing reads from the NIC or the client queues,
  * use this batch size
