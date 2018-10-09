@@ -373,25 +373,39 @@ add_patch(int in_port, int out_port)
 	return 0;
 }
 
+/*
+ * Create ring PMD with given ring_id.
+ */
 static int
 add_ring_pmd(int ring_id)
 {
 	struct rte_ring *ring;
-	int ring_port_id;
+	int res;
+	char rx_queue_name[32];  /* Prefix and number like as 'eth_ring_0' */
 
-	/* look up ring, based on user's provided id*/
-	ring = rte_ring_lookup(get_rx_queue_name(ring_id));
+	memset(rx_queue_name, '\0', sizeof(rx_queue_name));
+	sprintf(rx_queue_name, "%s", get_rx_queue_name(ring_id));
+
+	/* Look up ring with provided ring_id */
+	ring = rte_ring_lookup(rx_queue_name);
 	if (ring == NULL) {
 		RTE_LOG(ERR, APP,
-			"Cannot get RX ring - is server process running?\n");
+			"Failed to get RX ring %s - is primary running?\n",
+			rx_queue_name);
 		return -1;
 	}
+	RTE_LOG(INFO, APP, "Looked up ring '%s'\n", rx_queue_name);
 
 	/* create ring pmd*/
-	ring_port_id = rte_eth_from_ring(ring);
-	RTE_LOG(DEBUG, APP, "ring port id %d\n", ring_port_id);
+	res = rte_eth_from_ring(ring);
+	if (res < 0) {
+		RTE_LOG(ERR, APP,
+			"Cannot create eth dev with rte_eth_from_ring()\n");
+		return -1;
+	}
+	RTE_LOG(INFO, APP, "Created ring PMD: %d\n", res);
 
-	return ring_port_id;
+	return res;
 }
 
 static int
@@ -649,7 +663,7 @@ static int
 do_add(char *res_uid)
 {
 	enum port_type type = UNDEF;
-	int port_id = PORT_RESET;
+	uint16_t port_id = PORT_RESET;
 	char *p_type;
 	int p_id;
 	int res;
@@ -660,25 +674,27 @@ do_add(char *res_uid)
 
 	if (!strcmp(p_type, "vhost")) {
 		type = VHOST;
-		port_id = add_vhost_pmd(p_id);
+		res = add_vhost_pmd(p_id);
 
 	} else if (!strcmp(p_type, "ring")) {
 		type = RING;
-		port_id = add_ring_pmd(p_id);
+		res = add_ring_pmd(p_id);
 
 	} else if (!strcmp(p_type, "pcap")) {
 		type = PCAP;
-		port_id = add_pcap_pmd(p_id);
+		res = add_pcap_pmd(p_id);
 
 	} else if (!strcmp(p_type, "nullpmd")) {
 		type = NULLPMD;
-		port_id = add_null_pmd(p_id);
+		res = add_null_pmd(p_id);
 	}
 
-	if (port_id < 0)
+	if (res < 0)
 		return -1;
+	else
+		port_id = (uint16_t) res;
 
-	port_map[port_id].id = p_id;
+	port_map[port_id].id = (uint16_t) p_id;
 	port_map[port_id].port_type = type;
 	port_map[port_id].stats = &ports->client_stats[p_id];
 
