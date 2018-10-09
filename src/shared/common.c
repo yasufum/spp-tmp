@@ -228,6 +228,13 @@ parse_resource_uid(char *str, char **port_type, int *port_id)
 	char delim[] = ":";
 	char *endp;
 
+	RTE_LOG(DEBUG, APP, "Parsing resource UID: '%s\n'", str);
+	if (strstr(str, delim) == NULL) {
+		RTE_LOG(ERR, APP, "Invalid resource UID: '%s'\n", str);
+		return -1;
+	}
+	RTE_LOG(DEBUG, APP, "Delimiter %s is included\n", delim);
+
 	*port_type = strtok(str, delim);
 
 	token = strtok(NULL, delim);
