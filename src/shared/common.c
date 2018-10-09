@@ -217,6 +217,30 @@ parse_server(char **server_ip, int *server_port, char *server_addr)
 	return 0;
 }
 
+/**
+ * Retieve port type and ID from resource UID. For example, resource UID
+ * 'ring:0' is  parsed to retrieve port tyep 'ring' and ID '0'.
+ */
+int
+parse_resource_uid(char *str, char **port_type, int *port_id)
+{
+	char *token;
+	char delim[] = ":";
+	char *endp;
+
+	*port_type = strtok(str, delim);
+
+	token = strtok(NULL, delim);
+	*port_id = strtol(token, &endp, 10);
+
+	if (*endp) {
+		RTE_LOG(ERR, APP, "Bad integer value: %s\n", str);
+		return -1;
+	}
+
+	return 0;
+}
+
 int
 spp_atoi(const char *str, int *val)
 {

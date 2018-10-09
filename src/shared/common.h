@@ -196,6 +196,7 @@ void get_sec_stats_json(char *str, const char *running_stat,
 		struct port *ports_fwd_array,
 		struct port_map *port_map);
 
+int parse_resource_uid(char *str, char **port_type, int *port_id);
 int spp_atoi(const char *str, int *val);
 
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
