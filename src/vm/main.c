@@ -205,11 +205,15 @@ forward_array_remove(int port_id)
 	}
 }
 
-static int
+/*
+ * Return actual port ID which is assigned by system internally, or PORT_RESET
+ * if port is not found.
+ */
+static uint16_t
 find_port_id(int id, enum port_type type)
 {
-	int port_id = PORT_RESET;
-	unsigned int i;
+	uint16_t port_id = PORT_RESET;
+	uint16_t i;
 
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (port_map[i].port_type != type)
@@ -227,21 +231,24 @@ find_port_id(int id, enum port_type type)
 static int
 do_del(char *res_uid)
 {
-	int port_id = PORT_RESET;
+	uint16_t port_id = PORT_RESET;
 	char *p_type;
 	int p_id;
 	int res;
 
 	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0)
+	if (res < 0) {
+		RTE_LOG(ERR, APP,
+			"Failed to parse resource UID\n");
 		return -1;
+	}
 
 	if (!strcmp(p_type, "ring")) {
 		char name[RTE_ETH_NAME_MAX_LEN];
 
 		RTE_LOG(DEBUG, APP, "Del ring id %d\n", p_id);
 		port_id = find_port_id(p_id, RING);
-		if (port_id < 0)
+		if (port_id == PORT_RESET)
 			return -1;
 
 		rte_eth_dev_detach(port_id, name);
