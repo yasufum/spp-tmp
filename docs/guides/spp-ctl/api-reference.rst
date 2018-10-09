@@ -125,8 +125,114 @@ Request example
 Response
 ^^^^^^^^
 
-There is no data at the moment. The statistical information will be returned
-when ``spp_primary`` implements it.
+.. _table_spp_ctl_primary_status:
+
+.. table:: Response params of primary status.
+
+    +------------+-------+-------------------------------------------+
+    | Name       | Type  | Description                               |
+    |            |       |                                           |
+    +============+=======+===========================================+
+    | phy_ports  | array | An array of statistics of physical ports. |
+    +------------+-------+-------------------------------------------+
+    | ring_ports | array | An array of statistics of ring ports.     |
+    +------------+-------+-------------------------------------------+
+
+Physical port object.
+
+.. _table_spp_ctl_primary_status_phy:
+
+.. table:: Attributes of physical port of primary status.
+
+    +---------+---------+-----------------------------------------------------+
+    | Name    | Type    | Description                                         |
+    |         |         |                                                     |
+    +=========+=========+=====================================================+
+    | id      | integer | Port ID of the physical port.                       |
+    +---------+---------+-----------------------------------------------------+
+    | rx      | integer | The total number of received packets.               |
+    +---------+---------+-----------------------------------------------------+
+    | tx      | integer | The total number of transferred packets.            |
+    +---------+---------+-----------------------------------------------------+
+    | tx_drop | integer | The total number of dropped packets of transferred. |
+    +---------+---------+-----------------------------------------------------+
+    | eth     | string  | MAC address of the port.                            |
+    +---------+---------+-----------------------------------------------------+
+
+Ring port object.
+
+.. _table_spp_ctl_primary_status_ring:
+
+.. table:: Attributes of ring port of primary status.
+
+    +---------+---------+-----------------------------------------------------+
+    | Name    | Type    | Description                                         |
+    |         |         |                                                     |
+    +=========+=========+=====================================================+
+    | id      | integer | Port ID of the ring port.                           |
+    +---------+---------+-----------------------------------------------------+
+    | rx      | integer | The total number of received packets.               |
+    +---------+---------+-----------------------------------------------------+
+    | rx_drop | integer | The total number of dropped packets of received.    |
+    +---------+---------+-----------------------------------------------------+
+    | tx      | integer | The total number of transferred packets.            |
+    +---------+---------+-----------------------------------------------------+
+    | tx_drop | integer | The total number of dropped packets of transferred. |
+    +---------+---------+-----------------------------------------------------+
+
+Response example
+^^^^^^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+      "phy_ports": [
+        {
+          "id": 0,
+          "rx": 0,
+          "tx": 0,
+          "tx_drop": 0,
+          "eth": "56:48:4f:53:54:00"
+        },
+        {
+          "id": 1,
+          "rx": 0,
+          "tx": 0,
+          "tx_drop": 0,
+          "eth": "56:48:4f:53:54:01"
+        }
+      ],
+      "ring_ports": [
+        {
+          "id": 0,
+          "rx": 0,
+          "rx_drop": 0,
+          "tx": 0,
+          "tx_drop": 0
+        },
+        {
+          "id": 1,
+          "rx": 0,
+          "rx_drop": 0,
+          "tx": 0,
+          "tx_drop": 0
+        },
+        {
+          "id": 2,
+          "rx": 0,
+          "rx_drop": 0,
+          "tx": 0,
+          "tx_drop": 0
+        },
+        {
+          "id": 3,
+          "rx": 0,
+          "rx_drop": 0,
+          "tx": 0,
+          "tx_drop": 0
+        }
+      ]
+    }
 
 
 DELETE /v1/primary/status
