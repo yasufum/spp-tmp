@@ -373,7 +373,7 @@ static int
 do_add(char *res_uid)
 {
 	enum port_type type = UNDEF;
-	int port_id = PORT_RESET;
+	uint16_t port_id = PORT_RESET;
 	char *p_type;
 	int p_id;
 	int res;
@@ -384,11 +384,13 @@ do_add(char *res_uid)
 
 	if (!strcmp(p_type, "ring")) {
 		type = RING;
-		port_id = add_ring_pmd(p_id);
+		res = add_ring_pmd(p_id);
 	}
 
-	if (port_id < 0)
+	if (res < 0)
 		return -1;
+	else
+		port_id = (uint16_t) res;
 
 	port_map[port_id].id = p_id;
 	port_map[port_id].port_type = type;
