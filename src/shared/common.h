@@ -192,7 +192,19 @@ int parse_portmask(struct port_info *ports, uint16_t max_ports,
 int parse_num_clients(uint16_t *num_clients, const char *clients);
 int parse_server(char **server_ip, int *server_port, char *server_addr);
 
-void get_sec_stats_json(char *str, const char *running_stat,
+/* Get status of spp_nfv or spp_vm as JSON format. */
+void get_sec_stats_json(char *str, uint16_t client_id,
+		const char *running_stat,
+		struct port *ports_fwd_array,
+		struct port_map *port_map);
+
+/* Append port info to sec status, called from get_sec_stats_json(). */
+int append_port_info_json(char *str,
+		struct port *ports_fwd_array,
+		struct port_map *port_map);
+
+/* Append patch info to sec status, called from get_sec_stats_json(). */
+int append_patch_info_json(char *str,
 		struct port *ports_fwd_array,
 		struct port_map *port_map);
 

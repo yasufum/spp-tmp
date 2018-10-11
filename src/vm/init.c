@@ -83,7 +83,7 @@ init(int argc, char *argv[])
 			rte_socket_id(), NO_FLAGS);
 		if (mz == NULL)
 			rte_exit(EXIT_FAILURE,
-				"Cannot reserve memory zone for port information\n");
+				"Cannot reserve memzone for port info\n");
 		memset(mz->addr, 0, sizeof(*ports));
 	}
 	ports = mz->addr;

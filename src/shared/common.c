@@ -162,7 +162,7 @@ parse_portmask(struct port_info *ports, uint16_t max_ports,
 		if (pm & 0x01) { /* bit is set in mask, use port */
 			if (count >= max_ports)
 				RTE_LOG(WARNING, APP,
-					"requested port %u not present - ignoring\n",
+					"port %u not present - ignoring\n",
 					count);
 			else
 				ports->id[ports->num_ports++] = count;
@@ -266,25 +266,114 @@ spp_atoi(const char *str, int *val)
  *
  *   {
  *     "status": "running",
- *     "ports": [
+ *     "ports": ["phy:0", "phy:1", "ring:0", "vhost:0"],
+ *     "patches": [
  *       {"src":"phy:0","dst": "ring:0"},
- *       {"src":"ring:0","dst": "null"}
+ *       {"src":"ring:0","dst": "vhost:0"}
  *     ]
  *   }
  */
 void
-get_sec_stats_json(char *str, const char *running_stat,
+get_sec_stats_json(char *str, uint16_t client_id,
+		const char *running_stat,
+		struct port *ports_fwd_array,
+		struct port_map *port_map)
+{
+	sprintf(str, "{\"client-id\":%d,", client_id);
+
+	sprintf(str + strlen(str), "\"status\":");
+	sprintf(str + strlen(str), "\"%s\",", running_stat);
+
+	append_port_info_json(str, ports_fwd_array, port_map);
+	sprintf(str + strlen(str), ",");
+
+	append_patch_info_json(str, ports_fwd_array, port_map);
+	sprintf(str + strlen(str), "}");
+
+	// make sure to be terminated with null character
+	sprintf(str + strlen(str), "%c", '\0');
+}
+
+/*
+ * Append patch info to sec status. It is called from get_sec_stats_json()
+ * to add a JSON formatted patch info to given 'str'. Here is an example.
+ *
+ *     "ports": ["phy:0", "phy:1", "ring:0", "vhost:0"]
+ */
+int
+append_port_info_json(char *str,
 		struct port *ports_fwd_array,
 		struct port_map *port_map)
 {
 	unsigned int i;
-	unsigned int has_ports = 0;  // for checking having port at last
+	unsigned int has_port = 0;  // for checking having port at last
 
-	sprintf(str, "%s",  "{\"status\":");
-	sprintf(str + strlen(str), "\"%s\",", running_stat);
 	sprintf(str + strlen(str), "\"ports\":[");
-
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+			continue;
+
+		has_port = 1;
+		switch (port_map[i].port_type) {
+		case PHY:
+			sprintf(str + strlen(str), "\"phy:%u\",",
+					port_map[i].id);
+			break;
+		case RING:
+			sprintf(str + strlen(str), "\"ring:%u\",",
+				port_map[i].id);
+			break;
+		case VHOST:
+			sprintf(str + strlen(str), "\"vhost:%u\",",
+				port_map[i].id);
+			break;
+		case PCAP:
+			sprintf(str + strlen(str), "\"pcap:%u\",",
+					port_map[i].id);
+			break;
+		case NULLPMD:
+			sprintf(str + strlen(str), "\"nullpmd:%u\",",
+					port_map[i].id);
+			break;
+		case UNDEF:
+			/* TODO(yasufum) Need to remove print for undefined ? */
+			sprintf(str + strlen(str), "\"udf\",");
+			break;
+		}
+	}
+
+	// Check if it has at least one port to remove ",".
+	if (has_port == 0) {
+		sprintf(str + strlen(str), "]");
+	} else {  // Remove last ','
+		sprintf(str + strlen(str) - 1, "]");
+	}
+
+	return 0;
+}
+
+/*
+ * Append patch info to sec status. It is called from get_sec_stats_json()
+ * to add a JSON formatted patch info to given 'str'. Here is an example.
+ *
+ *     "patches": [
+ *       {"src":"phy:0","dst": "ring:0"},
+ *       {"src":"ring:0","dst": "vhost:0"}
+ *      ]
+ */
+int
+append_patch_info_json(char *str,
+		struct port *ports_fwd_array,
+		struct port_map *port_map)
+{
+	unsigned int i;
+	unsigned int has_patch = 0;  // for checking having patch at last
+
+	char patch_str[128];
+	sprintf(str + strlen(str), "\"patches\":[");
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+
 		if (ports_fwd_array[i].in_port_id == PORT_RESET)
 			continue;
 
@@ -292,104 +381,116 @@ get_sec_stats_json(char *str, const char *running_stat,
 		RTE_LOG(INFO, APP, "Status %d\n",
 			ports_fwd_array[i].in_port_id);
 
-		sprintf(str + strlen(str), "{\"src\":");
+		memset(patch_str, '\0', sizeof(patch_str));
+
+		sprintf(patch_str, "{\"src\":");
 
 		switch (port_map[i].port_type) {
 		case PHY:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: PHY\n");
-			sprintf(str + strlen(str), "\"phy:%u\",",
+			sprintf(patch_str + strlen(patch_str),
+					"\"phy:%u\",",
 					port_map[i].id);
 			break;
 		case RING:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: RING\n");
-			sprintf(str + strlen(str), "\"ring:%u\",",
-				port_map[i].id);
+			sprintf(patch_str + strlen(patch_str),
+					"\"ring:%u\",",
+					port_map[i].id);
 			break;
 		case VHOST:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: VHOST\n");
-			sprintf(str + strlen(str), "{\"vhost:%u\",",
-				port_map[i].id);
+			sprintf(patch_str + strlen(patch_str),
+					"\"vhost:%u\",",
+					port_map[i].id);
 			break;
 		case PCAP:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: PCAP\n");
-			sprintf(str + strlen(str), "\"pcap:%u\",",
+			sprintf(patch_str + strlen(patch_str),
+					"\"pcap:%u\",",
 					port_map[i].id);
 			break;
 		case NULLPMD:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: NULLPMD\n");
-			sprintf(str + strlen(str), "\"nullpmd:%u\",",
+			sprintf(patch_str + strlen(patch_str),
+					"\"nullpmd:%u\",",
 					port_map[i].id);
 			break;
 		case UNDEF:
-			has_ports = 1;
 			RTE_LOG(INFO, APP, "Type: UDF\n");
 			/* TODO(yasufum) Need to remove print for undefined ? */
-			sprintf(str + strlen(str), "\"udf\",");
+			sprintf(patch_str + strlen(patch_str),
+					"\"udf\",");
 			break;
 		}
 
-		sprintf(str + strlen(str), "\"dst\":");
+		sprintf(patch_str + strlen(patch_str), "\"dst\":");
 
 		RTE_LOG(INFO, APP, "Out Port ID %d\n",
 				ports_fwd_array[i].out_port_id);
+
 		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
-			sprintf(str + strlen(str), "%s", "\"null\"");
+			//sprintf(patch_str + strlen(patch_str), "%s", "\"\"");
+			continue;
 		} else {
+			has_patch = 1;
 			unsigned int j = ports_fwd_array[i].out_port_id;
 			switch (port_map[j].port_type) {
 			case PHY:
 				RTE_LOG(INFO, APP, "Type: PHY\n");
-				sprintf(str + strlen(str), "\"phy:%u\"",
+				sprintf(patch_str + strlen(patch_str),
+						"\"phy:%u\"",
 						port_map[j].id);
 				break;
 			case RING:
 				RTE_LOG(INFO, APP, "Type: RING\n");
-				sprintf(str + strlen(str), "\"ring:%u\"",
-					port_map[j].id);
+				sprintf(patch_str + strlen(patch_str),
+						"\"ring:%u\"",
+						port_map[j].id);
 				break;
 			case VHOST:
 				RTE_LOG(INFO, APP, "Type: VHOST\n");
-				sprintf(str + strlen(str), "\"vhost:%u\"",
+				sprintf(patch_str + strlen(patch_str),
+						"\"vhost:%u\"",
 						port_map[j].id);
 				break;
 			case PCAP:
 				RTE_LOG(INFO, APP, "Type: PCAP\n");
-				sprintf(str + strlen(str), "\"pcap:%u\"",
+				sprintf(patch_str + strlen(patch_str),
+						"\"pcap:%u\"",
 						port_map[j].id);
 				break;
 			case NULLPMD:
 				RTE_LOG(INFO, APP, "Type: NULLPMD\n");
-				sprintf(str + strlen(str), "\"nullpmd:%u\"",
+				sprintf(patch_str + strlen(patch_str),
+						"\"nullpmd:%u\"",
 						port_map[j].id);
 				break;
 			case UNDEF:
 				RTE_LOG(INFO, APP, "Type: UDF\n");
-				/**
+				/*
 				 * TODO(yasufum) Need to remove print for
 				 * undefined ?
 				 */
-				sprintf(str + strlen(str), "\"udf\"");
+				sprintf(patch_str + strlen(patch_str),
+						"\"udf\"");
 				break;
 			}
 		}
 
-		sprintf(str + strlen(str), "},");
+		sprintf(patch_str + strlen(patch_str), "},");
+
+		if (has_patch != 0)
+			sprintf(str + strlen(str), "%s", patch_str);
 	}
 
-	// Check the number of ports to remove "," if it has one or more ports.
-	if (has_ports == 0) {
+
+	// Check if it has at least one patch to remove ",".
+	if (has_patch == 0) {
 		sprintf(str + strlen(str), "]");
 	} else {  // Remove last ','
 		sprintf(str + strlen(str) - 1, "]");
 	}
 
-	sprintf(str + strlen(str), "}");
-
-	// make sure to be terminated with null character
-	sprintf(str + strlen(str), "%c", '\0');
+	return 0;
 }

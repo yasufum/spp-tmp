@@ -399,11 +399,11 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, APP, "status\n");
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
-			get_sec_stats_json(str, "running", ports_fwd_array,
-					port_map);
+			get_sec_stats_json(str, client_id, "running",
+					ports_fwd_array, port_map);
 		else
-			get_sec_stats_json(str, "idling", ports_fwd_array,
-					port_map);
+			get_sec_stats_json(str, client_id, "idling",
+					ports_fwd_array, port_map);
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
