@@ -325,7 +325,6 @@ class V1NFVHandler(BaseHandler):
         # that it has no dst port.
         #   {"status":"idling","ports":[{"src":"phy:0","dst":"null"},...
 
-        # TODO(yasufum) modify after nfv and vm is updated for new data definition.
         try:
             nfv = json.loads(data)
         except json.JSONDecodeError as e:
@@ -398,10 +397,12 @@ class V1PrimaryHandler(BaseHandler):
         return proc
 
     def convert_status(self, data):
-        # no data returned at the moment.
-        # some data will be returned when the primary becomes to
-        # return statistical information.
-        return {}
+        stat = {}
+        try:
+            stat = json.loads(data)
+        except json.JSONDecodeError as e:
+            print("%s" % e)
+        return stat
 
     def get_status(self):
         proc = self._get_proc()
