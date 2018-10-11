@@ -194,27 +194,30 @@ class Shell(cmd.Cmd, object):
             - phy:1
 
         The format of the received message is JSON and ended with
-        series of null character "\x00". The value of "ports" attribute
-        is a set of combinations of patches. If a port is not patched,
-        the "dst" is set to "null".
+        series of null character "\x00".
 
-          {"status":"idling","ports":[{"src":"phy:0", "dst": ...,]}'\x00\x00..
+          {"client-id":1,...,"patches":[{"src":"phy:0"...},...]}'\x00..
         """
 
-        msg = msg.replace("\x00", "")  # clean sec's msg
+        msg = msg.replace("\x00", "")  # Clean received msg
 
         try:
             sec_attr = json.loads(msg)
             print('- status: %s' % sec_attr['status'])
             print('- ports:')
             for port in sec_attr['ports']:
-                if port['dst'] == 'null':
-                    print('  - %s' % port['src'])
+                dst = None
+                for patch in sec_attr['patches']:
+                    if patch['src'] == port:
+                        dst = patch['dst']
+
+                if dst is None:
+                    print('  - %s' % port)
                 else:
-                    print('  - %s -> %s' % (port['src'], port['dst']))
+                    print('  - %s -> %s' % (port, dst))
         except ValueError as err:
             print('Invalid format: {0}.'.format(err))
-            print("  '%s'" % msg)
+            print("'%s'" % msg)
 
     def command_primary(self, command):
         """Send command to primary process"""
