@@ -18,7 +18,7 @@ from . import topo
 
 
 class Shell(cmd.Cmd, object):
-    """SPP command prompt"""
+    """SPP command prompt."""
 
     hist_file = '.spp_history'
 
@@ -51,7 +51,7 @@ class Shell(cmd.Cmd, object):
         readline.write_history_file(hist_file)
 
     def default(self, line):
-        """Define defualt behaviour
+        """Define defualt behaviour.
 
         If user input is commend styled, controller simply echo
         as a comment.
@@ -64,7 +64,7 @@ class Shell(cmd.Cmd, object):
             super(Shell, self).default(line)
 
     def emptyline(self):
-        """Do nothin for empty input
+        """Do nothin for empty input.
 
         It override Cmd.emptyline() which runs previous input as default
         to do nothing.
@@ -91,7 +91,7 @@ class Shell(cmd.Cmd, object):
                     self.hist_file)
 
     def close_all_secondary(self):
-        """Terminate all secondary processes"""
+        """Terminate all secondary processes."""
 
         tmp_list = []
         for i in spp_common.SECONDARY_LIST:
@@ -101,10 +101,14 @@ class Shell(cmd.Cmd, object):
         spp_common.SECONDARY_COUNT = 0
 
     def get_status(self):
-        """Return status of primary and secondary processes
+        """Return the status of SPP processes.
 
-        It is called from do_status() method and return primary status
-        and a list of secondary processes as status.
+        Show the number of each of SPP processes running on.
+
+        spp > status
+        Soft Patch Panel Status :
+        primary: 1
+        secondary count: 2
         """
 
         secondary = []
@@ -118,7 +122,7 @@ class Shell(cmd.Cmd, object):
         return stat
 
     def print_status(self):
-        """Display information about connected clients"""
+        """Display information about connected clients."""
 
         print("Soft Patch Panel Status :")
         print("primary: %d" % spp_common.PRIMARY)  # it is 1 if PRIMA == True
@@ -357,7 +361,7 @@ class Shell(cmd.Cmd, object):
         self.response(self.CMD_OK, json.dumps(stat))
 
     def do_pri(self, command):
-        """Send command to primary process
+        """Send a command to primary process.
 
         Spp primary takes sub commands.
 
@@ -392,14 +396,20 @@ class Shell(cmd.Cmd, object):
         return completions
 
     def do_sec(self, arg):
-        """Send command to secondary process
+        """Send a command to secondary process specified with ID.
 
         SPP secondary process is specified with secondary ID and takes
         sub commands.
 
-        spp > sec 1;status
-        spp > sec 1;add ring 0
-        spp > sec 1;patch 0 2
+        spp > sec 1; status
+        spp > sec 1; add ring:0
+        spp > sec 1; patch phy:0 ring:0
+
+        You can refer all of sub commands by pressing TAB after
+        'sec 1;'.
+
+        spp > sec 1;  # press TAB
+        add     del     exit    forward patch   status  stop
         """
 
         # remove unwanted spaces to avoid invalid command error
@@ -470,14 +480,13 @@ class Shell(cmd.Cmd, object):
             print(e)
 
     def do_record(self, fname):
-        """Save commands to a log file
+        """Save commands as a recipe file.
 
-        Save command history to a log file for loading from playback
-        command later as a config file.
-        Config is a series of SPP command and you can also create it
-        from scratch without playback command.
+        Save all of commands to a specified file as a recipe. This file
+        is reloaded with 'playback' command later. You can also edit
+        the recipe by hand to customize.
 
-        spp > record path/to/file
+        spp > record path/to/recipe_file
         """
 
         if fname == '':
@@ -490,12 +499,12 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_playback(self, fname):
-        """Load a config file to reproduce network configuration
+        """Setup a network configuration from recipe file.
 
-        Config is a series of SPP command and you can also create it
-        from scratch without playback command.
+        Recipe is a file describing a series of SPP command to setup
+        a network configuration.
 
-        spp > playback path/to/config
+        spp > playback path/to/recipe_file
         """
 
         if fname == '':
@@ -520,7 +529,7 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_pwd(self, args):
-        """Show corrent directory
+        """Show corrent directory.
 
         It behaves as UNIX's pwd command.
 
@@ -530,7 +539,7 @@ class Shell(cmd.Cmd, object):
         print(os.getcwd())
 
     def do_ls(self, args):
-        """Show a list of specified directory
+        """Show a list of specified directory.
 
         It behaves as UNIX's ls command.
 
@@ -547,7 +556,7 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_cd(self, args):
-        """Change current directory
+        """Change current directory.
 
         spp > cd path/to/dir
         """
@@ -562,9 +571,10 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line, 'directory')
 
     def do_mkdir(self, args):
-        """Create a new directory
+        """Create a new directory.
 
-        It behaves as 'mkdir -p'.
+        It behaves as 'mkdir -p' which means that you can create sub
+        directories at once.
 
         spp > mkdir path/to/dir
         """
@@ -576,9 +586,10 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_bye(self, arg):
-        """Terminate SPP processes and controller
+        """Terminate SPP processes and controller.
 
-        It also terminates logging if you activate recording.
+        There are three usages for terminating processes.
+        It terminates logging if you activated recording.
 
         (1) Terminate secondary processes
         spp > bye sec
@@ -627,7 +638,10 @@ class Shell(cmd.Cmd, object):
             print("No such a directory.")
 
     def do_redo(self, args):
-        """Execute command of index of history."""
+        """Execute command of index of history.
+
+        spp > redo 5  # exec 5th command in the history
+        """
 
         idx = int(args)
         cmdline = None
@@ -651,12 +665,16 @@ class Shell(cmd.Cmd, object):
                     self.hist_file)
 
     def do_history(self, arg):
-        """Show history.
+        """Show command history.
 
         spp > history
           1  ls
           2  cat file.txt
           ...
+
+        Command history is recorded in a file named '.spp_history'.
+        It does not add some command which are no meaning for history.
+        'bye', 'exit', 'history', 'redo'
         """
 
         # flush all of history to the hist_file.
@@ -688,7 +706,7 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_less(self, arg):
-        """View contents of a file
+        """View contents of a file.
 
         spp > less file
         """
@@ -702,11 +720,12 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_exit(self, args):
-        """Terminate SPP controller
+        """Terminate SPP controller process.
 
-        It is an alias for bye command and same as bye command.
+        It is an alias of bye command to terminate controller.
 
         spp > exit
+        Thank you for using Soft Patch Panel
         """
 
         self.close()
@@ -714,29 +733,45 @@ class Shell(cmd.Cmd, object):
         return True
 
     def do_inspect(self, args):
+        """Print attributes of Shell for debugging.
+
+        This command is intended to be used by developers to show the
+        inside of the object of Shell class.
+
+        spp > inspect
+        {'cmdqueue': [],
+         'completekey': 'tab',
+         'completion_matches': ['inspect'],
+         'lastcmd': 'inspect',
+         'old_completer': None,
+         'stdin': <open file '<stdin>', mode 'r' at 0x7fe96bddf0c0>,
+         'stdout': <open file '<stdout>', mode 'w' at 0x7fe96bddf150>}
+
+        """
+
         from pprint import pprint
         if args == '':
             pprint(vars(self))
 
     def terms_topo_subgraph(self):
-        """Define terms of topo_subgraph command"""
+        """Define terms of topo_subgraph command."""
 
         return ['add', 'del']
 
     def do_topo_subgraph(self, args):
-        """Subgarph manager for topo
+        """Edit subgarph for topo command.
 
-        Subgraph is a group of object defined in dot language.
-        For topo command, it is used for grouping resources of each
-        of VM or container to topology be more understandable.
+        Subgraph is a group of object defined in dot language. For topo
+        command, it is used for grouping resources of each of VM or
+        container to topology be more understandable.
 
-        Add subgraph labeled 'vm1'.
+        (1) Add subgraph labeled 'vm1'.
         spp > topo_subgraph add vm1 vhost:1;vhost:2
 
-        Delete subgraph 'vm1'.
+        (2) Delete subgraph 'vm1'.
         spp > topo_subgraph del vm1
 
-        To show subgraphs, run topo_subgraph without args.
+        (3) Show subgraphs by running topo_subgraph without args.
         spp > topo_subgraph
         label: vm1	subgraph: "vhost:1;vhost:2"
         """
@@ -801,6 +836,15 @@ class Shell(cmd.Cmd, object):
             pass
 
     def do_topo_resize(self, args):
+        """Change the size of the image of topo command.
+
+        You can specify the size by percentage or ratio.
+
+        spp > topo resize 60%  # percentage
+        spp > topo resize 0.6  # ratio
+
+        """
+
         if args == '':
             print(self.topo_size)
         else:
@@ -816,7 +860,7 @@ class Shell(cmd.Cmd, object):
                 print(self.topo_size)
 
     def do_topo(self, args):
-        """Output network topology
+        """Output network topology.
 
         Support four types of output.
         * terminal (but very few terminals supporting to display images)
@@ -900,7 +944,7 @@ class Shell(cmd.Cmd, object):
             pass
 
     def do_load_cmd(self, args):
-        """Load command plugin
+        """Load command plugin.
 
         Path of plugin file is 'spp/src/controller/command'.
 
