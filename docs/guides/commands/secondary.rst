@@ -29,7 +29,7 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Secondary Commands
-======================
+==================
 
 Each of secondary processes is managed with ``sec`` command.
 It is for sending sub commands to secondary with specific ID called
@@ -44,48 +44,70 @@ owned by secondary process.
 
     spp > sec [SEC_ID];[SUB_CMD]
 
+All of Sub commands are referred with ``help`` command.
+
+.. code-block:: console
+
+    spp > help sec
+
+    Send a command to secondary process specified with ID.
+
+        SPP secondary process is specified with secondary ID and takes
+        sub commands.
+
+        spp > sec 1; status
+        spp > sec 1; add ring:0
+        spp > sec 1; patch phy:0 ring:0
+
+        You can refer all of sub commands by pressing TAB after
+        'sec 1;'.
+
+        spp > sec 1;  # press TAB
+        add     del     exit    forward patch   status  stop
 
 status
 ------
 
-Show running status and resources.
+Show running status and ports assigned to the process. If a port is
+patched to other port, source and destination ports are shown, or only
+source if it is not patched.
 
 .. code-block:: console
 
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0 -> ring:0
+      - phy:1
 
 
 add
 ---
 
-Add a PMD to the secondary with resource ID.
+Add a port to the secondary with resource ID.
 
-Adding ring 0 by
-
-.. code-block:: console
-
-    spp> sec 1;add ring 0
-
-Or adding vhost 0 by
+For example, adding ``ring:0`` by
 
 .. code-block:: console
 
-    spp> sec 1;add vhost 0
+    spp> sec 1; add ring:0
+
+Or adding ``vhost:0`` by
+
+.. code-block:: console
+
+    spp> sec 1; add vhost:0
 
 
 patch
 ------
 
 Create a path between two ports, source and destination ports.
-This command just creates path and does not start forwarding.
+This command just creates a path and does not start forwarding.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 ring:0
+    spp > sec 1; patch phy:0 ring:0
 
 
 forward
@@ -95,18 +117,18 @@ Start forwarding.
 
 .. code-block:: console
 
-    spp > sec 1;forward
+    spp > sec 1; forward
 
 Running status is changed from ``idling`` to ``running`` by
 executing it.
 
 .. code-block:: console
 
-    spp > sec 1;status
-    status: running
-    ports:
-      - 'phy:0'
-      - 'phy:1'
+    spp > sec 1; status
+    - status: running
+    - ports:
+      - phy:0
+      - phy:1
 
 
 stop
@@ -116,36 +138,36 @@ Stop forwarding.
 
 .. code-block:: console
 
-    spp > sec 1;stop
+    spp > sec 1; stop
 
 Running status is changed from ``running`` to ``idling`` by
 executing it.
 
 .. code-block:: console
 
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
 
 
 del
 ---
 
-Delete PMD added by ``add`` subcommand from the secondary.
+Delete a port from the secondary.
 
 .. code-block:: console
 
-    spp> sec 1;del ring 0
+    spp> sec 1; del ring:0
 
 
 exit
 ----
 
-Terminate the secondary. For terminating all secondaries, use ``bye sec``
-command instead of it.
+Terminate the secondary. For terminating all secondaries,
+use ``bye sec`` command instead of it.
 
 .. code-block:: console
 
-    spp> sec 1;exit
+    spp> sec 1; exit
