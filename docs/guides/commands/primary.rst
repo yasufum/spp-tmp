@@ -38,29 +38,35 @@ Primary process is managed with ``pri`` command.
 status
 ------
 
-Show status of primary.
+Show forwarding statistics of each of ports.
 
 .. code-block:: console
 
-    spp > pri status
-    recv:('127.0.0.1', 50524):{Server Running}
-
+    spp > pri; status
+    Physical Ports:
+      ID          rx          tx     tx_drop  mac_addr
+       0    78932932    78932931           1  56:48:4f:53:54:00
+    Ring Ports:
+      ID          rx          tx     rx_drop     tx_drop
+       0       89283       89283           0           0
+       1        9208        9203           0           5
+       ...
 
 exit
 ----
 
-Terminate primary.
+Terminate primary process.
 
 .. code-block:: console
 
-    spp > pri exit
-    closing:('127.0.0.1', 50524)
+    spp > pri; exit
 
 .. note::
 
-    You should not use this command because terminating primary before
-    secondaries may cause an error.
-    You shold use ``bye`` command instead of ``pri exit``.
+    You should not use this command if one or more secondary processes
+    are still running because terminating primary before secondaries may
+    cause an error. You shold use ``bye`` command instead of
+    ``pri; exit``.
 
 clear
 -----
@@ -69,5 +75,4 @@ Clear statistics.
 
 .. code-block:: console
 
-    spp > pri clear
-    recv:('127.0.0.1', 50524):{clear stats}
+    spp > pri; clear
