@@ -145,12 +145,12 @@ class NfvProc(SppProc):
         return "status"
 
     @exec_command
-    def port_add(self, if_type, if_num):
-        return "add {if_type} {if_num}".format(**locals())
+    def port_add(self, port):
+        return "add {port}".format(**locals())
 
     @exec_command
-    def port_del(self, if_type, if_num):
-        return "del {if_type} {if_num}".format(**locals())
+    def port_del(self, port):
+        return "del {port}".format(**locals())
 
     @exec_command
     def patch_add(self, src_port, dst_port):
