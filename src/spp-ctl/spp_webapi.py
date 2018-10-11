@@ -321,33 +321,15 @@ class V1NFVHandler(BaseHandler):
     def convert_nfv_info(self, sec_id, data):
         nfv = {}
 
-        # spp_nfv returns status info in two lines. First line is
-        # status of running or idling, and second is patch info.
-        # 'null' means that it has no dst port.
-        #   "status: idling\nports: 'phy:0-phy:1,phy:1-null'\x00\x00.."
-        entries = data.split('\n')
-        if len(entries) != 2:
-            return {}
+        # spp_nfv returns status info in JSON format. 'null' means
+        # that it has no dst port.
+        #   {"status":"idling","ports":[{"src":"phy:0","dst":"null"},...
 
-        nfv['client_id'] = int(sec_id)
-        nfv['status'] = entries[0].split()[1]
-
-        patch_list = entries[1].split()[1].replace("'", '')
-
-        ports = []
-        nfv['patches'] = []
-
-        for port_cmb in patch_list.split(','):
-            p_src, p_dst = port_cmb.split('-')
-            if p_src != 'null' and p_dst != 'null':
-                nfv['patches'].append({'src': p_src, 'dst': p_dst})
-
-            for port in [p_src, p_dst]:
-                if port != 'null':
-                    ports.append(port)
-
-        nfv['ports'] = list(set(ports))
-
+        # TODO(yasufum) modify after nfv and vm is updated for new data definition.
+        try:
+            nfv = json.loads(data)
+        except json.JSONDecodeError as e:
+            print("%s" % e)
         return nfv
 
     def nfv_get(self, proc):
@@ -376,11 +358,10 @@ class V1NFVHandler(BaseHandler):
     def nfv_port(self, proc, body):
         self._validate_nfv_port(body)
 
-        if_type, if_num = body['port'].split(":")
         if body['action'] == "add":
-            proc.port_add(if_type, if_num)
+            proc.port_add(body['port'])
         else:
-            proc.port_del(if_type, if_num)
+            proc.port_del(body['port'])
 
     def _validate_nfv_patch(self, body):
         for key in ['src', 'dst']:
