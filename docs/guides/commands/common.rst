@@ -30,7 +30,7 @@
 
 
 Common Commands
-====================
+===============
 
 status
 ------
@@ -48,16 +48,34 @@ It also show a list of secondary IDs
     Connected secondary id: 2
 
 
-record
-------
+playback
+--------
 
-Start recording user's input and create a history file for ``playback``
-commnad.
-Recording is stopped by executing ``exit`` or ``playback`` command.
+Restore network configuration from a recipe file which defines a set
+of SPP commands.
+You can prepare a recipe file by using ``record`` command or editing
+file by hand.
+
+It is recommended to use extension ``.rcp`` to be self-sxplanatory as
+a recipe, although you can use any of extensions such as ``.txt`` or
+``.log``.
 
 .. code-block:: console
 
-    spp > record 2nfv_uni.config
+    spp > playback /path/to/my.rcp
+
+
+record
+------
+
+Start recording user's input and create a recipe file for loading
+from ``playback`` commnad.
+Recording recipe is stopped by executing ``exit`` or ``playback``
+command.
+
+.. code-block:: console
+
+    spp > record /path/to/my.rcp
 
 .. note::
 
@@ -67,21 +85,28 @@ Recording is stopped by executing ``exit`` or ``playback`` command.
     next relase.
 
 
-playback
---------
+history
+-------
 
-Restore configuration from a config file.
-Content of config file is just a series of SPP commnad.
-You prepare a config file by using ``record`` command or editing a text
-file by hand.
-
-It is recommended to use extension ``.config`` to be self-sxplanatory
-as a config, although you can use any of extensions such as ``.txt`` or
-``.log``.
+Show command history. Command history is recorded in a file named
+``$HOME/.spp_history``. It does not add some command which are no
+meaning for history, ``bye``, ``exit``, ``history`` and ``redo``.
 
 .. code-block:: console
 
-    spp> playback 2nfv_uni.config
+    spp > history
+      1  ls
+      2  cat file.txt
+
+
+redo
+----
+
+Execute command of index of history.
+
+.. code-block:: console
+
+    spp > redo 5  # exec 5th command in the history
 
 
 pwd
