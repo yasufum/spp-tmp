@@ -7,10 +7,8 @@ import requests
 
 class SppCtlClient(object):
 
-    def __init__(self):
+    def __init__(self, ip_addr='localhost', port=7777):
         api_ver = 'v1'
-        ip_addr = '127.0.0.1'
-        port = 7777
         self.base_url = 'http://%s:%d/%s' % (ip_addr, port, api_ver)
 
     def request_handler(func):

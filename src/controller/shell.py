@@ -10,7 +10,6 @@ import re
 import readline
 from .shell_lib import common
 from . import spp_common
-from . import spp_ctl_client
 from .spp_common import logger
 import subprocess
 from . import topo
@@ -47,9 +46,9 @@ class Shell(cmd.Cmd, object):
     else:
         readline.write_history_file(hist_file)
 
-    def __init__(self):
+    def __init__(self, spp_ctl_cli):
         cmd.Cmd.__init__(self)
-        self.spp_ctl_cli = spp_ctl_client.SppCtlClient()
+        self.spp_ctl_cli = spp_ctl_cli
 
     def default(self, line):
         """Define defualt behaviour.
