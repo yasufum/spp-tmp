@@ -23,8 +23,8 @@ MSG_SIZE = 4096
 
 class Controller(object):
 
-    def __init__(self, pri_port, sec_port, api_port):
-        self.web_server = spp_webapi.WebServer(self, api_port)
+    def __init__(self, host, pri_port, sec_port, api_port):
+        self.web_server = spp_webapi.WebServer(self, host, api_port)
         self.procs = {}
         self.init_connection(pri_port, sec_port)
 
@@ -144,15 +144,18 @@ class Controller(object):
 
 def main():
     parser = argparse.ArgumentParser(description="SPP Controller")
+    parser.add_argument("-b", '--bind-addr', type=str, default='localhost',
+                        help="bind address, default=localhost")
     parser.add_argument("-p", dest='pri_port', type=int, default=5555,
-                        action='store', help="primary port")
+                        action='store', help="primary port, default=5555")
     parser.add_argument("-s", dest='sec_port', type=int, default=6666,
-                        action='store', help="secondary port")
+                        action='store', help="secondary port, default=6666")
     parser.add_argument("-a", dest='api_port', type=int, default=7777,
-                        action='store', help="web api port")
+                        action='store', help="web api port, default=7777")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
 
-    controller = Controller(args.pri_port, args.sec_port, args.api_port)
+    controller = Controller(args.bind_addr, args.pri_port, args.sec_port,
+                            args.api_port)
     controller.start()

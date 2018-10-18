@@ -118,8 +118,9 @@ class WebServer(BaseHandler):
        /primary    V1PrimaryHandler
     """
 
-    def __init__(self, controller, api_port):
+    def __init__(self, controller, host, api_port):
         super(WebServer, self).__init__(controller)
+        self.host = host
         self.api_port = api_port
 
         self.mount("/v1", V1Handler(controller))
@@ -129,7 +130,7 @@ class WebServer(BaseHandler):
         self.add_hook("after_request", self.log_response)
 
     def start(self):
-        self.run(server='eventlet', host='localhost', port=self.api_port,
+        self.run(server='eventlet', host=self.host, port=self.api_port,
                  quiet=True)
 
 
