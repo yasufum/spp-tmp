@@ -44,9 +44,7 @@ class Shell(cmd.Cmd, object):
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
         self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
-        self.spp_topo = topo.SppTopo(self.spp_ctl_cli,
-                                     self.get_sec_ids('nfv'),
-                                     {}, self.topo_size)
+        self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
         self.spp_bye = bye.SppBye(self.spp_ctl_cli, self.spp_primary,
                                   self.spp_secondary)
 
@@ -660,7 +658,7 @@ class Shell(cmd.Cmd, object):
         spp > topo network_conf.js# text
         """
 
-        self.spp_topo.run(args)
+        self.spp_topo.run(args, self.get_sec_ids('nfv'))
 
     def complete_topo(self, text, line, begidx, endidx):
 

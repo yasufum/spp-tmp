@@ -56,3 +56,9 @@ class SppCtlClient(object):
     def delete(self, req):
         url = '%s/%s' % (self.base_url, req)
         return requests.delete(url)
+
+    def is_server_running(self):
+        if self.get('processes') is None:
+            return False
+        else:
+            return True

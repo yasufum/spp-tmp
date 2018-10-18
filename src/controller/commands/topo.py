@@ -22,32 +22,31 @@ class SppTopo(object):
 
     delim_node = '_'
 
-    def __init__(self, spp_ctl_cli, sec_ids, subgraphs, size):
+    def __init__(self, spp_ctl_cli, subgraphs, size):
         self.spp_ctl_cli = spp_ctl_cli
-        self.sec_ids = sec_ids
         self.subgraphs = subgraphs
         self.graph_size = size
 
-    def run(self, args):
+    def run(self, args, sec_ids):
         args_ary = args.split()
         if len(args_ary) == 0:
             print("Usage: topo dst [ftype]")
             return False
         elif (args_ary[0] == "term") or (args_ary[0] == "http"):
-            self.show(args_ary[0], self.graph_size)
+            self.show(args_ary[0], sec_ids, self.graph_size)
         elif len(args_ary) == 1:
             ftype = args_ary[0].split(".")[-1]
-            self.output(args_ary[0], ftype)
+            self.output(args_ary[0], sec_ids, ftype)
         elif len(args_ary) == 2:
-            self.output(args_ary[0], args_ary[1])
+            self.output(args_ary[0], sec_ids, args_ary[1])
         else:
             print("Usage: topo dst [ftype]")
 
-    def show(self, dtype, size):
+    def show(self, dtype, sec_ids, size):
         res_ary = []
         error_codes = self.spp_ctl_cli.rest_common_error_codes
 
-        for sec_id in self.sec_ids:
+        for sec_id in sec_ids:
             res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
             if res.status_code == 200:
                 res_ary.append(res.json())
@@ -65,11 +64,11 @@ class SppTopo(object):
         else:
             print("Invalid file type")
 
-    def output(self, fname, ftype="dot"):
+    def output(self, fname, sec_ids, ftype="dot"):
         res_ary = []
         error_codes = self.spp_ctl_cli.rest_common_error_codes
 
-        for sec_id in self.sec_ids:
+        for sec_id in sec_ids:
             res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
             if res.status_code == 200:
                 res_ary.append(res.json())
