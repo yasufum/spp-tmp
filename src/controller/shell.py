@@ -6,6 +6,7 @@ from __future__ import absolute_import
 import cmd
 from .commands import pri
 from .commands import sec
+from .commands import topo
 import os
 import re
 import readline
@@ -13,7 +14,6 @@ from .shell_lib import common
 from . import spp_common
 from .spp_common import logger
 import subprocess
-from . import topo
 
 
 class Shell(cmd.Cmd, object):
@@ -33,7 +33,6 @@ class Shell(cmd.Cmd, object):
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
     PLUGIN_DIR = 'command'
-    subgraphs = {}
     topo_size = '60%'
 
     # setup history file
@@ -47,6 +46,9 @@ class Shell(cmd.Cmd, object):
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
         self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
+        self.spp_topo = topo.SppTopo(self.spp_ctl_cli,
+                                     self.get_sec_ids('nfv'),
+                                     {})
 
     def default(self, line):
         """Define defualt behaviour.
@@ -77,10 +79,11 @@ class Shell(cmd.Cmd, object):
 
         ids = []
         res = self.spp_ctl_cli.get('processes')
-        if res.status_code == 200:
-            for ent in res.json():
-                if ent['type'] == ptype:
-                    ids.append(ent['client-id'])
+        if res is not None:
+            if res.status_code == 200:
+                for ent in res.json():
+                    if ent['type'] == ptype:
+                        ids.append(ent['client-id'])
         return ids
 
     def clean_hist_file(self):
@@ -589,13 +592,18 @@ class Shell(cmd.Cmd, object):
         label: vm1	subgraph: "vhost:1;vhost:2"
         """
 
+        #logger.info("Topo initialized with sec IDs %s" % sec_ids)
+
+        # delimiter of node in dot file
+        delim_node = '_'
+
         args_cleaned = re.sub(r"\s+", ' ', args).strip()
         # Show subgraphs if given no argments
         if (args_cleaned == ''):
-            if len(self.subgraphs) == 0:
+            if len(self.spp_topo.subgraphs) == 0:
                 print("No subgraph.")
             else:
-                for label, subg in self.subgraphs.items():
+                for label, subg in self.spp_topo.subgraphs.items():
                     print('label: %s\tsubgraph: "%s"' % (label, subg))
         else:  # add or del
             tokens = args_cleaned.split(' ')
@@ -605,13 +613,11 @@ class Shell(cmd.Cmd, object):
                     label = tokens[1]
                     subg = tokens[2]
                     if ',' in subg:
-                        subg = re.sub(
-                            r'%s' % spp_common.delim_node,
-                            spp_common.delim_label, subg)
+                        subg = re.sub(r'%s' % delim_node, ':', subg)
                         subg = re.sub(r",", ";", subg)
 
                     # TODO(yasufum) add validation for subgraph
-                    self.subgraphs[label] = subg
+                    self.spp_topo.subgraphs[label] = subg
                     print("Add subgraph '%s'" % label)
                 else:
                     print("Invalid syntax '%s'!" % args_cleaned)
@@ -619,7 +625,7 @@ class Shell(cmd.Cmd, object):
             elif ((tokens[0] == 'del') or
                     (tokens[0] == 'delete') or
                     (tokens[0] == 'remove')):
-                del(self.subgraphs[tokens[1]])
+                del(self.spp_topo.subgraphs[tokens[1]])
                 print("Delete subgraph '%s'" % tokens[1])
 
             else:
@@ -633,11 +639,11 @@ class Shell(cmd.Cmd, object):
             if len(tokens) == 1:
                 return terms
             elif len(tokens) == 2 and tokens[1] == 'del':
-                return self.subgraphs.keys()
+                return self.spp_topo.subgraphs.keys()
         elif text != '':
             completions = []
             if len(tokens) == 3 and tokens[1] == 'del':
-                for t in self.subgraphs.keys():
+                for t in self.spp_topo.subgraphs.keys():
                     if t.startswith(tokens[2]):
                         completions.append(t)
             elif len(tokens) == 2:
@@ -679,80 +685,20 @@ class Shell(cmd.Cmd, object):
         * terminal (but very few terminals supporting to display images)
         * browser (websocket server is required)
         * image file (jpg, png, bmp)
-        * text (dot, json, yaml)
+        * text (dot, js or json, yml or yaml)
 
         spp > topo term  # terminal
         spp > topo http  # browser
         spp > topo network_conf.jpg  # image
         spp > topo network_conf.dot  # text
+        spp > topo network_conf.js# text
         """
 
-        if len(spp_common.SECONDARY_LIST) == 0:
-            message = "secondary not exist"
-            print(message)
-        else:
-            tp = topo.Topo(
-                spp_common.SECONDARY_LIST,
-                spp_common.MAIN2SEC,
-                spp_common.SEC2MAIN,
-                self.subgraphs)
-            args_ary = args.split()
-            if len(args_ary) == 0:
-                print("Usage: topo dst [ftype]")
-                return False
-            elif (args_ary[0] == "term") or (args_ary[0] == "http"):
-                res_ary = tp.show(args_ary[0], self.topo_size)
-            elif len(args_ary) == 1:
-                ftype = args_ary[0].split(".")[-1]
-                res_ary = tp.output(args_ary[0], ftype)
-            elif len(args_ary) == 2:
-                res_ary = tp.output(args_ary[0], args_ary[1])
-            else:
-                print("Usage: topo dst [ftype]")
-                return False
+        self.spp_topo.run(args, self.topo_size)
 
     def complete_topo(self, text, line, begidx, endidx):
-        """Complete topo command
 
-        If no token given, return 'term' and 'http'.
-        On the other hand, complete 'term' or 'http' if token starts
-        from it, or complete file name if is one of supported formats.
-        """
-
-        terms = ['term', 'http']
-        # Supported formats
-        img_exts = ['jpg', 'png', 'bmp']
-        txt_exts = ['dot', 'yml', 'js']
-
-        # Number of given tokens is expected as two. First one is
-        # 'topo'. If it is three or more, this methods returns nothing.
-        tokens = re.sub(r"\s+", " ", line).split(' ')
-        if (len(tokens) == 2):
-            if (text == ''):
-                completions = terms
-            else:
-                completions = []
-                # Check if 2nd token is a part of terms.
-                for t in terms:
-                    if t.startswith(tokens[1]):
-                        completions.append(t)
-                # Not a part of terms, so check for completion for
-                # output file name.
-                if len(completions) == 0:
-                    if tokens[1].endswith('.'):
-                        completions = img_exts + txt_exts
-                    elif ('.' in tokens[1]):
-                        fname = tokens[1].split('.')[0]
-                        token = tokens[1].split('.')[-1]
-                        for ext in img_exts:
-                            if ext.startswith(token):
-                                completions.append(fname + '.' + ext)
-                        for ext in txt_exts:
-                            if ext.startswith(token):
-                                completions.append(fname + '.' + ext)
-            return completions
-        else:  # do nothing for three or more tokens
-            pass
+        return self.spp_topo.complete(text, line, begidx, endidx)
 
     def do_load_cmd(self, args):
         """Load command plugin.

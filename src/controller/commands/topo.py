@@ -4,15 +4,14 @@
 
 import os
 import re
-from . import spp_common
-from .spp_common import logger
+import socket
 import subprocess
 import traceback
 import uuid
 import yaml
 
 
-class Topo(object):
+class SppTopo(object):
     """Setup and output network topology for topo command
 
     Topo command supports four types of output.
@@ -22,37 +21,64 @@ class Topo(object):
     * text (dot, json, yaml)
     """
 
-    def __init__(self, sec_ids, m2s_queues, s2m_queues, sub_graphs):
-        logger.info("Topo initialized with sec IDs %s" % sec_ids)
+    delim_node = '_'
+
+    def __init__(self, spp_ctl_cli, sec_ids, subgraphs):
+        self.spp_ctl_cli = spp_ctl_cli
         self.sec_ids = sec_ids
-        self.m2s_queues = m2s_queues
-        self.s2m_queues = s2m_queues
-        self.sub_graphs = sub_graphs
+        self.subgraphs = subgraphs
+
+    def run(self, args, topo_size):
+        args_ary = args.split()
+        if len(args_ary) == 0:
+            print("Usage: topo dst [ftype]")
+            return False
+        elif (args_ary[0] == "term") or (args_ary[0] == "http"):
+            self.show(args_ary[0], topo_size)
+        elif len(args_ary) == 1:
+            ftype = args_ary[0].split(".")[-1]
+            self.output(args_ary[0], ftype)
+        elif len(args_ary) == 2:
+            self.output(args_ary[0], args_ary[1])
+        else:
+            print("Usage: topo dst [ftype]")
 
     def show(self, dtype, size):
         res_ary = []
+        error_codes = self.spp_ctl_cli.rest_common_error_codes
+
         for sec_id in self.sec_ids:
-            msg = "status"
-            self.m2s_queues[sec_id].put(msg.encode('utf-8'))
-            res = self.format_sec_status(
-                sec_id, self.s2m_queues[sec_id].get(True))
-            res_ary.append(res)
+            res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
+            if res.status_code == 200:
+                res_ary.append(res.json())
+            elif res.status_code in error_codes:
+                # Print default error message
+                pass
+            else:
+                # Ignore unknown response because no problem for drawing graph
+                pass
+
         if dtype == "http":
             self.to_http(res_ary)
         elif dtype == "term":
             self.to_term(res_ary, size)
         else:
             print("Invalid file type")
-            return res_ary
 
     def output(self, fname, ftype="dot"):
         res_ary = []
+        error_codes = self.spp_ctl_cli.rest_common_error_codes
+
         for sec_id in self.sec_ids:
-            msg = "status"
-            self.m2s_queues[sec_id].put(msg.encode('utf-8'))
-            res = self.format_sec_status(
-                sec_id, self.s2m_queues[sec_id].get(True))
-            res_ary.append(res)
+            res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
+            if res.status_code == 200:
+                res_ary.append(res.json())
+            elif res.status_code in error_codes:
+                # Print default error message
+                pass
+            else:
+                # Ignore unknown response because no problem for drawing graph
+                pass
 
         if ftype == "dot":
             self.to_dot(res_ary, fname)
@@ -69,8 +95,6 @@ class Topo(object):
         return res_ary
 
     def to_dot(self, sec_list, output_fname):
-        # Label given if outport is "none"
-        NO_PORT = None
 
         # Graphviz params
         # TODO(yasufum) consider to move gviz params to config file.
@@ -89,7 +113,7 @@ class Topo(object):
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
 
-        node_template = '%s' + spp_common.delim_node + '%s'
+        node_template = '%s' + self.delim_node + '%s'
 
         phys = []
         rings = []
@@ -100,38 +124,45 @@ class Topo(object):
         for sec in sec_list:
             if sec is None:
                 continue
-            for port in sec["ports"]:
-                if port["iface"]["type"] == "phy":
-                    phys.append(port)
-                elif port["iface"]["type"] == "ring":
-                    rings.append(port)
-                elif port["iface"]["type"] == "vhost":
-                    vhosts.append(port)
-                else:
-                    raise ValueError(
-                        "Invaid interface type: %s" % port["iface"]["type"])
-
-                if port['out'] != NO_PORT:
-                    out_type, out_id = port['out'].split(':')
-                    if sec['status'] == 'running':
-                        l_style = LINE_STYLE["running"]
+            for port in sec['ports']:
+                if self._is_valid_port(port):
+                    r_type = port.split(':')[0]
+                    # TODO(yasufum) change decision of r_type smarter
+                    if r_type == 'phy':
+                        phys.append(port)
+                    elif r_type == 'ring':
+                        rings.append(port)
+                    elif r_type == 'vhost':
+                        vhosts.append(port)
+                    # TODO(yasufum) add drawing pcap and nullpmd
+                    elif r_type == 'pcap':
+                        pass
+                    elif r_type == 'nullpmd':
+                        pass
                     else:
-                        l_style = LINE_STYLE["idling"]
-                    attrs = '[label="%s", color="%s", style="%s"]' % (
-                        "sec%d" % sec["sec_id"],
-                        SEC_COLORS[sec["sec_id"]],
-                        l_style
-                    )
-                    link_style = node_template + ' %s ' + node_template + '%s;'
-                    tmp = link_style % (
-                        port["iface"]["type"],
-                        port["iface"]["id"],
-                        LINK_TYPE,
-                        out_type,
-                        out_id,
-                        attrs
-                    )
-                    links.append(tmp)
+                        raise ValueError(
+                            "Invaid interface type: %s" % r_type)
+
+            for patch in sec['patches']:
+                if sec['status'] == 'running':
+                    l_style = LINE_STYLE["running"]
+                else:
+                    l_style = LINE_STYLE["idling"]
+                attrs = '[label="%s", color="%s", style="%s"]' % (
+                    "sec%d" % sec["client-id"],
+                    SEC_COLORS[sec["client-id"]],
+                    l_style
+                )
+                link_style = node_template + ' %s ' + node_template + '%s;'
+
+                if self._is_valid_port(patch['src']):
+                    src_type, src_id = patch['src'].split(':')
+                if self._is_valid_port(patch['dst']):
+                    dst_type, dst_id = patch['dst'].split(':')
+
+                tmp = link_style % (src_type, src_id, LINK_TYPE,
+                                    dst_type, dst_id, attrs)
+                links.append(tmp)
 
         output = ["%s spp{" % GRAPH_TYPE]
         output.append("newrank=true;")
@@ -139,70 +170,65 @@ class Topo(object):
 
         phy_nodes = []
         for node in phys:
+            r_type, r_id = node.split(':')
             phy_nodes.append(
-                node_template % (node['iface']['type'], node['iface']['id']))
+                node_template % (r_type, r_id))
         phy_nodes = list(set(phy_nodes))
         for node in phy_nodes:
-            label = re.sub(
-                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
+            label = re.sub(r'%s' % self.delim_node, ':', node)
             output.append(
                 '%s[label="%s", fillcolor="%s"];' % (
                     node, label, PORT_COLORS["phy"]))
 
         ring_nodes = []
-        for p in rings:
-            ring_nodes.append(
-                node_template % (p['iface']['type'], p['iface']['id']))
+        for node in rings:
+            r_type, r_id = node.split(':')
+            ring_nodes.append(node_template % (r_type, r_id))
         ring_nodes = list(set(ring_nodes))
         for node in ring_nodes:
-            label = re.sub(
-                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
+            label = re.sub(r'%s' % self.delim_node, ':', node)
             output.append(
                 '%s[label="%s", fillcolor="%s"];' % (
                     node, label, PORT_COLORS["ring"]))
 
         vhost_nodes = []
-        for p in vhosts:
-            vhost_nodes.append(
-                node_template % (p["iface"]["type"], p["iface"]["id"]))
+        for node in vhosts:
+            r_type, r_id = node.split(':')
+            vhost_nodes.append(node_template % (r_type, r_id))
         vhost_nodes = list(set(vhost_nodes))
         for node in vhost_nodes:
-            label = re.sub(
-                r'%s' % spp_common.delim_node, spp_common.delim_label, node)
+            label = re.sub(r'%s' % self.delim_node, ':', node)
             output.append(
                 '%s[label="%s", fillcolor="%s"];' % (
                     node, label, PORT_COLORS["vhost"]))
 
-        # rank
+        # Align the same type of nodes with rank attribute
         output.append(
             '{rank=same; %s}' % ("; ".join(ring_nodes)))
         output.append(
             '{rank=same; %s}' % ("; ".join(vhost_nodes)))
 
+        # Decide the bottom, phy or vhost
         rank_style = '{rank=max; %s}' % node_template
         if len(phys) > 0:
-            output.append(
-                rank_style % (
-                    phys[0]["iface"]["type"], phys[0]["iface"]["id"]))
+            r_type, r_id = phys[0].split(':')
         elif len(vhosts) > 0:
-            output.append(
-                rank_style % (
-                    vhosts[0]["iface"]["type"], vhosts[0]["iface"]["id"]))
+            r_type, r_id = vhosts[0].split(':')
+        output.append(rank_style % (r_type, r_id))
 
+        # TODO(yasufum) check if it is needed, or is not needed for vhost_nodes
         if len(phy_nodes) > 0:
             output.append(
                 '{rank=same; %s}' % ("; ".join(phy_nodes)))
 
         # Add subgraph
         ssgs = []
-        if len(self.sub_graphs) > 0:
+        if len(self.subgraphs) > 0:
             cnt = 1
-            for label, val in self.sub_graphs.items():
+            for label, val in self.subgraphs.items():
                 cluster_id = "cluster%d" % cnt
                 ssg_label = label
-                ssg_ports = re.sub(
-                    r'%s' % spp_common.delim_label,
-                    spp_common.delim_node, val)
+                ssg_ports = re.sub(r'%s' % ':', self.delim_node, val)
                 ssg = 'subgraph %s {label="%s" %s}' % (
                     cluster_id, ssg_label, ssg_ports)
                 ssgs.append(ssg)
@@ -258,16 +284,19 @@ class Topo(object):
         msg = open(tmpfile).read()
         subprocess.call("rm -f %s" % tmpfile, shell=True)
         ws_url = "ws://localhost:8989/spp_ws"
-        ws = websocket.create_connection(ws_url)
-        ws.send(msg)
-        ws.close()
+        try:
+            ws = websocket.create_connection(ws_url)
+            ws.send(msg)
+            ws.close()
+        except socket.error:
+            print('Error: Connection refused! Is running websocket server?')
 
     def to_term(self, sec_list, size):
         tmpfile = "%s.jpg" % uuid.uuid4().hex
         self.to_img(sec_list, tmpfile)
         from distutils import spawn
 
-        # TODO(yasufum) Add check for using only supported terminal
+        # TODO(yasufum) add check for using only supported terminal
         if spawn.find_executable("img2sixel") is not None:
             img_cmd = "img2sixel"
         else:
@@ -362,3 +391,57 @@ class Topo(object):
         except Exception:
             traceback.print_exc()
             return None
+
+    def complete(self, text, line, begidx, endidx):
+        """Complete topo command
+
+        If no token given, return 'term' and 'http'.
+        On the other hand, complete 'term' or 'http' if token starts
+        from it, or complete file name if is one of supported formats.
+        """
+
+        terms = ['term', 'http']
+        # Supported formats
+        img_exts = ['jpg', 'png', 'bmp']
+        txt_exts = ['dot', 'yml', 'js']
+
+        # Number of given tokens is expected as two. First one is
+        # 'topo'. If it is three or more, this methods returns nothing.
+        tokens = re.sub(r"\s+", " ", line).split(' ')
+        if (len(tokens) == 2):
+            if (text == ''):
+                completions = terms
+            else:
+                completions = []
+                # Check if 2nd token is a part of terms.
+                for t in terms:
+                    if t.startswith(tokens[1]):
+                        completions.append(t)
+                # Not a part of terms, so check for completion for
+                # output file name.
+                if len(completions) == 0:
+                    if tokens[1].endswith('.'):
+                        completions = img_exts + txt_exts
+                    elif ('.' in tokens[1]):
+                        fname = tokens[1].split('.')[0]
+                        token = tokens[1].split('.')[-1]
+                        for ext in img_exts:
+                            if ext.startswith(token):
+                                completions.append(fname + '.' + ext)
+                        for ext in txt_exts:
+                            if ext.startswith(token):
+                                completions.append(fname + '.' + ext)
+            return completions
+        else:  # do nothing for three or more tokens
+            pass
+
+    def _is_valid_port(self, port):
+        """Check if port's format is valid.
+
+        Return True if the format is 'r_type:r_id', for example, 'phy:0'.
+        """
+
+        if (':' in port) and (len(port.split(':')) == 2):
+            return True
+        else:
+            return False

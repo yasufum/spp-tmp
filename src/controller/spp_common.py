@@ -23,6 +23,3 @@ SECONDARY_LIST = []
 
 # Maximum num of sock queues for secondaries
 MAX_SECONDARY = 16
-
-delim_node = '_'
-delim_label = ':'
