@@ -53,6 +53,11 @@ class SppCtlClient(object):
         return requests.put(url, json=params)
 
     @request_handler
+    def post(self, req, params):
+        url = '%s/%s' % (self.base_url, req)
+        return requests.post(url, json=params)
+
+    @request_handler
     def delete(self, req):
         url = '%s/%s' % (self.base_url, req)
         return requests.delete(url)
