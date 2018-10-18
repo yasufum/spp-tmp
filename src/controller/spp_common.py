@@ -5,8 +5,6 @@
 import logging
 import os
 
-SECONDARY_LIST = []
-
 PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
 # Maximum num of sock queues for secondaries
