@@ -5,6 +5,13 @@
 import logging
 import os
 
+SECONDARY_LIST = []
+
+PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
+
+# Maximum num of sock queues for secondaries
+MAX_SECONDARY = 16
+
 # Setup logger object
 logger = logging.getLogger(__name__)
 # handler = logging.StreamHandler()
@@ -18,8 +25,3 @@ formatter = logging.Formatter(
 handler.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
-
-SECONDARY_LIST = []
-
-# Maximum num of sock queues for secondaries
-MAX_SECONDARY = 16

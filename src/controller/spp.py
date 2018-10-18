@@ -20,8 +20,9 @@ def main(argv):
     args = parser.parse_args()
 
     try:
-        spp_ctl_cli = spp_ctl_client.SppCtlClient(args.bind_addr, args.api_port)
-        if spp_ctl_cli.is_server_running() == False:
+        spp_ctl_cli = spp_ctl_client.SppCtlClient(args.bind_addr,
+                                                  args.api_port)
+        if spp_ctl_cli.is_server_running() is False:
             print('Is not spp-ctl running, nor correct IP address?')
             exit()
         shell = Shell(spp_ctl_cli)

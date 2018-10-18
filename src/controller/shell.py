@@ -12,6 +12,7 @@ import os
 import re
 import readline
 from .shell_lib import common
+from . import spp_common
 from .spp_common import logger
 import subprocess
 
@@ -25,8 +26,6 @@ class Shell(cmd.Cmd, object):
 
     intro = 'Welcome to the spp.   Type help or ? to list commands.\n'
     prompt = 'spp > '
-
-    PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
     PLUGIN_DIR = 'plugins'
     topo_size = '60%'
@@ -148,8 +147,9 @@ class Shell(cmd.Cmd, object):
             if re.match(ptn, id1) and re.match(ptn, id2):
                 pt1 = id1.split(delim)[0]
                 pt2 = id2.split(delim)[0]
-                if (pt1 in self.PORT_TYPES) and (pt2 in self.PORT_TYPES):
-                    return True
+                if (pt1 in spp_common.PORT_TYPES) \
+                        and (pt2 in spp_common.PORT_TYPES):
+                            return True
         return False
 
     def check_sec_cmds(self, cmds):
