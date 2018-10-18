@@ -48,7 +48,7 @@ class Shell(cmd.Cmd, object):
         self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli,
                                      self.get_sec_ids('nfv'),
-                                     {})
+                                     {}, self.topo_size)
 
     def default(self, line):
         """Define defualt behaviour.
@@ -664,19 +664,7 @@ class Shell(cmd.Cmd, object):
 
         """
 
-        if args == '':
-            print(self.topo_size)
-        else:
-            if '%' in args:
-                self.topo_size = args
-                print(self.topo_size)
-            elif '.' in args:
-                ii = float(args) * 100
-                self.topo_size = str(ii) + '%'
-                print(self.topo_size)
-            else:  # TODO(yasufum) add check for no number
-                self.topo_size = str(float(args) * 100) + '%'
-                print(self.topo_size)
+        self.spp_topo.resize_graph(args)
 
     def do_topo(self, args):
         """Output network topology.
@@ -694,7 +682,7 @@ class Shell(cmd.Cmd, object):
         spp > topo network_conf.js# text
         """
 
-        self.spp_topo.run(args, self.topo_size)
+        self.spp_topo.run(args)
 
     def complete_topo(self, text, line, begidx, endidx):
 

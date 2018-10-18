@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
 
@@ -23,18 +22,19 @@ class SppTopo(object):
 
     delim_node = '_'
 
-    def __init__(self, spp_ctl_cli, sec_ids, subgraphs):
+    def __init__(self, spp_ctl_cli, sec_ids, subgraphs, size):
         self.spp_ctl_cli = spp_ctl_cli
         self.sec_ids = sec_ids
         self.subgraphs = subgraphs
+        self.graph_size = size
 
-    def run(self, args, topo_size):
+    def run(self, args):
         args_ary = args.split()
         if len(args_ary) == 0:
             print("Usage: topo dst [ftype]")
             return False
         elif (args_ary[0] == "term") or (args_ary[0] == "http"):
-            self.show(args_ary[0], topo_size)
+            self.show(args_ary[0], self.graph_size)
         elif len(args_ary) == 1:
             ftype = args_ary[0].split(".")[-1]
             self.output(args_ary[0], ftype)
@@ -319,6 +319,21 @@ class SppTopo(object):
             topo_doc = "https://spp.readthedocs.io/en/latest/"
             topo_doc += "commands/experimental.html"
             print("See '%s' for required packages." % topo_doc)
+
+    def resize_graph(self, args):
+        if args == '':
+            print(self.graph_size)
+        else:
+            if '%' in args:
+                self.graph_size = args
+                print(self.graph_size)
+            elif '.' in args:
+                ii = float(args) * 100
+                self.graph_size = str(ii) + '%'
+                print(self.graph_size)
+            else:  # TODO(yasufum) add check for no number
+                self.graph_size = str(float(args) * 100) + '%'
+                print(self.graph_size)
 
     def format_sec_status(self, sec_id, stat):
         """Return formatted secondary status as a hash
