@@ -8,6 +8,7 @@ from .commands import bye
 from .commands import pri
 from .commands import sec
 from .commands import topo
+from .commands import vf
 import os
 import re
 import readline
@@ -41,6 +42,11 @@ class Shell(cmd.Cmd, object):
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
         self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
+
+        self.spp_vfs = {}
+        for sec_id in self.get_sec_ids('vf'):
+            self.spp_vfs[sec_id] = vf.SppVf(self.spp_ctl_cli, sec_id)
+
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
         self.spp_bye = bye.SppBye(self.spp_ctl_cli, self.spp_primary,
                                   self.spp_secondary)
@@ -269,7 +275,7 @@ class Shell(cmd.Cmd, object):
         tmparg = self.clean_cmd(cmd)
         cmds = tmparg.split(';')
         if len(cmds) < 2:
-            print("Required an ID and ';' before command.")
+            print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
             sec_id = int(cmds[0])
             if self.check_sec_cmds(cmds[1]):
@@ -286,6 +292,101 @@ class Shell(cmd.Cmd, object):
         line = self.clean_cmd(line)
         return self.spp_secondary.complete(
                 self.get_sec_ids('nfv'), text, line, begidx, endidx)
+
+    def do_vf(self, cmd):
+        """Send a command to spp_vf.
+
+        SPP VF is a secondary process for pseudo SR-IOV features. This
+        command has four sub commands.
+          * status
+          * component
+          * port
+          * classifier_table
+
+        Each of sub commands other than 'status' takes several parameters
+        for detailed operations. Notice that 'start' for launching a worker
+        is replaced with 'stop' for terminating. 'add' is also replaced with
+        'del' for deleting.
+
+        Examples:
+
+        # (1) show status of worker threads and resources
+        spp > vf 1; status
+
+        # (2) launch or terminate a worker thread with arbitrary name
+        #   NAME: arbitrary name used as identifier
+        #   CORE_ID: one of unused cores referred from status
+        #   ROLE: role of workers, 'forward', 'merge' or 'classifier_mac'
+        spp > vf 1; component start NAME CORE_ID ROLE
+        spp > vf 1; component stop NAME CORE_ID ROLE
+
+        # (3) add or delete a port to worker of NAME
+        #   RES_UID: resource UID such as 'ring:0' or 'vhost:1'
+        #   DIR: 'rx' or 'tx'
+        spp > vf 1; port add RES_UID DIR NAME
+        spp > vf 1; port del RES_UID DIR NAME
+
+        # (4) add or delete a port with vlan ID to worker of NAME
+        #   VID: vlan ID
+        #   PCP: priority code point defined in IEEE 802.1p
+        spp > vf 1; port add RES_UID DIR NAME add_vlantag VID PCP
+        spp > vf 1; port del RES_UID DIR NAME add_vlantag VID PCP
+
+        # (5) add a port of deleting vlan tag
+        spp > vf 1; port add RES_UID DIR NAME del_vlantag
+
+        # (6) add or delete an entry of MAC address and resource to classify
+        spp > vf 1; classifier_table add mac MAC_ADDR RES_UID
+        spp > vf 1; classifier_table del mac MAC_ADDR RES_UID
+
+        # (7) add or delete an entry of MAC address and resource with vlan ID
+        spp > vf 1; classifier_table add vlan VID MAC_ADDR RES_UID
+        spp > vf 1; classifier_table del vlan VID MAC_ADDR RES_UID
+        """
+
+        # remove unwanted spaces to avoid invalid command error
+        # TODO change self.spp_vf to self.spp_vfs
+        tmparg = self.clean_cmd(cmd)
+        cmds = tmparg.split(';')
+        if len(cmds) < 2:
+            print("Required an ID and ';' before the command.")
+        elif str.isdigit(cmds[0]):
+            self.spp_vfs[int(cmds[0])].run(cmds[1])
+        else:
+            print('Invalid command: %s' % tmparg)
+
+    def complete_vf(self, text, line, begidx, endidx):
+        """Completion for vf command"""
+
+        line = self.clean_cmd(line)
+
+        tokens = line.split(';')
+        if len(tokens) == 1:
+            # Add SppVf of sec_id if it is not exist
+            sec_ids = self.get_sec_ids('vf')
+            for idx in sec_ids:
+                if self.spp_vfs[idx] is None:
+                    self.spp_vfs[idx] = vf.SppVf(self.spp_ctl_cli, idx)
+
+            if len(line.split()) == 1:
+                res = [str(i)+';' for i in sec_ids]
+            else:
+                if not (';' in line):
+                    res = [str(i)+';'
+                           for i in sec_ids
+                           if (str(i)+';').startswith(text)]
+            return res
+        elif len(tokens) == 2:
+            first_tokens = tokens[0].split(' ')  # 'vf 1' => ['vf', '1']
+            if len(first_tokens) == 2:
+                idx = int(first_tokens[1])
+
+                # Add SppVf of sec_id if it is not exist
+                if self.spp_vfs[idx] is None:
+                    self.spp_vfs[idx] = vf.SppVf(self.spp_ctl_cli, idx)
+
+                return self.spp_vfs[idx].complete(self.get_sec_ids('vf'),
+                                                  text, line, begidx, endidx)
 
     def do_record(self, fname):
         """Save commands as a recipe file.

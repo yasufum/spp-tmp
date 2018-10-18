@@ -19,17 +19,14 @@ def main(argv):
                         help='bind address, default=7777')
     args = parser.parse_args()
 
-    try:
-        spp_ctl_cli = spp_ctl_client.SppCtlClient(args.bind_addr,
-                                                  args.api_port)
-        if spp_ctl_cli.is_server_running() is False:
-            print('Is not spp-ctl running, nor correct IP address?')
-            exit()
-        shell = Shell(spp_ctl_cli)
-        shell.cmdloop()
-        shell = None
-    except Exception as e:
-        print(e)
+    spp_ctl_cli = spp_ctl_client.SppCtlClient(args.bind_addr,
+                                              args.api_port)
+    if spp_ctl_cli.is_server_running() is False:
+        print('Is not spp-ctl running, nor correct IP address?')
+        exit()
+    shell = Shell(spp_ctl_cli)
+    shell.cmdloop()
+    shell = None
 
 
 if __name__ == "__main__":
