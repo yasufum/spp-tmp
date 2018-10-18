@@ -30,7 +30,7 @@ class Shell(cmd.Cmd, object):
 
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
-    PLUGIN_DIR = 'command'
+    PLUGIN_DIR = 'plugins'
     topo_size = '60%'
 
     # setup history file
@@ -669,24 +669,23 @@ class Shell(cmd.Cmd, object):
     def do_load_cmd(self, args):
         """Load command plugin.
 
-        Path of plugin file is 'spp/src/controller/command'.
+        Path of plugin file is 'spp/src/controller/plugins'.
 
-        spp > load hello
+        spp > load_cmd hello
         """
 
         args = re.sub(',', ' ', args)
         args = re.sub(r'\s+', ' ', args)
         list_args = args.split(' ')
 
-        libdir = 'command'
+        libdir = self.PLUGIN_DIR
         mod_name = list_args[0]
         method_name = 'do_%s' % mod_name
-        loaded = '%s.%s' % (libdir, mod_name)
-        exec('import %s' % loaded)
-        do_cmd = '%s.%s' % (loaded, method_name)
+        exec('from .%s import %s' % (libdir, mod_name))
+        do_cmd = '%s.%s' % (mod_name, method_name)
         exec('Shell.%s = %s' % (method_name, do_cmd))
 
-        print("Module '%s' loaded." % loaded)
+        print("Module '%s' loaded." % mod_name)
 
     def complete_load_cmd(self, text, line, begidx, endidx):
         """Complete command plugins
