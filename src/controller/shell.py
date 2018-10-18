@@ -1,10 +1,10 @@
-#!/usr/bin/env python
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2015-2016 Intel Corporation
 
 from __future__ import absolute_import
 
 import cmd
+from .commands import pri
 import os
 import re
 import readline
@@ -27,7 +27,6 @@ class Shell(cmd.Cmd, object):
 
     PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
-    PRI_CMDS = ['status', 'exit', 'clear']
     SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
     SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
@@ -49,6 +48,7 @@ class Shell(cmd.Cmd, object):
     def __init__(self, spp_ctl_cli):
         cmd.Cmd.__init__(self)
         self.spp_ctl_cli = spp_ctl_cli
+        self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
 
     def default(self, line):
         """Define defualt behaviour.
@@ -131,62 +131,6 @@ class Shell(cmd.Cmd, object):
             else:
                 print('Error: unknown response.')
 
-    def print_pri_status(self, json_obj):
-        """Parse SPP primary's status and print.
-
-        Primary returns the status as JSON format, but it is just a little
-        long.
-
-            {
-                "phy_ports": [
-                    {
-                        "eth": "56:48:4f:12:34:00",
-                        "id": 0,
-                        "rx": 78932932,
-                        "tx": 78932931,
-                        "tx_drop": 1,
-                    }
-                    ...
-                ],
-                "ring_ports": [
-                    {
-                        "id": 0,
-                        "rx": 89283,
-                        "rx_drop": 0,
-                        "tx": 89283,
-                        "tx_drop": 0
-                    },
-                    ...
-                ]
-            }
-
-        It is formatted to be simple and more understandable.
-
-            Physical Ports:
-              ID          rx          tx     tx_drop  mac_addr
-               0    78932932    78932931           1  56:48:4f:53:54:00
-            Ring Ports:
-              ID          rx          tx     rx_drop     rx_drop
-               0       89283       89283           0           0
-               ...
-        """
-
-        if 'phy_ports' in json_obj:
-            print('Physical Ports:')
-            print('  ID          rx          tx     tx_drop  mac_addr')
-            for pports in json_obj['phy_ports']:
-                print('  %2d  %10d  %10d  %10d  %s' % (
-                    pports['id'], pports['rx'],  pports['tx'],
-                    pports['tx_drop'], pports['eth']))
-
-        if 'ring_ports' in json_obj:
-            print('Ring Ports:')
-            print('  ID          rx          tx     rx_drop     rx_drop')
-            for rports in json_obj['ring_ports']:
-                print('  %2d  %10d  %10d  %10d  %10d' % (
-                    rports['id'], rports['rx'],  rports['tx'],
-                    rports['rx_drop'], rports['tx_drop']))
-
     def print_sec_status(self, json_obj):
         """Parse and print message from SPP secondary.
 
@@ -217,35 +161,6 @@ class Shell(cmd.Cmd, object):
                 print('  - %s' % port)
             else:
                 print('  - %s -> %s' % (port, dst))
-
-    def command_primary(self, command):
-        """Send command to primary process"""
-
-        if command == 'status':
-            res = self.spp_ctl_cli.get('primary/status')
-            if res is not None:
-                if res.status_code == 200:
-                    self.print_pri_status(res.json())
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif command == 'clear':
-            res = self.spp_ctl_cli.delete('primary/status')
-            if res is not None:
-                if res.status_code == 204:
-                    print('Clear port statistics.')
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif command == 'exit':
-            print('"pri; exit" is deprecated.')
-
-        else:
-            print('Invalid pri command!')
 
     def command_secondary(self, sec_id, command):
         """Send command to secondary process."""
@@ -442,23 +357,12 @@ class Shell(cmd.Cmd, object):
         if logger is not None:
             logger.info("Receive pri command: '%s'" % command)
 
-        if command and (command in self.PRI_CMDS):
-            self.command_primary(command)
-        else:
-            message = "Invalid pri command: '%s'" % command
-            print(message)
+        self.spp_primary.run(command)
 
     def complete_pri(self, text, line, begidx, endidx):
-        """Completion for primary process commands"""
+        """Completion for primary process commands."""
 
-        if not text:
-            completions = self.PRI_CMDS[:]
-        else:
-            completions = [p
-                           for p in self.PRI_CMDS
-                           if p.startswith(text)
-                           ]
-        return completions
+        return self.spp_primary.complete(text, line, begidx, endidx)
 
     def do_sec(self, arg):
         """Send a command to secondary process specified with ID.
@@ -666,7 +570,7 @@ class Shell(cmd.Cmd, object):
             print('Closing secondary ...')
             self.close_all_secondary()
             print('Closing primary ...')
-            self.command_primary('exit')
+            self.spp_primary.run('exit')
         elif cmds[0] == '':
             print('Thank you for using Soft Patch Panel')
             self.close()
