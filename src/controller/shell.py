@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 import cmd
 from .commands import pri
+from .commands import sec
 import os
 import re
 import readline
@@ -27,13 +28,9 @@ class Shell(cmd.Cmd, object):
 
     PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
-    SEC_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
-    SEC_SUBCMDS = ['vhost', 'ring', 'pcap', 'nullpmd']
     BYE_CMDS = ['sec', 'all']
 
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
-
-    rest_common_error_codes = [400, 404, 500]
 
     PLUGIN_DIR = 'command'
     subgraphs = {}
@@ -49,6 +46,7 @@ class Shell(cmd.Cmd, object):
         cmd.Cmd.__init__(self)
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
+        self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
 
     def default(self, line):
         """Define defualt behaviour.
@@ -70,6 +68,20 @@ class Shell(cmd.Cmd, object):
         to do nothing.
         """
         pass
+
+    def get_sec_ids(self, ptype):
+        """Return a list of IDs of running secondary processes.
+
+        'ptype' is 'nfv' or 'vf'.
+        """
+
+        ids = []
+        res = self.spp_ctl_cli.get('processes')
+        if res.status_code == 200:
+            for ent in res.json():
+                if ent['type'] == ptype:
+                    ids.append(ent['client-id'])
+        return ids
 
     def clean_hist_file(self):
         """Remove useless entries in history file."""
@@ -126,128 +138,10 @@ class Shell(cmd.Cmd, object):
                 for obj in sec_obj['nfv']:
                     print('    %d: %s:%s' % (
                         obj['client-id'], obj['type'], obj['client-id']))
-            elif res.status_code in self.rest_common_error_codes:
+            elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 pass
             else:
                 print('Error: unknown response.')
-
-    def print_sec_status(self, json_obj):
-        """Parse and print message from SPP secondary.
-
-        Print status received from secondary.
-
-          spp > sec 1;status
-          - status: idling
-          - ports:
-            - phy:0 -> ring:0
-            - phy:1
-
-        The format of the received message is JSON and ended with
-        series of null character "\x00".
-
-          {"client-id":1,...,"patches":[{"src":"phy:0"...},...]}'\x00..
-        """
-
-        sec_attr = json_obj
-        print('- status: %s' % sec_attr['status'])
-        print('- ports:')
-        for port in sec_attr['ports']:
-            dst = None
-            for patch in sec_attr['patches']:
-                if patch['src'] == port:
-                    dst = patch['dst']
-
-            if dst is None:
-                print('  - %s' % port)
-            else:
-                print('  - %s -> %s' % (port, dst))
-
-    def command_secondary(self, sec_id, command):
-        """Send command to secondary process."""
-
-        cmd = command.split(' ')[0]
-        params = command.split(' ')[1:]
-
-        if cmd == 'status':
-            res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
-            if res is not None:
-                if res.status_code == 200:
-                    self.print_sec_status(res.json())
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif cmd == 'add':
-            req_params = {'action': 'add', 'port': params[0]}
-            res = self.spp_ctl_cli.put('nfvs/%d/ports' % sec_id, req_params)
-            if res is not None:
-                if res.status_code == 204:
-                    print('Add %s.' % params[0])
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif cmd == 'del':
-            req_params = {'action': 'del', 'port': params[0]}
-            res = self.spp_ctl_cli.put('nfvs/%d/ports' % sec_id, req_params)
-            if res is not None:
-                if res.status_code == 204:
-                    print('Delete %s.' % params[0])
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif cmd == 'forward' or cmd == 'stop':
-            if cmd == 'forward':
-                req_params = {'action': 'start'}
-            elif cmd == 'stop':
-                req_params = {'action': 'stop'}
-            else:
-                print('Unknown command. "forward" or "stop"?')
-
-            res = self.spp_ctl_cli.put('nfvs/%d/forward' % sec_id, req_params)
-            if res is not None:
-                if res.status_code == 204:
-                    if cmd == 'forward':
-                        print('Start forwarding.')
-                    else:
-                        print('Stop forwarding.')
-                elif res.status_code in self.rest_common_error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
-
-        elif cmd == 'patch':
-            if params[0] == 'reset':
-                res = self.spp_ctl_cli.delete('nfvs/%d/patches' % sec_id)
-                if res is not None:
-                    if res.status_code == 204:
-                        print('Clear all of patches.')
-                    elif res.status_code in self.rest_common_error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
-            else:
-                req_params = {'src': params[0], 'dst': params[1]}
-                res = self.spp_ctl_cli.put(
-                        'nfvs/%d/patches' % sec_id, req_params)
-                if res is not None:
-                    if res.status_code == 204:
-                        print('Patch ports (%s -> %s).' % (
-                            params[0], params[1]))
-                    elif res.status_code in self.rest_common_error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
-
-        elif cmd == 'exit':
-            print('do nothing.')
-
-        else:
-            print('Invalid command "%s".' % cmd)
 
     def is_patched_ids_valid(self, id1, id2, delim=':'):
         """Check if port IDs are valid
@@ -364,7 +258,7 @@ class Shell(cmd.Cmd, object):
 
         return self.spp_primary.complete(text, line, begidx, endidx)
 
-    def do_sec(self, arg):
+    def do_sec(self, cmd):
         """Send a command to secondary process specified with ID.
 
         SPP secondary process is specified with secondary ID and takes
@@ -382,18 +276,16 @@ class Shell(cmd.Cmd, object):
         """
 
         # remove unwanted spaces to avoid invalid command error
-        tmparg = self.clean_cmd(arg)
+        tmparg = self.clean_cmd(cmd)
         cmds = tmparg.split(';')
         if len(cmds) < 2:
-            message = "'sec' requires an ID and ';' before command."
-            print(message)
+            print("Required an ID and ';' before command.")
         elif str.isdigit(cmds[0]):
             sec_id = int(cmds[0])
             if self.check_sec_cmds(cmds[1]):
-                self.command_secondary(sec_id, cmds[1])
+                self.spp_secondary.run(sec_id, cmds[1])
             else:
-                message = "invalid cmd"
-                print(message)
+                print("Invalid sec command")
         else:
             print(cmds[0])
             print("first %s" % cmds[1])
@@ -401,48 +293,9 @@ class Shell(cmd.Cmd, object):
     def complete_sec(self, text, line, begidx, endidx):
         """Completion for secondary process commands"""
 
-        try:
-            cleaned_line = self.clean_cmd(line)
-            if len(cleaned_line.split()) == 1:
-                completions = [str(i)+";" for i in spp_common.SECONDARY_LIST]
-            elif len(cleaned_line.split()) == 2:
-                if not (";" in cleaned_line):
-                    tmplist = [str(i) for i in spp_common.SECONDARY_LIST]
-                    completions = [p+";"
-                                   for p in tmplist
-                                   if p.startswith(text)
-                                   ]
-                elif cleaned_line[-1] == ";":
-                    completions = self.SEC_CMDS[:]
-                else:
-                    seccmd = cleaned_line.split(";")[1]
-                    if cleaned_line[-1] != " ":
-                        completions = [p
-                                       for p in self.SEC_CMDS
-                                       if p.startswith(seccmd)
-                                       ]
-                    elif ("add" in seccmd) or ("del" in seccmd):
-                        completions = self.SEC_SUBCMDS[:]
-                    else:
-                        completions = []
-            elif len(cleaned_line.split()) == 3:
-                subcmd = cleaned_line.split()[-1]
-                if ("add" == subcmd) or ("del" == subcmd):
-                    completions = self.SEC_SUBCMDS[:]
-                else:
-                    if cleaned_line[-1] == " ":
-                        completions = []
-                    else:
-                        completions = [p
-                                       for p in self.SEC_SUBCMDS
-                                       if p.startswith(subcmd)
-                                       ]
-            else:
-                completions = []
-            return completions
-        except Exception as e:
-            print(len(cleaned_line.split()))
-            print(e)
+        line = self.clean_cmd(line)
+        return self.spp_secondary.complete(
+                self.get_sec_ids('nfv'), text, line, begidx, endidx)
 
     def do_record(self, fname):
         """Save commands as a recipe file.

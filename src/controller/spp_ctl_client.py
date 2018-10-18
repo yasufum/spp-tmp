@@ -7,6 +7,8 @@ import requests
 
 class SppCtlClient(object):
 
+    rest_common_error_codes = [400, 404, 500]
+
     def __init__(self, ip_addr='localhost', port=7777):
         api_ver = 'v1'
         self.base_url = 'http://%s:%d/%s' % (ip_addr, port, api_ver)
