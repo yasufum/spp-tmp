@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 
 import cmd
+from .commands import bye
 from .commands import pri
 from .commands import sec
 from .commands import topo
@@ -11,7 +12,6 @@ import os
 import re
 import readline
 from .shell_lib import common
-from . import spp_common
 from .spp_common import logger
 import subprocess
 
@@ -27,8 +27,6 @@ class Shell(cmd.Cmd, object):
     recorded_file = None
 
     PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
-
-    BYE_CMDS = ['sec', 'all']
 
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
@@ -49,6 +47,8 @@ class Shell(cmd.Cmd, object):
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli,
                                      self.get_sec_ids('nfv'),
                                      {}, self.topo_size)
+        self.spp_bye = bye.SppBye(self.spp_ctl_cli, self.spp_primary,
+                                  self.spp_secondary)
 
     def default(self, line):
         """Define defualt behaviour.
@@ -103,15 +103,6 @@ class Shell(cmd.Cmd, object):
             f.close()
         except IOError:
             print('Error: Cannot open history file "%s"' % self.hist_file)
-
-    def close_all_secondary(self):
-        """Terminate all secondary processes."""
-
-        tmp_list = []
-        for i in spp_common.SECONDARY_LIST:
-            tmp_list.append(i)
-        for i in tmp_list:
-            self.command_secondary(i, 'exit')
 
     def print_status(self):
         """Display information about connected clients."""
@@ -403,7 +394,7 @@ class Shell(cmd.Cmd, object):
     def complete_mkdir(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
-    def do_bye(self, arg):
+    def do_bye(self, args):
         """Terminate SPP processes and controller.
 
         There are three usages for terminating processes.
@@ -419,30 +410,17 @@ class Shell(cmd.Cmd, object):
         spp > bye
         """
 
-        cmds = arg.split(' ')
-        if cmds[0] == 'sec':
-            self.close_all_secondary()
-        elif cmds[0] == 'all':
-            print('Closing secondary ...')
-            self.close_all_secondary()
-            print('Closing primary ...')
-            self.spp_primary.run('exit')
-        elif cmds[0] == '':
-            print('Thank you for using Soft Patch Panel')
-            self.close()
+        cmds = args.split(' ')
+        if cmds[0] == '':
+            self.do_exit('')
             return True
+        else:  # 'all' or 'sec'
+            self.spp_bye.run(args, self.get_sec_ids('nfv'))
 
     def complete_bye(self, text, line, begidx, endidx):
         """Completion for bye commands"""
 
-        if not text:
-            completions = self.BYE_CMDS[:]
-        else:
-            completions = [p
-                           for p in self.BYE_CMDS
-                           if p.startswith(text)
-                           ]
-        return completions
+        return self.spp_bye.complete(text, line, begidx, endidx)
 
     def do_cat(self, arg):
         """View contents of a file.
@@ -592,7 +570,7 @@ class Shell(cmd.Cmd, object):
         label: vm1	subgraph: "vhost:1;vhost:2"
         """
 
-        #logger.info("Topo initialized with sec IDs %s" % sec_ids)
+        # logger.info("Topo initialized with sec IDs %s" % sec_ids)
 
         # delimiter of node in dot file
         delim_node = '_'
