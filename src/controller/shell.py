@@ -19,16 +19,14 @@ import subprocess
 class Shell(cmd.Cmd, object):
     """SPP command prompt."""
 
-    # TODO(yasufum) move hist_file to $HOME as default
-    hist_file = '.spp_history'
+    recorded_file = None
+    hist_file = os.path.expanduser('~/.spp_history')
+    HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
     intro = 'Welcome to the spp.   Type help or ? to list commands.\n'
     prompt = 'spp > '
-    recorded_file = None
 
     PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
-
-    HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
     PLUGIN_DIR = 'plugins'
     topo_size = '60%'
