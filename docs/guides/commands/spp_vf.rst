@@ -1,10 +1,10 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
-.. _spp_vf_commands_spp_vf_secondary:
+.. _commands_spp_vf:
 
-Secondary Commands
-======================
+SPP VF Commands
+===============
 
 Each of secondary processes is managed with ``sec`` command.
 It is for sending sub commands to secondary with specific ID called

@@ -13,5 +13,6 @@ controller.
 
    primary
    secondary
+   spp_vf
    common
    experimental
