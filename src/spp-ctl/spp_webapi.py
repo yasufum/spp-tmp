@@ -310,6 +310,7 @@ class V1NFVHandler(BaseHandler):
 
     def set_route(self):
         self.route('/<sec_id:int>', 'GET', callback=self.nfv_get)
+        self.route('/<sec_id:int>', 'DELETE', callback=self.nfv_exit)
         self.route('/<sec_id:int>/forward', 'PUT',
                    callback=self.nfv_forward)
         self.route('/<sec_id:int>/ports', 'PUT',
@@ -376,6 +377,10 @@ class V1NFVHandler(BaseHandler):
 
     def nfv_patch_del(self, proc):
         proc.patch_reset()
+
+    def nfv_exit(self, proc):
+        self.ctrl.do_exit(proc.type, proc.id)
+        proc.do_exit()
 
 
 class V1PrimaryHandler(BaseHandler):

@@ -168,6 +168,10 @@ class NfvProc(SppProc):
     def stop(self):
         return "stop"
 
+    @exec_command
+    def do_exit(self):
+        return "exit"
+
 
 class PrimaryProc(SppProc):
 

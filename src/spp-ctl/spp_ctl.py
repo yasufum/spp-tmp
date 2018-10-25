@@ -141,6 +141,15 @@ class Controller(object):
             procs.append(p)
         return procs
 
+    def do_exit(self, sec_type, sec_id):
+        target_key = None
+        for k, proc in self.procs.items():
+            if proc.type == sec_type and proc.id == sec_id:
+                target_key = k
+                break
+        if target_key is not None:
+            del self.procs[target_key]
+
 
 def main():
     parser = argparse.ArgumentParser(description="SPP Controller")
