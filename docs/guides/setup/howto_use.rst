@@ -4,57 +4,112 @@
 How to Use
 ==========
 
-SPP consists of primary process for managing resources,
-secondary processes for forwarding packet,
-and SPP controller to accept user commands and sent it to SPP processes.
+As described in :ref:`Overview<spp_overview>`, SPP consists of
+primary process for managing resources, secondary processes for
+forwarding packet, and SPP controller to accept user commands and
+send it to SPP processes.
 
-You must keep in mind the order of launching processes.
-Primary process must be launched before secondary.
-In addition, controller need to be launched before primary and secondary
-because it prepares TCP connections for communicating primary and secondary.
+You should keep in mind the order of launching processes.
+Primary process must be launched before secondary processes.
+``spp-ctl`` need to be launched before ``spp.py``, but no need to be launched
+before other processes. If ``spp-ctl`` is not running after primary and
+secondary processes are launched, they wait ``spp-ctl`` is launched.
 
-1. SPP Controller
-2. SPP Primary
-3. SPP Secondary
+In general, ``spp-ctl`` should be launched first, then ``spp.py`` and
+``spp_primary`` in each of terminals without running as background process.
+After ``spp_primary``, you launch secondary processes for your usage.
+If you just patch two DPDK applications on host, it is enough to use one
+``spp_nfv``, or use ``spp_vf`` if you need to classify packets.
+How to use of these secondary processes is described in next chapters.
 
 
 SPP Controller
-----------------
+--------------
 
-SPP controller is implemented as a python script ``spp.py``.
+spp-ctl
+~~~~~~~
+
+``spp-ctl`` is launched as a HTTP server for REST APIs for managing SPP
+processes. In default, it is accessed with URL ``http://127.0.0.1:7777``
+or ``http://localhost:7777``.
+``spp-ctl`` shows no messages after launched, but shows log messages for
+events such as receiving a request or terminating a process.
 
 .. code-block:: console
 
+    # terminal 1
     $ cd /path/to/spp
-    $ python src/spp.py
-    primary port : 5555
-    secondary port : 6666
-    Welcome to the spp.   Type help or ? to list commands.
+    $ python3 src/spp-ctl/spp-ctl
 
-    spp >
+Notice that It is implemented in ``python3`` and cannot launch
+with ``python`` or ``python2``.
 
-Controller communicate with primary via TCP port 5555 and with secondary
-processes via 6666 in defalt.
-You can change port number by using options.
-Please refer help message for options.
+It has a option ``-b`` for binding address to be accessed from other than
+``127.0.0.1`` or ``localhost``.
 
 .. code-block:: console
 
-    $ python src/spp.py -h
-    usage: spp.py [-h] [-p PRI_PORT] [-s SEC_PORT] [-m MNG_PORT] [-ip IPADDR]
+    # launch with URL http://192.168.1.100:7777
+    $ python3 src/spp-ctl/spp-ctl -b 192.168.1.100
+
+All of options can be referred with help option ``-h``.
+
+.. code-block:: console
+
+    python3 ./src/spp-ctl/spp-ctl -h
+    usage: spp-ctl [-h] [-b BIND_ADDR] [-p PRI_PORT] [-s SEC_PORT] [-a API_PORT]
 
     SPP Controller
 
     optional arguments:
       -h, --help            show this help message and exit
-      -p PRI_PORT, --pri-port PRI_PORT
-                            primary port number
-      -s SEC_PORT, --sec-port SEC_PORT
-                            secondary port number
-      -m MNG_PORT, --mng-port MNG_PORT
-                            management port number
-      -ip IPADDR, --ipaddr IPADDR
-                            IP address
+      -b BIND_ADDR, --bind-addr BIND_ADDR
+                            bind address, default=localhost
+      -p PRI_PORT           primary port, default=5555
+      -s SEC_PORT           secondary port, default=6666
+      -a API_PORT           web api port, default=7777
+
+spp.py
+~~~~~~
+
+If ``spp-ctl`` is launched, go to the next terminal and launch ``spp.py``.
+It supports both of Python 2 and 3, so use ``python`` in this case.
+
+.. code-block:: console
+
+    # terminal 2
+    $ cd /path/to/spp
+    $ python src/spp.py
+    Welcome to the spp.   Type help or ? to list commands.
+
+    spp >
+
+If you launched ``spp-ctl`` with ``-b`` option, you also need to use the same
+option for ``spp.py``, or failed to connect and to launch.
+
+.. code-block:: console
+
+    # to send request to http://192.168.1.100:7777
+    $ python src/spp.py -b 192.168.1.100
+    Welcome to the spp.   Type help or ? to list commands.
+
+    spp >
+
+All of options can be referred with help option ``-h``.
+
+.. code-block:: console
+
+    $ python src/spp.py -h
+    usage: spp.py [-h] [-b BIND_ADDR] [-a API_PORT]
+
+    SPP Controller
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -b BIND_ADDR, --bind-addr BIND_ADDR
+                            bind address, default=127.0.0.1
+      -a API_PORT, --api-port API_PORT
+                        bind address, default=777
 
 :doc:`../../commands/index` describes
 how to manage SPP processes from SPP controller.
@@ -70,6 +125,7 @@ To launch primary, run ``spp_primary`` with options.
 
 .. code-block:: console
 
+    # terminal 3
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
         -l 1 -n 4 \
         --socket-mem 512,512 \
@@ -80,15 +136,44 @@ To launch primary, run ``spp_primary`` with options.
         -n 10 \
         -s 192.168.122.1:5555
 
-SPP primary is a DPDK application and it takes EAL options before
-application specific options.
-Briefly describe about supported options.
-You can use ``-m`` instead of ``--socket-mem`` if you use single NUMA
-node.
+SPP primary takes EAL options before other application specific options.
+
+Core list option ``-l`` is for assigining cores and SPP primary requires just
+one core. You can use core mask option ``-c`` instead of ``-l``.
+
+You can use ``-m`` for memory reservation instead of ``--socket-mem`` if you
+use single NUMA node.
+
+.. note::
+
+    SPP primary show statistics within interval time periodically if you
+    assign two lcores. However, you can retrieve it with ``status`` command
+    of spp_primary. Second core of spp_primary is not used for counting
+    packets but used just for displaying the statistics.
+
+Primary process sets up physical ports of given port mask with ``-p`` option
+and ring ports of the number of ``-n`` option. Ports of  ``-p`` option is for
+accepting incomming packets and ``-n`` option is for inter-process packet
+forwarding. You can also add ports initialized with ``--vdev`` option to
+physical ports.
+
+.. code-block:: console
+
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 1 -n 4 \
+        --socket-mem 512,512 \
+        --huge-dir=/dev/hugepages \
+        --vdev eth_vhost1,iface=/tmp/sock1  # used as 1st phy port
+        --vdev eth_vhost2,iface=/tmp/sock2  # used as 2nd
+        --proc-type=primary \
+        -- \
+        -p 0x03 \
+        -n 10 \
+        -s 192.168.122.1:5555
 
 - EAL options:
 
-  - -l: core list (two cores required for displaying status)
+  - -l: core list
   - --socket-mem: memory size on each of NUMA nodes
   - --huge-dir: path of hugepage dir
   - --proc-type: process type
@@ -98,13 +183,6 @@ node.
   - -p: port mask
   - -n: number of ring PMD
   - -s: IP address of controller and port prepared for primary
-
-.. note::
-
-    You do not need to give two cores if you are not interested in
-    statistics.
-    SPP primary is able to run with only one core and use second one
-    to show the statistics.
 
 
 SPP Secondary
@@ -126,6 +204,7 @@ Run ``spp_nfv`` with options.
 
 .. code-block:: console
 
+    # terminal 4
     $ cd /path/to/spp
     $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
         -l 2-3 -n 4 \
