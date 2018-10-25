@@ -753,7 +753,7 @@ vlan object:
 
 classifier table:
 
-.. _table_spp_ctl_spp_vf_res_vlan:
+.. _table_spp_ctl_spp_vf_res_cls:
 
 .. table:: Vlan objects of getting spp_vf.
 
