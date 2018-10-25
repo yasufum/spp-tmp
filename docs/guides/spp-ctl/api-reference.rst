@@ -582,6 +582,49 @@ Equivalent CLI command
     sec {client_id};patch reset
 
 
+DELETE /v1/nfvs/{client_id}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Terminate ``spp_nfv`` or ``spp_vm`` process.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+Request(path)
+^^^^^^^^^^^^^
+
+.. _table_spp_ctl_nfvs_delete:
+
+.. table:: Request parameter for terminating spp_nfv or spp_vm.
+
+    +-----------+---------+-------------------------------------+
+    | Name      | Type    | Description                         |
+    |           |         |                                     |
+    +===========+=========+=====================================+
+    | client_id | integer | client id.                          |
+    +-----------+---------+-------------------------------------+
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X DELETE -H 'application/json' \
+    http://127.0.0.1:7777/v1/nfvs/1
+
+Response example
+^^^^^^^^^^^^^^^^
+
+There is no body content for the response of a successful ``DELETE`` request.
+
+Equivalent CLI command
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: none
+
+    sec {client_id}; exit
+
+
 API for spp_vf
 --------------
 
