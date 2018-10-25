@@ -107,7 +107,15 @@ class SppSecondary(object):
                         print('Error: unknown response.')
 
         elif cmd == 'exit':
-            print('do nothing.')
+            res = self.spp_ctl_cli.delete('nfvs/%d' % sec_id)
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    print('Exit sec %d' % sec_id)
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
 
         else:
             print('Invalid command "%s".' % cmd)
