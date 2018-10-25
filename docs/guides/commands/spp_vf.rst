@@ -302,7 +302,7 @@ a table of classifier.
     spp > vf SEC_ID; classifier_table add mac MAC_ADDR RES_UID
 
     # delete entry
-    spp > vf SEC_ID; classifier_table del mac [MAC_ADDRESS] [RES_ID]
+    spp > vf SEC_ID; classifier_table del mac MAC_ADDRESS RES_ID
 
 This is an example to register MAC address ``52:54:00:01:00:01``
 with port ``ring:0``.
