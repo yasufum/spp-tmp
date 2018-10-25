@@ -609,6 +609,7 @@ main(int argc, char *argv[])
 	int connected = 0;
 	char str[MSG_SIZE];
 	int ret;
+	int flg_exit;  // used as res of parse_command() to exit if -1
 	int i;
 
 	/* initialise the system */
@@ -651,13 +652,14 @@ main(int argc, char *argv[])
 
 		RTE_LOG(DEBUG, APP, "Received string: %s\n", str);
 
-		ret = parse_command(str);
-		if (ret < 0)  /* terminate process if exit is called */
-			break;
+		flg_exit = parse_command(str);
 
-		/*Send the message back to client*/
+		/* Send the message back to client */
 		ret = do_send(&connected, &sock, str);
-		if (ret < 0)
+
+		if (flg_exit < 0)  /* terminate process if exit is called */
+			break;
+		else if (ret < 0)
 			continue;
 	}
 
