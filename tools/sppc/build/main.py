@@ -86,9 +86,12 @@ def create_env_sh(dst_dir, rte_sdk, target, target_dir):
     elif target == 'spp':
         contents += "export SPP_DIR=%s" % target_dir
 
-    f = open('%s/env.sh' % dst_dir, 'w')
-    f.write(contents)
-    f.close()
+    try:
+        f = open('%s/env.sh' % dst_dir, 'w')
+        f.write(contents)
+        f.close()
+    except IOError:
+        print('Error: Failed to create env.sh.')
 
 
 def main():
@@ -142,10 +145,12 @@ def main():
     # Check for just creating env.sh, or run docker build.
     if args.only_envsh is True:
         if args.dry_run is False:
-            if target == 'pktgen':
-                create_env_sh(dockerfile_dir, rte_sdk, target, pktgen_dir)
-            elif target == 'spp':
-                create_env_sh(dockerfile_dir, rte_sdk, target, spp_dir)
+            if args.target == 'pktgen':
+                create_env_sh(dockerfile_dir, rte_sdk, args.target, pktgen_dir)
+            elif args.target == 'spp':
+                create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
+            elif args.target == 'dpdk':
+                create_env_sh(dockerfile_dir, rte_sdk, args.target, dpdk_dir)
             print("Info: '%s/env.sh' created." % dockerfile_dir)
             exit()
         else:
@@ -157,6 +162,8 @@ def main():
             create_env_sh(dockerfile_dir, rte_sdk, args.target, pktgen_dir)
         elif args.target == 'spp':
             create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
+        elif args.target == 'dpdk':
+            create_env_sh(dockerfile_dir, rte_sdk, args.target, dpdk_dir)
 
     # Setup environment variables on host to pass 'docker build'.
     env_opts = [
