@@ -189,3 +189,7 @@ class PrimaryProc(SppProc):
     @exec_command
     def clear(self):
         return "clear"
+
+    @exec_command
+    def do_exit(self):
+        return "exit"

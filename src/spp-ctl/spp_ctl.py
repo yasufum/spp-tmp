@@ -141,14 +141,14 @@ class Controller(object):
             procs.append(p)
         return procs
 
-    def do_exit(self, sec_type, sec_id):
-        target_key = None
-        for k, proc in self.procs.items():
-            if proc.type == sec_type and proc.id == sec_id:
-                target_key = k
+    def do_exit(self, proc_type, proc_id):
+            removed_id = None  # remove proc info of ID from self.procs
+        for proc in self.procs.values():
+            if proc.type == proc_type and proc.id == proc_id:
+                removed_id = proc.id
                 break
-        if target_key is not None:
-            del self.procs[target_key]
+        if removed_id is not None:
+            del self.procs[removed_id]
 
 
 def main():

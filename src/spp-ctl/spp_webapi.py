@@ -395,6 +395,7 @@ class V1PrimaryHandler(BaseHandler):
     def set_route(self):
         self.route('/status', 'GET', callback=self.get_status)
         self.route('/status', 'DELETE', callback=self.clear_status)
+        self.route('/', 'DELETE', callback=self.pri_exit)
 
     def _get_proc(self):
         proc = self.ctrl.procs.get(spp_proc.ID_PRIMARY)
@@ -417,3 +418,8 @@ class V1PrimaryHandler(BaseHandler):
     def clear_status(self):
         proc = self._get_proc()
         proc.clear()
+
+    def pri_exit(self):
+        proc = self._get_proc()
+        self.ctrl.do_exit(proc.type, proc.id)
+        proc.do_exit()
