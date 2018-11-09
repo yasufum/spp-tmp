@@ -26,6 +26,7 @@ class Controller(object):
     def __init__(self, host, pri_port, sec_port, api_port):
         self.web_server = spp_webapi.WebServer(self, host, api_port)
         self.procs = {}
+        self.ip_addr = host
         self.init_connection(pri_port, sec_port)
 
     def start(self):
@@ -34,14 +35,14 @@ class Controller(object):
     def init_connection(self, pri_port, sec_port):
         self.pri_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.pri_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.pri_sock.bind(('127.0.0.1', pri_port))
+        self.pri_sock.bind((self.ip_addr, pri_port))
         self.pri_sock.listen(1)
         self.primary_listen_thread = eventlet.greenthread.spawn(
             self.accept_primary)
 
         self.sec_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sec_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sec_sock.bind(('127.0.0.1', sec_port))
+        self.sec_sock.bind((self.ip_addr, sec_port))
         self.sec_sock.listen(1)
         self.secondary_listen_thread = eventlet.greenthread.spawn(
             self.accept_secondary)
@@ -142,7 +143,7 @@ class Controller(object):
         return procs
 
     def do_exit(self, proc_type, proc_id):
-            removed_id = None  # remove proc info of ID from self.procs
+        removed_id = None  # remove proc info of ID from self.procs
         for proc in self.procs.values():
             if proc.type == proc_type and proc.id == proc_id:
                 removed_id = proc.id
