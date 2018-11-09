@@ -24,22 +24,6 @@ Show forwarding statistics of each of ports.
        1        9208        9203           0           5
        ...
 
-exit
-----
-
-Terminate primary process.
-
-.. code-block:: console
-
-    spp > pri; exit
-
-.. note::
-
-    You should not use this command if one or more secondary processes
-    are still running because terminating primary before secondaries may
-    cause an error. You shold use ``bye`` command instead of
-    ``pri; exit``.
-
 clear
 -----
 
