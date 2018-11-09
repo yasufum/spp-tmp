@@ -253,7 +253,27 @@ Request example
 Response
 ^^^^^^^^
 
-There is no body content for the response of a successful ``PUT`` request.
+There is no body content for the response of a successful ``DELETE`` request.
+
+DELETE /v1/primary
+~~~~~~~~~~~~~~~~~~
+
+Terminate primary process.
+
+* Normal response codes: 204
+
+Request example
+^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    curl -X DELETE -H 'application/json' \
+    http://127.0.0.1:7777/v1/primary
+
+Response
+^^^^^^^^
+
+There is no body content for the response of a successful ``DELETE`` request.
 
 
 API for spp_nfv/spp_vm
