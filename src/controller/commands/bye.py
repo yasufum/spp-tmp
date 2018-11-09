@@ -28,7 +28,7 @@ class SppBye(object):
             print('Closing secondary ...')
             self.close_all_secondary(sec_ids)
             print('Closing primary ...')
-            self.spp_primary.run('exit')
+            self.spp_primary.do_exit()
 
     def complete(self, text, line, begidx, endidx):
 

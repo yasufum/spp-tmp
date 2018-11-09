@@ -13,7 +13,7 @@ class SppPrimary(object):
     """
 
     # All of primary commands used for validation and completion.
-    PRI_CMDS = ['status', 'exit', 'clear']
+    PRI_CMDS = ['status', 'clear']
 
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
@@ -46,11 +46,19 @@ class SppPrimary(object):
                 else:
                     print('Error: unknown response.')
 
-        elif cmd == 'exit':
-            print('"pri; exit" is deprecated.')
-
         else:
             print('Invalid pri command!')
+
+    def do_exit(self):
+        res = self.spp_ctl_cli.delete('primary')
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print('Exit primary')
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
 
     def print_status(self, json_obj):
         """Parse SPP primary's status and print.
