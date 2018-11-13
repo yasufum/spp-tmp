@@ -4,6 +4,7 @@
 
 
 HOMEDIR = '/root'
+RTE_SDK = '/root/dpdk'
 RTE_TARGET = 'x86_64-native-linuxapp-gcc'
 
 CONTAINER_IMG_NAME = {
