@@ -50,7 +50,7 @@ class BaseHandler(bottle.Bottle):
     def _validate_port(self, port):
         try:
             if_type, if_num = port.split(":")
-            if if_type not in ["phy", "vhost", "ring"]:
+            if if_type not in ["phy", "vhost", "ring", "pcap", "nullpmd"]:
                 raise
             int(if_num)
         except:
