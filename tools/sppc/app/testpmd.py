@@ -250,7 +250,7 @@ def parse_args():
     parser.add_argument(
         '--no-flush-rx',
         action='store_true',
-        help="Don’t flush the RX streams before starting forwarding, " +
+        help="Don't flush the RX streams before starting forwarding, " +
         "Used mainly with the PCAP PMD")
     parser.add_argument(
         '--txpkts',
