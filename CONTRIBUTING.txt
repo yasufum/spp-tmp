@@ -48,4 +48,5 @@ Coding Guidelines
 Maintainer
 ----------
 
-The SPP maintainer is: Ferruh Yigit <ferruh.yigit@intel.com>
+* Ferruh Yigit <ferruh.yigit@intel.com>
+* Yasufumi Ogawa <ogawa.yasufumi@lab.ntt.co.jp>
