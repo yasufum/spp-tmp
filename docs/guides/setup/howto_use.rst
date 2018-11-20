@@ -134,7 +134,7 @@ To launch primary, run ``spp_primary`` with options.
         -- \
         -p 0x03 \
         -n 10 \
-        -s 192.168.122.1:5555
+        -s 192.168.1.100:5555
 
 SPP primary takes EAL options before other application specific options.
 
@@ -169,7 +169,7 @@ physical ports.
         -- \
         -p 0x03 \
         -n 10 \
-        -s 192.168.122.1:5555
+        -s 192.168.1.100:5555
 
 - EAL options:
 
@@ -211,7 +211,7 @@ Run ``spp_nfv`` with options.
         --proc-type=secondary \
         -- \
         -n 1 \
-        -s 192.168.122.1:6666
+        -s 192.168.1.100:6666
 
 - EAL options:
 
@@ -239,11 +239,11 @@ create ``vhost-user`` and ``virtio-net-pci`` devices on the VM.
 
 Before launching VM, you need to prepare a socket file for creating
 ``vhost-user`` device.
-Socket file is created from SPP secondary as following.
+Run ``add`` command with resource UID ``vhost:0`` to create socket file.
 
 .. code-block:: console
 
-    spp > sec 1;add vhost 0
+    spp > sec 1;add vhost:0
 
 In this example, create socket file with index 0 from secondary of ID 1.
 Socket file is created as ``/tmp/sock0``.
@@ -307,7 +307,7 @@ Run ``spp_vm`` with options.
         -- \
         -p 0x01 \
         -n 1 \
-        -s 192.168.122.1:6666
+        -s 192.168.1.100:6666
 
 - EAL options:
 
