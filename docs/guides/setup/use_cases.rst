@@ -23,13 +23,13 @@ First of all, Check the status of ``spp_nfv`` from SPP controller.
 
 .. code-block:: console
 
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
 
-This message explains that ``sec 1`` has two physical ports.
+This status message explains that ``sec 1`` has two physical ports.
 
 
 Configure spp_nfv as L2fwd
@@ -42,19 +42,23 @@ which means it is bi-directional connection.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 phy:1
-    spp > sec 1;patch phy:1 phy:0
-    spp > sec 1;forward
+    spp > sec 1; patch phy:0 phy:1
+    Patch ports (phy:0 -> phy:1).
+    spp > sec 1; patch phy:1 phy:0
+    Patch ports (phy:1 -> phy:0).
+    spp > sec 1; forward
+    Start forwarding.
 
-Confirm that status of ``sec 1`` is updated.
+Confirm that status of ``sec 1`` is updated to ``running`` and ports are
+patches as you defined.
 
 .. code-block:: console
 
-    spp > sec 1;status
-    status: running
-    ports:
-      - 'phy:0 -> phy:1'
-      - 'phy:1 -> phy:0'
+    spp > sec 1; status
+    - status: running
+    - ports:
+      - phy:0 -> phy:1
+      - phy:1 -> phy:0
 
 .. _figure_spp_nfv_as_l2fwd:
 
@@ -65,11 +69,14 @@ Confirm that status of ``sec 1`` is updated.
 
 
 Stop forwarding and reset patch to clear configuration.
+``patch reset`` is to clear all of patch configurations.
 
 .. code-block:: console
 
-    spp > sec 1;stop
-    spp > sec 1;patch reset
+    spp > sec 1; stop
+    Stop forwarding.
+    spp > sec 1; patch reset
+    Clear all of patches.
 
 
 Configure spp_nfv for Loopback
@@ -80,9 +87,12 @@ for loopback.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 phy:0
-    spp > sec 1;patch phy:1 phy:1
-    spp > sec 1;forward
+    spp > sec 1; patch phy:0 phy:0
+    Patch ports (phy:0 -> phy:0).
+    spp > sec 1; patch phy:1 phy:1
+    Patch ports (phy:1 -> phy:1).
+    spp > sec 1; forward
+    Start forwarding.
 
 
 Dual spp_nfv
@@ -113,10 +123,14 @@ from ``phy:1`` to ``phy:0`` for ``sec 2``.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 phy:1
-    spp > sec 2;patch phy:1 phy:0
-    spp > sec 1;forward
-    spp > sec 2;forward
+    spp > sec 1; patch phy:0 phy:1
+    Patch ports (phy:0 -> phy:1).
+    spp > sec 2; patch phy:1 phy:0
+    Patch ports (phy:1 -> phy:0).
+    spp > sec 1; forward
+    Start forwarding.
+    spp > sec 2; forward
+    Start forwarding.
 
 .. _figure_spp_two_nfv_as_l2fwd:
 
@@ -134,10 +148,14 @@ Patch ``phy:0`` to ``phy:0`` for ``sec 1`` and
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 phy:0
-    spp > sec 2;patch phy:1 phy:1
-    spp > sec 1;forward
-    spp > sec 2;forward
+    spp > sec 1; patch phy:0 phy:0
+    Patch ports (phy:0 -> phy:0).
+    spp > sec 2; patch phy:1 phy:1
+    Patch ports (phy:1 -> phy:1).
+    spp > sec 1; forward
+    Start forwarding.
+    spp > sec 2; forward
+    Start forwarding.
 
 .. _figure_spp_two_nfv_loopback:
 
@@ -167,14 +185,14 @@ All of ring PMDs is showed with ``status`` subcommand.
 
 .. code-block:: console
 
-    spp > sec 1;add ring 0
-    addring0
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
-      - 'ring:0'
+    spp > sec 1; add ring:0
+    Add ring:0.
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
+      - ring:0
 
 Notice that ``ring:0`` is added to ``sec 1``.
 You can delete it with ``del`` command if you do not need to
@@ -182,30 +200,36 @@ use it anymore.
 
 .. code-block:: console
 
-    spp > sec 1;del ring 0
-    delring0
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
+    spp > sec 1; del ring:0
+    Delete ring:0.
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
 
 
 Uni-Directional L2fwd
 ~~~~~~~~~~~~~~~~~~~~~
 
 Add a ring PMD and connect two ``spp_nvf`` processes.
-To configure network path, add ``ring 0`` to ``sec 1`` and ``sec 2``.
+To configure network path, add ``ring:0`` to ``sec 1`` and ``sec 2``.
 Then, connect it with ``patch`` subcommand.
 
 .. code-block:: console
 
-    spp > sec 1;add ring 0
-    spp > sec 2;add ring 0
-    spp > sec 1;patch phy:0 ring:0
-    spp > sec 2;patch ring:0 phy:1
-    spp > sec 1;forward
-    spp > sec 2;forward
+    spp > sec 1; add ring:0
+    Add ring:0.
+    spp > sec 2; add ring:0
+    Add ring:0.
+    spp > sec 1; patch phy:0 ring:0
+    Patch ports (phy:0 -> ring:0).
+    spp > sec 2; patch ring:0 phy:1
+    Patch ports (ring:0 -> phy:1).
+    spp > sec 1; forward
+    Start forwarding.
+    spp > sec 2; forward
+    Start forwarding.
 
 .. _figure_spp_uni_directional_l2fwd:
 
@@ -220,46 +244,55 @@ Bi-Directional L2fwd
 
 Add two ring PMDs to two ``spp_nvf`` processes.
 For bi-directional forwarding,
-patch ``ring 0`` for a path from ``sec 1`` to ``sec 2``
-and ``ring 1`` for another path from ``sec 2`` to ``sec 1``.
+patch ``ring:0`` for a path from ``sec 1`` to ``sec 2``
+and ``ring:1`` for another path from ``sec 2`` to ``sec 1``.
 
-First, add ``ring 0`` and ``ring 1`` to ``sec 1``.
-
-.. code-block:: console
-
-    spp > sec 1;add ring 0
-    spp > sec 1;add ring 1
-    spp > sec 1;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
-      - 'ring:0'
-      - 'ring:1'
-
-
-Then, add ``ring 0`` and ``ring 1`` to ``sec 2``.
+First, add ``ring:0`` and ``ring:1`` to ``sec 1``.
 
 .. code-block:: console
 
-    spp > sec 2;add ring 0
-    spp > sec 2;add ring 1
-    spp > sec 2;status
-    status: idling
-    ports:
-      - 'phy:0'
-      - 'phy:1'
-      - 'ring:0'
-      - 'ring:1'
+    spp > sec 1; add ring:0
+    Add ring:0.
+    spp > sec 1; add ring:1
+    Add ring:1.
+    spp > sec 1; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
+      - ring:0
+      - ring:1
+
+Then, add ``ring:0`` and ``ring:1`` to ``sec 2``.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 ring:0
-    spp > sec 1;patch ring:1 phy:0
-    spp > sec 2;patch phy:1 ring:1
-    spp > sec 2;patch ring:0 phy:1
-    spp > sec 1;forward
-    spp > sec 2;forward
+    spp > sec 2; add ring:0
+    Add ring:0.
+    spp > sec 2; add ring:1
+    Add ring:1.
+    spp > sec 2; status
+    - status: idling
+    - ports:
+      - phy:0
+      - phy:1
+      - ring:0
+      - ring:1
+
+.. code-block:: console
+
+    spp > sec 1; patch phy:0 ring:0
+    Patch ports (phy:0 -> ring:0).
+    spp > sec 1; patch ring:1 phy:0
+    Patch ports (ring:1 -> phy:0).
+    spp > sec 2; patch phy:1 ring:1
+    Patch ports (phy:1 -> ring:0).
+    spp > sec 2; patch ring:0 phy:1
+    Patch ports (ring:0 -> phy:1).
+    spp > sec 1; forward
+    Start forwarding.
+    spp > sec 2; forward
+    Start forwarding.
 
 .. _figure_spp_bi_directional_l2fwd:
 
@@ -284,10 +317,10 @@ vhost must be created by ``add`` subcommand before the VM is launched.
 Setup Vhost PMD
 ~~~~~~~~~~~~~~~
 
-In this use case, add ``vhost 0`` to ``sec 1`` for communicating
+In this use case, add ``vhost:0`` to ``sec 1`` for communicating
 with the VM.
 First, check if ``/tmp/sock0`` is already exist.
-You have to remove it already exist to avoid failure of socket file
+You should remove it already exist to avoid a failure of socket file
 creation.
 
 .. code-block:: console
@@ -302,13 +335,15 @@ Create ``/tmp/sock0`` from ``sec 1``.
 
 .. code-block:: console
 
-    spp > sec 1;add vhost 0
+    spp > sec 1; add vhost:0
+    Add vhost:0.
 
 
 Uni-Directional L2fwd with Vhost PMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start a VM with vhost interface as described in
+Launch a VM by using the vhost interface created as previous step.
+Lauunching VM is described in
 :doc:`How to Use<howto_use>`
 and launch ``spp_vm`` with secondary ID 2.
 You find ``sec 2`` from controller after launched.
@@ -320,11 +355,16 @@ with ``sec 2``.
 
 .. code-block:: console
 
-    spp > sec 1;patch phy:0 vhost:0
-    spp > sec 1;patch vhost:0 phy:1
-    spp > sec 2;patch phy:0 phy:0
-    spp > sec 1;forward
-    spp > sec 2;forward
+    spp > sec 1; patch phy:0 vhost:0
+    Patch ports (phy:0 -> vhost:0).
+    spp > sec 1; patch vhost:0 phy:1
+    Patch ports (vhost:0 -> phy:1).
+    spp > sec 2; patch phy:0 phy:0
+    Patch ports (phy:0 -> phy:0).
+    spp > sec 1; forward
+    Start forwarding.
+    spp > sec 2; forward
+    Start forwarding.
 
 .. _figure_spp_uni_directional_l2fwd_vhost:
 
@@ -341,7 +381,7 @@ PCAP PMD
 
 Pcap PMD is an interface for capturing or restoring traffic.
 For usign pcap PMD, you should set ``CONFIG_RTE_LIBRTE_PMD_PCAP``
-to ``y`` and compile DPDK before SPP.
+and ``CONFIG_RTE_PORT_PCAP`` to ``y`` and compile DPDK before SPP.
 Refer to
 :ref:`Install DPDK and SPP<install_dpdk_spp>`
 for details of setting up.
@@ -352,11 +392,11 @@ packets.
 For rx device, you can use any of pcap files other than SPP's pcap PMD.
 
 To start using pcap pmd, just using ``add`` subcommand as ring.
-Here is an example for creating pcap PMD with index ``1``.
+Here is an example for creating pcap PMD ``pcap:1``.
 
 .. code-block:: console
 
-    spp > sec 1;add pcap 1
+    spp > sec 1; add pcap:1
 
 After running it, you can find two of pcap files in ``/tmp``.
 
@@ -379,9 +419,12 @@ As the first usecase, add a pcap PMD and capture incoming packets from
 
 .. code-block:: console
 
-    spp > sec 1;add pcap 1
-    spp > sec 1;patch phy:0 pcap:1
-    spp > sec 1;forward
+    spp > sec 1; add pcap 1
+    Add pcap:1.
+    spp > sec 1; patch phy:0 pcap:1
+    Patch ports (phy:0 -> pcap:1).
+    spp > sec 1; forward
+    Start forwarding.
 
 .. _figure_spp_pcap_incoming:
 
@@ -404,7 +447,8 @@ To stop capturing, simply stop forwarding of ``spp_nfv``.
 
 .. code-block:: console
 
-    spp > sec 1;stop
+    spp > sec 1; stop
+    Stop forwarding.
 
 You can analyze the dumped pcap file with other tools like as wireshark.
 
@@ -418,11 +462,12 @@ Copy ``spp-tx1.pcap`` to ``spp-rx2.pcap`` first.
 
     $ sudo cp /tmp/spp-tx1.pcap /tmp/spp-rx2.pcap
 
-Then, add pcap PMD to another ``spp_nfv`` with index ``2``.
+Then, add pcap PMD ``pcap:2`` to another ``spp_nfv``.
 
 .. code-block:: console
 
-    spp > sec 2;add pcap 2
+    spp > sec 2; add pcap:2
+    Add pcap:2.
 
 .. _figure_spp_pcap_restoring:
 
@@ -447,7 +492,9 @@ and watch received packets on pktgen.
 
 .. code-block:: console
 
-    spp > sec 2;patch pcap:2 phy:1
-    spp > sec 2;forward
+    spp > sec 2; patch pcap:2 phy:1
+    Patch ports (pcap:2 -> phy:1).
+    spp > sec 2; forward
+    Start forwarding.
 
 After started forwarding, you can see that packet count is increased.
