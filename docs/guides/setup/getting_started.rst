@@ -6,6 +6,8 @@
 Getting Started
 ===============
 
+This documentation is described for Ubuntu 16.04 and later.
+
 Setup
 -----
 
@@ -139,6 +141,21 @@ Clone repository and compile DPDK in any directory.
     $ cd /path/to/any
     $ git clone http://dpdk.org/git/dpdk
 
+To compile DPDK, required to install libnuma-devel library.
+
+.. code-block:: console
+
+    $ sudo apt install libnuma-dev
+
+Python and pip are also required if not installed.
+
+.. code-block:: console
+
+    # Python2
+    $ sudo apt install python python-pip
+
+    # Python3
+    $ sudo apt install python3 python3-pip
 
 SPP provides libpcap-based PMD for dumping packet to a file or retrieve
 it from the file.
@@ -323,3 +340,48 @@ for EAL or application.
 Refer to `L2 Forwarding Sample Application
 <https://dpdk.org/doc/guides/sample_app_ug/l2_forward_real_virtual.html>`_
 for more details.
+
+
+Build Documentation
+-------------------
+
+This documentation is able to be biult as HTML and PDF formats from make
+command. Before compiling the documentation, you need to install some of
+packages required to compile.
+
+For HTML documentation, install sphinx and additional theme.
+
+.. code-block:: console
+
+    $ pip install sphinx
+    $ pip install sphinx-rtd-theme
+
+For PDF, inkscape and latex packages are required.
+
+.. code-block:: console
+
+    $ sudo apt install inkscape
+    $ sudo apt install texlive-latex-extra
+    $ sudo apt install texlive-latex-recommended
+
+HTML documentation is compiled by running make with ``doc-html``. This
+command launch sphinx for compiling HTML documents.
+Compiled HTML files are created in ``docs/guides/_build/html/`` and
+You can find the top page ``index.html`` in the directory.
+
+.. code-block:: console
+
+    $ make doc-html
+
+PDF documentation is compiled with ``doc-pdf`` which runs latex for.
+Compiled PDF file is created as ``docs/guides/_build/html/SoftPatchPanel.pdf``.
+
+.. code-block:: console
+
+    $ make doc-pdf
+
+You can also compile both of HTML and PDF documentations with ``doc-all``.
+
+.. code-block:: console
+
+    $ make doc-all
