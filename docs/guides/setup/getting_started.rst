@@ -152,13 +152,15 @@ is included in ``wireshark``.
     $ sudo apt install wireshark
 
 PCAP is disabled by default in DPDK configuration.
-``CONFIG_RTE_LIBRTE_PMD_PCAP`` defines the configuration and enabled
-it to ``y``.
+``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` define the
+configuration and enabled it to ``y``.
 
 .. code-block:: console
 
     # dpdk/config/common_base
     CONFIG_RTE_LIBRTE_PMD_PCAP=y
+    ...
+    CONFIG_RTE_PORT_PCAP=y
 
 Compile DPDK with target environment.
 
@@ -188,6 +190,8 @@ Python 2 or 3 ?
 
 You need to install Python for using usertools of DPDK or SPP controller.
 DPDK and SPP support both of Python2 and 3.
+Howevrer, Python2 will not be maintained after 2020 and SPP is going to update
+only supporting Python3.
 
 
 Binding Network Ports to DPDK
@@ -289,8 +293,9 @@ cannot find it by using ``ifconfig`` or ``ip``.
 Confirm DPDK is setup properly
 ------------------------------
 
-You should run DPDK sample application ``l2fwd`` before SPP
-to confirm that DPDK is setup properly.
+You can confirm if you are ready to use DPDK by running DPDK's sample
+application. ``l2fwd`` is good choice to confirm it before SPP because
+it is very similar to SPP's worker process for forwarding.
 
 .. code-block:: console
 
@@ -301,7 +306,8 @@ to confirm that DPDK is setup properly.
      INSTALL-APP l2fwd
      INSTALL-MAP l2fwd.map
 
-In this case, run this application with two options.
+In this case, run this application simply with just two options
+while DPDK has many kinds of options.
 
   - -l: core list
   - -p: port mask
