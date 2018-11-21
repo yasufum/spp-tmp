@@ -12,6 +12,8 @@
  * Decode and validate the command message string.
  */
 
+#include "spp_proc.h"
+
 /** max number of command per request */
 #define SPP_CMD_MAX_COMMANDS 32
 

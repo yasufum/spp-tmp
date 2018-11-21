@@ -10,6 +10,8 @@
 
 #include "spp_port.h"
 #include "string_buffer.h"
+#include "../classifier_mac.h"
+#include "../spp_forward.h"
 #include "command_conn.h"
 #include "command_dec.h"
 #include "command_proc.h"

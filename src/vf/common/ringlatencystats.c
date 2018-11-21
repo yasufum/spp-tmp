@@ -15,6 +15,7 @@
 #include <rte_memcpy.h>
 
 #include "ringlatencystats.h"
+#include "spp_proc.h"
 
 #define NS_PER_SEC 1E9
 
