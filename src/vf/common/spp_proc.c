@@ -17,7 +17,21 @@
 #include "../vf/spp_forward.h"
 #include "../vf/classifier_mac.h"
 
+/* Manage data to addoress */
+struct manage_data_addr_info {
+	struct startup_param	  *p_startup_param;
+	struct iface_info	  *p_iface_info;
+	struct spp_component_info *p_component_info;
+	struct core_mng_info	  *p_core_info;
+	int			  *p_change_core;
+	int			  *p_change_component;
+	struct cancel_backup_info *p_backup_info;
+	unsigned int		  main_lcore_id;
+};
+
 /* Declare global variables */
+/* Logical core ID for main process */
+static struct manage_data_addr_info g_mng_data_addr;
 
 /**
  * Make a hexdump of an array data in every 4 byte.
@@ -929,4 +943,61 @@ spp_change_mac_str_to_int64(const char *mac)
 	RTE_LOG(DEBUG, APP, "MAC address change. (mac = %s => 0x%08lx)\n",
 			 mac, ret_mac);
 	return ret_mac;
+}
+
+/* Set mange data address */
+int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
+			  struct iface_info *iface_addr,
+			  struct spp_component_info *component_addr,
+			  struct core_mng_info *core_mng_addr,
+			  int *change_core_addr,
+			  int *change_component_addr,
+			  struct cancel_backup_info *backup_info_addr,
+			  unsigned int main_lcore_id)
+{
+	if (startup_param_addr == NULL || iface_addr == NULL ||
+			component_addr == NULL || core_mng_addr == NULL ||
+			change_core_addr == NULL ||
+			change_component_addr == NULL ||
+			backup_info_addr == NULL ||
+			main_lcore_id == 0xffffffff)
+		return SPP_RET_NG;
+
+	g_mng_data_addr.p_startup_param = startup_param_addr;
+	g_mng_data_addr.p_iface_info = iface_addr;
+	g_mng_data_addr.p_component_info = component_addr;
+	g_mng_data_addr.p_core_info = core_mng_addr;
+	g_mng_data_addr.p_change_core = change_core_addr;
+	g_mng_data_addr.p_change_component = change_component_addr;
+	g_mng_data_addr.p_backup_info = backup_info_addr;
+	g_mng_data_addr.main_lcore_id = main_lcore_id;
+
+	return SPP_RET_OK;
+}
+
+/* Get manage data address */
+void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
+			   struct iface_info **iface_addr,
+			   struct spp_component_info **component_addr,
+			   struct core_mng_info **core_mng_addr,
+			   int **change_core_addr,
+			   int **change_component_addr,
+			   struct cancel_backup_info **backup_info_addr)
+{
+
+	if (startup_param_addr != NULL)
+		*startup_param_addr = g_mng_data_addr.p_startup_param;
+	if (iface_addr != NULL)
+		*iface_addr = g_mng_data_addr.p_iface_info;
+	if (component_addr != NULL)
+		*component_addr = g_mng_data_addr.p_component_info;
+	if (core_mng_addr != NULL)
+		*core_mng_addr = g_mng_data_addr.p_core_info;
+	if (change_core_addr != NULL)
+		*change_core_addr = g_mng_data_addr.p_change_core;
+	if (change_component_addr != NULL)
+		*change_component_addr = g_mng_data_addr.p_change_component;
+	if (backup_info_addr != NULL)
+		*backup_info_addr = g_mng_data_addr.p_backup_info;
+
 }

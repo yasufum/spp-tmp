@@ -277,6 +277,19 @@ main(int argc, char *argv[])
 		/* Get lcore id of main thread to set its status after */
 		g_main_lcore_id = rte_lcore_id();
 
+		/* set manage address */
+		if (spp_set_mng_data_addr(&g_startup_param,
+					  &g_iface_info,
+					  g_component_info,
+					  g_core_info,
+					  g_change_core,
+					  g_change_component,
+					  &g_backup_info,
+					  g_main_lcore_id) < 0) {
+			RTE_LOG(ERR, APP, "manage address set is failed.\n");
+			break;
+		}
+
 		int ret_mng = init_mng_data();
 		if (unlikely(ret_mng != 0))
 			break;

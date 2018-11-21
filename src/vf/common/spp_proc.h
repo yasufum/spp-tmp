@@ -666,4 +666,62 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  */
 int64_t spp_change_mac_str_to_int64(const char *mac);
 
+/**
+ * Set mange data address
+ *
+ * @param startup_param_addr
+ *  g_startup_param address
+ * @param iface_addr
+ *  g_iface_info address
+ * @param component_addr
+ *  g_component_info address
+ * @param core_mng_addr
+ *  g_core_info address
+ * @param change_core_addr
+ *  g_change_core address
+ * @param change_component_addr
+ *  g_change_component address
+ * @param backup_info_addr
+ *  g_backup_info address
+ * @param main_lcore_id
+ *  main_lcore_id mask
+ *
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
+ */
+int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
+			  struct iface_info *iface_addr,
+			  struct spp_component_info *component_addr,
+			  struct core_mng_info *core_mng_addr,
+			  int *change_core_addr,
+			  int *change_component_addr,
+			  struct cancel_backup_info *backup_info_addr,
+			  unsigned int main_lcore_id);
+
+/**
+ * Get mange data address
+ *
+ * @param iface_addr
+ *  g_startup_param write address
+ * @param iface_addr
+ *  g_iface_info write address
+ * @param component_addr
+ *  g_component_info write address
+ * @param core_mng_addr
+ *  g_core_mng_info write address
+ * @param change_core_addr
+ *  g_change_core write address
+ * @param change_component_addr
+ *  g_change_component write address
+ * @param backup_info_addr
+ *  g_backup_info write address
+ */
+void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
+			   struct iface_info **iface_addr,
+			   struct spp_component_info **component_addr,
+			   struct core_mng_info **core_mng_addr,
+			   int **change_core_addr,
+			   int **change_component_addr,
+			   struct cancel_backup_info **backup_info_addr);
+
 #endif /* _SPP_PROC_H_ */
