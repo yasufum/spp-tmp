@@ -15,6 +15,7 @@ APP = spp_vf
 SRCS-y := spp_vf.c classifier_mac.c spp_forward.c
 SRCS-y += common/string_buffer.c common/ringlatencystats.c common/spp_port.c
 SRCS-y += common/command_conn.c common/command_dec.c common/command_proc.c
+SRCS-y += common/spp_proc.c
 SRCS-y += ../shared/common.c
 
 CFLAGS += $(WERROR_FLAGS) -O3
