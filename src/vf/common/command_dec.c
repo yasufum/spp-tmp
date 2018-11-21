@@ -45,7 +45,7 @@
 
 /*
  * classifier type string list
- * do it same as the order of enum spp_classifier_type (spp_vf.h)
+ * do it same as the order of enum spp_classifier_type (spp_proc.h)
  */
 const char *CLASSIFILER_TYPE_STRINGS[] = {
 	SPP_CLASSIFLER_NONE_STR,
@@ -57,7 +57,7 @@ const char *CLASSIFILER_TYPE_STRINGS[] = {
 
 /*
  * command action type string list
- * do it same as the order of enum spp_command_action (spp_vf.h)
+ * do it same as the order of enum spp_command_action (command_dec.h)
  */
 const char *COMMAND_ACTION_STRINGS[] = {
 	SPP_ACTION_NONE_STR,
