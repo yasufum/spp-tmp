@@ -12,7 +12,7 @@
  * Provide about the ability per port.
  */
 
-#include "spp_vf.h"
+#include "../spp_vf.h"
 
 /** Calculate TCI of VLAN tag. */
 #define SPP_VLANTAG_CALC_TCI(id, pcp) (((pcp & 0x07) << 13) | (id & 0x0fff))

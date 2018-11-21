@@ -8,7 +8,6 @@
 #include <rte_tcp.h>
 #include <rte_net_crc.h>
 
-#include "spp_vf.h"
 #include "spp_port.h"
 #include "ringlatencystats.h"
 

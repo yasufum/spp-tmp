@@ -8,7 +8,7 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
-#include "spp_vf.h"
+#include "../spp_vf.h"
 #include "spp_port.h"
 #include "string_buffer.h"
 #include "command_conn.h"
