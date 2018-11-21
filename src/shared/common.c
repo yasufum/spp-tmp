@@ -526,3 +526,41 @@ dev_attach_by_devargs(const char *devargs, uint16_t *port_id)
 
 	return ret;
 }
+
+/* detach the device, then store the name of the device */
+int
+dev_detach_by_port_id(uint16_t port_id)
+{
+	struct rte_device *dev;
+	struct rte_bus *bus;
+	uint32_t dev_flags;
+	int ret = -1;
+
+	if (rte_eth_devices[port_id].data == NULL) {
+		RTE_LOG(INFO, APP,
+			"rte_eth_devices[%d].data is  NULL\n", port_id);
+		return 0;
+	}
+	dev_flags = rte_eth_devices[port_id].data->dev_flags;
+	if (dev_flags & RTE_ETH_DEV_BONDED_SLAVE) {
+		RTE_LOG(ERR, APP,
+			"Port %"PRIu16" is bonded, cannot detach\n", port_id);
+		return -ENOTSUP;
+	}
+
+	dev = rte_eth_devices[port_id].device;
+	if (dev == NULL)
+		return -EINVAL;
+
+	bus = rte_bus_find_by_device(dev);
+	if (bus == NULL)
+		return -ENOENT;
+
+	ret = rte_eal_hotplug_remove(bus->name, dev->name);
+	if (ret < 0)
+		return ret;
+
+	rte_eth_dev_release_port(&rte_eth_devices[port_id]);
+
+	return 0;
+}

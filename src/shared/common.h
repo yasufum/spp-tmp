@@ -234,4 +234,16 @@ int spp_atoi(const char *str, int *val);
 int
 dev_attach_by_devargs(const char *devargs, uint16_t *port_id);
 
+/**
+ * Detach a Ethernet device specified by port identifier.
+ * This function must be called when the device is in the
+ * closed state.
+ *
+ * @param port_id
+ *   The port identifier of the device to detach.
+ * @return
+ *  0 on success and devname is filled, negative on error
+ */
+int dev_detach_by_port_id(uint16_t port_id);
+
 #endif
