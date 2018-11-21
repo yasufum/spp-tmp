@@ -183,15 +183,6 @@ parse_app_args(int argc, char *argv[])
 	return 0;
 }
 
-/* Get component type being updated on target core */
-enum spp_component_type
-spp_get_component_type_update(unsigned int lcore_id)
-{
-	struct core_mng_info *info = &g_core_info[lcore_id];
-	return info->core[info->upd_index].type;
-}
-
-
 /* Main process of slave core */
 static int
 slave_main(void *arg __attribute__ ((unused)))
@@ -387,29 +378,6 @@ int
 spp_get_client_id(void)
 {
 	return g_startup_param.client_id;
-}
-
-/**
- * Check mac address used on the port for registering or removing
- */
-int
-spp_check_classid_used_port(
-		int vid, uint64_t mac_addr,
-		enum port_type iface_type, int iface_no)
-{
-	struct spp_port_info *port_info = get_iface_info(iface_type, iface_no);
-	return ((mac_addr == port_info->class_id.mac_addr) &&
-			(vid == port_info->class_id.vlantag.vid));
-}
-
-/*
- * Check if port has been added.
- */
-int
-spp_check_added_port(enum port_type iface_type, int iface_no)
-{
-	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
-	return port->iface_type != UNDEF;
 }
 
 /*
@@ -794,80 +762,4 @@ spp_get_dpdk_port(enum port_type iface_type, int iface_no)
 	default:
 		return -1;
 	}
-}
-
-/**
- * Separate port id of combination of iface type and number and
- * assign to given argument, iface_type and iface_no.
- *
- * For instance, 'ring:0' is separated to 'ring' and '0'.
- */
-int
-spp_get_iface_index(const char *port,
-		    enum port_type *iface_type,
-		    int *iface_no)
-{
-	enum port_type type = UNDEF;
-	const char *no_str = NULL;
-	char *endptr = NULL;
-
-	/* Find out which type of interface from port */
-	if (strncmp(port, SPP_IFTYPE_NIC_STR ":",
-			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
-		/* NIC */
-		type = PHY;
-		no_str = &port[strlen(SPP_IFTYPE_NIC_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_VHOST_STR ":",
-			strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
-		/* VHOST */
-		type = VHOST;
-		no_str = &port[strlen(SPP_IFTYPE_VHOST_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_RING_STR ":",
-			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
-		/* RING */
-		type = RING;
-		no_str = &port[strlen(SPP_IFTYPE_RING_STR)+1];
-	} else {
-		/* OTHER */
-		RTE_LOG(ERR, APP, "Unknown interface type. (port = %s)\n",
-				port);
-		return -1;
-	}
-
-	/* Change type of number of interface */
-	int ret_no = strtol(no_str, &endptr, 0);
-	if (unlikely(no_str == endptr) || unlikely(*endptr != '\0')) {
-		/* No IF number */
-		RTE_LOG(ERR, APP, "No interface number. (port = %s)\n", port);
-		return -1;
-	}
-
-	*iface_type = type;
-	*iface_no = ret_no;
-
-	RTE_LOG(DEBUG, APP, "Port = %s => Type = %d No = %d\n",
-			port, *iface_type, *iface_no);
-	return 0;
-}
-
-/**
- * Return the type of forwarder as a member of enum of spp_component_type
- */
-enum spp_component_type
-spp_change_component_type(const char *type_str)
-{
-	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
-			 strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
-		/* Classifier */
-		return SPP_COMPONENT_CLASSIFIER_MAC;
-	} else if (strncmp(type_str, CORE_TYPE_MERGE_STR,
-			 strlen(CORE_TYPE_MERGE_STR)+1) == 0) {
-		/* Merger */
-		return SPP_COMPONENT_MERGE;
-	} else if (strncmp(type_str, CORE_TYPE_FORWARD_STR,
-			 strlen(CORE_TYPE_FORWARD_STR)+1) == 0) {
-		/* Forwarder */
-		return SPP_COMPONENT_FORWARD;
-	}
-	return SPP_COMPONENT_UNUSE;
 }

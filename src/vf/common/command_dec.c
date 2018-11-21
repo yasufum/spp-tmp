@@ -64,6 +64,112 @@ const char *PORT_ABILITY_STRINGS[] = {
 	/* termination */ "",
 };
 
+/* Get component type being updated on target core */
+static enum spp_component_type
+spp_get_component_type_update(unsigned int lcore_id)
+{
+	struct core_mng_info *info = &g_core_info[lcore_id];
+	return info->core[info->upd_index].type;
+}
+
+/* Check mac address used on the port for registering or removing */
+static int
+spp_check_classid_used_port(
+		int vid, uint64_t mac_addr,
+		enum port_type iface_type, int iface_no)
+{
+	struct spp_port_info *port_info = get_iface_info(iface_type, iface_no);
+
+	/**
+	 * return true if given mac_addr/vid matches
+	 *  with that of port_info/vid
+	 */
+	return ((mac_addr == port_info->class_id.mac_addr) &&
+		(vid == port_info->class_id.vlantag.vid));
+}
+
+/* Check if port has been added. */
+static int
+spp_check_added_port(enum port_type iface_type, int iface_no)
+{
+	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	return port->iface_type != UNDEF;
+}
+
+/**
+ * Separate port id of combination of iface type and number and
+ * assign to given argument, iface_type and iface_no.
+ *
+ * For instance, 'ring:0' is separated to 'ring' and '0'.
+ */
+static int
+spp_convert_port_to_iface(const char *port,
+		    enum port_type *iface_type,
+		    int *iface_no)
+{
+	enum port_type type = UNDEF;
+	const char *no_str = NULL;
+	char *endptr = NULL;
+
+	/* Find out which type of interface from port */
+	if (strncmp(port, SPP_IFTYPE_NIC_STR ":",
+			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
+		/* NIC */
+		type = PHY;
+		no_str = &port[strlen(SPP_IFTYPE_NIC_STR)+1];
+	} else if (strncmp(port, SPP_IFTYPE_VHOST_STR ":",
+			strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
+		/* VHOST */
+		type = VHOST;
+		no_str = &port[strlen(SPP_IFTYPE_VHOST_STR)+1];
+	} else if (strncmp(port, SPP_IFTYPE_RING_STR ":",
+			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
+		/* RING */
+		type = RING;
+		no_str = &port[strlen(SPP_IFTYPE_RING_STR)+1];
+	} else {
+		/* OTHER */
+		RTE_LOG(ERR, APP, "Unknown interface type. (port = %s)\n",
+				port);
+		return -1;
+	}
+
+	/* Change type of number of interface */
+	int ret_no = strtol(no_str, &endptr, 0);
+	if (unlikely(no_str == endptr) || unlikely(*endptr != '\0')) {
+		/* No IF number */
+		RTE_LOG(ERR, APP, "No interface number. (port = %s)\n", port);
+		return -1;
+	}
+
+	*iface_type = type;
+	*iface_no = ret_no;
+
+	RTE_LOG(DEBUG, APP, "Port = %s => Type = %d No = %d\n",
+			port, *iface_type, *iface_no);
+	return 0;
+}
+
+/* Convert component name to component type */
+static enum spp_component_type
+spp_convert_component_type(const char *type_str)
+{
+	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
+			strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
+		/* Classifier */
+		return SPP_COMPONENT_CLASSIFIER_MAC;
+	} else if (strncmp(type_str, CORE_TYPE_MERGE_STR,
+			strlen(CORE_TYPE_MERGE_STR)+1) == 0) {
+		/* Merger */
+		return SPP_COMPONENT_MERGE;
+	} else if (strncmp(type_str, CORE_TYPE_FORWARD_STR,
+			strlen(CORE_TYPE_FORWARD_STR)+1) == 0) {
+		/* Forwarder */
+		return SPP_COMPONENT_FORWARD;
+	}
+	return SPP_COMPONENT_UNUSE;
+}
+
 /* set decode error */
 inline int
 set_decode_error(struct spp_command_decode_error *error,
@@ -179,7 +285,8 @@ decode_port_value(void *output, const char *arg_val)
 {
 	int ret = 0;
 	struct spp_port_index *port = output;
-	ret = spp_get_iface_index(arg_val, &port->iface_type, &port->iface_no);
+	ret = spp_convert_port_to_iface(arg_val, &port->iface_type,
+							&port->iface_no);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad port. val=%s\n", arg_val);
 		return -1;
@@ -273,7 +380,7 @@ decode_component_type_value(void *output, const char *arg_val)
 	if (component->action != SPP_CMD_ACTION_START)
 		return 0;
 
-	set_type = spp_get_component_type(arg_val);
+	set_type = spp_convert_component_type(arg_val);
 	if (unlikely(set_type <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component type. val=%s\n",
@@ -392,7 +499,7 @@ decode_port_name_value(void *output, const char *arg_val)
 	return decode_str_value(output, arg_val);
 }
 
-#/* decoding procedure of port ability for port command */
+/* decoding procedure of port ability for port command */
 static int
 decode_port_ability_value(void *output, const char *arg_val)
 {
