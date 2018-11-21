@@ -15,98 +15,8 @@
 
 #include "common.h"
 
-/** Identifier string for each component (status command) @{*/
-#define SPP_TYPE_CLASSIFIER_MAC_STR "classifier_mac"
-#define SPP_TYPE_MERGE_STR          "merge"
-#define SPP_TYPE_FORWARD_STR        "forward"
-#define SPP_TYPE_UNUSE_STR          "unuse"
-/**@}*/
-
-/** Identifier string for each interface @{*/
-#define SPP_IFTYPE_NIC_STR   "phy"
-#define SPP_IFTYPE_VHOST_STR "vhost"
-#define SPP_IFTYPE_RING_STR  "ring"
-/**@}*/
-
 /** The max number of client ID */
 #define SPP_CLIENT_MAX    128
-
-/** The max number of buffer for management */
-#define SPP_INFO_AREA_MAX 2
-
-/** The length of shortest character string */
-#define SPP_MIN_STR_LEN   32
-
-/** The length of NAME string */
-#define SPP_NAME_STR_LEN  128
-
-/** Update wait timer (micro sec) */
-#define SPP_CHANGE_UPDATE_INTERVAL 10
-
-/** Character sting for default port of classifier */
-#define SPP_DEFAULT_CLASSIFIED_SPEC_STR     "default"
-
-/** Character sting for default MAC address of classifier */
-#define SPP_DEFAULT_CLASSIFIED_DMY_ADDR_STR "00:00:00:00:00:01"
-
-/** Value for default MAC address of classifier */
-#define SPP_DEFAULT_CLASSIFIED_DMY_ADDR     0x010000000000
-
-/** Maximum number of port abilities available */
-#define SPP_PORT_ABILITY_MAX 4
-
-/** Number of VLAN ID */
-#define SPP_NUM_VLAN_VID 4096
-
-/** Maximum VLAN PCP */
-#define SPP_VLAN_PCP_MAX 7
-
-/**
- * State on component
- */
-enum spp_core_status {
-	SPP_CORE_UNUSE,        /**< Not used */
-	SPP_CORE_STOP,         /**< Stopped */
-	SPP_CORE_IDLE,         /**< Idling */
-	SPP_CORE_FORWARD,      /**< Forwarding  */
-	SPP_CORE_STOP_REQUEST, /**< Request stopping */
-	SPP_CORE_IDLE_REQUEST  /**< Request idling */
-};
-
-/**
- * Process type for each component
- */
-enum spp_component_type {
-	SPP_COMPONENT_UNUSE,          /**< Not used */
-	SPP_COMPONENT_CLASSIFIER_MAC, /**< Classifier_mac */
-	SPP_COMPONENT_MERGE,          /**< Merger */
-	SPP_COMPONENT_FORWARD,        /**< Forwarder */
-};
-
-/**
- * Classifier Type
- */
-enum spp_classifier_type {
-	SPP_CLASSIFIER_TYPE_NONE, /**< Type none */
-	SPP_CLASSIFIER_TYPE_MAC,  /**< MAC address */
-	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
-};
-
-/**
- * API Return value
- */
-enum spp_return_value {
-	SPP_RET_OK = 0,  /**< succeeded */
-	SPP_RET_NG = -1, /**< failed */
-};
-
-/** Port type (rx or tx) */
-enum spp_port_rxtx {
-	SPP_PORT_RXTX_NONE, /**< none */
-	SPP_PORT_RXTX_RX,   /**< rx port */
-	SPP_PORT_RXTX_TX,   /**< tx port */
-	SPP_PORT_RXTX_ALL,  /**< rx/tx port */
-};
 
 /** command setting type */
 enum spp_command_action {
@@ -115,77 +25,6 @@ enum spp_command_action {
 	SPP_CMD_ACTION_STOP,  /**< stop */
 	SPP_CMD_ACTION_ADD,   /**< add */
 	SPP_CMD_ACTION_DEL,   /**< delete */
-};
-
-/** Port ability operation */
-enum spp_port_ability_ope {
-	SPP_PORT_ABILITY_OPE_NONE,        /**< none */
-	SPP_PORT_ABILITY_OPE_ADD_VLANTAG, /**< add VLAN tag */
-	SPP_PORT_ABILITY_OPE_DEL_VLANTAG, /**< delete VLAN tag */
-};
-
-/**
- * Interface information structure
- */
-struct spp_port_index {
-	enum port_type  iface_type; /**< Interface type (phy/vhost/ring) */
-	int             iface_no;   /**< Interface number */
-};
-
-/** VLAN tag information */
-struct spp_vlantag_info {
-	int vid; /**< VLAN ID */
-	int pcp; /**< Priority Code Point */
-	int tci; /**< Tag Control Information */
-};
-
-/** Data for each port ability */
-union spp_ability_data {
-	/** VLAN tag information */
-	struct spp_vlantag_info vlantag;
-};
-
-/** Port ability information */
-struct spp_port_ability {
-	enum spp_port_ability_ope ope; /**< Operation */
-	enum spp_port_rxtx rxtx;       /**< rx/tx identifier */
-	union spp_ability_data data;   /**< Port ability data */
-};
-
-/** Port class identifier for classifying */
-struct spp_port_class_identifier {
-	uint64_t mac_addr;                      /**< Mac address (binary) */
-	char     mac_addr_str[SPP_MIN_STR_LEN]; /**< Mac address (text) */
-	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
-};
-
-/**
- * Port info
- */
-struct spp_port_info {
-	enum port_type iface_type;      /**< Interface type (phy/vhost/ring) */
-	int            iface_no;        /**< Interface number */
-	int            dpdk_port;       /**< DPDK port number */
-	struct spp_port_class_identifier class_id;
-					/**< Port class identifier */
-	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
-					/**< Port ability */
-};
-
-/**
- * Component info
- */
-struct spp_component_info {
-	char name[SPP_NAME_STR_LEN];    /**< Component name */
-	enum spp_component_type type;   /**< Component type */
-	unsigned int lcore_id;          /**< Logical core ID for component */
-	int component_id;               /**< Component ID */
-	int num_rx_port;                /**< The number of rx ports */
-	int num_tx_port;                /**< The number of tx ports */
-	struct spp_port_info *rx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to rx ports */
-	struct spp_port_info *tx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to tx ports */
 };
 
 /**
@@ -267,27 +106,6 @@ int spp_update_port(
  */
 int spp_flush(void);
 
-struct spp_iterate_core_params;
-/** definition of iterated core element procedure function */
-typedef int (*spp_iterate_core_element_proc)(
-		struct spp_iterate_core_params *params,
-		const unsigned int lcore_id,
-		const char *name,
-		const char *type,
-		const int num_rx,
-		const struct spp_port_index *rx_ports,
-		const int num_tx,
-		const struct spp_port_index *tx_ports);
-
-/** iterate core information parameters */
-struct spp_iterate_core_params {
-	/** Output buffer */
-	char *output;
-
-	/** The function for creating core information */
-	spp_iterate_core_element_proc element_proc;
-};
-
 /**
  * Iterate core information
  *
@@ -299,20 +117,6 @@ struct spp_iterate_core_params {
  * @retval SPP_RET_NG failed.
  */
 int spp_iterate_core_info(struct spp_iterate_core_params *params);
-
-struct spp_iterate_classifier_table_params;
-/** definition of iterated classifier element procedure function */
-typedef int (*spp_iterate_classifier_element_proc)(
-		struct spp_iterate_classifier_table_params *params,
-		enum spp_classifier_type type,
-		int vid, const char *mac,
-		const struct spp_port_index *port);
-
-/** iterate classifier table parameters */
-struct spp_iterate_classifier_table_params {
-	void *output;
-	spp_iterate_classifier_element_proc element_proc;
-};
 
 /**
  * Iterate Classifier_table
