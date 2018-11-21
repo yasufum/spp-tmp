@@ -67,6 +67,18 @@ struct command_response_list {
 };
 
 /*
+ * seconary type string list
+ * do it same the order enum secondary_type (spp_proc.h)
+ */
+const char *SECONDARY_PROCESS_TYPE_SRINGS[] = {
+	"none",
+	"vf",
+	"mirror",
+
+	/* termination */ "",
+};
+
+/*
  * port ability string list
  * do it same as the order of enum spp_port_ability_type (spp_vf.h)
  */
@@ -99,6 +111,17 @@ spp_get_client_id(void)
 	spp_get_mng_data_addr(&startup_param,
 			NULL, NULL, NULL, NULL, NULL, NULL);
 	return startup_param->client_id;
+}
+
+/* get process type */
+static int
+spp_get_process_type(void)
+{
+	struct startup_param *startup_param;
+
+	spp_get_mng_data_addr(&startup_param,
+			NULL, NULL, NULL, NULL, NULL, NULL);
+	return startup_param->secondary_type;
 }
 
 /* Check if port has been flushed. */
@@ -886,6 +909,15 @@ append_interface_array(char **output, const enum port_type type)
 	return SPP_RET_OK;
 }
 
+/* append a secondary process type for JSON format */
+static int
+append_process_type_value(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	return append_json_str_value(name, output,
+			SECONDARY_PROCESS_TYPE_SRINGS[spp_get_process_type()]);
+}
+
 /* append a list of interface numbers for JSON format */
 static int
 append_interface_value(const char *name, char **output,
@@ -1465,6 +1497,8 @@ send_command_result_response(int *sock,
 					"client id response.\n");
 			return;
 		}
+		ret = append_process_type_value("process_type",
+							&tmp_buff, NULL);
 	}
 
 	/* append info value */

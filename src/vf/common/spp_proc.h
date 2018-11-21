@@ -148,6 +148,13 @@ enum copy_mng_flg {
 	COPY_MNG_FLG_ALLCOPY,
 };
 
+/* secondary process type used only from spp_vf and spp_mirror */
+enum secondary_type {
+	SECONDARY_TYPE_NONE,
+	SECONDARY_TYPE_VF,
+	SECONDARY_TYPE_MIRROR,
+};
+
 /**
  * Interface information structure
  */
@@ -218,6 +225,8 @@ struct startup_param {
 				/* IP address stiring of spp-ctl */
 	int server_port;	/* Port Number of spp-ctl */
 	int vhost_client;	/* Flag for --vhost-client option */
+	enum secondary_type secondary_type;
+				/* secondary type */
 };
 
 /* Manage number of interfaces  and port information as global variable */
