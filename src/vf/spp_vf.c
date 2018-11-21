@@ -62,7 +62,7 @@ usage(const char *progname)
  * Convert string of given client id to integer
  *
  * If succeeded, client id of integer is assigned to client_id and
- * return 0. Or return -1 if failed.
+ * return SPP_RET_OK Or return SPP_RET_NG if failed.
  */
 static int
 parse_app_client_id(const char *client_id_str, int *client_id)
@@ -72,14 +72,14 @@ parse_app_client_id(const char *client_id_str, int *client_id)
 
 	id = strtol(client_id_str, &endptr, 0);
 	if (unlikely(client_id_str == endptr) || unlikely(*endptr != '\0'))
-		return -1;
+		return SPP_RET_NG;
 
 	if (id >= RTE_MAX_LCORE)
-		return -1;
+		return SPP_RET_NG;
 
 	*client_id = id;
 	RTE_LOG(DEBUG, APP, "Set client id = %d\n", *client_id);
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Parse options for server IP and port */
@@ -93,19 +93,19 @@ parse_app_server(const char *server_str, char *server_ip, int *server_port)
 
 	pos = strcspn(server_str, delim);
 	if (pos >= strlen(server_str))
-		return -1;
+		return SPP_RET_NG;
 
 	port = strtol(&server_str[pos+1], &endptr, 0);
 	if (unlikely(&server_str[pos+1] == endptr) ||
 				unlikely(*endptr != '\0'))
-		return -1;
+		return SPP_RET_NG;
 
 	memcpy(server_ip, server_str, pos);
 	server_ip[pos] = '\0';
 	*server_port = port;
 	RTE_LOG(DEBUG, APP, "Set server IP   = %s\n", server_ip);
 	RTE_LOG(DEBUG, APP, "Set server port = %d\n", *server_port);
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Parse options for client app */
@@ -145,9 +145,10 @@ parse_app_args(int argc, char *argv[])
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
 			if (parse_app_client_id(optarg,
-					&g_startup_param.client_id) != 0) {
+					&g_startup_param.client_id) !=
+								SPP_RET_OK) {
 				usage(progname);
-				return -1;
+				return SPP_RET_NG;
 			}
 			proc_flg = 1;
 			break;
@@ -156,22 +157,23 @@ parse_app_args(int argc, char *argv[])
 			break;
 		case 's':
 			if (parse_app_server(optarg, g_startup_param.server_ip,
-					&g_startup_param.server_port) != 0) {
+					&g_startup_param.server_port) !=
+								SPP_RET_OK) {
 				usage(progname);
-				return -1;
+				return SPP_RET_NG;
 			}
 			server_flg = 1;
 			break;
 		default:
 			usage(progname);
-			return -1;
+			return SPP_RET_NG;
 		}
 	}
 
 	/* Check mandatory parameters */
 	if ((proc_flg == 0) || (server_flg == 0)) {
 		usage(progname);
-		return -1;
+		return SPP_RET_NG;
 	}
 	RTE_LOG(INFO, APP,
 			"app opts (client_id=%d,server=%s:%d,"
@@ -180,7 +182,7 @@ parse_app_args(int argc, char *argv[])
 			g_startup_param.server_ip,
 			g_startup_param.server_port,
 			g_startup_param.vhost_client);
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Main process of slave core */
@@ -241,12 +243,12 @@ slave_main(void *arg __attribute__ ((unused)))
 /**
  * Main function
  *
- * Return -1 explicitly if error is occurred.
+ * Return SPP_RET_NG explicitly if error is occurred.
  */
 int
 main(int argc, char *argv[])
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
 	int ret_daemon = daemon(0, 0);
@@ -271,7 +273,7 @@ main(int argc, char *argv[])
 
 		/* Parse spp_vf specific parameters */
 		int ret_parse = parse_app_args(argc, argv);
-		if (unlikely(ret_parse != 0))
+		if (unlikely(ret_parse != SPP_RET_OK))
 			break;
 
 		/* Get lcore id of main thread to set its status after */
@@ -285,17 +287,17 @@ main(int argc, char *argv[])
 					  g_change_core,
 					  g_change_component,
 					  &g_backup_info,
-					  g_main_lcore_id) < 0) {
+					  g_main_lcore_id) < SPP_RET_OK) {
 			RTE_LOG(ERR, APP, "manage address set is failed.\n");
 			break;
 		}
 
 		int ret_mng = init_mng_data();
-		if (unlikely(ret_mng != 0))
+		if (unlikely(ret_mng != SPP_RET_OK))
 			break;
 
 		int ret_classifier_mac_init = spp_classifier_mac_init();
-		if (unlikely(ret_classifier_mac_init != 0))
+		if (unlikely(ret_classifier_mac_init != SPP_RET_OK))
 			break;
 
 		spp_forward_init();
@@ -305,14 +307,14 @@ main(int argc, char *argv[])
 		int ret_command_init = spp_command_proc_init(
 				g_startup_param.server_ip,
 				g_startup_param.server_port);
-		if (unlikely(ret_command_init != 0))
+		if (unlikely(ret_command_init != SPP_RET_OK))
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
 				g_iface_info.num_ring);
-		if (unlikely(ret_ringlatency != 0))
+		if (unlikely(ret_ringlatency != SPP_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -325,7 +327,7 @@ main(int argc, char *argv[])
 		/* Set the status of main thread to idle */
 		g_core_info[g_main_lcore_id].status = SPP_CORE_IDLE;
 		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
-		if (unlikely(ret_wait != 0))
+		if (unlikely(ret_wait != SPP_RET_OK))
 			break;
 
 		/* Start forwarding */
@@ -337,7 +339,7 @@ main(int argc, char *argv[])
 		backup_mng_info(&g_backup_info);
 
 		/* Enter loop for accepting commands */
-		int ret_do = 0;
+		int ret_do = SPP_RET_OK;
 #ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[g_main_lcore_id].status !=
 				SPP_CORE_STOP_REQUEST)) {
@@ -346,7 +348,7 @@ main(int argc, char *argv[])
 #endif
 			/* Receive command */
 			ret_do = spp_command_proc_do();
-			if (unlikely(ret_do != 0))
+			if (unlikely(ret_do != SPP_RET_OK))
 				break;
 
 			sleep(1);
@@ -356,12 +358,12 @@ main(int argc, char *argv[])
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
-		if (unlikely(ret_do != 0)) {
+		if (unlikely(ret_do != SPP_RET_OK)) {
 			set_all_core_status(SPP_CORE_STOP_REQUEST);
 			break;
 		}
 
-		ret = 0;
+		ret = SPP_RET_OK;
 		break;
 	}
 
@@ -369,7 +371,7 @@ main(int argc, char *argv[])
 	if (g_main_lcore_id == rte_lcore_id()) {
 		g_core_info[g_main_lcore_id].status = SPP_CORE_STOP;
 		int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
-		if (unlikely(ret_core_end != 0))
+		if (unlikely(ret_core_end != SPP_RET_OK))
 			RTE_LOG(ERR, APP, "Core did not stop.\n");
 
 		/*

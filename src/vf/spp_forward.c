@@ -66,7 +66,7 @@ spp_forward_update(struct spp_component_info *component)
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, rx = %d)\n",
 			component->component_id, component->type, num_rx);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	/* Component allows only one transmit port. */
@@ -74,7 +74,7 @@ spp_forward_update(struct spp_component_info *component)
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, tx = %d)\n",
 			component->component_id, component->type, num_tx);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	memset(path, 0x00, sizeof(struct forward_path));
@@ -110,7 +110,7 @@ spp_forward_update(struct spp_component_info *component)
 			component->name,
 			component->type);
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Change index of forward info */
@@ -168,7 +168,7 @@ spp_forward(int id)
 				rte_pktmbuf_free(bufs[buf]);
 		}
 	}
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Merge/Forward get component status */
@@ -177,7 +177,7 @@ spp_forward_get_component_status(
 		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	int cnt;
 	const char *component_type = NULL;
 	struct forward_info *info = &g_forward_info[id];
@@ -190,7 +190,7 @@ spp_forward_get_component_status(
 				"Component[%d] Not used. "
 				"(status)(core = %d, type = %d)\n",
 				id, lcore_id, path->type);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	if (path->type == SPP_COMPONENT_MERGE)
@@ -215,8 +215,8 @@ spp_forward_get_component_status(
 		params, lcore_id,
 		path->name, component_type,
 		path->num_rx, rx_ports, path->num_tx, tx_ports);
-	if (unlikely(ret != 0))
-		return -1;
+	if (unlikely(ret != SPP_RET_OK))
+		return SPP_RET_NG;
 
-	return 0;
+	return SPP_RET_OK;
 }

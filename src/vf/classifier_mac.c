@@ -355,7 +355,7 @@ static int
 init_component_info(struct component_info *cmp_info,
 		const struct spp_component_info *component_info)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	int i;
 	struct mac_classification *mac_cls;
 	struct ether_addr eth_addr;
@@ -408,7 +408,7 @@ init_component_info(struct component_info *cmp_info,
 					create_mac_classification();
 			if (unlikely(cmp_info->mac_classifications[vid] ==
 					NULL))
-				return -1;
+				return SPP_RET_NG;
 		}
 		mac_cls = cmp_info->mac_classifications[vid];
 
@@ -445,7 +445,7 @@ init_component_info(struct component_info *cmp_info,
 					"table. ret=%d, vid=%hu, "
 					"mac_addr=%s\n",
 					ret, vid, mac_addr_str);
-			return -1;
+			return SPP_RET_NG;
 		}
 
 		RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
@@ -459,14 +459,14 @@ init_component_info(struct component_info *cmp_info,
 				tx_port->dpdk_port);
 	}
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* initialize classifier. */
 static int
 init_classifier(struct management_info *mng_info)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	struct spp_component_info component_info;
 
 	memset(mng_info, 0, sizeof(struct management_info));
@@ -490,18 +490,18 @@ init_classifier(struct management_info *mng_info)
 	/* populate the classifier information at reference */
 	ret = init_component_info(&mng_info->
 			cmp_infos[mng_info->ref_index], &component_info);
-	if (unlikely(ret != 0)) {
+	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Cannot initialize classifier mac table. "
 				"ret=%d\n", ret);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	/* updating side can be set by completion of initialization. */
 	mng_info->upd_index = mng_info->ref_index + 1;
 	mng_info->is_used = 1;
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* free mac classification instance. */
@@ -618,7 +618,7 @@ get_general_default_classified_index(struct component_info *cmp_info)
 	if (unlikely(mac_cls == NULL)) {
 		LOG_DBG(cmp_info->name, "Untagged's default is not set. "
 				"vid=%d\n", (int)VLAN_UNTAGGED_VID);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	return mac_cls->default_classified;
@@ -800,7 +800,7 @@ spp_classifier_mac_init(void)
 int
 spp_classifier_mac_update(struct spp_component_info *component_info)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	int id = component_info->component_id;
 	struct management_info *mng_info = g_mng_infos + id;
 	struct component_info *cmp_info = NULL;
@@ -817,7 +817,7 @@ spp_classifier_mac_update(struct spp_component_info *component_info)
 
 	/* initialize update side classifier information */
 	ret = init_component_info(cmp_info, component_info);
-	if (unlikely(ret != 0)) {
+	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Cannot update classifier mac. ret=%d\n", ret);
 		return ret;
@@ -838,14 +838,14 @@ spp_classifier_mac_update(struct spp_component_info *component_info)
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 			"Component[%u] Complete update component.\n", id);
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* classifier(mac address) thread function. */
 int
 spp_classifier_mac_do(int id)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	int i;
 	int n_rx;
 	unsigned int lcore_id = rte_lcore_id();
@@ -862,7 +862,7 @@ spp_classifier_mac_do(int id)
 
 	/* initialize */
 	ret = init_classifier(mng_info);
-	if (unlikely(ret != 0)) {
+	if (unlikely(ret != SPP_RET_OK)) {
 		uninit_classifier(mng_info);
 		return ret;
 	}
@@ -917,7 +917,7 @@ spp_classifier_mac_do(int id)
 	/* uninitialize */
 	uninit_classifier(mng_info);
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* classifier iterate component information */
@@ -926,7 +926,7 @@ spp_classifier_get_component_status(
 		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = -1;
+	int ret = SPP_RET_NG;
 	int i, num_tx, num_rx = 0;
 	struct management_info *mng_info;
 	struct component_info *cmp_info;
@@ -940,7 +940,7 @@ spp_classifier_get_component_status(
 				"Component[%d] Not used. "
 				"(status)(core = %d, type = %d)\n",
 				id, lcore_id, SPP_COMPONENT_CLASSIFIER_MAC);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
@@ -967,10 +967,10 @@ spp_classifier_get_component_status(
 		params, lcore_id,
 		cmp_info->name, SPP_TYPE_CLASSIFIER_MAC_STR,
 		num_rx, rx_ports, num_tx, tx_ports);
-	if (unlikely(ret != 0))
-		return -1;
+	if (unlikely(ret != SPP_RET_OK))
+		return SPP_RET_NG;
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 static void
@@ -1071,5 +1071,5 @@ spp_classifier_mac_iterate_table(
 		}
 	}
 
-	return 0;
+	return SPP_RET_OK;
 }

@@ -189,7 +189,7 @@ struct spp_command_decode_error {
  *  The pointer to struct spp_command_decode_error.@n
  *  Detailed error information will be stored.
  *
- * @retval 0  succeeded.
+ * @retval SPP_RET_OK succeeded.
  * @retval !0 failed.
  */
 int spp_command_decode_request(struct spp_command_request *request,

@@ -22,8 +22,8 @@ struct spp_iterate_classifier_table_params;
 /**
  * classifier(mac address) initialize globals.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_classifier_mac_init(void);
 
@@ -34,8 +34,8 @@ int spp_classifier_mac_init(void);
  *  The pointer to struct spp_component_info.@n
  *  The data for updating the internal data of classifier.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_classifier_mac_update(struct spp_component_info *component_info);
 
@@ -45,8 +45,8 @@ int spp_classifier_mac_update(struct spp_component_info *component_info);
  * @param id
  *  The unique component ID.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_classifier_mac_do(int id);
 
@@ -62,8 +62,8 @@ int spp_classifier_mac_do(int id);
  *  The pointer to struct spp_iterate_core_params.@n
  *  Detailed data of classifier status.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int
 spp_classifier_get_component_status(unsigned int lcore_id, int id,
@@ -76,8 +76,8 @@ spp_classifier_get_component_status(unsigned int lcore_id, int id,
  *  Point to struct spp_iterate_classifier_table_params.@n
  *  Detailed data of classifier table.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_classifier_mac_iterate_table(
 		struct spp_iterate_classifier_table_params *params);

@@ -111,7 +111,7 @@ add_vlantag_packet(
 		if (unlikely(new_ether == NULL)) {
 			RTE_LOG(ERR, PORT, "Failed to "
 					"get additional header area.\n");
-			return -1;
+			return SPP_RET_NG;
 		}
 
 		rte_memcpy(new_ether, old_ether, sizeof(struct ether_hdr));
@@ -122,7 +122,7 @@ add_vlantag_packet(
 
 	vlan->vlan_tci = vlantag->tci;
 	set_fcs_packet(pkt);
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Add VLAN tag to all packets. */
@@ -131,7 +131,7 @@ add_vlantag_all_packets(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union spp_ability_data *data)
 {
-	int ret = 0;
+	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
 		ret = add_vlantag_packet(pkts[cnt], data);
@@ -163,7 +163,7 @@ del_vlantag_packet(
 		if (unlikely(new_ether == NULL)) {
 			RTE_LOG(ERR, PORT, "Failed to "
 					"delete unnecessary header area.\n");
-			return -1;
+			return SPP_RET_NG;
 		}
 
 		old = (uint32_t *)old_ether;
@@ -174,7 +174,7 @@ del_vlantag_packet(
 		old[0] = 0;
 		set_fcs_packet(pkt);
 	}
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Delete VLAN tag to all packets. */
@@ -183,7 +183,7 @@ del_vlantag_all_packets(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union spp_ability_data *data)
 {
-	int ret = 0;
+	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
 		ret = del_vlantag_packet(pkts[cnt], data);
@@ -373,7 +373,7 @@ spp_eth_rx_burst(
 	uint16_t nb_rx = 0;
 	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
 	if (unlikely(nb_rx == 0))
-		return 0;
+		return SPP_RET_OK;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 	if (g_port_mng_info[port_id].iface_type == RING)
@@ -396,7 +396,7 @@ spp_eth_tx_burst(
 	nb_tx = port_ability_each_operation(port_id, tx_pkts, nb_pkts,
 			SPP_PORT_RXTX_TX);
 	if (unlikely(nb_tx == 0))
-		return 0;
+		return SPP_RET_OK;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 	if (g_port_mng_info[port_id].iface_type == RING)

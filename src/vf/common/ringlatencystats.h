@@ -33,8 +33,8 @@ struct spp_ringlatencystats_ring_latency_stats {
  * @param stats_count
  *  The number of ring to be measured.
  *
- * @retval 0: succeeded.
- * @retval -1: failed.
+ * @retval SPP_RET_OK: succeeded.
+ * @retval SPP_RET_NG: failed.
  */
 int spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count);
 

@@ -649,8 +649,8 @@ int flush_component(void);
  * @param iface_no
  *  interface no
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int
 spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
@@ -662,7 +662,7 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  *  Character string of MAC address to be converted.
  *
  * @retval 0< int64 that store mac address
- * @retval -1
+ * @retval SPP_RET_NG
  */
 int64_t spp_change_mac_str_to_int64(const char *mac);
 

@@ -57,7 +57,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 	if (unlikely(g_stats_info == NULL)) {
 		RTE_LOG(ERR, SPP_RING_LATENCY_STATS, "Cannot allocate memory "
 				"for ring latency stats info\n");
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	/* store global information for ring latency statistics */
@@ -70,7 +70,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 			g_samp_intvl, g_stats_count,
 			cycles_per_ns(), NS_PER_SEC);
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 void

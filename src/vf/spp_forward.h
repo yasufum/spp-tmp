@@ -31,8 +31,8 @@ void spp_forward_init(void);
  *  The pointer to struct spp_component_info.@n
  *  The data for updating the internal data of forwarder and merger.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_forward_update(struct spp_component_info *component);
 
@@ -42,8 +42,8 @@ int spp_forward_update(struct spp_component_info *component);
  * @param id
  *  The unique component ID.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_forward(int id);
 
@@ -58,8 +58,8 @@ int spp_forward(int id);
  *  The pointer to struct spp_iterate_core_params.@n
  *  Detailed data of forwarder/merger status.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_forward_get_component_status(
 		unsigned int lcore_id, int id,

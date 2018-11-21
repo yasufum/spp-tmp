@@ -76,7 +76,7 @@ add_ring_pmd(int ring_id)
 	if (unlikely(ring == NULL)) {
 		RTE_LOG(ERR, APP,
 			"Cannot get RX ring - is server process running?\n");
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	/* Create ring pmd */
@@ -107,7 +107,7 @@ add_vhost_pmd(int index, int client)
 	if (unlikely(mp == NULL)) {
 		RTE_LOG(ERR, APP, "Cannot get mempool for mbufs. "
 				"(name = %s)\n", PKTMBUF_POOL_NAME);
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	/* eth_vhost0 index 0 iface /tmp/sock0 on numa 0 */
@@ -178,7 +178,7 @@ spp_get_core_status(unsigned int lcore_id)
 /**
  * Check status of all of cores is same as given
  *
- * It returns -1 as status mismatch if status is not same.
+ * It returns SPP_RET_NG as status mismatch if status is not same.
  * If core is in use, status will be checked.
  */
 static int
@@ -189,10 +189,10 @@ check_core_status(enum spp_core_status status)
 		if ((g_mng_data_addr.p_core_info + lcore_id)->status !=
 								status) {
 			/* Status is mismatched */
-			return -1;
+			return SPP_RET_NG;
 		}
 	}
-	return 0;
+	return SPP_RET_OK;
 }
 
 int
@@ -203,11 +203,11 @@ check_core_status_wait(enum spp_core_status status)
 		sleep(1);
 		int ret = check_core_status(status);
 		if (ret == 0)
-			return 0;
+			return SPP_RET_OK;
 	}
 
 	RTE_LOG(ERR, APP, "Status check time out. (status = %d)\n", status);
-	return -1;
+	return SPP_RET_NG;
 }
 
 /* Set core status */
@@ -522,7 +522,7 @@ set_nic_interface(void)
 		p_iface_info->nic[nic_cnt].dpdk_port = nic_cnt;
 	}
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Setup management info for spp_vf */
@@ -535,10 +535,10 @@ init_mng_data(void)
 	init_component_info();
 
 	int ret_nic = set_nic_interface();
-	if (unlikely(ret_nic != 0))
-		return -1;
+	if (unlikely(ret_nic != SPP_RET_OK))
+		return SPP_RET_NG;
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -707,7 +707,7 @@ get_free_component(void)
 		if ((component_info + cnt)->type == SPP_COMPONENT_UNUSE)
 			return cnt;
 	}
-	return -1;
+	return SPP_RET_NG;
 }
 
 /* Get component id for specified component name */
@@ -742,7 +742,7 @@ del_component_info(int component_id, int component_num, int *componet_array)
 	}
 
 	if (match < 0)
-		return -1;
+		return SPP_RET_NG;
 
 	/* Last element is excluded from movement. */
 	max--;
@@ -763,7 +763,7 @@ check_port_element(
 		struct spp_port_info *array[])
 {
 	int cnt = 0;
-	int match = -1;
+	int match = SPP_RET_NG;
 	for (cnt = 0; cnt < num; cnt++) {
 		if (info == array[cnt])
 			match = cnt;
@@ -779,12 +779,12 @@ get_del_port_element(
 		struct spp_port_info *array[])
 {
 	int cnt = 0;
-	int match = -1;
+	int match = SPP_RET_NG;
 	int max = num;
 
 	match = check_port_element(info, num, array);
 	if (match < 0)
-		return -1;
+		return SPP_RET_NG;
 
 	/* Last element is excluded from movement. */
 	max--;
@@ -794,7 +794,7 @@ get_del_port_element(
 
 	/* Last element is cleared. */
 	array[cnt] = NULL;
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Flush initial setting of each interface. */
@@ -919,12 +919,12 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 		iface_type_str = SPP_IFTYPE_VHOST_STR;
 		break;
 	default:
-		return -1;
+		return SPP_RET_NG;
 	}
 
 	sprintf(port, "%s:%d", iface_type_str, iface_no);
 
-	return 0;
+	return SPP_RET_OK;
 }
 
 /* Change mac address of 'aa:bb:cc:dd:ee:ff' to int64 and return it */
@@ -952,7 +952,7 @@ spp_change_mac_str_to_int64(const char *mac)
 		if (unlikely(token_cnt >= ETHER_ADDR_LEN)) {
 			RTE_LOG(ERR, APP, "MAC address format error. "
 					"(mac = %s)\n", mac);
-			return -1;
+			return SPP_RET_NG;
 		}
 
 		/* Convert string to hex value */

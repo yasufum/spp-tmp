@@ -25,8 +25,8 @@
  * @param controller_port
  *  The controller's port number.
  *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @retval SPP_RET_OK  succeeded.
+ * @retval SPP_RET_NG failed.
  */
 int spp_command_conn_init(const char *controller_ip, int controller_port);
 
@@ -38,7 +38,7 @@ int spp_command_conn_init(const char *controller_ip, int controller_port);
  * @param sock
  *  Socket number for connecting to controller.
  *
- * @retval 0                     succeeded.
+ * @retval SPP_RET_OK		 succeeded.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please retry.
  */
 int spp_connect_to_controller(int *sock);
@@ -53,10 +53,10 @@ int spp_connect_to_controller(int *sock);
  * @param msgbuf
  *  The pointer to command message buffer.
  *
- * @retval 0 <                   succeeded. number of bytes received.
- * @retval 0                     no receive message.
+ * @retval 0 <			 succeeded. number of bytes received.
+ * @retval SPP_RET_OK		 no receive message.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.
- * @retval SPP_CONNERR_FATAL    fatal error occurred. should terminate process.
+ * @retval SPP_CONNERR_FATAL	fatal error occurred. should terminate process.
  */
 int spp_receive_message(int *sock, char **msgbuf);
 
@@ -72,7 +72,7 @@ int spp_receive_message(int *sock, char **msgbuf);
  * @param message_len
  *  The length of message.
  *
- * @retval 0                     succeeded.
+ * @retval SPP_RET_OK		 succeeded.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.
  */
 int spp_send_message(int *sock, const char *message, size_t message_len);
