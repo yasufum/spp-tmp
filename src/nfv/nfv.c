@@ -442,7 +442,7 @@ add_vhost_pmd(int index)
 	iface = get_vhost_iface_name(index);
 
 	sprintf(devargs, "%s,iface=%s,queues=%d", name, iface, nr_queues);
-	ret = rte_eth_dev_attach(devargs, &vhost_port_id);
+	ret = dev_attach_by_devargs(devargs, &vhost_port_id);
 	if (ret < 0)
 		return ret;
 
@@ -560,7 +560,7 @@ add_pcap_pmd(int index)
 	sprintf(devargs,
 			"%s,rx_pcap=%s,tx_pcap=%s",
 			name, rx_fpath, tx_fpath);
-	ret = rte_eth_dev_attach(devargs, &pcap_pmd_port_id);
+	ret = dev_attach_by_devargs(devargs, &pcap_pmd_port_id);
 
 	if (ret < 0)
 		return ret;
@@ -623,7 +623,7 @@ add_null_pmd(int index)
 
 	name = get_null_pmd_name(index);
 	sprintf(devargs, "%s", name);
-	ret = rte_eth_dev_attach(devargs, &null_pmd_port_id);
+	ret = dev_attach_by_devargs(devargs, &null_pmd_port_id);
 	if (ret < 0)
 		return ret;
 
