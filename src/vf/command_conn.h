@@ -56,7 +56,7 @@ int spp_connect_to_controller(int *sock);
  * @retval 0 <                   succeeded. number of bytes received.
  * @retval 0                     no receive message.
  * @retval SPP_CONNERR_TEMPORARY temporary error. please reconnect.
- * @retval SPP_CONNERR_FATAL     fatal error occurred. should terminate process.
+ * @retval SPP_CONNERR_FATAL    fatal error occurred. should terminate process.
  */
 int spp_receive_message(int *sock, char **msgbuf);
 

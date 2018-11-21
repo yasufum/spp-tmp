@@ -90,7 +90,8 @@ append_json_comma(char **output)
 {
 	*output = spp_strbuf_append(*output, JSON_COMMA, strlen(JSON_COMMA));
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "JSON's comma failed to add.\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"JSON's comma failed to add.\n");
 		return -1;
 	}
 
@@ -107,8 +108,8 @@ append_json_uint_value(const char *name, char **output, unsigned int value)
 			strlen(name) + CMD_TAG_APPEND_SIZE*2);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"JSON's numeric format failed to add. (name = %s, uint = %u)\n",
-				name, value);
+				"JSON's numeric format failed to add. "
+				"(name = %s, uint = %u)\n", name, value);
 		return -1;
 	}
 
@@ -127,8 +128,8 @@ append_json_int_value(const char *name, char **output, int value)
 			strlen(name) + CMD_TAG_APPEND_SIZE*2);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"JSON's numeric format failed to add. (name = %s, int = %d)\n",
-				name, value);
+				"JSON's numeric format failed to add. "
+				"(name = %s, int = %d)\n", name, value);
 		return -1;
 	}
 
@@ -147,8 +148,8 @@ append_json_str_value(const char *name, char **output, const char *str)
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"JSON's string format failed to add. (name = %s, str = %s)\n",
-				name, str);
+				"JSON's string format failed to add. "
+				"(name = %s, str = %s)\n", name, str);
 		return -1;
 	}
 
@@ -167,8 +168,8 @@ append_json_array_brackets(const char *name, char **output, const char *str)
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"JSON's square bracket failed to add. (name = %s, str = %s)\n",
-				name, str);
+				"JSON's square bracket failed to add. "
+				"(name = %s, str = %s)\n", name, str);
 		return -1;
 	}
 
@@ -187,8 +188,8 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"JSON's curly bracket failed to add. (name = %s, str = %s)\n",
-				name, str);
+				"JSON's curly bracket failed to add. "
+				"(name = %s, str = %s)\n", name, str);
 		return -1;
 	}
 
@@ -226,7 +227,8 @@ execute_command(const struct spp_command *command)
 		break;
 
 	case SPP_CMDTYPE_COMPONENT:
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Execute component command.\n");
+		RTE_LOG(INFO, SPP_COMMAND_PROC,
+				"Execute component command.\n");
 		ret = spp_update_component(
 				command->spec.component.action,
 				command->spec.component.name,
@@ -415,8 +417,8 @@ append_interface_array(char **output, const enum port_type type)
 		*output = spp_strbuf_append(*output, tmp_str, strlen(tmp_str));
 		if (unlikely(*output == NULL)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Interface number failed to add. (type = %d)\n",
-					type);
+					"Interface number failed to add. "
+					"(type = %d)\n", type);
 			return -1;
 		}
 
@@ -778,8 +780,8 @@ append_response_list_value(char **output,
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Failed to get reply string. (tag = %s)\n",
-					list[i].tag_name);
+					"Failed to get reply string. "
+					"(tag = %s)\n", list[i].tag_name);
 			return -1;
 		}
 
@@ -791,7 +793,8 @@ append_response_list_value(char **output,
 			if (unlikely(ret < 0)) {
 				spp_strbuf_free(tmp_buff);
 				RTE_LOG(ERR, SPP_COMMAND_PROC,
-						"Failed to add commas. (tag = %s)\n",
+						"Failed to add commas. "
+						"(tag = %s)\n",
 						list[i].tag_name);
 				return -1;
 			}
@@ -802,7 +805,8 @@ append_response_list_value(char **output,
 		if (unlikely(*output == NULL)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Failed to add reply string. (tag = %s)\n",
+					"Failed to add reply string. "
+					"(tag = %s)\n",
 					list[i].tag_name);
 			return -1;
 		}
@@ -910,15 +914,16 @@ append_info_value(const char *name, char **output)
 
 /* send response for decode error */
 static void
-send_decode_error_response(int *sock, const struct spp_command_request *request,
+send_decode_error_response(int *sock,
+		const struct spp_command_request *request,
 		struct command_result *command_results)
 {
 	int ret = -1;
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"allocate error. (name = decode_error_response)\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
+				"(name = decode_error_response)\n");
 		return;
 	}
 
@@ -935,8 +940,8 @@ send_decode_error_response(int *sock, const struct spp_command_request *request,
 	msg = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(msg == NULL)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"allocate error. (name = decode_error_response)\n");
+		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
+				"(name = decode_error_response)\n");
 		return;
 	}
 	ret = append_json_block_brackets("", &msg, tmp_buff);
@@ -993,8 +998,8 @@ send_command_result_response(int *sock,
 		ret = append_client_id_value("client_id", &tmp_buff, NULL);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Failed to make client id response.\n");
+			RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make "
+					"client id response.\n");
 			return;
 		}
 	}
@@ -1132,7 +1137,8 @@ spp_command_proc_do(void)
 		msgbuf = spp_strbuf_allocate(CMD_REQ_BUF_INIT_SIZE);
 		if (unlikely(msgbuf == NULL)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Cannot allocate memory for receive data(init).\n");
+					"Cannot allocate memory "
+					"for receive data(init).\n");
 			return -1;
 		}
 	}

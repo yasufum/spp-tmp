@@ -62,7 +62,8 @@ spp_strbuf_free(char *strbuf)
 {
 	if (likely(strbuf != NULL)) {
 		RTE_LOG(DEBUG, SPP_STRING_BUFF,
-				";free   ; addr=%p; size=%lu; str=%s; len=%lu;\n",
+				";free   ; addr=%p; size=%lu; "
+				"str=%s; len=%lu;\n",
 				strbuf, strbuf_get_capacity(strbuf),
 				strbuf, strlen(strbuf));
 		free(strbuf - sizeof(size_t));

@@ -110,7 +110,8 @@ add_vlantag_packet(
 		new_ether = (struct ether_hdr *)rte_pktmbuf_prepend(pkt,
 				sizeof(struct vlan_hdr));
 		if (unlikely(new_ether == NULL)) {
-			RTE_LOG(ERR, PORT, "Failed to get additional header area.\n");
+			RTE_LOG(ERR, PORT, "Failed to "
+					"get additional header area.\n");
 			return -1;
 		}
 
@@ -137,8 +138,8 @@ add_vlantag_all_packets(
 		ret = add_vlantag_packet(pkts[cnt], data);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
-					"Failed to add VLAN tag.(pkts %d/%d)\n",
-					cnt, nb_pkts);
+					"Failed to add VLAN tag."
+					"(pkts %d/%d)\n", cnt, nb_pkts);
 			break;
 		}
 	}
@@ -161,7 +162,8 @@ del_vlantag_packet(
 		new_ether = (struct ether_hdr *)rte_pktmbuf_adj(pkt,
 				sizeof(struct vlan_hdr));
 		if (unlikely(new_ether == NULL)) {
-			RTE_LOG(ERR, PORT, "Failed to delete unnecessary header area.\n");
+			RTE_LOG(ERR, PORT, "Failed to "
+					"delete unnecessary header area.\n");
 			return -1;
 		}
 
@@ -188,8 +190,8 @@ del_vlantag_all_packets(
 		ret = del_vlantag_packet(pkts[cnt], data);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
-					"Failed to del VLAN tag.(pkts %d/%d)\n",
-					cnt, nb_pkts);
+					"Failed to del VLAN tag."
+					"(pkts %d/%d)\n", cnt, nb_pkts);
 			break;
 		}
 	}
@@ -251,7 +253,8 @@ port_ability_set_ability(
 {
 	int in_cnt, out_cnt = 0;
 	int port_id = port->dpdk_port;
-	struct port_ability_port_mng_info *port_mng = &g_port_mng_info[port_id];
+	struct port_ability_port_mng_info *port_mng =
+						&g_port_mng_info[port_id];
 	struct port_ability_mng_info *mng         = NULL;
 	struct spp_port_ability      *in_ability  = port->ability;
 	struct spp_port_ability      *out_ability = NULL;

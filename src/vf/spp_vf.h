@@ -513,7 +513,8 @@ int spp_get_iface_index(
  * @retval 0  succeeded.
  * @retval -1 failed.
  */
-int spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
+int
+spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 
 /**
  * Change component type from string to type value.

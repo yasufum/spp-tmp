@@ -45,7 +45,10 @@
 /* interval that wait until change update index (micro second) */
 #define CHANGE_UPDATE_INDEX_WAIT_INTERVAL SPP_CHANGE_UPDATE_INTERVAL
 
-/* interval that transmit burst packet, if buffer is not filled (nano second) */
+/*
+ *  interval that transmit burst packet,
+ *  if buffer is not filled (nano second)
+ */
 #define DRAIN_TX_PACKET_INTERVAL 100
 
 /* VID of VLAN untagged */
@@ -190,7 +193,8 @@ log_packet(const char *name, struct rte_mbuf *pkt,
 			&eth->s_addr);
 
 	RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,
-			"[%s]Packet(%s:%d). d_addr=%s, s_addr=%s, vid=%hu, pktlen=%u\n",
+			"[%s]Packet(%s:%d). d_addr=%s, s_addr=%s, "
+			"vid=%hu, pktlen=%u\n",
 			name,
 			func_name,
 			line_num,
@@ -234,7 +238,8 @@ log_classification(
 				clsd_data[clsd_idx].iface_no_global);
 
 	RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,
-			"[%s]Classification(%s:%d). d_addr=%s, s_addr=%s, vid=%hu, pktlen=%u, tx_iface=%s\n",
+			"[%s]Classification(%s:%d). d_addr=%s, "
+			"s_addr=%s, vid=%hu, pktlen=%u, tx_iface=%s\n",
 			cmp_info->name,
 			func_name,
 			line_num,
@@ -335,7 +340,8 @@ create_mac_classification(void)
 	/* create classifier mac table (hash table) */
 	*mac_cls_tab = rte_hash_create(&hash_params);
 	if (unlikely(*mac_cls_tab == NULL)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC, "Cannot create mac classification table. "
+		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+				"Cannot create mac classification table. "
 				"name=%s\n", hash_tab_name);
 		rte_free(mac_cls);
 		return NULL;
@@ -396,8 +402,8 @@ init_component_info(struct component_info *cmp_info,
 		/* if mac classification is NULL, make instance */
 		if (unlikely(cmp_info->mac_classifications[vid] == NULL)) {
 			RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-					"Mac classification is not registered. create."
-					"vid=%hu\n", vid);
+					"Mac classification is not registered."
+					" create. vid=%hu\n", vid);
 			cmp_info->mac_classifications[vid] =
 					create_mac_classification();
 			if (unlikely(cmp_info->mac_classifications[vid] ==
@@ -414,8 +420,10 @@ init_component_info(struct component_info *cmp_info,
 		if (unlikely(tx_port->class_id.mac_addr ==
 				SPP_DEFAULT_CLASSIFIED_DMY_ADDR)) {
 			mac_cls->default_classified = i;
-			RTE_LOG(INFO, SPP_CLASSIFIER_MAC, "default classified. "
-					"vid=%hu, iface_type=%d, iface_no=%d, dpdk_port=%d\n",
+			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+					"default classified. vid=%hu, "
+					"iface_type=%d, iface_no=%d, "
+					"dpdk_port=%d\n",
 					vid,
 					tx_port->iface_type,
 					tx_port->iface_no,
@@ -433,14 +441,17 @@ init_component_info(struct component_info *cmp_info,
 				(void *)&eth_addr, (void *)(long)i);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-					"Cannot add entry to classifier mac table. "
-					"ret=%d, vid=%hu, mac_addr=%s\n",
+					"Cannot add entry to classifier mac "
+					"table. ret=%d, vid=%hu, "
+					"mac_addr=%s\n",
 					ret, vid, mac_addr_str);
 			return -1;
 		}
 
-		RTE_LOG(INFO, SPP_CLASSIFIER_MAC, "Add entry to classifier mac table. "
-				"vid=%hu, mac_addr=%s, iface_type=%d, iface_no=%d, dpdk_port=%d\n",
+		RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+				"Add entry to classifier mac table. "
+				"vid=%hu, mac_addr=%s, iface_type=%d, "
+				"iface_no=%d, dpdk_port=%d\n",
 				vid,
 				mac_addr_str,
 				tx_port->iface_type,
@@ -472,7 +483,8 @@ init_classifier(struct management_info *mng_info)
 #ifdef RTE_MACHINE_CPUFLAG_SSE4_2
 	RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC, "Enabled SSE4.2. use CRC hash.\n");
 #else
-	RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC, "Disabled SSE4.2. use Jenkins hash.\n");
+	RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+			"Disabled SSE4.2. use Jenkins hash.\n");
 #endif
 
 	/* populate the classifier information at reference */
@@ -480,8 +492,8 @@ init_classifier(struct management_info *mng_info)
 			cmp_infos[mng_info->ref_index], &component_info);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				"Cannot initialize classifier mac table. ret=%d\n",
-				ret);
+				"Cannot initialize classifier mac table. "
+				"ret=%d\n", ret);
 		return -1;
 	}
 
@@ -604,8 +616,8 @@ get_general_default_classified_index(struct component_info *cmp_info)
 
 	mac_cls = cmp_info->mac_classifications[VLAN_UNTAGGED_VID];
 	if (unlikely(mac_cls == NULL)) {
-		LOG_DBG(cmp_info->name, "Untagged's default is not set. vid=%d\n",
-				(int)VLAN_UNTAGGED_VID);
+		LOG_DBG(cmp_info->name, "Untagged's default is not set. "
+				"vid=%d\n", (int)VLAN_UNTAGGED_VID);
 		return -1;
 	}
 
@@ -683,8 +695,8 @@ select_classified_index(const struct rte_mbuf *pkt,
 	/* select mac address classification by vid */
 	mac_cls = cmp_info->mac_classifications[vid];
 	if (unlikely(mac_cls == NULL)) {
-		LOG_DBG(cmp_info->name, "Mac classification is not registered. vid=%hu\n",
-				vid);
+		LOG_DBG(cmp_info->name, "Mac classification is not "
+				"registered. vid=%hu\n", vid);
 		return get_general_default_classified_index(cmp_info);
 	}
 
@@ -692,14 +704,14 @@ select_classified_index(const struct rte_mbuf *pkt,
 	ret = rte_hash_lookup_data(mac_cls->classification_tab,
 			(const void *)&eth->d_addr, &lookup_data);
 	if (ret >= 0) {
-		LOG_DBG(cmp_info->name, "Mac address is registered. ret=%d, vid=%hu\n",
-				ret, vid);
+		LOG_DBG(cmp_info->name, "Mac address is registered. "
+				"ret=%d, vid=%hu\n", ret, vid);
 		return (int)(long)lookup_data;
 	}
 
 	LOG_DBG(cmp_info->name,
-			"Mac address is not registered. ret=%d, (EINVAL=%d, ENOENT=%d)\n",
-			ret, EINVAL, ENOENT);
+			"Mac address is not registered. ret=%d, "
+			"(EINVAL=%d, ENOENT=%d)\n", ret, EINVAL, ENOENT);
 
 	/* check if packet is l2 multicast */
 	if (unlikely(is_multicast_ether_addr(&eth->d_addr)))
@@ -708,8 +720,8 @@ select_classified_index(const struct rte_mbuf *pkt,
 	/* if default is not set, use untagged's default */
 	if (unlikely(mac_cls->default_classified < 0 &&
 			vid != VLAN_UNTAGGED_VID)) {
-		LOG_DBG(cmp_info->name, "Vid's default is not set. use general default. vid=%hu\n",
-				vid);
+		LOG_DBG(cmp_info->name, "Vid's default is not set. "
+				"use general default. vid=%hu\n", vid);
 		return get_general_default_classified_index(cmp_info);
 	}
 
@@ -741,8 +753,8 @@ classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
 					i);
 			push_packet(rx_pkts[i], clsd_data + clsd_idx);
 		} else if (unlikely(clsd_idx == -1)) {
-			LOG_DBG(cmp_info->name, "no destination. drop packet. i=%d\n",
-					i);
+			LOG_DBG(cmp_info->name, "no destination. "
+					"drop packet. i=%d\n", i);
 			rte_pktmbuf_free(rx_pkts[i]);
 		} else if (unlikely(clsd_idx == -2)) {
 			LOG_DBG(cmp_info->name, "as multicast packet. i=%d\n",
@@ -760,7 +772,8 @@ change_update_index(struct management_info *mng_info, int id)
 	if (unlikely(mng_info->ref_index ==
 			mng_info->upd_index)) {
 		/* Change reference index of port ability. */
-		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
+		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF,
+									0, 0);
 
 		/* Transmit all packets for switching the using data. */
 		transmit_all_packet(mng_info->cmp_infos +
@@ -924,7 +937,8 @@ spp_classifier_get_component_status(
 	mng_info = g_mng_infos + id;
 	if (!is_used_mng_info(mng_info)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				"Component[%d] Not used. (status)(core = %d, type = %d)\n",
+				"Component[%d] Not used. "
+				"(status)(core = %d, type = %d)\n",
 				id, lcore_id, SPP_COMPONENT_CLASSIFIER_MAC);
 		return -1;
 	}

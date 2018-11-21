@@ -146,7 +146,7 @@ struct spp_command_request {
 	int num_command;                /**< Number of accepted commands */
 	int num_valid_command;          /**< Number of executed commands */
 	struct spp_command commands[SPP_CMD_MAX_COMMANDS];
-					/**< Information of executed commands */
+					/**<Information of executed commands */
 
 	int is_requested_client_id;     /**< Id for get_client_id command */
 	int is_requested_status;        /**< Id for status command */

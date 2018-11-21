@@ -80,7 +80,8 @@ spp_forward_update(struct spp_component_info *component)
 	memset(path, 0x00, sizeof(struct forward_path));
 
 	RTE_LOG(INFO, FORWARD,
-			"Component[%d] Start update component. (name = %s, type = %d)\n",
+			"Component[%d] Start update component. "
+			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
 			component->type);
@@ -103,7 +104,8 @@ spp_forward_update(struct spp_component_info *component)
 		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, FORWARD,
-			"Component[%d] Complete update component. (name = %s, type = %d)\n",
+			"Component[%d] Complete update component. "
+			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
 			component->type);
@@ -118,7 +120,8 @@ change_forward_index(int id)
 	struct forward_info *info = &g_forward_info[id];
 	if (info->ref_index == info->upd_index) {
 		/* Change reference index of port ability. */
-		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
+		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF,
+									0, 0);
 
 		info->ref_index = (info->upd_index+1)%SPP_INFO_AREA_MAX;
 	}
@@ -149,13 +152,15 @@ spp_forward(int id)
 		tx = &path->ports[cnt].tx;
 
 		/* Receive packets */
-		nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
+		nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0,
+						bufs, MAX_PKT_BURST);
 		if (unlikely(nb_rx == 0))
 			continue;
 
 		/* Send packets */
 		if (tx->dpdk_port >= 0)
-			nb_tx = spp_eth_tx_burst(tx->dpdk_port, 0, bufs, nb_rx);
+			nb_tx = spp_eth_tx_burst(tx->dpdk_port,
+							0, bufs, nb_rx);
 
 		/* Discard remained packets to release mbuf */
 		if (unlikely(nb_tx < nb_rx)) {
@@ -182,7 +187,8 @@ spp_forward_get_component_status(
 
 	if (unlikely(path->type == SPP_COMPONENT_UNUSE)) {
 		RTE_LOG(ERR, FORWARD,
-				"Component[%d] Not used. (status)(core = %d, type = %d)\n",
+				"Component[%d] Not used. "
+				"(status)(core = %d, type = %d)\n",
 				id, lcore_id, path->type);
 		return -1;
 	}

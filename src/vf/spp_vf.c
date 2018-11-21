@@ -75,7 +75,8 @@ struct core_info {
 	volatile enum spp_component_type type;
 				/* Component type */
 	int num;                /* The number of IDs below */
-	int id[RTE_MAX_LCORE];  /* ID list of components executed on cpu core */
+	int id[RTE_MAX_LCORE];
+			/* ID list of components executed on cpu core */
 };
 
 /* Manage core status and component information as global variable */
@@ -139,7 +140,8 @@ usage(const char *progname)
 			" -s SERVER_IP:SERVER_PORT"
 			" [--vhost-client]\n"
 			" --client-id CLIENT_ID   : My client ID\n"
-			" -s SERVER_IP:SERVER_PORT  : Access information to the server\n"
+			" -s SERVER_IP:SERVER_PORT  :"
+			" Access information to the server\n"
 			" --vhost-client            : Run vhost on client\n"
 			, progname);
 }
@@ -211,8 +213,8 @@ add_vhost_pmd(int index, int client)
 
 	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
 	if (unlikely(mp == NULL)) {
-		RTE_LOG(ERR, APP, "Cannot get mempool for mbufs. (name = %s)\n",
-				PKTMBUF_POOL_NAME);
+		RTE_LOG(ERR, APP, "Cannot get mempool for mbufs. "
+				"(name = %s)\n", PKTMBUF_POOL_NAME);
 		return -1;
 	}
 
@@ -232,8 +234,8 @@ add_vhost_pmd(int index, int client)
 	ret = rte_eth_dev_configure(vhost_port_id, nr_queues, nr_queues,
 		&port_conf);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_configure error. (ret = %d)\n",
-				ret);
+		RTE_LOG(ERR, APP, "rte_eth_dev_configure error. "
+				"(ret = %d)\n", ret);
 		return ret;
 	}
 
@@ -264,7 +266,8 @@ add_vhost_pmd(int index, int client)
 	/* Start the Ethernet port. */
 	ret = rte_eth_dev_start(vhost_port_id);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_start error. (ret = %d)\n", ret);
+		RTE_LOG(ERR, APP, "rte_eth_dev_start error. (ret = %d)\n",
+				ret);
 		return ret;
 	}
 
@@ -389,7 +392,8 @@ parse_app_server(const char *server_str, char *server_ip, int *server_port)
 		return -1;
 
 	port = strtol(&server_str[pos+1], &endptr, 0);
-	if (unlikely(&server_str[pos+1] == endptr) || unlikely(*endptr != '\0'))
+	if (unlikely(&server_str[pos+1] == endptr) ||
+				unlikely(*endptr != '\0'))
 		return -1;
 
 	memcpy(server_ip, server_str, pos);
@@ -466,7 +470,8 @@ parse_app_args(int argc, char *argv[])
 		return -1;
 	}
 	RTE_LOG(INFO, APP,
-			"app opts (client_id=%d,server=%s:%d,vhost_client=%d)\n",
+			"app opts (client_id=%d,server=%s:%d,"
+			"vhost_client=%d)\n",
 			g_startup_param.client_id,
 			g_startup_param.server_ip,
 			g_startup_param.server_port,
@@ -509,11 +514,13 @@ dump_core_info(const struct core_mng_info *core_info)
 
 		sprintf(str, "core[%d]-0 type=%d, num=%d", lcore_id,
 				info->core[0].type, info->core[0].num);
-		dump_buff(str, info->core[0].id, sizeof(int)*info->core[0].num);
+		dump_buff(str, info->core[0].id,
+				sizeof(int)*info->core[0].num);
 
 		sprintf(str, "core[%d]-1 type=%d, num=%d", lcore_id,
 				info->core[1].type, info->core[1].num);
-		dump_buff(str, info->core[1].id, sizeof(int)*info->core[1].num);
+		dump_buff(str, info->core[1].id,
+				sizeof(int)*info->core[1].num);
 	}
 }
 
@@ -529,7 +536,8 @@ dump_component_info(const struct spp_component_info *component_info)
 		if (component->type == SPP_COMPONENT_UNUSE)
 			continue;
 
-		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, core=%u, index=%d\n",
+		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, "
+				"core=%u, index=%d\n",
 				cnt, component->name, component->type,
 				component->lcore_id, component->component_id);
 
@@ -907,7 +915,8 @@ slave_main(void *arg __attribute__ ((unused)))
 				break;
 		}
 		if (unlikely(ret != 0)) {
-			RTE_LOG(ERR, APP, "Core[%d] Component Error. (id = %d)\n",
+			RTE_LOG(ERR, APP, "Core[%d] Component Error. "
+					"(id = %d)\n",
 					lcore_id, core->id[cnt]);
 			break;
 		}
@@ -1165,7 +1174,8 @@ spp_update_classifier_table(
 	int64_t ret_mac = 0;
 	uint64_t mac_addr = 0;
 
-	RTE_LOG(DEBUG, APP, "update_classifier_table ( type = mac, mac addr = %s, port = %d:%d )\n",
+	RTE_LOG(DEBUG, APP, "update_classifier_table "
+			"( type = mac, mac addr = %s, port = %d:%d )\n",
 			mac_addr_str, port->iface_type, port->iface_no);
 
 	ret_mac = spp_change_mac_str_to_int64(mac_addr_str);
@@ -1193,32 +1203,35 @@ spp_update_classifier_table(
 		if ((port_info->class_id.vlantag.vid != 0) &&
 				unlikely(port_info->class_id.vlantag.vid !=
 				vid)) {
-			RTE_LOG(ERR, APP, "VLAN ID is different. ( vid = %d )\n",
-					vid);
+			RTE_LOG(ERR, APP, "VLAN ID is different. "
+					"( vid = %d )\n", vid);
 			return SPP_RET_NG;
 		}
 		if ((port_info->class_id.mac_addr != 0) &&
 				unlikely(port_info->class_id.mac_addr !=
 						mac_addr)) {
-			RTE_LOG(ERR, APP, "MAC address is different. ( mac = %s )\n",
-					mac_addr_str);
+			RTE_LOG(ERR, APP, "MAC address is different. "
+					"( mac = %s )\n", mac_addr_str);
 			return SPP_RET_NG;
 		}
 
 		port_info->class_id.vlantag.vid = ETH_VLAN_ID_MAX;
 		port_info->class_id.mac_addr    = 0;
-		memset(port_info->class_id.mac_addr_str, 0x00, SPP_MIN_STR_LEN);
+		memset(port_info->class_id.mac_addr_str, 0x00,
+							SPP_MIN_STR_LEN);
 	} else if (action == SPP_CMD_ACTION_ADD) {
 		/* Setting */
 		if (unlikely(port_info->class_id.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
-			RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d, vlan = %d != %d )\n",
+			RTE_LOG(ERR, APP, "Port in used. "
+					"( port = %d:%d, vlan = %d != %d )\n",
 					port->iface_type, port->iface_no,
 					port_info->class_id.vlantag.vid, vid);
 			return SPP_RET_NG;
 		}
 		if (unlikely(port_info->class_id.mac_addr != 0)) {
-			RTE_LOG(ERR, APP, "Port in used. ( port = %d:%d, mac = %s != %s )\n",
+			RTE_LOG(ERR, APP, "Port in used. "
+					"( port = %d:%d, mac = %s != %s )\n",
 					port->iface_type, port->iface_no,
 					port_info->class_id.mac_addr_str,
 					mac_addr_str);
@@ -1437,8 +1450,8 @@ spp_update_port(enum spp_command_action action,
 
 	component_id = spp_get_component_id(name);
 	if (component_id < 0) {
-		RTE_LOG(ERR, APP, "Unknown component by port command. (component = %s)\n",
-				name);
+		RTE_LOG(ERR, APP, "Unknown component by port command. "
+				"(component = %s)\n", name);
 		return SPP_RET_NG;
 	}
 
@@ -1470,7 +1483,8 @@ spp_update_port(enum spp_command_action action,
 				cnt++;
 			}
 			if (cnt >= SPP_PORT_ABILITY_MAX) {
-				RTE_LOG(ERR, APP, "No space of port ability.\n");
+				RTE_LOG(ERR, APP,
+						"No space of port ability.\n");
 				return SPP_RET_NG;
 			}
 			memcpy(&port_info->ability[cnt], ability,
@@ -1592,7 +1606,8 @@ flush_component(void)
 			ret = spp_forward_update(component_info);
 
 		if (unlikely(ret < 0)) {
-			RTE_LOG(ERR, APP, "Flush error. ( component = %s, type = %d)\n",
+			RTE_LOG(ERR, APP, "Flush error. "
+					"( component = %s, type = %d)\n",
 					component_info->name,
 					component_info->type);
 			return SPP_RET_NG;
@@ -1641,7 +1656,8 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 				"", SPP_TYPE_UNUSE_STR,
 				0, NULL, 0, NULL);
 			if (unlikely(ret != 0)) {
-				RTE_LOG(ERR, APP, "Cannot iterate core information. "
+				RTE_LOG(ERR, APP, "Cannot iterate core "
+						"information. "
 						"(core = %d, type = %d)\n",
 						lcore_id, SPP_COMPONENT_UNUSE);
 				return SPP_RET_NG;
@@ -1662,7 +1678,8 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 						params);
 			}
 			if (unlikely(ret != 0)) {
-				RTE_LOG(ERR, APP, "Cannot iterate core information. "
+				RTE_LOG(ERR, APP, "Cannot iterate core "
+						"information. "
 						"(core = %d, type = %d)\n",
 						lcore_id, core->type);
 				return SPP_RET_NG;
@@ -1712,7 +1729,9 @@ spp_get_dpdk_port(enum port_type iface_type, int iface_no)
  * For instance, 'ring:0' is separated to 'ring' and '0'.
  */
 int
-spp_get_iface_index(const char *port, enum port_type *iface_type, int *iface_no)
+spp_get_iface_index(const char *port,
+		    enum port_type *iface_type,
+		    int *iface_no)
 {
 	enum port_type type = UNDEF;
 	const char *no_str = NULL;
@@ -1809,8 +1828,8 @@ spp_change_mac_str_to_int64(const char *mac)
 
 		/* Check for mal-formatted address */
 		if (unlikely(token_cnt >= ETHER_ADDR_LEN)) {
-			RTE_LOG(ERR, APP, "MAC address format error. (mac = %s)\n",
-					mac);
+			RTE_LOG(ERR, APP, "MAC address format error. "
+					"(mac = %s)\n", mac);
 			return -1;
 		}
 

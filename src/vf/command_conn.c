@@ -98,8 +98,8 @@ spp_receive_message(int *sock, char **strbuf)
 	ret = recv(*sock, rx_buf, rx_buf_sz, 0);
 	if (unlikely(ret <= 0)) {
 		if (likely(ret == 0)) {
-			RTE_LOG(INFO, SPP_COMMAND_PROC,
-					"Controller has performed an shutdown.");
+			RTE_LOG(INFO, SPP_COMMAND_PROC, "Controller has "
+					"performed an shutdown.");
 		} else if (unlikely(errno != EAGAIN && errno != EWOULDBLOCK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Receive failure. errno=%d\n", errno);
@@ -108,7 +108,8 @@ spp_receive_message(int *sock, char **strbuf)
 			return 0;
 		}
 
-		RTE_LOG(INFO, SPP_COMMAND_PROC, "Assume Server closed connection.\n");
+		RTE_LOG(INFO, SPP_COMMAND_PROC, "Assume Server closed "
+							"connection.\n");
 		close(*sock);
 		*sock = -1;
 		return SPP_CONNERR_TEMPORARY;

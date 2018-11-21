@@ -284,7 +284,8 @@ decode_component_type_value(void *output, const char *arg_val)
 	org_type = spp_get_component_type_update(component->core);
 	if ((org_type != SPP_COMPONENT_UNUSE) && (org_type != set_type)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"Component type does not match. val=%s (org=%d, new=%d)\n",
+				"Component type does not match. "
+				"val=%s (org=%d, new=%d)\n",
 				arg_val, org_type, set_type);
 		return -1;
 	}
@@ -383,8 +384,8 @@ decode_port_name_value(void *output, const char *arg_val)
 
 	ret = spp_get_component_id(arg_val);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown component name. val=%s\n",
-				arg_val);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Unknown component name. val=%s\n", arg_val);
 		return -1;
 	}
 
@@ -457,8 +458,8 @@ decode_mac_addr_str_value(void *output, const char *arg_val)
 
 	ret = spp_change_mac_str_to_int64(str_val);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad mac address string. val=%s\n",
-				str_val);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Bad mac address string. val=%s\n", str_val);
 		return -1;
 	}
 
@@ -533,7 +534,8 @@ decode_classifier_port_value(void *output, const char *arg_val)
 	if (ret < 0)
 		return -1;
 
-	if (spp_check_added_port(tmp_port.iface_type, tmp_port.iface_no) == 0) {
+	if (spp_check_added_port(tmp_port.iface_type,
+					tmp_port.iface_no) == 0) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Port not added. val=%s\n",
 				arg_val);
 		return -1;
@@ -545,8 +547,8 @@ decode_classifier_port_value(void *output, const char *arg_val)
 	if (unlikely(classifier_table->action == SPP_CMD_ACTION_ADD)) {
 		if (!spp_check_classid_used_port(ETH_VLAN_ID_MAX, 0,
 				tmp_port.iface_type, tmp_port.iface_no)) {
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Port in used. (classifier_table command) val=%s\n",
+			RTE_LOG(ERR, SPP_COMMAND_PROC, "Port in used. "
+					"(classifier_table command) val=%s\n",
 					arg_val);
 			return -1;
 		}
@@ -558,8 +560,8 @@ decode_classifier_port_value(void *output, const char *arg_val)
 		if (!spp_check_classid_used_port(classifier_table->vid,
 				(uint64_t)mac_addr,
 				tmp_port.iface_type, tmp_port.iface_no)) {
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Port in used. (classifier_table command) val=%s\n",
+			RTE_LOG(ERR, SPP_COMMAND_PROC, "Port in used. "
+					"(classifier_table command) val=%s\n",
 					arg_val);
 			return -1;
 		}
@@ -581,7 +583,8 @@ struct decode_parameter_list {
 };
 
 /* parameter list for each command */
-static struct decode_parameter_list parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
+static struct decode_parameter_list
+parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 	{                                /* classifier_table(mac) */
 		{
 			.name = "action",
@@ -728,7 +731,8 @@ decode_command_parameter_in_list(struct spp_command_request *request,
 				argv[pi]);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Bad value. command=%s, name=%s, index=%d, value=%s\n",
+					"Bad value. command=%s, name=%s, "
+					"index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
 			return set_string_value_decode_error(error, argv[pi],
 					list->name);
@@ -742,8 +746,8 @@ struct decode_command_list {
 	const char *name;       /* Command name */
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
-	int (*func)(struct spp_command_request *request, int argc, char *argv[],
-			struct spp_command_decode_error *error);
+	int (*func)(struct spp_command_request *request, int argc,
+			char *argv[], struct spp_command_decode_error *error);
 				/* Pointer to command handling function */
 };
 
@@ -833,7 +837,8 @@ spp_command_decode_request(
 	request->num_command = 1;
 	ret = decode_command_in_list(request, request_str, error);
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Cannot decode command request. "
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Cannot decode command request. "
 				"ret=%d, request_str=%.*s\n",
 				ret, (int)request_str_len, request_str);
 		return ret;

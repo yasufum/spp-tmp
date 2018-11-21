@@ -55,8 +55,8 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 			sizeof(struct ring_latency_stats_info) * stats_count,
 			0);
 	if (unlikely(g_stats_info == NULL)) {
-		RTE_LOG(ERR, SPP_RING_LATENCY_STATS,
-				"Cannot allocate memory for ring latency stats info\n");
+		RTE_LOG(ERR, SPP_RING_LATENCY_STATS, "Cannot allocate memory "
+				"for ring latency stats info\n");
 		return -1;
 	}
 
@@ -65,7 +65,8 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 	g_stats_count = stats_count;
 
 	RTE_LOG(DEBUG, SPP_RING_LATENCY_STATS,
-			"g_samp_intvl=%lu, g_stats_count=%hu, cpns=%lu, NS_PER_SEC=%f\n",
+			"g_samp_intvl=%lu, g_stats_count=%hu, "
+			"cpns=%lu, NS_PER_SEC=%f\n",
 			g_samp_intvl, g_stats_count,
 			cycles_per_ns(), NS_PER_SEC);
 
@@ -103,7 +104,8 @@ spp_ringlatencystats_add_time_stamp(int ring_id,
 		/* set tsc to mbuf::timestamp */
 		if (unlikely(stats_info->timer_tsc >= g_samp_intvl)) {
 			RTE_LOG(DEBUG, SPP_RING_LATENCY_STATS,
-					"Set timestamp. ring_id=%d, pkts_index=%u, timestamp=%lu\n",
+					"Set timestamp. ring_id=%d, "
+					"pkts_index=%u, timestamp=%lu\n",
 					ring_id, i, now);
 			pkts[i]->timestamp = now;
 			stats_info->timer_tsc = 0;
