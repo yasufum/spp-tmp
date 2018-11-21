@@ -84,6 +84,405 @@ const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
 	/* termination */ "",
 };
 
+/* get client id */
+static int
+spp_get_client_id(void)
+{
+	return g_startup_param.client_id;
+}
+
+/* Check if port has been flushed. */
+static int
+spp_check_flush_port(enum port_type iface_type, int iface_no)
+{
+	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	return port->dpdk_port >= 0;
+}
+
+/* update classifier table according to the specified action(add or del). */
+static int
+spp_update_classifier_table(
+		enum spp_command_action action,
+		enum spp_classifier_type type __attribute__ ((unused)),
+		int vid,
+		const char *mac_addr_str,
+		const struct spp_port_index *port)
+{
+	struct spp_port_info *port_info = NULL;
+	int64_t ret_mac = 0;
+	uint64_t mac_addr = 0;
+
+	RTE_LOG(DEBUG, APP, "update_classifier_table "
+			"( type = mac, mac addr = %s, port = %d:%d )\n",
+			mac_addr_str, port->iface_type, port->iface_no);
+
+	ret_mac = spp_change_mac_str_to_int64(mac_addr_str);
+	if (unlikely(ret_mac == -1)) {
+		RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
+			mac_addr_str);
+		return SPP_RET_NG;
+	}
+	mac_addr = (uint64_t)ret_mac;
+
+	port_info = get_iface_info(port->iface_type, port->iface_no);
+	if (unlikely(port_info == NULL)) {
+		RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
+				port->iface_type, port->iface_no);
+		return SPP_RET_NG;
+	}
+	if (unlikely(port_info->iface_type == UNDEF)) {
+		RTE_LOG(ERR, APP, "Port not added. ( port = %d:%d )\n",
+				port->iface_type, port->iface_no);
+		return SPP_RET_NG;
+	}
+
+	if (action == SPP_CMD_ACTION_DEL) {
+		/* Delete */
+		if ((port_info->class_id.vlantag.vid != 0) &&
+				unlikely(port_info->class_id.vlantag.vid !=
+				vid)) {
+			RTE_LOG(ERR, APP, "VLAN ID is different. "
+					"( vid = %d )\n", vid);
+			return SPP_RET_NG;
+		}
+		if ((port_info->class_id.mac_addr != 0) &&
+			unlikely(port_info->class_id.mac_addr !=
+					mac_addr)) {
+			RTE_LOG(ERR, APP, "MAC address is different. "
+					"( mac = %s )\n", mac_addr_str);
+			return SPP_RET_NG;
+		}
+
+		port_info->class_id.vlantag.vid = ETH_VLAN_ID_MAX;
+		port_info->class_id.mac_addr    = 0;
+		memset(port_info->class_id.mac_addr_str, 0x00,
+							SPP_MIN_STR_LEN);
+
+	} else if (action == SPP_CMD_ACTION_ADD) {
+		/* Setting */
+		if (unlikely(port_info->class_id.vlantag.vid !=
+				ETH_VLAN_ID_MAX)) {
+			RTE_LOG(ERR, APP, "Port in used. "
+					"( port = %d:%d, vlan = %d != %d )\n",
+					port->iface_type, port->iface_no,
+					port_info->class_id.vlantag.vid, vid);
+			return SPP_RET_NG;
+		}
+		if (unlikely(port_info->class_id.mac_addr != 0)) {
+			RTE_LOG(ERR, APP, "Port in used. "
+					"( port = %d:%d, mac = %s != %s )\n",
+					port->iface_type, port->iface_no,
+					port_info->class_id.mac_addr_str,
+					mac_addr_str);
+			return SPP_RET_NG;
+		}
+
+		port_info->class_id.vlantag.vid = vid;
+		port_info->class_id.mac_addr    = mac_addr;
+		strcpy(port_info->class_id.mac_addr_str, mac_addr_str);
+	}
+
+	set_component_change_port(port_info, SPP_PORT_RXTX_TX);
+	return SPP_RET_OK;
+}
+
+/**
+ * Assign or remove component to/from specified lcore depending
+ * on component action
+ */
+static int
+spp_update_component(
+		enum spp_command_action action,
+		const char *name,
+		unsigned int lcore_id,
+		enum spp_component_type type)
+{
+	int ret = SPP_RET_NG;
+	int ret_del = -1;
+	int component_id = 0;
+	unsigned int tmp_lcore_id = 0;
+	struct spp_component_info *component = NULL;
+	struct core_info *core = NULL;
+	struct core_mng_info *info = NULL;
+
+	switch (action) {
+	case SPP_CMD_ACTION_START:
+		info = &g_core_info[lcore_id];
+		if (info->status == SPP_CORE_UNUSE) {
+			RTE_LOG(ERR, APP, "Core %d is not available because "
+				"it is in SPP_CORE_UNUSE state.\n", lcore_id);
+			return SPP_RET_NG;
+		}
+
+		component_id = spp_get_component_id(name);
+		if (component_id >= 0) {
+			RTE_LOG(ERR, APP, "Component name '%s' is already "
+				"used.\n", name);
+			return SPP_RET_NG;
+		}
+
+		component_id = get_free_component();
+		if (component_id < 0) {
+			RTE_LOG(ERR, APP, "Cannot assign component over the "
+				"maximum number.\n");
+			return SPP_RET_NG;
+		}
+
+		core = &info->core[info->upd_index];
+		if ((core->type != SPP_COMPONENT_UNUSE) &&
+				(core->type != type)) {
+			RTE_LOG(ERR, APP, "Component type '%s' is invalid.\n",
+				name);
+			return SPP_RET_NG;
+		}
+
+		component = &g_component_info[component_id];
+		memset(component, 0x00, sizeof(struct spp_component_info));
+		strcpy(component->name, name);
+		component->type		= type;
+		component->lcore_id	= lcore_id;
+		component->component_id	= component_id;
+
+		core->type = type;
+		core->id[core->num] = component_id;
+		core->num++;
+		ret = SPP_RET_OK;
+		tmp_lcore_id = lcore_id;
+		g_change_component[component_id] = 1;
+		break;
+
+	case SPP_CMD_ACTION_STOP:
+		component_id = spp_get_component_id(name);
+		if (component_id < 0)
+			return SPP_RET_OK;
+
+		component = &g_component_info[component_id];
+		tmp_lcore_id = component->lcore_id;
+		memset(component, 0x00, sizeof(struct spp_component_info));
+
+		info = &g_core_info[tmp_lcore_id];
+		core = &info->core[info->upd_index];
+		ret_del = del_component_info(component_id,
+				core->num, core->id);
+		if (ret_del >= 0)
+			/* If deleted, decrement number. */
+			core->num--;
+
+		if (core->num == 0)
+			core->type = SPP_COMPONENT_UNUSE;
+
+		ret = SPP_RET_OK;
+		g_change_component[component_id] = 0;
+		break;
+
+	default:
+		break;
+	}
+
+	g_change_core[tmp_lcore_id] = 1;
+	return ret;
+}
+
+/* Port add or del to execute it */
+static int
+spp_update_port(enum spp_command_action action,
+		const struct spp_port_index *port,
+		enum spp_port_rxtx rxtx,
+		const char *name,
+		const struct spp_port_ability *ability)
+{
+	int ret = SPP_RET_NG;
+	int ret_check = -1;
+	int ret_del = -1;
+	int component_id = 0;
+	int cnt = 0;
+	struct spp_component_info *component = NULL;
+	struct spp_port_info *port_info = NULL;
+	int *num = NULL;
+	struct spp_port_info **ports = NULL;
+
+	component_id = spp_get_component_id(name);
+	if (component_id < 0) {
+		RTE_LOG(ERR, APP, "Unknown component by port command. "
+				"(component = %s)\n", name);
+		return SPP_RET_NG;
+	}
+
+	component = &g_component_info[component_id];
+	port_info = get_iface_info(port->iface_type, port->iface_no);
+	if (rxtx == SPP_PORT_RXTX_RX) {
+		num = &component->num_rx_port;
+		ports = component->rx_ports;
+	} else {
+		num = &component->num_tx_port;
+		ports = component->tx_ports;
+	}
+
+	switch (action) {
+	case SPP_CMD_ACTION_ADD:
+		ret_check = check_port_element(port_info, *num, ports);
+		if (ret_check >= 0)
+			return SPP_RET_OK;
+
+		if (*num >= RTE_MAX_ETHPORTS) {
+			RTE_LOG(ERR, APP, "Cannot assign port over the "
+				"maximum number.\n");
+			break;
+		}
+
+		if (ability->ope != SPP_PORT_ABILITY_OPE_NONE) {
+			while ((cnt < SPP_PORT_ABILITY_MAX) &&
+					(port_info->ability[cnt].ope !=
+					SPP_PORT_ABILITY_OPE_NONE)) {
+				cnt++;
+			}
+			if (cnt >= SPP_PORT_ABILITY_MAX) {
+				RTE_LOG(ERR, APP,
+						"No space of port ability.\n");
+				return SPP_RET_NG;
+			}
+			memcpy(&port_info->ability[cnt], ability,
+					sizeof(struct spp_port_ability));
+		}
+
+		port_info->iface_type = port->iface_type;
+		ports[*num] = port_info;
+		(*num)++;
+
+		ret = SPP_RET_OK;
+		break;
+
+	case SPP_CMD_ACTION_DEL:
+		for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
+			if (port_info->ability[cnt].ope ==
+					SPP_PORT_ABILITY_OPE_NONE)
+				continue;
+
+			if (port_info->ability[cnt].rxtx == rxtx)
+				memset(&port_info->ability[cnt], 0x00,
+					sizeof(struct spp_port_ability));
+		}
+
+		ret_del = get_del_port_element(port_info, *num, ports);
+		if (ret_del == 0)
+			(*num)--; /* If deleted, decrement number. */
+
+		ret = SPP_RET_OK;
+		break;
+	default:
+		break;
+	}
+
+	g_change_component[component_id] = 1;
+	return ret;
+}
+
+/* Flush command to execute it */
+static int
+spp_flush(void)
+{
+	int ret = -1;
+
+	/* Initial setting of each interface. */
+	ret = flush_port();
+	if (ret < 0)
+		return ret;
+
+	/* Flush of core index. */
+	flush_core();
+
+	/* Flush of component */
+	ret = flush_component();
+
+	backup_mng_info(&g_backup_info);
+	return ret;
+}
+
+/* Iterate core information to create response to status command */
+static int
+spp_iterate_core_info(struct spp_iterate_core_params *params)
+{
+	int ret;
+	int lcore_id, cnt;
+	struct core_info *core = NULL;
+
+	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+		if (spp_get_core_status(lcore_id) == SPP_CORE_UNUSE)
+			continue;
+
+		core = get_core_info(lcore_id);
+		if (core->num == 0) {
+			ret = (*params->element_proc)(
+				params, lcore_id,
+				"", SPP_TYPE_UNUSE_STR,
+				0, NULL, 0, NULL);
+			if (unlikely(ret != 0)) {
+				RTE_LOG(ERR, APP, "Cannot iterate core "
+						"information. "
+						"(core = %d, type = %d)\n",
+						lcore_id, SPP_COMPONENT_UNUSE);
+				return SPP_RET_NG;
+			}
+			continue;
+		}
+
+		for (cnt = 0; cnt < core->num; cnt++) {
+			if (core->type == SPP_COMPONENT_CLASSIFIER_MAC) {
+				ret = spp_classifier_get_component_status(
+						lcore_id,
+						core->id[cnt],
+						params);
+			} else {
+				ret = spp_forward_get_component_status(
+						lcore_id,
+						core->id[cnt],
+						params);
+			}
+			if (unlikely(ret != 0)) {
+				RTE_LOG(ERR, APP, "Cannot iterate core "
+						"information. "
+						"(core = %d, type = %d)\n",
+						lcore_id, core->type);
+				return SPP_RET_NG;
+			}
+		}
+	}
+
+	return SPP_RET_OK;
+}
+
+/* Iterate classifier_table to create response to status command */
+static int
+spp_iterate_classifier_table(
+		struct spp_iterate_classifier_table_params *params)
+{
+	int ret;
+
+	ret = spp_classifier_mac_iterate_table(params);
+	if (unlikely(ret != 0)) {
+		RTE_LOG(ERR, APP, "Cannot iterate classifier_mac_table.\n");
+		return SPP_RET_NG;
+	}
+
+	return SPP_RET_OK;
+}
+
+/* Get port number assigned by DPDK lib */
+static int
+spp_get_dpdk_port(enum port_type iface_type, int iface_no)
+{
+	switch (iface_type) {
+	case PHY:
+		return g_iface_info.nic[iface_no].dpdk_port;
+	case RING:
+		return g_iface_info.ring[iface_no].dpdk_port;
+	case VHOST:
+		return g_iface_info.vhost[iface_no].dpdk_port;
+	default:
+		return -1;
+	}
+}
+
 /* append a comma for JSON format */
 static int
 append_json_comma(char **output)
