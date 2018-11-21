@@ -222,9 +222,9 @@ add_vhost_pmd(int index, int client)
 
 	sprintf(devargs, "%s,iface=%s,queues=%d,client=%d",
 			name, iface, nr_queues, client);
-	ret = rte_eth_dev_attach(devargs, &vhost_port_id);
+	ret = dev_attach_by_devargs(devargs, &vhost_port_id);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_attach error. (ret = %d)\n",
+		RTE_LOG(ERR, APP, "dev_attach_by_devargs error. (ret = %d)\n",
 				ret);
 		return ret;
 	}
