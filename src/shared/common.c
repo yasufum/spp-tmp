@@ -500,3 +500,29 @@ append_patch_info_json(char *str,
 
 	return 0;
 }
+
+/* attach the new device, then store port_id of the device */
+int
+dev_attach_by_devargs(const char *devargs, uint16_t *port_id)
+{
+	int ret = -1;
+	struct rte_devargs da;
+
+	memset(&da, 0, sizeof(da));
+
+	/* parse devargs */
+	if (rte_devargs_parse(&da, devargs))
+		return -1;
+
+	ret = rte_eal_hotplug_add(da.bus->name, da.name, da.args);
+	if (ret < 0) {
+		free(da.args);
+		return ret;
+	}
+
+	ret = rte_eth_dev_get_port_by_name(da.name, port_id);
+
+	free(da.args);
+
+	return ret;
+}

@@ -18,7 +18,9 @@
 #include <rte_common.h>
 #include <rte_config.h>
 #include <rte_eal.h>
+#include <rte_devargs.h>
 #include <rte_ethdev.h>
+#include <rte_ethdev_driver.h>
 #include <rte_launch.h>
 #include <rte_lcore.h>
 #include <rte_log.h>
@@ -216,5 +218,20 @@ int parse_resource_uid(char *str, char **port_type, int *port_id);
 int spp_atoi(const char *str, int *val);
 
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
+
+/**
+ * Attach a new Ethernet device specified by arguments.
+ *
+ * @param devargs
+ *  A pointer to a strings array describing the new device
+ *  to be attached. The strings should be a pci address like
+ *  '0000:01:00.0' or virtual device name like 'net_pcap0'.
+ * @param port_id
+ *  A pointer to a port identifier actually attached.
+ * @return
+ *  0 on success and port_id is filled, negative on error
+ */
+int
+dev_attach_by_devargs(const char *devargs, uint16_t *port_id);
 
 #endif
