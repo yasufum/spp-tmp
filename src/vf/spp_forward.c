@@ -147,6 +147,17 @@ spp_forward(int id)
 	change_forward_index(id);
 	path = &info->path[info->ref_index];
 
+	/* Practice condition check */
+	if (path->type == SPP_COMPONENT_MERGE) {
+		/* merger */
+		if (!(path->num_tx == 1 && path->num_rx >= 1))
+			return SPP_RET_OK;
+	} else {
+		/* forwarder */
+		if (!(path->num_tx == 1 && path->num_rx == 1))
+			return SPP_RET_OK;
+	}
+
 	for (cnt = 0; cnt < path->num_rx; cnt++) {
 		rx = &path->ports[cnt].rx;
 		tx = &path->ports[cnt].tx;
