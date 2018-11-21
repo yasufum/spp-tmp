@@ -6,13 +6,7 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 
-#include <rte_eth_ring.h>
-#include <rte_eth_vhost.h>
-#include <rte_memzone.h>
-#include <rte_cycles.h>
-
 #include "spp_vf.h"
-#include "ringlatencystats.h"
 #include "classifier_mac.h"
 #include "spp_forward.h"
 #include "command_proc.h"
