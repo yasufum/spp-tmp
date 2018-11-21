@@ -337,13 +337,32 @@ spp_update_port(enum spp_command_action action,
 	switch (action) {
 	case SPP_CMD_ACTION_ADD:
 		ret_check = check_port_element(port_info, *num, ports);
-		if (ret_check >= 0)
+		/* registered check */
+		if (ret_check >= SPP_RET_OK) {
+			/* registered */
+			if (ability->ope == SPP_PORT_ABILITY_OPE_ADD_VLANTAG) {
+				while ((cnt < SPP_PORT_ABILITY_MAX) &&
+					    (port_info->ability[cnt].ope !=
+					    SPP_PORT_ABILITY_OPE_ADD_VLANTAG))
+					cnt++;
+				if (cnt >= SPP_PORT_ABILITY_MAX) {
+					RTE_LOG(ERR, APP, "update VLAN tag "
+						"Non-registratio\n");
+					return SPP_RET_NG;
+				}
+				memcpy(&port_info->ability[cnt], ability,
+					sizeof(struct spp_port_ability));
+
+				ret = SPP_RET_OK;
+				break;
+			}
 			return SPP_RET_OK;
+		}
 
 		if (*num >= RTE_MAX_ETHPORTS) {
 			RTE_LOG(ERR, APP, "Cannot assign port over the "
 				"maximum number.\n");
-			break;
+			return SPP_RET_NG;
 		}
 
 		if (ability->ope != SPP_PORT_ABILITY_OPE_NONE) {
@@ -387,7 +406,7 @@ spp_update_port(enum spp_command_action action,
 		break;
 
 	default:
-		break;
+		return SPP_RET_NG;
 	}
 
 	*(change_component + component_id) = 1;
