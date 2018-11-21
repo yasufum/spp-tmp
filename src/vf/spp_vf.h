@@ -18,15 +18,6 @@
 /** The max number of client ID */
 #define SPP_CLIENT_MAX    128
 
-/** command setting type */
-enum spp_command_action {
-	SPP_CMD_ACTION_NONE,  /**< none */
-	SPP_CMD_ACTION_START, /**< start */
-	SPP_CMD_ACTION_STOP,  /**< stop */
-	SPP_CMD_ACTION_ADD,   /**< add */
-	SPP_CMD_ACTION_DEL,   /**< delete */
-};
-
 /**
  * Get client ID
  *

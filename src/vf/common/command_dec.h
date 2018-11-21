@@ -38,6 +38,21 @@ enum spp_command_decode_error_code {
 };
 
 /**
+ * Define actions of each of components
+ *  The Run option of the folllwing commands.
+ *   compomnent       : start,stop
+ *   port             : add,del
+ *   classifier_table : add,del
+ */
+enum spp_command_action {
+	SPP_CMD_ACTION_NONE,  /**< none */
+	SPP_CMD_ACTION_START, /**< start */
+	SPP_CMD_ACTION_STOP,  /**< stop */
+	SPP_CMD_ACTION_ADD,   /**< add */
+	SPP_CMD_ACTION_DEL,   /**< delete */
+};
+
+/**
  * spp command type.
  *
  * @attention This enumerated type must have the same order of command_list
