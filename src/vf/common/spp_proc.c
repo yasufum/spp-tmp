@@ -18,6 +18,9 @@
 #include "../spp_forward.h"
 #include "../classifier_mac.h"
 #endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+#include "../../mirror/spp_mirror.h"
+#endif /* SPP_MIRROR_MODULE */
 
 /* Manage data to addoress */
 struct manage_data_addr_info {
@@ -888,6 +891,9 @@ flush_component(void)
 		else
 			ret = spp_forward_update(component_info);
 #endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+		ret = spp_mirror_update(component_info);
+#endif /* SPP_MIRROR_MODULE */
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, APP, "Flush error. "
 					"( component = %s, type = %d)\n",

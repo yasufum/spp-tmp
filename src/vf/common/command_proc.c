@@ -14,6 +14,9 @@
 #include "../classifier_mac.h"
 #include "../spp_forward.h"
 #endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+#include "../../mirror/spp_mirror.h"
+#endif /* SPP_MIRROR_MODULE */
 #include "command_conn.h"
 #include "command_dec.h"
 #include "command_proc.h"
@@ -482,6 +485,12 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 						params);
 			}
 #endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+			ret = spp_mirror_get_component_status(
+						lcore_id,
+						core->id[cnt],
+						params);
+#endif /* SPP_MIRROR_MODULE */
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, APP, "Cannot iterate core "
 						"information. "

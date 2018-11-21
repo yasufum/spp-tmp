@@ -201,6 +201,12 @@ spp_convert_component_type(const char *type_str)
 		return SPP_COMPONENT_FORWARD;
 	}
 #endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+	if (strncmp(type_str, SPP_TYPE_MIRROR_STR,
+			strlen(SPP_TYPE_MIRROR_STR)+1) == 0)
+		/* Mirror */
+		return SPP_COMPONENT_MIRROR;
+#endif /* SPP_MIRROR_MODULE */
 	return SPP_COMPONENT_UNUSE;
 }
 
