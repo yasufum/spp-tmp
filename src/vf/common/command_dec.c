@@ -14,14 +14,44 @@
 
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 
+/* command string  */
+#define SPP_COMMAND_CLASSFIER_TABLE_STR	"classifier_table"
+#define SPP_COMMAND_GET_CLIENT_ID_STR	"_get_client_id"
+#define SPP_COMMAND_STATUS_STR		"status"
+#define SPP_COMMAND_EXIT_STR		"exit"
+#define SPP_COMMAND_COMPONENT_STR	"component"
+#define SPP_COMMAND_PORT_STR		"port"
+
+/* classifiler_type string */
+#define SPP_CLASSIFLER_NONE_STR		"none"
+#define SPP_CLASSIFLER_MAC_STR		"mac"
+#define SPP_CLASSIFLER_VLAN_STR		"vlan"
+
+/* command action string */
+#define SPP_ACTION_NONE_STR		"none"
+#define SPP_ACTION_START_STR		"start"
+#define SPP_ACTION_STOP_STR		"stop"
+#define SPP_ACTION_ADD_STR		"add"
+#define SPP_ACTION_DEL_STR		"del"
+
+/* port rx/tx string */
+#define SPP_PORT_RXTX_NONE_STR		"none"
+#define SPP_PORT_RXTX_RX_STR		"rx"
+#define SPP_PORT_RXTX_TX_STR		"tx"
+
+/* port ability string */
+#define SPP_ABILITY_NONE_STR		"none"
+#define SPP_ABILITY_ADD_VLANTAG_STR	"add_vlantag"
+#define SPP_ABILITY_DEL_VLANTAG_STR	"del_vlantag"
+
 /*
  * classifier type string list
  * do it same as the order of enum spp_classifier_type (spp_vf.h)
  */
 const char *CLASSIFILER_TYPE_STRINGS[] = {
-	"none",
-	"mac",
-	"vlan",
+	SPP_CLASSIFLER_NONE_STR,
+	SPP_CLASSIFLER_MAC_STR,
+	SPP_CLASSIFLER_VLAN_STR,
 
 	/* termination */ "",
 };
@@ -31,11 +61,11 @@ const char *CLASSIFILER_TYPE_STRINGS[] = {
  * do it same as the order of enum spp_command_action (spp_vf.h)
  */
 const char *COMMAND_ACTION_STRINGS[] = {
-	"none",
-	"start",
-	"stop",
-	"add",
-	"del",
+	SPP_ACTION_NONE_STR,
+	SPP_ACTION_START_STR,
+	SPP_ACTION_STOP_STR,
+	SPP_ACTION_ADD_STR,
+	SPP_ACTION_DEL_STR,
 
 	/* termination */ "",
 };
@@ -45,9 +75,9 @@ const char *COMMAND_ACTION_STRINGS[] = {
  * do it same as the order of enum spp_port_rxtx (spp_vf.h)
  */
 const char *PORT_RXTX_STRINGS[] = {
-	"none",
-	"rx",
-	"tx",
+	SPP_PORT_RXTX_NONE_STR,
+	SPP_PORT_RXTX_RX_STR,
+	SPP_PORT_RXTX_TX_STR,
 
 	/* termination */ "",
 };
@@ -57,9 +87,9 @@ const char *PORT_RXTX_STRINGS[] = {
  * do it same as the order of enum spp_port_ability_type (spp_vf.h)
  */
 const char *PORT_ABILITY_STRINGS[] = {
-	"none",
-	"add_vlantag",
-	"del_vlantag",
+	SPP_ABILITY_NONE_STR,
+	SPP_ABILITY_ADD_VLANTAG_STR,
+	SPP_ABILITY_DEL_VLANTAG_STR,
 
 	/* termination */ "",
 };
@@ -863,18 +893,20 @@ struct decode_command_list {
 
 /* command list */
 static struct decode_command_list command_list[] = {
-	{ "classifier_table", 5, 5, decode_command_parameter_in_list },
+	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 5, 5,
+		decode_command_parameter_in_list },
 						/* classifier_table(mac) */
-	{ "classifier_table", 6, 6, decode_command_parameter_in_list },
+	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 6, 6,
+		decode_command_parameter_in_list },
 						/* classifier_table(vlan) */
-	{ "_get_client_id",   1, 1, NULL },     /* _get_client_id   */
-	{ "status",           1, 1, NULL },     /* status           */
-	{ "exit",             1, 1, NULL },     /* exit             */
-	{ "component",        3, 5, decode_command_parameter_in_list },
-						/* component        */
-	{ "port",             5, 8, decode_command_parameter_in_list },
-						/* port             */
-	{ "",                 0, 0, NULL }      /* termination      */
+	{ SPP_COMMAND_GET_CLIENT_ID_STR, 1, 1, NULL }, /* _get_client_id  */
+	{ SPP_COMMAND_STATUS_STR,	 1, 1, NULL }, /* status	  */
+	{ SPP_COMMAND_EXIT_STR,		 1, 1, NULL }, /* exit		  */
+	{ SPP_COMMAND_COMPONENT_STR,	 3, 5,
+		decode_command_parameter_in_list },    /* component	  */
+	{ SPP_COMMAND_PORT_STR,		 5, 8,
+		decode_command_parameter_in_list },    /* port		  */
+	{ "",				 0, 0, NULL }  /* termination     */
 };
 
 /* Decode command line parameters */
