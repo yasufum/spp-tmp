@@ -244,14 +244,12 @@ do_del(char *res_uid)
 	}
 
 	if (!strcmp(p_type, "ring")) {
-		char name[RTE_ETH_NAME_MAX_LEN];
-
 		RTE_LOG(DEBUG, APP, "Del ring id %d\n", p_id);
 		port_id = find_port_id(p_id, RING);
 		if (port_id == PORT_RESET)
 			return -1;
 
-		rte_eth_dev_detach(port_id, name);
+		dev_detach_by_port_id(port_id);
 	}
 
 	forward_array_remove(port_id);
