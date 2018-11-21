@@ -273,7 +273,7 @@ decode_component_type_value(void *output, const char *arg_val)
 	if (component->action != SPP_CMD_ACTION_START)
 		return 0;
 
-	set_type = spp_change_component_type(arg_val);
+	set_type = spp_get_component_type(arg_val);
 	if (unlikely(set_type <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component type. val=%s\n",

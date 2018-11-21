@@ -328,28 +328,6 @@ int spp_iterate_classifier_table(
 		struct spp_iterate_classifier_table_params *params);
 
 /**
- * Get core status
- *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  Status of specified logical core.
- */
-enum spp_core_status spp_get_core_status(unsigned int lcore_id);
-
-/**
- * Get component type of target core
- *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  Type of component executed on specified logical core
- */
-enum spp_component_type spp_get_component_type(unsigned int lcore_id);
-
-/**
  * Get component type being updated on target core
  *
  * @param lcore_id
@@ -360,39 +338,6 @@ enum spp_component_type spp_get_component_type(unsigned int lcore_id);
  *  specified logical core after update.
  */
 enum spp_component_type spp_get_component_type_update(unsigned int lcore_id);
-
-/**
- * Get core ID of target component
- *
- * @param component_id
- *  unique component ID.
- *
- * @return
- *  Logical core id of specified component.
- */
-unsigned int spp_get_component_core(int component_id);
-
-/**
- * Check core index change
- *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  True if index has changed.
- */
-int spp_check_core_index(unsigned int lcore_id);
-
-/**
- * Get name matching component ID
- *
- * @param name
- *  Component name.
- *
- * @retval 0~127      Component ID.
- * @retval SPP_RET_NG failed.
- */
-int spp_get_component_id(const char *name);
 
 /**
  * Check mac address used on the port for registering or removing
@@ -441,35 +386,6 @@ int spp_check_added_port(enum port_type iface_type, int iface_no);
 int spp_check_flush_port(enum port_type iface_type, int iface_no);
 
 /**
- * Check if component is using port.
- *
- * @param iface_type
- *  Interface type to be validated.
- * @param iface_no
- *  Interface number to be validated.
- * @param rxtx
- *  tx/rx type to be validated.
- *
- * @retval 0~127      match component ID
- * @retval SPP_RET_NG failed.
- */
-int spp_check_used_port(
-		enum port_type iface_type,
-		int iface_no,
-		enum spp_port_rxtx rxtx);
-
-/**
- * Change mac address string to int64
- *
- * @param mac
- *  Character string of MAC address to be converted.
- *
- * @retval 0< int64 that store mac address
- * @retval -1
- */
-int64_t spp_change_mac_str_to_int64(const char *mac);
-
-/**
  * Get the port number of DPDK.
  *
  * @param iface_type
@@ -499,22 +415,6 @@ int spp_get_iface_index(
 		const char *port,
 		enum port_type *iface_type,
 		int *iface_no);
-
-/**
- * Format port string form if-type/if-number
- *
- * @param port
- *  Character string expressing the port, e.g. "phy:0","ring:1"
- * @param iface_type
- *  Interface type.
- * @param iface_no
- *  Interface number.
- *
- * @retval 0  succeeded.
- * @retval -1 failed.
- */
-int
-spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 
 /**
  * Change component type from string to type value.

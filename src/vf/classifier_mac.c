@@ -868,7 +868,7 @@ spp_classifier_mac_do(int id)
 	}
 
 	while (likely(spp_get_core_status(lcore_id) == SPP_CORE_FORWARD) &&
-			likely(spp_check_core_index(lcore_id) == 0)) {
+		    likely(spp_check_core_update(lcore_id) == SPP_RET_NG)) {
 		/* change index of update side */
 		change_update_index(mng_info, id);
 
