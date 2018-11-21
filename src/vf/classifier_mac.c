@@ -879,10 +879,24 @@ spp_classifier_mac_do(int id)
 		/* change index of update side */
 		change_update_index(mng_info, id);
 
-		/* decide classifier information of the current cycle */
+		/**
+		 * decide classifier information of the current cycle
+		 * If at least, one rx port, one tx port and one
+		 * classifier_table exist, then start classifying.
+		 * If not, stop classifying.
+		 */
 		cmp_info = mng_info->cmp_infos + mng_info->ref_index;
 		clsd_data_rx = &cmp_info->classified_data_rx;
 		clsd_data_tx = cmp_info->classified_data_tx;
+
+		/**
+		 * Perform condition check if reception/transmission
+		 * of packet should be done or not
+		 */
+		if (!(clsd_data_rx->iface_type != UNDEF &&
+				cmp_info->n_classified_data_tx >= 1 &&
+				cmp_info->mac_addr_entry == 1))
+			continue;
 
 		/* drain tx packets, if buffer is not filled for interval */
 		cur_tsc = rte_rdtsc();
