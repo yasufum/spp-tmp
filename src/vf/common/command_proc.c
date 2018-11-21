@@ -10,8 +10,10 @@
 
 #include "spp_port.h"
 #include "string_buffer.h"
+#ifdef SPP_VF_MODULE
 #include "../classifier_mac.h"
 #include "../spp_forward.h"
+#endif /* SPP_VF_MODULE */
 #include "command_conn.h"
 #include "command_dec.h"
 #include "command_proc.h"
@@ -467,6 +469,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 		}
 
 		for (cnt = 0; cnt < core->num; cnt++) {
+#ifdef SPP_VF_MODULE
 			if (core->type == SPP_COMPONENT_CLASSIFIER_MAC) {
 				ret = spp_classifier_get_component_status(
 						lcore_id,
@@ -478,6 +481,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 						core->id[cnt],
 						params);
 			}
+#endif /* SPP_VF_MODULE */
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, APP, "Cannot iterate core "
 						"information. "
@@ -492,6 +496,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 }
 
 /* Iterate classifier_table to create response to status command */
+#ifdef SPP_VF_MODULE
 static int
 spp_iterate_classifier_table(
 		struct spp_iterate_classifier_table_params *params)
@@ -506,6 +511,7 @@ spp_iterate_classifier_table(
 
 	return SPP_RET_OK;
 }
+#endif /* SPP_VF_MODULE */
 
 /* Get port number assigned by DPDK lib */
 static int
@@ -1119,6 +1125,7 @@ append_core_value(const char *name, char **output,
 }
 
 /* append one element of classifier table for JSON format */
+#ifdef SPP_VF_MODULE
 static int
 append_classifier_element_value(
 		struct spp_iterate_classifier_table_params *params,
@@ -1171,8 +1178,10 @@ append_classifier_element_value(
 	params->output = buff;
 	return ret;
 }
+#endif /* SPP_VF_MODULE */
 
 /* append a list of classifier table for JSON format */
+#ifdef SPP_VF_MODULE
 static int
 append_classifier_table_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
@@ -1200,7 +1209,7 @@ append_classifier_table_value(const char *name, char **output,
 	spp_strbuf_free(itr_params.output);
 	return ret;
 }
-
+#endif /* SPP_VF_MODULE */
 /* append string of command response list for JSON format */
 static int
 append_response_list_value(char **output,
@@ -1276,7 +1285,9 @@ struct command_response_list response_info_list[] = {
 	{ "vhost",            append_interface_value },
 	{ "ring",             append_interface_value },
 	{ "core",             append_core_value },
+#ifdef SPP_VF_MODULE
 	{ "classifier_table", append_classifier_table_value },
+#endif /* SPP_VF_MODULE */
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
 

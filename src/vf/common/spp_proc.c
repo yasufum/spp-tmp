@@ -14,8 +14,10 @@
 #include "spp_proc.h"
 #include "spp_port.h"
 
+#ifdef SPP_VF_MODULE
 #include "../spp_forward.h"
 #include "../classifier_mac.h"
+#endif /* SPP_VF_MODULE */
 
 /* Manage data to addoress */
 struct manage_data_addr_info {
@@ -880,10 +882,12 @@ flush_component(void)
 		component_info = (p_component_info + cnt);
 		spp_port_ability_update(component_info);
 
+#ifdef SPP_VF_MODULE
 		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
 			ret = spp_classifier_mac_update(component_info);
 		else
 			ret = spp_forward_update(component_info);
+#endif /* SPP_VF_MODULE */
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, APP, "Flush error. "
 					"( component = %s, type = %d)\n",
