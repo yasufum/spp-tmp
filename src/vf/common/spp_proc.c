@@ -64,6 +64,7 @@ dump_buff(const char *name, const void *addr, const size_t size)
 	}
 }
 
+/* generation of the ring port */
 int
 add_ring_pmd(int ring_id)
 {
@@ -85,6 +86,7 @@ add_ring_pmd(int ring_id)
 	return ring_port_id;
 }
 
+/* generation of the vhost port */
 int
 add_vhost_pmd(int index, int client)
 {
@@ -170,7 +172,7 @@ add_vhost_pmd(int index, int client)
 enum spp_core_status
 spp_get_core_status(unsigned int lcore_id)
 {
-	return g_core_info[lcore_id].status;
+	return (g_mng_data_addr.p_core_info + lcore_id)->status;
 }
 
 /**
@@ -184,7 +186,8 @@ check_core_status(enum spp_core_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		if (g_core_info[lcore_id].status != status) {
+		if ((g_mng_data_addr.p_core_info + lcore_id)->status !=
+								status) {
 			/* Status is mismatched */
 			return -1;
 		}
@@ -212,7 +215,7 @@ void
 set_core_status(unsigned int lcore_id,
 		enum spp_core_status status)
 {
-	g_core_info[lcore_id].status = status;
+	(g_mng_data_addr.p_core_info + lcore_id)->status = status;
 }
 
 /* Set all core to given status */
@@ -221,7 +224,7 @@ set_all_core_status(enum spp_core_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		g_core_info[lcore_id].status = status;
+		(g_mng_data_addr.p_core_info + lcore_id)->status = status;
 	}
 }
 
@@ -237,7 +240,8 @@ stop_process(int signal)
 		return;
 	}
 
-	g_core_info[g_main_lcore_id].status = SPP_CORE_STOP_REQUEST;
+	(g_mng_data_addr.p_core_info + g_mng_data_addr.main_lcore_id)->status =
+							SPP_CORE_STOP_REQUEST;
 	set_all_core_status(SPP_CORE_STOP_REQUEST);
 }
 
@@ -249,13 +253,15 @@ stop_process(int signal)
 struct spp_port_info *
 get_iface_info(enum port_type iface_type, int iface_no)
 {
+	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
+
 	switch (iface_type) {
 	case PHY:
-		return &g_iface_info.nic[iface_no];
+		return &iface_info->nic[iface_no];
 	case VHOST:
-		return &g_iface_info.vhost[iface_no];
+		return &iface_info->vhost[iface_no];
 	case RING:
-		return &g_iface_info.ring[iface_no];
+		return &iface_info->ring[iface_no];
 	default:
 		return NULL;
 	}
@@ -425,13 +431,19 @@ copy_mng_info(
 void
 backup_mng_info(struct cancel_backup_info *backup)
 {
-	dump_all_mng_info(g_core_info, g_component_info, &g_iface_info);
+	dump_all_mng_info(g_mng_data_addr.p_core_info,
+			g_mng_data_addr.p_component_info,
+			g_mng_data_addr.p_iface_info);
 	copy_mng_info(backup->core, backup->component, &backup->interface,
-			g_core_info, g_component_info, &g_iface_info,
+			g_mng_data_addr.p_core_info,
+			g_mng_data_addr.p_component_info,
+			g_mng_data_addr.p_iface_info,
 			COPY_MNG_FLG_ALLCOPY);
 	dump_all_mng_info(backup->core, backup->component, &backup->interface);
-	memset(g_change_core, 0x00, sizeof(g_change_core));
-	memset(g_change_component, 0x00, sizeof(g_change_component));
+	memset(g_mng_data_addr.p_change_core, 0x00,
+				sizeof(int)*RTE_MAX_LCORE);
+	memset(g_mng_data_addr.p_change_component, 0x00,
+				sizeof(int)*RTE_MAX_LCORE);
 }
 
 /**
@@ -443,79 +455,77 @@ static void
 init_iface_info(void)
 {
 	int port_cnt;  /* increment ether ports */
-	memset(&g_iface_info, 0x00, sizeof(g_iface_info));
+	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
+	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		g_iface_info.nic[port_cnt].iface_type = UNDEF;
-		g_iface_info.nic[port_cnt].iface_no   = port_cnt;
-		g_iface_info.nic[port_cnt].dpdk_port  = -1;
-		g_iface_info.nic[port_cnt].class_id.vlantag.vid =
+		p_iface_info->nic[port_cnt].iface_type = UNDEF;
+		p_iface_info->nic[port_cnt].iface_no   = port_cnt;
+		p_iface_info->nic[port_cnt].dpdk_port  = -1;
+		p_iface_info->nic[port_cnt].class_id.vlantag.vid =
 				ETH_VLAN_ID_MAX;
-		g_iface_info.vhost[port_cnt].iface_type = UNDEF;
-		g_iface_info.vhost[port_cnt].iface_no   = port_cnt;
-		g_iface_info.vhost[port_cnt].dpdk_port  = -1;
-		g_iface_info.vhost[port_cnt].class_id.vlantag.vid =
+		p_iface_info->vhost[port_cnt].iface_type = UNDEF;
+		p_iface_info->vhost[port_cnt].iface_no   = port_cnt;
+		p_iface_info->vhost[port_cnt].dpdk_port  = -1;
+		p_iface_info->vhost[port_cnt].class_id.vlantag.vid =
 				ETH_VLAN_ID_MAX;
-		g_iface_info.ring[port_cnt].iface_type = UNDEF;
-		g_iface_info.ring[port_cnt].iface_no   = port_cnt;
-		g_iface_info.ring[port_cnt].dpdk_port  = -1;
-		g_iface_info.ring[port_cnt].class_id.vlantag.vid =
+		p_iface_info->ring[port_cnt].iface_type = UNDEF;
+		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
+		p_iface_info->ring[port_cnt].dpdk_port  = -1;
+		p_iface_info->ring[port_cnt].class_id.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 	}
 }
 
-/**
- * Initialize g_component_info
- */
+/* Initialize g_component_info */
 static void
 init_component_info(void)
 {
 	int cnt;
-	memset(&g_component_info, 0x00, sizeof(g_component_info));
+	memset(g_mng_data_addr.p_component_info, 0x00,
+			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++)
-		g_component_info[cnt].component_id = cnt;
-	memset(g_change_component, 0x00, sizeof(g_change_component));
+		(g_mng_data_addr.p_component_info + cnt)->component_id = cnt;
+	memset(g_mng_data_addr.p_change_component, 0x00,
+			sizeof(int)*RTE_MAX_LCORE);
 }
 
-/**
- * Initialize g_core_info
- */
+/* Initialize g_core_info */
 static void
 init_core_info(void)
 {
 	int cnt = 0;
-	memset(&g_core_info, 0x00, sizeof(g_core_info));
+	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
+	memset(p_core_info, 0x00,
+			sizeof(struct core_mng_info)*RTE_MAX_LCORE);
 	set_all_core_status(SPP_CORE_STOP);
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		g_core_info[cnt].ref_index = 0;
-		g_core_info[cnt].upd_index = 1;
+		(p_core_info + cnt)->ref_index = 0;
+		(p_core_info + cnt)->upd_index = 1;
 	}
-	memset(g_change_core, 0x00, sizeof(g_change_core));
+	memset(g_mng_data_addr.p_change_core, 0x00, sizeof(int)*RTE_MAX_LCORE);
 }
 
-/**
- * Setup port info of port on host
- */
+/* Setup port info of port on host */
 static int
 set_nic_interface(void)
 {
 	int nic_cnt = 0;
+	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 
 	/* NIC Setting */
-	g_iface_info.num_nic = rte_eth_dev_count_avail();
-	if (g_iface_info.num_nic > RTE_MAX_ETHPORTS)
-		g_iface_info.num_nic = RTE_MAX_ETHPORTS;
+	p_iface_info->num_nic = rte_eth_dev_count_avail();
+	if (p_iface_info->num_nic > RTE_MAX_ETHPORTS)
+		p_iface_info->num_nic = RTE_MAX_ETHPORTS;
 
-	for (nic_cnt = 0; nic_cnt < g_iface_info.num_nic; nic_cnt++) {
-		g_iface_info.nic[nic_cnt].iface_type   = PHY;
-		g_iface_info.nic[nic_cnt].dpdk_port = nic_cnt;
+	for (nic_cnt = 0; nic_cnt < p_iface_info->num_nic; nic_cnt++) {
+		p_iface_info->nic[nic_cnt].iface_type   = PHY;
+		p_iface_info->nic[nic_cnt].dpdk_port = nic_cnt;
 	}
 
 	return 0;
 }
 
-/**
- * Setup management info for spp_vf
- */
+/* Setup management info for spp_vf */
 int
 init_mng_data(void)
 {
@@ -532,9 +542,7 @@ init_mng_data(void)
 }
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-/**
- * Print statistics of time for packet processing in ring interface
- */
+/* Print statistics of time for packet processing in ring interface */
 static void
 print_ring_latency_stats(void)
 {
@@ -547,10 +555,11 @@ print_ring_latency_stats(void)
 	struct spp_ringlatencystats_ring_latency_stats stats[RTE_MAX_ETHPORTS];
 	memset(&stats, 0x00, sizeof(stats));
 
+	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 	printf("RING Latency\n");
 	printf(" RING");
 	for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-		if (g_iface_info.ring[ring_cnt].iface_type == UNDEF)
+		if (p_iface_info->ring[ring_cnt].iface_type == UNDEF)
 			continue;
 
 		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
@@ -562,7 +571,7 @@ print_ring_latency_stats(void)
 			stats_cnt++) {
 		printf("%3dns", stats_cnt);
 		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-			if (g_iface_info.ring[ring_cnt].iface_type == UNDEF)
+			if (p_iface_info->ring[ring_cnt].iface_type == UNDEF)
 				continue;
 
 			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
@@ -579,7 +588,7 @@ del_vhost_sockfile(struct spp_port_info *vhost)
 	int cnt;
 
 	/* Do not remove for if it is running in vhost-client mode. */
-	if (g_startup_param.vhost_client != 0)
+	if (g_mng_data_addr.p_startup_param->vhost_client != 0)
 		return;
 
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
@@ -596,7 +605,7 @@ del_vhost_sockfile(struct spp_port_info *vhost)
 enum spp_component_type
 spp_get_component_type(unsigned int lcore_id)
 {
-	struct core_mng_info *info = &g_core_info[lcore_id];
+	struct core_mng_info *info = (g_mng_data_addr.p_core_info + lcore_id);
 	return info->core[info->ref_index].type;
 }
 
@@ -604,7 +613,8 @@ spp_get_component_type(unsigned int lcore_id)
 unsigned int
 spp_get_component_core(int component_id)
 {
-	struct spp_component_info *info = &g_component_info[component_id];
+	struct spp_component_info *info =
+			(g_mng_data_addr.p_component_info + component_id);
 	return info->lcore_id;
 }
 
@@ -612,7 +622,7 @@ spp_get_component_core(int component_id)
 struct core_info *
 get_core_info(unsigned int lcore_id)
 {
-	struct core_mng_info *info = &g_core_info[lcore_id];
+	struct core_mng_info *info = (g_mng_data_addr.p_core_info + lcore_id);
 	return &(info->core[info->ref_index]);
 }
 
@@ -620,13 +630,14 @@ get_core_info(unsigned int lcore_id)
 int
 spp_check_core_update(unsigned int lcore_id)
 {
-	struct core_mng_info *info = &g_core_info[lcore_id];
+	struct core_mng_info *info = (g_mng_data_addr.p_core_info + lcore_id);
 	if (info->ref_index == info->upd_index)
 		return SPP_RET_OK;
 	else
 		return SPP_RET_NG;
 }
 
+/* Check if component is using port. */
 int
 spp_check_used_port(
 		enum port_type iface_type,
@@ -637,12 +648,14 @@ spp_check_used_port(
 	struct spp_component_info *component = NULL;
 	struct spp_port_info **port_array = NULL;
 	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	struct spp_component_info *component_info =
+					g_mng_data_addr.p_component_info;
 
 	if (port == NULL)
 		return SPP_RET_NG;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		component = &g_component_info[cnt];
+		component = (component_info + cnt);
 		if (component->type == SPP_COMPONENT_UNUSE)
 			continue;
 
@@ -671,14 +684,14 @@ set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_RX);
 		if (ret >= 0)
-			g_change_component[ret] = 1;
+			*(g_mng_data_addr.p_change_component + ret) = 1;
 	}
 
 	if ((rxtx == SPP_PORT_RXTX_TX) || (rxtx == SPP_PORT_RXTX_ALL)) {
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_TX);
 		if (ret >= 0)
-			g_change_component[ret] = 1;
+			*(g_mng_data_addr.p_change_component + ret) = 1;
 	}
 }
 
@@ -686,9 +699,12 @@ set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
 int
 get_free_component(void)
 {
+	struct spp_component_info *component_info =
+					g_mng_data_addr.p_component_info;
+
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (g_component_info[cnt].type == SPP_COMPONENT_UNUSE)
+		if ((component_info + cnt)->type == SPP_COMPONENT_UNUSE)
 			return cnt;
 	}
 	return -1;
@@ -698,12 +714,15 @@ get_free_component(void)
 int
 spp_get_component_id(const char *name)
 {
+	struct spp_component_info *component_info =
+					g_mng_data_addr.p_component_info;
+
 	int cnt = 0;
 	if (name[0] == '\0')
 		return SPP_RET_NG;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (strcmp(name, g_component_info[cnt].name) == 0)
+		if (strcmp(name, (component_info + cnt)->name) == 0)
 			return cnt;
 	}
 	return SPP_RET_NG;
@@ -785,13 +804,14 @@ flush_port(void)
 	int ret = 0;
 	int cnt = 0;
 	struct spp_port_info *port = NULL;
+	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 
 	/* Initialize added vhost. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &g_iface_info.vhost[cnt];
+		port = &p_iface_info->vhost[cnt];
 		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
 			ret = add_vhost_pmd(port->iface_no,
-					g_startup_param.vhost_client);
+				g_mng_data_addr.p_startup_param->vhost_client);
 			if (ret < 0)
 				return SPP_RET_NG;
 			port->dpdk_port = ret;
@@ -800,7 +820,7 @@ flush_port(void)
 
 	/* Initialize added ring. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &g_iface_info.ring[cnt];
+		port = &p_iface_info->ring[cnt];
 		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
 			ret = add_ring_pmd(port->iface_no);
 			if (ret < 0)
@@ -817,19 +837,21 @@ flush_core(void)
 {
 	int cnt = 0;
 	struct core_mng_info *info = NULL;
+	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
+	int *p_change_core = g_mng_data_addr.p_change_core;
 
 	/* Changed core has changed index. */
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (g_change_core[cnt] != 0) {
-			info = &g_core_info[cnt];
+		if (*(p_change_core + cnt) != 0) {
+			info = (p_core_info + cnt);
 			info->upd_index = info->ref_index;
 		}
 	}
 
 	/* Waiting for changed core change. */
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (g_change_core[cnt] != 0) {
-			info = &g_core_info[cnt];
+		if (*(p_change_core + cnt) != 0) {
+			info = (p_core_info + cnt);
 			while (likely(info->ref_index == info->upd_index))
 				rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
@@ -847,19 +869,26 @@ flush_component(void)
 	int ret = 0;
 	int cnt = 0;
 	struct spp_component_info *component_info = NULL;
+	int *p_change_component = g_mng_data_addr.p_change_component;
+	struct spp_component_info *p_component_info =
+					g_mng_data_addr.p_component_info;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (g_change_component[cnt] == 0)
+		if (*(p_change_component + cnt) == 0)
 			continue;
 
-		component_info = &g_component_info[cnt];
+		component_info = (p_component_info + cnt);
 		spp_port_ability_update(component_info);
 
+#ifdef SPP_VF_MODULE
 		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
 			ret = spp_classifier_mac_update(component_info);
 		else
 			ret = spp_forward_update(component_info);
-
+#endif /* SPP_VF_MODULE */
+#ifdef SPP_MIRROR_MODULE
+		ret = spp_mirror_update(component_info);
+#endif /* SPP_MIRROR_MODULE */
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, APP, "Flush error. "
 					"( component = %s, type = %d)\n",
@@ -898,9 +927,7 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 	return 0;
 }
 
-/**
- * Change mac address of 'aa:bb:cc:dd:ee:ff' to int64 and return it
- */
+/* Change mac address of 'aa:bb:cc:dd:ee:ff' to int64 and return it */
 int64_t
 spp_change_mac_str_to_int64(const char *mac)
 {

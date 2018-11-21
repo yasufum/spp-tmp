@@ -88,7 +88,11 @@ const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
 static int
 spp_get_client_id(void)
 {
-	return g_startup_param.client_id;
+	struct startup_param *startup_param;
+
+	spp_get_mng_data_addr(&startup_param,
+			NULL, NULL, NULL, NULL, NULL, NULL);
+	return startup_param->client_id;
 }
 
 /* Check if port has been flushed. */
@@ -204,10 +208,17 @@ spp_update_component(
 	struct spp_component_info *component = NULL;
 	struct core_info *core = NULL;
 	struct core_mng_info *info = NULL;
+	struct spp_component_info *component_info = NULL;
+	struct core_mng_info *core_info = NULL;
+	int *change_core = NULL;
+	int *change_component = NULL;
+
+	spp_get_mng_data_addr(NULL, NULL, &component_info, &core_info,
+				&change_core, &change_component, NULL);
 
 	switch (action) {
 	case SPP_CMD_ACTION_START:
-		info = &g_core_info[lcore_id];
+		info = (core_info + lcore_id);
 		if (info->status == SPP_CORE_UNUSE) {
 			RTE_LOG(ERR, APP, "Core %d is not available because "
 				"it is in SPP_CORE_UNUSE state.\n", lcore_id);
@@ -236,7 +247,7 @@ spp_update_component(
 			return SPP_RET_NG;
 		}
 
-		component = &g_component_info[component_id];
+		component = (component_info + component_id);
 		memset(component, 0x00, sizeof(struct spp_component_info));
 		strcpy(component->name, name);
 		component->type		= type;
@@ -248,7 +259,7 @@ spp_update_component(
 		core->num++;
 		ret = SPP_RET_OK;
 		tmp_lcore_id = lcore_id;
-		g_change_component[component_id] = 1;
+		*(change_component + component_id) = 1;
 		break;
 
 	case SPP_CMD_ACTION_STOP:
@@ -256,11 +267,11 @@ spp_update_component(
 		if (component_id < 0)
 			return SPP_RET_OK;
 
-		component = &g_component_info[component_id];
+		component = (component_info + component_id);
 		tmp_lcore_id = component->lcore_id;
 		memset(component, 0x00, sizeof(struct spp_component_info));
 
-		info = &g_core_info[tmp_lcore_id];
+		info = (core_info + tmp_lcore_id);
 		core = &info->core[info->upd_index];
 		ret_del = del_component_info(component_id,
 				core->num, core->id);
@@ -272,14 +283,14 @@ spp_update_component(
 			core->type = SPP_COMPONENT_UNUSE;
 
 		ret = SPP_RET_OK;
-		g_change_component[component_id] = 0;
+		*(change_component + component_id) = 0;
 		break;
 
 	default:
 		break;
 	}
 
-	g_change_core[tmp_lcore_id] = 1;
+	*(change_core + tmp_lcore_id) = 1;
 	return ret;
 }
 
@@ -300,6 +311,8 @@ spp_update_port(enum spp_command_action action,
 	struct spp_port_info *port_info = NULL;
 	int *num = NULL;
 	struct spp_port_info **ports = NULL;
+	struct spp_component_info *component_info = NULL;
+	int *change_component = NULL;
 
 	component_id = spp_get_component_id(name);
 	if (component_id < 0) {
@@ -308,7 +321,9 @@ spp_update_port(enum spp_command_action action,
 		return SPP_RET_NG;
 	}
 
-	component = &g_component_info[component_id];
+	spp_get_mng_data_addr(NULL, NULL,
+			&component_info, NULL, NULL, &change_component, NULL);
+	component = (component_info + component_id);
 	port_info = get_iface_info(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
 		num = &component->num_rx_port;
@@ -369,11 +384,12 @@ spp_update_port(enum spp_command_action action,
 
 		ret = SPP_RET_OK;
 		break;
+
 	default:
 		break;
 	}
 
-	g_change_component[component_id] = 1;
+	*(change_component + component_id) = 1;
 	return ret;
 }
 
@@ -382,6 +398,10 @@ static int
 spp_flush(void)
 {
 	int ret = -1;
+	struct cancel_backup_info *backup_info = NULL;
+
+	spp_get_mng_data_addr(NULL, NULL, NULL,
+				NULL, NULL, NULL, &backup_info);
 
 	/* Initial setting of each interface. */
 	ret = flush_port();
@@ -394,7 +414,7 @@ spp_flush(void)
 	/* Flush of component */
 	ret = flush_component();
 
-	backup_mng_info(&g_backup_info);
+	backup_mng_info(backup_info);
 	return ret;
 }
 
@@ -471,13 +491,17 @@ spp_iterate_classifier_table(
 static int
 spp_get_dpdk_port(enum port_type iface_type, int iface_no)
 {
+	struct iface_info *iface_info = NULL;
+
+	spp_get_mng_data_addr(NULL, &iface_info,
+				NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:
-		return g_iface_info.nic[iface_no].dpdk_port;
+		return iface_info->nic[iface_no].dpdk_port;
 	case RING:
-		return g_iface_info.ring[iface_no].dpdk_port;
+		return iface_info->ring[iface_no].dpdk_port;
 	case VHOST:
-		return g_iface_info.vhost[iface_no].dpdk_port;
+		return iface_info->vhost[iface_no].dpdk_port;
 	default:
 		return -1;
 	}

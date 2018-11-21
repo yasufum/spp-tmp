@@ -68,7 +68,10 @@ const char *PORT_ABILITY_STRINGS[] = {
 static enum spp_component_type
 spp_get_component_type_update(unsigned int lcore_id)
 {
-	struct core_mng_info *info = &g_core_info[lcore_id];
+	struct core_mng_info *core_info;
+
+	spp_get_mng_data_addr(NULL, NULL, NULL, &core_info, NULL, NULL, NULL);
+	struct core_mng_info *info = (core_info + lcore_id);
 	return info->core[info->upd_index].type;
 }
 
