@@ -112,6 +112,9 @@ struct component_info {
 	/* component name */
 	char name[SPP_NAME_STR_LEN];
 
+	/* mac address entry flag */
+	int mac_addr_entry;
+
 	/* mac address classification per vlan-id */
 	struct mac_classification *mac_classifications[SPP_NUM_VLAN_VID];
 
@@ -385,6 +388,7 @@ init_component_info(struct component_info *cmp_info,
 
 	/* set tx */
 	cmp_info->n_classified_data_tx = component_info->num_tx_port;
+	cmp_info->mac_addr_entry = 0;
 	for (i = 0; i < component_info->num_tx_port; i++) {
 		tx_port = component_info->tx_ports[i];
 		vid = tx_port->class_id.vlantag.vid;
@@ -415,6 +419,9 @@ init_component_info(struct component_info *cmp_info,
 		/* store active tx_port that associate with mac address */
 		mac_cls->active_classifieds[
 				mac_cls->num_active_classified++] = i;
+
+		/* mac address entry flag set */
+		cmp_info->mac_addr_entry = 1;
 
 		/* store default classified */
 		if (unlikely(tx_port->class_id.mac_addr ==
