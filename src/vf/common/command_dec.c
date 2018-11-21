@@ -14,34 +14,34 @@
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 
 /* command string  */
-#define SPP_COMMAND_CLASSFIER_TABLE_STR	"classifier_table"
-#define SPP_COMMAND_GET_CLIENT_ID_STR	"_get_client_id"
-#define SPP_COMMAND_STATUS_STR		"status"
-#define SPP_COMMAND_EXIT_STR		"exit"
-#define SPP_COMMAND_COMPONENT_STR	"component"
-#define SPP_COMMAND_PORT_STR		"port"
+#define SPP_COMMAND_CLASSFIER_TABLE_STR "classifier_table"
+#define SPP_COMMAND_GET_CLIENT_ID_STR   "_get_client_id"
+#define SPP_COMMAND_STATUS_STR          "status"
+#define SPP_COMMAND_EXIT_STR            "exit"
+#define SPP_COMMAND_COMPONENT_STR       "component"
+#define SPP_COMMAND_PORT_STR            "port"
 
 /* classifiler_type string */
-#define SPP_CLASSIFLER_NONE_STR		"none"
-#define SPP_CLASSIFLER_MAC_STR		"mac"
-#define SPP_CLASSIFLER_VLAN_STR		"vlan"
+#define SPP_CLASSIFLER_NONE_STR         "none"
+#define SPP_CLASSIFLER_MAC_STR          "mac"
+#define SPP_CLASSIFLER_VLAN_STR         "vlan"
 
 /* command action string */
-#define SPP_ACTION_NONE_STR		"none"
-#define SPP_ACTION_START_STR		"start"
-#define SPP_ACTION_STOP_STR		"stop"
-#define SPP_ACTION_ADD_STR		"add"
-#define SPP_ACTION_DEL_STR		"del"
+#define SPP_ACTION_NONE_STR             "none"
+#define SPP_ACTION_START_STR            "start"
+#define SPP_ACTION_STOP_STR             "stop"
+#define SPP_ACTION_ADD_STR              "add"
+#define SPP_ACTION_DEL_STR              "del"
 
 /* port rx/tx string */
-#define SPP_PORT_RXTX_NONE_STR		"none"
-#define SPP_PORT_RXTX_RX_STR		"rx"
-#define SPP_PORT_RXTX_TX_STR		"tx"
+#define SPP_PORT_RXTX_NONE_STR          "none"
+#define SPP_PORT_RXTX_RX_STR            "rx"
+#define SPP_PORT_RXTX_TX_STR            "tx"
 
 /* port ability string */
-#define SPP_ABILITY_NONE_STR		"none"
-#define SPP_ABILITY_ADD_VLANTAG_STR	"add_vlantag"
-#define SPP_ABILITY_DEL_VLANTAG_STR	"del_vlantag"
+#define SPP_ABILITY_NONE_STR            "none"
+#define SPP_ABILITY_ADD_VLANTAG_STR     "add_vlantag"
+#define SPP_ABILITY_DEL_VLANTAG_STR     "del_vlantag"
 
 /*
  * classifier type string list
@@ -344,7 +344,8 @@ decode_core_value(void *output, const char *arg_val)
 
 /* decoding procedure of action for component command */
 static int
-decode_component_action_value(void *output, const char *arg_val)
+decode_component_action_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
@@ -369,7 +370,8 @@ decode_component_action_value(void *output, const char *arg_val)
 
 /* decoding procedure of action for component command */
 static int
-decode_component_name_value(void *output, const char *arg_val)
+decode_component_name_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	struct spp_command_component *component = output;
@@ -390,7 +392,8 @@ decode_component_name_value(void *output, const char *arg_val)
 
 /* decoding procedure of core id for component command */
 static int
-decode_component_core_value(void *output, const char *arg_val)
+decode_component_core_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	struct spp_command_component *component = output;
 
@@ -403,7 +406,8 @@ decode_component_core_value(void *output, const char *arg_val)
 
 /* decoding procedure of type for component command */
 static int
-decode_component_type_value(void *output, const char *arg_val)
+decode_component_type_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	enum spp_component_type org_type, set_type;
 	struct spp_command_component *component = output;
@@ -435,7 +439,8 @@ decode_component_type_value(void *output, const char *arg_val)
 
 /* decoding procedure of action for port command */
 static int
-decode_port_action_value(void *output, const char *arg_val)
+decode_port_action_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
@@ -460,7 +465,7 @@ decode_port_action_value(void *output, const char *arg_val)
 
 /* decoding procedure of port for port command */
 static int
-decode_port_port_value(void *output, const char *arg_val)
+decode_port_port_value(void *output, const char *arg_val, int allow_override)
 {
 	int ret = SPP_RET_NG;
 	struct spp_port_index tmp_port;
@@ -470,17 +475,20 @@ decode_port_port_value(void *output, const char *arg_val)
 	if (ret < SPP_RET_OK)
 		return SPP_RET_NG;
 
-	if ((port->action == SPP_CMD_ACTION_ADD) &&
-			(spp_check_used_port(tmp_port.iface_type,
-					tmp_port.iface_no,
-					SPP_PORT_RXTX_RX) >= 0) &&
-			(spp_check_used_port(tmp_port.iface_type,
-					tmp_port.iface_no,
-					SPP_PORT_RXTX_TX) >= 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+	/* add vlantag command check */
+	if (allow_override == 0) {
+		if ((port->action == SPP_CMD_ACTION_ADD) &&
+				(spp_check_used_port(tmp_port.iface_type,
+						tmp_port.iface_no,
+						SPP_PORT_RXTX_RX) >= 0) &&
+				(spp_check_used_port(tmp_port.iface_type,
+						tmp_port.iface_no,
+						SPP_PORT_RXTX_TX) >= 0)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Port in used. (port command) val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+			return SPP_RET_NG;
+		}
 	}
 
 	port->port.iface_type = tmp_port.iface_type;
@@ -490,7 +498,7 @@ decode_port_port_value(void *output, const char *arg_val)
 
 /* decoding procedure of rxtx type for port command */
 static int
-decode_port_rxtx_value(void *output, const char *arg_val)
+decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
 {
 	int ret = SPP_RET_OK;
 	struct spp_command_port *port = output;
@@ -502,13 +510,16 @@ decode_port_rxtx_value(void *output, const char *arg_val)
 		return SPP_RET_NG;
 	}
 
-	if ((port->action == SPP_CMD_ACTION_ADD) &&
-			(spp_check_used_port(port->port.iface_type,
+	/* add vlantag command check */
+	if (allow_override == 0) {
+		if ((port->action == SPP_CMD_ACTION_ADD) &&
+				(spp_check_used_port(port->port.iface_type,
 					port->port.iface_no, ret) >= 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Port in used. (port command) val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+			return SPP_RET_NG;
+		}
 	}
 
 	port->rxtx = ret;
@@ -517,7 +528,8 @@ decode_port_rxtx_value(void *output, const char *arg_val)
 
 /* decoding procedure of component name for port command */
 static int
-decode_port_name_value(void *output, const char *arg_val)
+decode_port_name_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 
@@ -531,9 +543,10 @@ decode_port_name_value(void *output, const char *arg_val)
 	return decode_str_value(output, arg_val);
 }
 
-/* decoding procedure of port ability for port command */
+/* decoding procedure of vlan operation for port command */
 static int
-decode_port_ability_value(void *output, const char *arg_val)
+decode_port_vlan_operation(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	struct spp_command_port *port = output;
@@ -552,29 +565,62 @@ decode_port_ability_value(void *output, const char *arg_val)
 		ability->rxtx = port->rxtx;
 		break;
 	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
-		if (ability->data.vlantag.pcp == 0) {
-			ret = get_int_value(&ability->data.vlantag.vid,
-					arg_val, 0, ETH_VLAN_ID_MAX);
-			if (unlikely(ret < 0)) {
-				RTE_LOG(ERR, SPP_COMMAND_PROC,
-						"Bad VLAN ID. val=%s\n",
-						arg_val);
-				return SPP_RET_NG;
-			}
-			ability->data.vlantag.pcp = -1;
-		} else {
-			ret = get_int_value(&ability->data.vlantag.pcp,
-					arg_val, 0, SPP_VLAN_PCP_MAX);
-			if (unlikely(ret < 0)) {
-				RTE_LOG(ERR, SPP_COMMAND_PROC,
-						"Bad VLAN PCP. val=%s\n",
-						arg_val);
-				return SPP_RET_NG;
-			}
-		}
-		break;
-	case SPP_PORT_ABILITY_OPE_DEL_VLANTAG:
 		/* Nothing to do. */
+		break;
+	default:
+		/* Not used. */
+		break;
+	}
+
+	return SPP_RET_OK;
+}
+
+/* decoding procedure of vid  for port command */
+static int
+decode_port_vid(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
+{
+	int ret = SPP_RET_OK;
+	struct spp_command_port *port = output;
+	struct spp_port_ability *ability = &port->ability;
+
+	switch (ability->ope) {
+	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+		ret = get_int_value(&ability->data.vlantag.vid,
+			arg_val, 0, ETH_VLAN_ID_MAX);
+		if (unlikely(ret < SPP_RET_OK)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
+					"Bad VLAN ID. val=%s\n", arg_val);
+			return SPP_RET_NG;
+		}
+		ability->data.vlantag.pcp = -1;
+		break;
+	default:
+		/* Not used. */
+		break;
+	}
+
+	return SPP_RET_OK;
+}
+
+/* decoding procedure of pcp for port command */
+static int
+decode_port_pcp(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
+{
+	int ret = SPP_RET_OK;
+	struct spp_command_port *port = output;
+	struct spp_port_ability *ability = &port->ability;
+
+	switch (ability->ope) {
+	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+		ret = get_int_value(&ability->data.vlantag.pcp,
+				arg_val, 0, SPP_VLAN_PCP_MAX);
+		if (unlikely(ret < SPP_RET_OK)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC,
+					"Bad VLAN PCP. val=%s\n", arg_val);
+			return SPP_RET_NG;
+		}
 		break;
 	default:
 		/* Not used. */
@@ -586,7 +632,8 @@ decode_port_ability_value(void *output, const char *arg_val)
 
 /* decoding procedure of mac address string */
 static int
-decode_mac_addr_str_value(void *output, const char *arg_val)
+decode_mac_addr_str_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int64_t ret = SPP_RET_OK;
 	const char *str_val = arg_val;
@@ -608,7 +655,8 @@ decode_mac_addr_str_value(void *output, const char *arg_val)
 
 /* decoding procedure of action for classifier_table command */
 static int
-decode_classifier_action_value(void *output, const char *arg_val)
+decode_classifier_action_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
@@ -631,7 +679,8 @@ decode_classifier_action_value(void *output, const char *arg_val)
 
 /* decoding procedure of type for classifier_table command */
 static int
-decode_classifier_type_value(void *output, const char *arg_val)
+decode_classifier_type_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	ret = get_arrary_index(arg_val, CLASSIFILER_TYPE_STRINGS);
@@ -648,7 +697,8 @@ decode_classifier_type_value(void *output, const char *arg_val)
 
 /* decoding procedure of vlan id for classifier_table command */
 static int
-decode_classifier_vid_value(void *output, const char *arg_val)
+decode_classifier_vid_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
 	ret = get_int_value(output, arg_val, 0, ETH_VLAN_ID_MAX);
@@ -662,7 +712,8 @@ decode_classifier_vid_value(void *output, const char *arg_val)
 
 /* decoding procedure of port for classifier_table command */
 static int
-decode_classifier_port_value(void *output, const char *arg_val)
+decode_classifier_port_value(void *output, const char *arg_val,
+				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	struct spp_command_classifier_table *classifier_table = output;
@@ -717,7 +768,7 @@ decode_classifier_port_value(void *output, const char *arg_val)
 struct decode_parameter_list {
 	const char *name;       /* Parameter name */
 	size_t offset;          /* Offset value of struct spp_command */
-	int (*func)(void *output, const char *arg_val);
+	int (*func)(void *output, const char *arg_val, int allow_override);
 				/* Pointer to parameter handling function */
 };
 
@@ -834,30 +885,31 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 			.func = decode_port_name_value
 		},
 		{
-			.name = "port ability 1",
+			.name = "port vlan operation",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_ability_value
+			.func = decode_port_vlan_operation
 		},
 		{
-			.name = "port ability 2",
+			.name = "port vid",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_ability_value
+			.func = decode_port_vid
 		},
 		{
-			.name = "port ability 3",
+			.name = "port pcp",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_ability_value
+			.func = decode_port_pcp
 		},
 		DECODE_PARAMETER_LIST_EMPTY,
 	},
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* termination      */
 };
 
-/* check by list for each command line parameter */
+/* check by list for each command line parameter component */
 static int
-decode_command_parameter_in_list(struct spp_command_request *request,
+decode_command_parameter_component(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct spp_command_decode_error *error)
+				struct spp_command_decode_error *error,
+				int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
@@ -867,7 +919,7 @@ decode_command_parameter_in_list(struct spp_command_request *request,
 		list = &parameter_list[ci][pi-1];
 		ret = (*list->func)((void *)
 				((char *)&request->commands[0]+list->offset),
-				argv[pi]);
+				argv[pi], 0);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Bad value. command=%s, name=%s, "
@@ -880,31 +932,105 @@ decode_command_parameter_in_list(struct spp_command_request *request,
 	return SPP_RET_OK;
 }
 
+/* check by list for each command line parameter clssfier_table */
+static int
+decode_command_parameter_cls_table(struct spp_command_request *request,
+				int argc, char *argv[],
+				struct spp_command_decode_error *error,
+				int maxargc)
+{
+	return decode_command_parameter_component(request,
+						argc,
+						argv,
+						error,
+						maxargc);
+}
+/* check by list for each command line parameter clssfier_table(vlan) */
+static int
+decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
+				int argc, char *argv[],
+				struct spp_command_decode_error *error,
+				int maxargc __attribute__ ((unused)))
+{
+	int ret = SPP_RET_OK;
+	int ci = request->commands[0].type;
+	int pi = 0;
+	struct decode_parameter_list *list = NULL;
+	for (pi = 1; pi < argc; pi++) {
+		list = &parameter_list[ci][pi-1];
+		ret = (*list->func)((void *)
+				((char *)&request->commands[0]+list->offset),
+				argv[pi], 0);
+		if (unlikely(ret < SPP_RET_OK)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
+				"command=%s, name=%s, index=%d, value=%s\n",
+					argv[0], list->name, pi, argv[pi]);
+			return set_string_value_decode_error(error, argv[pi],
+				list->name);
+		}
+	}
+	return SPP_RET_OK;
+}
+
+/* check by list for each command line parameter port */
+static int
+decode_command_parameter_port(struct spp_command_request *request,
+				int argc, char *argv[],
+				struct spp_command_decode_error *error,
+				int maxargc)
+{
+	int ret = SPP_RET_OK;
+	int ci = request->commands[0].type;
+	int pi = 0;
+	struct decode_parameter_list *list = NULL;
+	int flag = 0;
+
+	/* check add vlatag */
+	if (argc == maxargc)
+		flag = 1;
+
+	for (pi = 1; pi < argc; pi++) {
+		list = &parameter_list[ci][pi-1];
+		ret = (*list->func)((void *)
+				((char *)&request->commands[0]+list->offset),
+				argv[pi], flag);
+		if (unlikely(ret < SPP_RET_OK)) {
+			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
+				"command=%s, name=%s, index=%d, value=%s\n",
+					argv[0], list->name, pi, argv[pi]);
+			return set_string_value_decode_error(error, argv[pi],
+				list->name);
+		}
+	}
+	return SPP_RET_OK;
+}
+
 /* command list for decoding */
 struct decode_command_list {
 	const char *name;       /* Command name */
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
 	int (*func)(struct spp_command_request *request, int argc,
-			char *argv[], struct spp_command_decode_error *error);
+			char *argv[], struct spp_command_decode_error *error,
+			int maxargc);
 				/* Pointer to command handling function */
 };
 
 /* command list */
 static struct decode_command_list command_list[] = {
 	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 5, 5,
-		decode_command_parameter_in_list },
-						/* classifier_table(mac) */
+		decode_command_parameter_cls_table  },
+						/* classifier_table(mac)  */
 	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 6, 6,
-		decode_command_parameter_in_list },
+		decode_command_parameter_cls_table_vlan },
 						/* classifier_table(vlan) */
 	{ SPP_COMMAND_GET_CLIENT_ID_STR, 1, 1, NULL }, /* _get_client_id  */
-	{ SPP_COMMAND_STATUS_STR,	 1, 1, NULL }, /* status	  */
-	{ SPP_COMMAND_EXIT_STR,		 1, 1, NULL }, /* exit		  */
+	{ SPP_COMMAND_STATUS_STR,	 1, 1, NULL }, /* status          */
+	{ SPP_COMMAND_EXIT_STR,		 1, 1, NULL }, /* exit            */
 	{ SPP_COMMAND_COMPONENT_STR,	 3, 5,
-		decode_command_parameter_in_list },    /* component	  */
+		decode_command_parameter_component  }, /* component       */
 	{ SPP_COMMAND_PORT_STR,		 5, 8,
-		decode_command_parameter_in_list },    /* port		  */
+		decode_command_parameter_port       }, /* port            */
 	{ "",				 0, 0, NULL }  /* termination     */
 };
 
@@ -947,7 +1073,8 @@ decode_command_in_list(struct spp_command_request *request,
 
 		request->commands[0].type = i;
 		if (list->func != NULL)
-			return (*list->func)(request, argc, argv, error);
+			return (*list->func)(request, argc, argv, error,
+							list->param_max);
 
 		return SPP_RET_OK;
 	}
