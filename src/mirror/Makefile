@@ -19,6 +19,7 @@ SRCS-y += ../vf/common/command_conn.c ../vf/common/command_proc.c
 SRCS-y += ../vf/common/command_dec.c
 SRCS-y += ../vf/common/ringlatencystats.c ../vf/common/string_buffer.c
 
+CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3
 CFLAGS += -I$(SRCDIR)/../shared
 CFLAGS += -I$(SRCDIR)/../vf/common

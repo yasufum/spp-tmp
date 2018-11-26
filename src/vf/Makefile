@@ -18,6 +18,7 @@ SRCS-y += common/command_conn.c common/command_dec.c common/command_proc.c
 SRCS-y += common/spp_proc.c
 SRCS-y += ../shared/common.c
 
+CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3
 CFLAGS += -I$(SRCDIR)/../shared
 CFLAGS += -I$(SRCDIR)/common
