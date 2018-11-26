@@ -29,38 +29,4 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-VERSION = 18.05.1
-
-ifeq ($(RTE_SDK),)
-$(error "Please define RTE_SDK environment variable")
-endif
-
-# Default target, can be overriden by command line or environment
-RTE_TARGET ?= x86_64-native-linuxapp-gcc
-
-include $(RTE_SDK)/mk/rte.vars.mk
-
-DIRS-y += src
-
-include $(RTE_SDK)/mk/rte.extsubdir.mk
-
-DOC_ROOT = docs/guides
-
-# Compile RST documents
-.PHONY: doc-pdf
-doc-all: doc-pdf doc-html
-
-.PHONY: doc-html
-doc-html:
-	make -C $(DOC_ROOT) html
-
-.PHONY: doc-pdf
-doc-pdf:
-	python $(DOC_ROOT)/gen_pdf_imgs.py
-	make -C $(DOC_ROOT) latexpdf
-	@echo "Succeeded to generate '$(DOC_ROOT)/_build/latex/SoftPatchPanel.pdf'"
-
-.PHONY: doc-clean
-doc-clean:
-	find $(DOC_ROOT)/images/ -type f -name "*.pdf" -delete
-	make -C $(DOC_ROOT) clean
+.error Error please compile using GNU Make (gmake)
