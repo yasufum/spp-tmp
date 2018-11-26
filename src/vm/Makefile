@@ -24,7 +24,7 @@ SRCS-y := main.c init.c args.c ../shared/common.c
 INC := $(wildcard *.h)
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
-CFLAGS += $(WERROR_FLAGS) -O3
+CFLAGS += $(WERROR_FLAGS) -O3 -MMD
 CFLAGS += -I$(SRCDIR)/../shared
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)

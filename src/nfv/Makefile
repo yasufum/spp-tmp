@@ -15,7 +15,7 @@ APP = spp_nfv
 SRCS-y := nfv.c ../shared/common.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
-CFLAGS += $(WERROR_FLAGS) -O3
+CFLAGS += $(WERROR_FLAGS) -O3 -MMD
 CFLAGS += -I$(SRCDIR)/../shared
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)

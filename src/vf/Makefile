@@ -19,7 +19,7 @@ SRCS-y += common/spp_proc.c
 SRCS-y += ../shared/common.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
-CFLAGS += $(WERROR_FLAGS) -O3
+CFLAGS += $(WERROR_FLAGS) -O3 -MMD
 CFLAGS += -I$(SRCDIR)/../shared
 CFLAGS += -I$(SRCDIR)/common
 #CFLAGS += -DSPP_DEMONIZE
