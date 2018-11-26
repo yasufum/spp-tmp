@@ -1,12 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-VERSION = 18.05.1
+VERSION := 18.05.1
 
-ifeq ($(RTE_SDK),)
-$(error "Please define RTE_SDK environment variable")
-endif
-
+ifneq ($(RTE_SDK),)
 # Default target, can be overriden by command line or environment
 RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
@@ -15,20 +12,36 @@ include $(RTE_SDK)/mk/rte.vars.mk
 DIRS-y += src
 
 include $(RTE_SDK)/mk/rte.extsubdir.mk
+endif
 
-DOC_ROOT = docs/guides
+.PHONY: showversion
+showversion:
+	@set -- ;\
+		printf $(VERSION);\
 
 # Compile RST documents
+DOC_ROOT = docs/guides
+
 .PHONY: doc
-doc: doc-pdf doc-html
+doc: doc-all
+doc-all: doc-pdf doc-html
 
 .PHONY: doc-html
 doc-html:
 	make -C $(DOC_ROOT) html
 
+RTE_PDF_DPI := 300
+IMG_DIR := docs/guides/images
+SVGS := $(wildcard $(IMG_DIR)/*.svg)
+SVGS += $(wildcard $(IMG_DIR)/*/*.svg)
+SVGS += $(wildcard $(IMG_DIR)/*/*/*.svg)
+PDFS := $(SVGS:%.svg=%.pdf)
+
+%.pdf: %.svg
+	inkscape -d $(RTE_PDF_DPI) -D -f $< -A $@ $(RTE_INKSCAPE_VERBOSE)
+
 .PHONY: doc-pdf
-doc-pdf:
-	python $(DOC_ROOT)/gen_pdf_imgs.py
+doc-pdf: $(PDFS)
 	make -C $(DOC_ROOT) latexpdf
 	@echo "Succeeded to generate '$(DOC_ROOT)/_build/latex/SoftPatchPanel.pdf'"
 
