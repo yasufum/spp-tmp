@@ -186,6 +186,7 @@ spp_convert_port_to_iface(const char *port,
 static enum spp_component_type
 spp_convert_component_type(const char *type_str)
 {
+	RTE_LOG(DEBUG, APP, "type_str is %s\n", type_str);
 #ifdef SPP_VF_MODULE
 	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
 			strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
