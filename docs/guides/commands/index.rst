@@ -12,7 +12,7 @@ controller.
    :numbered:
 
    primary
-   secondary
+   secondary/index
    spp_vf
    common
    experimental

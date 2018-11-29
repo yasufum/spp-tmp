@@ -1,10 +1,10 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
-Secondary Commands
-==================
+spp_nfv
+=======
 
-Each of secondary processes is managed with ``sec`` command.
+Each of ``spp_nfv`` and ``spp_vm`` processes is managed with ``sec`` command.
 It is for sending sub commands to secondary with specific ID called
 secondary ID.
 
@@ -15,7 +15,7 @@ owned by secondary process.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];[SUB_CMD]
+    spp > sec SEC_ID; SUB_CMD
 
 All of Sub commands are referred with ``help`` command.
 

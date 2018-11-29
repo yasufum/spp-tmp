@@ -3,7 +3,7 @@
 
 .. _commands_spp_vf:
 
-SPP VF
+spp_vf
 ======
 
 ``spp_vf`` is a kind of SPP secondary process. It it introduced for
