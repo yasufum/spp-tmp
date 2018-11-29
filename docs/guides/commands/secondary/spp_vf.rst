@@ -272,7 +272,7 @@ Delete a port which is not used anymore.
 
 .. code-block:: console
 
-    spp > sec SEC_ID; port del RES_UID DIR NAME
+    spp > vf SEC_ID; port del RES_UID DIR NAME
 
 It is same as the adding port, but no need to add additional sub command
 for VLAN features.
@@ -282,7 +282,7 @@ Here is an example.
 .. code-block:: console
 
     # delete rx port 'ring:0' from 'cls1'
-    spp > vf 2; port del rx cls1
+    spp > vf 2; port del ring:0 rx cls1
 
     # delete tx port 'vhost:1' from 'mgr1'
     spp > vf 2; port del vhost:1 tx mgr1
