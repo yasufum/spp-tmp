@@ -114,6 +114,7 @@ class WebServer(BaseHandler):
     /          WebServer
     /v1          V1Handler
        /vfs        V1VFHandler
+       /mirrors    V1MirrorHandler
        /nfvs       V1NFVHandler
        /primary    V1PrimaryHandler
     """
@@ -141,6 +142,7 @@ class V1Handler(BaseHandler):
         self.set_route()
 
         self.mount("/vfs", V1VFHandler(controller))
+        self.mount("/mirrors", V1MirrorHandler(controller))
         self.mount("/nfvs", V1NFVHandler(controller))
         self.mount("/primary", V1PrimaryHandler(controller))
 
@@ -154,7 +156,46 @@ class V1Handler(BaseHandler):
         return self.ctrl.get_processes()
 
 
-class V1VFHandler(BaseHandler):
+class V1VFCommon(object):
+    """Define common methods for vf and mirror handler."""
+
+    def convert_info(self, data):
+        info = data["info"]
+        vf = {}
+        vf["client-id"] = info["client-id"]
+        vf["ports"] = []
+        for key in ["phy", "vhost", "ring"]:
+            for idx in info[key]:
+                vf["ports"].append(key + ":" + str(idx))
+        vf["components"] = info["core"]
+        if "classifier_table" in info:
+            vf["classifier_table"] = info["classifier_table"]
+
+        return vf
+
+    def validate_comp_start(self, body, types):
+        for key in ['name', 'core', 'type']:
+            if key not in body:
+                raise KeyRequired(key)
+        if not isinstance(body['name'], str):
+            raise KeyInvalid('name', body['name'])
+        if not isinstance(body['core'], int):
+            raise KeyInvalid('core', body['core'])
+        if body['type'] not in types:
+            raise KeyInvalid('type', body['type'])
+
+    def validate_comp_port(self, body):
+        for key in ['action', 'port', 'dir']:
+            if key not in body:
+                raise KeyRequired(key)
+        if body['action'] not in ["attach", "detach"]:
+            raise KeyInvalid('action', body['action'])
+        if body['dir'] not in ["rx", "tx"]:
+            raise KeyInvalid('dir', body['dir'])
+        self._validate_port(body['port'])
+
+
+class V1VFHandler(BaseHandler, V1VFCommon):
 
     def __init__(self, controller):
         super(V1VFHandler, self).__init__(controller)
@@ -177,50 +218,18 @@ class V1VFHandler(BaseHandler):
         self.route('/<sec_id:int>/classifier_table', 'PUT',
                    callback=self.vf_classifier)
 
-    def convert_vf_info(self, data):
-        info = data["info"]
-        vf = {}
-        vf["client-id"] = info["client-id"]
-        vf["ports"] = []
-        for key in ["phy", "vhost", "ring"]:
-            for idx in info[key]:
-                vf["ports"].append(key + ":" + str(idx))
-        vf["components"] = info["core"]
-        vf["classifier_table"] = info["classifier_table"]
-
-        return vf
-
     def vf_get(self, proc):
-        return self.convert_vf_info(proc.get_status())
-
-    def _validate_vf_comp_start(self, body):
-        for key in ['name', 'core', 'type']:
-            if key not in body:
-                raise KeyRequired(key)
-        if not isinstance(body['name'], str):
-            raise KeyInvalid('name', body['name'])
-        if not isinstance(body['core'], int):
-            raise KeyInvalid('core', body['core'])
-        if body['type'] not in ["forward", "merge", "classifier_mac"]:
-            raise KeyInvalid('type', body['type'])
+        return self.convert_info(proc.get_status())
 
     def vf_comp_start(self, proc, body):
-        self._validate_vf_comp_start(body)
+        self.validate_comp_start(body, ["forward", "merge", "classifier_mac"])
         proc.start_component(body['name'], body['core'], body['type'])
 
     def vf_comp_stop(self, proc, name):
         proc.stop_component(name)
 
     def _validate_vf_comp_port(self, body):
-        for key in ['action', 'port', 'dir']:
-            if key not in body:
-                raise KeyRequired(key)
-        if body['action'] not in ["attach", "detach"]:
-            raise KeyInvalid('action', body['action'])
-        if body['dir'] not in ["rx", "tx"]:
-            raise KeyInvalid('dir', body['dir'])
-        self._validate_port(body['port'])
-
+        self.validate_comp_port(body)
         if body['action'] == "attach":
             vlan = body.get('vlan')
             if vlan:
@@ -294,6 +303,45 @@ class V1VFHandler(BaseHandler):
             else:
                 proc.clear_classifier_table_with_vlan(
                     mac_address, port, body['vlan'])
+
+
+class V1MirrorHandler(BaseHandler, V1VFCommon):
+
+    def __init__(self, controller):
+        super(V1MirrorHandler, self).__init__(controller)
+        self.type = spp_proc.TYPE_MIRROR
+
+        self.set_route()
+
+        self.install(self.check_sec_id)
+        self.install(self.get_body)
+        self.install(self.make_response)
+
+    def set_route(self):
+        self.route('/<sec_id:int>', 'GET', callback=self.mirror_get)
+        self.route('/<sec_id:int>/components', 'POST',
+                   callback=self.mirror_comp_start)
+        self.route('/<sec_id:int>/components/<name>', 'DELETE',
+                   callback=self.mirror_comp_stop)
+        self.route('/<sec_id:int>/components/<name>/ports', 'PUT',
+                   callback=self.mirror_comp_port)
+
+    def mirror_get(self, proc):
+        return self.convert_info(proc.get_status())
+
+    def mirror_comp_start(self, proc, body):
+        self.validate_comp_start(body, ["mirror"])
+        proc.start_component(body['name'], body['core'], body['type'])
+
+    def mirror_comp_stop(self, proc, name):
+        proc.stop_component(name)
+
+    def mirror_comp_port(self, proc, name, body):
+        self.validate_comp_port(body)
+        if body['action'] == "attach":
+            proc.port_add(body['port'], body['dir'], name)
+        else:
+            proc.port_del(body['port'], body['dir'], name)
 
 
 class V1NFVHandler(BaseHandler):

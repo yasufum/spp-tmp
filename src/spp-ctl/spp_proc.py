@@ -15,6 +15,7 @@ ID_PRIMARY = 0
 TYPE_PRIMARY = "primary"
 TYPE_VF = "vf"
 TYPE_NFV = "nfv"
+TYPE_MIRROR = "mirror"
 
 
 def exec_command(func):
@@ -53,10 +54,10 @@ class SppProc(object):
         self.conn = conn
 
 
-class VfProc(SppProc):
+class VfCommon(SppProc):
 
-    def __init__(self, id, conn):
-        super(VfProc, self).__init__(TYPE_VF, id, conn)
+    def __init__(self, proc_type, id, conn):
+        super(VfCommon, self).__init__(proc_type, id, conn)
 
     @staticmethod
     def _decode_reply(data):
@@ -66,14 +67,6 @@ class VfProc(SppProc):
             msg = result["error_details"]["message"]
             raise bottle.HTTPError(400, "command error: %s" % msg)
         return data
-
-    @staticmethod
-    def _decode_client_id(data):
-        try:
-            data = VfProc._decode_reply(data)
-            return data["client_id"]
-        except:
-            return None
 
     @exec_command
     def get_status(self):
@@ -89,6 +82,25 @@ class VfProc(SppProc):
         return "component stop {comp_name}".format(**locals())
 
     @exec_command
+    def port_del(self, port, direction, comp_name):
+        return "port del {port} {direction} {comp_name}".format(**locals())
+
+
+class VfProc(VfCommon):
+
+    def __init__(self, id, conn):
+        super(VfProc, self).__init__(TYPE_VF, id, conn)
+
+    @staticmethod
+    def _decode_client_id(data):
+        try:
+            data = VfCommon._decode_reply(data)
+            if data["process_type"] == TYPE_VF:
+                return data["client_id"]
+        except:
+            return None
+
+    @exec_command
     def port_add(self, port, direction, comp_name, op, vlan_id, pcp):
         command = "port add {port} {direction} {comp_name}".format(**locals())
         if op != "none":
@@ -96,10 +108,6 @@ class VfProc(SppProc):
             if op == "add_vlantag":
                 command += " %d %d" % (vlan_id, pcp)
         return command
-
-    @exec_command
-    def port_del(self, port, direction, comp_name):
-        return "port del {port} {direction} {comp_name}".format(**locals())
 
     @exec_command
     def set_classifier_table(self, mac_address, port):
@@ -122,6 +130,25 @@ class VfProc(SppProc):
                                          vlan_id):
         return ("classifier_table del vlan {vlan_id} {mac_address} {port}"
                 .format(**locals()))
+
+
+class MirrorProc(VfCommon):
+
+    def __init__(self, id, conn):
+        super(MirrorProc, self).__init__(TYPE_MIRROR, id, conn)
+
+    @staticmethod
+    def _decode_client_id(data):
+        try:
+            data = VfCommon._decode_reply(data)
+            if data["process_type"] == TYPE_MIRROR:
+                return data["client_id"]
+        except:
+            return None
+
+    @exec_command
+    def port_add(self, port, direction, comp_name):
+        return "port add {port} {direction} {comp_name}".format(**locals())
 
 
 class NfvProc(SppProc):

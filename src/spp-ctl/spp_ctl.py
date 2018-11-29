@@ -128,7 +128,7 @@ class Controller(object):
         # it is a bit ad hoc. send "_get_clinet_id" command and try to
         # decode reply for each proc type. if success, that is the type.
         data = self._send_command(conn, "_get_client_id")
-        for proc in [spp_proc.VfProc, spp_proc.NfvProc]:
+        for proc in [spp_proc.VfProc, spp_proc.NfvProc, spp_proc.MirrorProc]:
             sec_id = proc._decode_client_id(data)
             if sec_id is not None:
                 return proc(sec_id, conn)
