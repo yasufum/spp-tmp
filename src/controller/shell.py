@@ -9,6 +9,7 @@ from .commands import pri
 from .commands import sec
 from .commands import topo
 from .commands import vf
+from .commands import mirror
 import os
 import re
 import readline
@@ -47,6 +48,11 @@ class Shell(cmd.Cmd, object):
         for sec_id in self.get_sec_ids('vf'):
             self.spp_vfs[sec_id] = vf.SppVf(self.spp_ctl_cli, sec_id)
 
+        self.spp_mirrors = {}
+        for sec_id in self.get_sec_ids('mirror'):
+            self.spp_mirrors[sec_id] = mirror.SppMirror(
+                    self.spp_ctl_cli, sec_id)
+
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
         self.spp_bye = bye.SppBye(self.spp_ctl_cli, self.spp_primary,
                                   self.spp_secondary)
@@ -75,7 +81,7 @@ class Shell(cmd.Cmd, object):
     def get_sec_ids(self, ptype):
         """Return a list of IDs of running secondary processes.
 
-        'ptype' is 'nfv' or 'vf'.
+        'ptype' is 'nfv', 'vf' or 'mirror'.
         """
 
         ids = []
@@ -115,12 +121,14 @@ class Shell(cmd.Cmd, object):
                 pri_obj = None
                 sec_obj = {}
                 sec_obj['nfv'] = []
+                sec_obj['vf'] = []
+                sec_obj['mirror'] = []
 
                 for proc_obj in proc_objs:
                     if proc_obj['type'] == 'primary':
                         pri_obj = proc_obj
-                    elif proc_obj['type'] == 'nfv':
-                        sec_obj['nfv'].append(proc_obj)
+                    else:
+                        sec_obj[proc_obj['type']].append(proc_obj)
 
                 print('- primary:')
                 if pri_obj is not None:
@@ -130,9 +138,11 @@ class Shell(cmd.Cmd, object):
 
                 print('- secondary:')
                 print('  - processes:')
-                for obj in sec_obj['nfv']:
-                    print('    %d: %s:%s' % (
-                        obj['client-id'], obj['type'], obj['client-id']))
+                cnt = 1
+                for pt in ['nfv', 'vf', 'mirror']:
+                    for obj in sec_obj[pt]:
+                        print('    %d: %s:%s' % (cnt, obj['type'], obj['client-id']))
+                        cnt += 1
             elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 pass
             else:
@@ -345,7 +355,6 @@ class Shell(cmd.Cmd, object):
         """
 
         # remove unwanted spaces to avoid invalid command error
-        # TODO change self.spp_vf to self.spp_vfs
         tmparg = self.clean_cmd(cmd)
         cmds = tmparg.split(';')
         if len(cmds) < 2:
@@ -387,6 +396,83 @@ class Shell(cmd.Cmd, object):
 
                 return self.spp_vfs[idx].complete(self.get_sec_ids('vf'),
                                                   text, line, begidx, endidx)
+
+    def do_mirror(self, cmd):
+        """Send a command to spp_mirror.
+
+        spp_mirror is a secondary process for duplicating incoming
+        packets to be used as similar to TaaS in OpenStack. This
+        command has four sub commands.
+          * status
+          * component
+          * port
+
+        Each of sub commands other than 'status' takes several parameters
+        for detailed operations. Notice that 'start' for launching a worker
+        is replaced with 'stop' for terminating. 'add' is also replaced with
+        'del' for deleting.
+
+        Examples:
+
+        # (1) show status of worker threads and resources
+        spp > mirror 1; status
+
+        # (2) launch or terminate a worker thread with arbitrary name
+        #   NAME: arbitrary name used as identifier
+        #   CORE_ID: one of unused cores referred from status
+        spp > mirror 1; component start NAME CORE_ID mirror
+        spp > mirror 1; component stop NAME CORE_ID mirror
+
+        # (3) add or delete a port to worker of NAME
+        #   RES_UID: resource UID such as 'ring:0' or 'vhost:1'
+        #   DIR: 'rx' or 'tx'
+        spp > mirror 1; port add RES_UID DIR NAME
+        spp > mirror 1; port del RES_UID DIR NAME
+        """
+
+        # remove unwanted spaces to avoid invalid command error
+        tmparg = self.clean_cmd(cmd)
+        cmds = tmparg.split(';')
+        if len(cmds) < 2:
+            print("Required an ID and ';' before the command.")
+        elif str.isdigit(cmds[0]):
+            self.spp_mirrors[int(cmds[0])].run(cmds[1])
+        else:
+            print('Invalid command: %s' % tmparg)
+
+    def complete_mirror(self, text, line, begidx, endidx):
+        """Completion for mirror command"""
+
+        line = self.clean_cmd(line)
+
+        tokens = line.split(';')
+        if len(tokens) == 1:
+            # Add SppMirror of sec_id if it is not exist
+            sec_ids = self.get_sec_ids('mirror')
+            for idx in sec_ids:
+                if self.spp_mirrors[idx] is None:
+                    self.spp_mirrors[idx] = mirror.SppMirror(self.spp_ctl_cli, idx)
+
+            if len(line.split()) == 1:
+                res = [str(i)+';' for i in sec_ids]
+            else:
+                if not (';' in line):
+                    res = [str(i)+';'
+                           for i in sec_ids
+                           if (str(i)+';').startswith(text)]
+            return res
+        elif len(tokens) == 2:
+            # Split tokens like as from 'mirror 1' to ['mirror', '1']
+            first_tokens = tokens[0].split(' ')
+            if len(first_tokens) == 2:
+                idx = int(first_tokens[1])
+
+                # Add SppMirror of sec_id if it is not exist
+                if self.spp_mirrors[idx] is None:
+                    self.spp_mirrors[idx] = mirror.SppMirror(self.spp_ctl_cli, idx)
+
+                return self.spp_mirrors[idx].complete(
+                        self.get_sec_ids('mirror'), text, line, begidx, endidx)
 
     def do_record(self, fname):
         """Save commands as a recipe file.
