@@ -282,6 +282,8 @@ Now, you can login to VMs from the remote host1.
     # spp-vm2 via NIC1
     $ ssh sppuser@192.168.150.32
 
+.. _spp_vf_use_cases_usecase1_shutdown_spp_vf_components:
+
 Shutdown SPP VF Components
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
