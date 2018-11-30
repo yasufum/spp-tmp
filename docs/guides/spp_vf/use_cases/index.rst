@@ -8,3 +8,4 @@ Use Cases
    :maxdepth: 2
 
    usecase1
+   usecase2
