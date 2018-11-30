@@ -7,4 +7,5 @@ Explanation
 .. toctree::
    :maxdepth: 2
 
-   functions
+   functions_vf
+   functions_mirror

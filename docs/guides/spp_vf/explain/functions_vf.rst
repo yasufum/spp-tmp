@@ -1,10 +1,10 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
-.. _spp_vf_explain_functions:
+.. _spp_vf_explain_spp_vf:
 
-Explanation
-===========
+spp_vf
+======
 
 The following sections provide some explanation of the code.
 
