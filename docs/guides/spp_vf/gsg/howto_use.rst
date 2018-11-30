@@ -23,7 +23,7 @@ SPP primary allocates and manages resources for secondary processes.
 You need to run SPP primary before secondary processes.
 
 SPP primary has two kinds of options for DPDK and spp.
-Before ``--`` are for DPDK is, and after ``--`` are for spp.
+Before ``--`` are for DPDK is, and after it are for spp.
 
 See `Running a Sample Application
 <http://dpdk.org/doc/guides/linux_gsg/build_sample_apps.html#running-a-sample-application>`_
@@ -40,23 +40,23 @@ Then, spp primary can be launched like this.
 .. code-block:: console
 
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
-      -c 0x02 -n 4 --socket-mem 512,512 \
+      -l 1 -n 4 --socket-mem 512,512 \
       --huge-dir=/run/hugepages/kvm \
       --proc-type=primary \
-      -- -p 0x03 -n 9 -s 127.0.0.1:5555
+      -- \
+      -p 0x03 -n 9 -s 127.0.0.1:5555
 
-SPP Secondary
--------------
+spp_vf
+------
 
-spp secondary processes(``spp_vf``) can be launched with two kinds of
-options, like primary process.
+``spp_vf`` can be launched with two kinds of options, like primary process.
 
 Like primary process, ``spp_vf`` has two kinds of options. One is for
 DPDK, the other is ``spp_vf``.
 
 ``spp_vf`` specific options are:
 
-  * --client-id: client id
+  * --client-id: client id which can be seen as secondary ID from spp.py
   * -s: IPv4 address and port for spp secondary
   * --vhost-client: vhost-user client enable setting
 
@@ -65,8 +65,9 @@ DPDK, the other is ``spp_vf``.
 .. code-block:: console
 
     $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
-    -c 0x3ffd -n 4 --proc-type=secondary \
-    -- --client-id 1 -s 127.0.0.1:6666 --vhost-client
+    -l 0,2-13 -n 4 --proc-type=secondary \
+    -- \
+    --client-id 1 -s 127.0.0.1:6666 --vhost-client
 
 If ``--vhost-client`` option is specified, then ``vhost-user`` act as
 the client, otherwise the server.
@@ -75,35 +76,47 @@ used. This reconnect features requires QEMU 2.7 (or later).
 See also `Vhost Sample Application
 <http://dpdk.org/doc/guides/sample_app_ug/vhost.html>`_.
 
+
+.. _spp_vf_gsg_howto_use_spp_mirror:
+
+spp_mirror
+----------
+
+``spp_mirror`` takes the same options as ``spp_vf``. Here is an example.
+
+.. code-block:: console
+
+    $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/spp_mirror \
+    -l 2 -n 4 --proc-type=secondary \
+    -- \
+    --client-id 1 -s 127.0.0.1:6666 --vhost-client
+
 VM
 --
 
-Launch VMs with ``virsh`` command.
+VM is launched with ``virsh`` command.
 
 .. code-block:: console
 
     $ virsh start [VM]
 
+It is required to add network configuration for processes running on the VMs.
+If this configuration is skipped, processes cannot communicate with others
+via SPP.
 
-Additional Network Configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To enable processes running on the VM to communicate through spp,
-it is required additional network configurations on host and guest VMs.
-
-(1) Guest VMs
+On the VMs, add an interface and disable offload.
 
 .. code-block:: console
 
-    # Interface for vhost
+    # Add interface
     $ sudo ifconfig [IF_NAME] inet [IP_ADDR] netmask [NETMASK] up
 
-    # Disable offload for vhost interface
+    # Disable offload
     $ sudo ethtool -K [IF_NAME] tx off
 
-(2) Host2
+On host machine, it is also required to disable offload.
 
 .. code-block:: console
 
-    # Disable offload for VM interface
-    $ ethtool -K [IF_NAME] tx off
+    # Disable offload for VM
+    $ sudo ethtool -K [IF_NAME] tx off
