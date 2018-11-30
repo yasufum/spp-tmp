@@ -2,7 +2,7 @@
     Copyright(c) 2010-2014 Intel Corporation
 
 Primary Commands
-====================
+================
 
 Primary process is managed with ``pri`` command.
 
