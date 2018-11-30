@@ -3,7 +3,7 @@
    Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
 
-.. _spp_mirror_use_cases_usecase1:
+.. _spp_mirror_use_cases_usecase:
 
 Mirroring packet from a VM
 ==========================
@@ -43,8 +43,8 @@ Start spp_primary with core id 1.
 
 .. _figure_simple_mirroring:
 
-.. figure:: ../../images/spp_vf/spp_mirror_usecase1_overview.*
-   :width: 90%
+.. figure:: ../../images/spp_vf/spp_mirror_usecase_overview.*
+   :width: 60%
 
    Mirroring from a VM
 
@@ -136,12 +136,12 @@ Detailed configuration of :numref:`figure_simple_mirroring` is
 described below. There are two NICs on the host to send and receive packets.
 During that path, mirror component mirror1 replicates packet to merger3.
 
-.. _figure_network_config:
+.. _figure_spp_mirror_usecase_nwconfig:
 
-  .. figure:: ../../images/spp_vf/spp_mirror_usecase1_nwconfig1.*
-     :width: 110%
+  .. figure:: ../../images/spp_vf/spp_mirror_usecase_nwconfig.*
+     :width: 80%
 
-     Network Configuration
+     Network configuration of mirroring
 
 Launch spp_mirror
 ^^^^^^^^^^^^^^^^^
