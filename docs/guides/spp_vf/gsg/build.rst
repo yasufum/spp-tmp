@@ -6,12 +6,22 @@
 Setup
 =====
 
+This section describes how to setup ``spp_vf`` and ``spp_mirror``.
+
+
 Environment
 -----------
 
+Here is a recommended versions of each of software.
+
 * Ubuntu 16.04
-* qemu-kvm 2.7 or later(if you use vhost reconnect feature described in 3.2.3)
-* DPDK v17.11 or later
+* qemu-kvm 2.7 or later
+
+.. note::
+
+    If you do not use ``--vhost-client`` described in
+    :ref:`How to Use<spp_vf_gsg_howto_use_spp_mirror>`
+    , you can use previous versions of qemu-kvm.
 
 
 Edit Config
@@ -26,7 +36,8 @@ Uncomment user and group in ``/etc/libvirt/qemu.conf``.
     user = "root"
     group = "root"
 
-Change ``KVM_HUGEPAGES`` from 0 to 1 in ``/etc/default/qemu-kvm``.
+To use hugepages with libvirt, change ``KVM_HUGEPAGES`` from 0 to 1
+in ``/etc/default/qemu-kvm``.
 
 .. code-block:: console
 
@@ -34,13 +45,24 @@ Change ``KVM_HUGEPAGES`` from 0 to 1 in ``/etc/default/qemu-kvm``.
 
     KVM_HUGEPAGES=1
 
-Change grub config for hugepages and isolcpus.
+Change grub configuration for hugepages and isolcpus features. It is defined
+as ``GRUB_CMDLINE_LINUX_DEFAULT`` and takes parameters.
+
+* isolcpus: Core IDs separated with commna, such as ``2,3,4,8``
+* hugepagesz: The size of hugepage, such as ``2M`` or ``1G``
+* hugepages: The number of hugepages, such as ``8``
+* default_hugepagesz: Default hugepage size, required only for ``1G``
+
+In this setup guide, configure ``hugepagez`` and its default is ``1G`` and
+the number of hugepages is ``36``.
+Core IDs of for ``isolcpus`` depends on your environment and usecase,
+but should be configured to have enough number of cores.
 
 .. code-block:: c
 
     # /etc/default/grub
 
-    GRUB_CMDLINE_LINUX_DEFAULT="isolcpus=2,...,46 hugepagesz=1G hugepages=36 default_hugepagesz=1G"
+    GRUB_CMDLINE_LINUX_DEFAULT="isolcpus=2,...,46 hugepagesz=1G hugepages=..."
 
 For hugepages, isolcpus, refer to the dpdk documentation below.
 
@@ -129,17 +151,20 @@ Load igb_uio module.
     igb_uio                16384  0  # igb_uio is loaded
     uio                    20480  1 igb_uio
 
-Then, bind it with PCI_Number.
+Then, bind your devices with PCI number by using ``dpdk-devbind.py``.
+PCI number is inspected
 
 .. code-block:: console
 
-    $ $RTE_SDK/usertools/dpdk-devbind.py --status
     # check your device for PCI_Number
+    $ $RTE_SDK/usertools/dpdk-devbind.py --status
 
-    $ sudo $RTE_SDK/usertools/dpdk-devbind.py --bind=igb_uio [PCI_Number]
+    $ sudo $RTE_SDK/usertools/dpdk-devbind.py --bind=igb_uio PCI_NUM
+
 
 virsh setup
 -----------
+
 First of all, please check version of qemu-kvm.
 
 .. code-block:: console
@@ -151,7 +176,8 @@ then please install qemu following
 the instruction of https://wiki.qemu.org/index.php/Hosts/Linux
 to install qemu 2.7.
 You may need to install libvirt-bin,
-virtinst, bridge-utils packages via ``apt-get`` install to run ``virt-install``.
+virtinst, bridge-utils packages via ``apt-get`` install to run
+``virt-install``.
 
 
 ``virsh`` is a command line interface that can be used to create, destroy,
@@ -295,6 +321,30 @@ using Secondary command.
         <qemu:arg value='vhost-user,id=vhost-net1,chardev=chr1,vhostforce'/>
       </qemu:commandline>
     </domain>
+
+
+Setup spp_mirror
+----------------
+
+Setup of ``spp_mirror`` is almost the same as :ref:`SPP VF<spp_vf_gsg_build>`.
+Configuration of use of ``shallowcopy`` or ``deepcopy`` is different from
+``spp_vf``.
+It is defined in ``src/mirror/Makefile`` and which of copying is used is
+configured by editing ``CFLAG`` option. It is defined to use ``shallowcopy``
+by default.
+
+If you use ``deepcopy``, comment out the line of ``-Dspp_mirror_SHALLOWCOPY``
+to be disabled.
+
+.. code-block:: c
+
+   #CFLAGS += -Dspp_mirror_SHALLOWCOPY
+
+Then, run make command to compile ``spp_mirror``.
+
+.. code-block:: console
+
+   $ make
 
 
 Trouble Shooting Guide
