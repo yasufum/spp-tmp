@@ -224,11 +224,13 @@ of targetting VM..
     spp > vf 1; classifier_table add mac 52:54:00:12:34:59 ring:5
 
 
+.. _spp_vf_use_cases_usecase1_setup_vm:
+
 Setup for VMs
 -------------
 
 Launch VM1 and VM2 with virsh command.
-Setup for virsh is described in :ref:`spp_vf_gsg_setup`.
+Setup for virsh is described in :ref:`spp_vf_gsg_virsh_setup`.
 
 .. code-block:: console
 

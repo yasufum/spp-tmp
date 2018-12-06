@@ -162,6 +162,8 @@ PCI number is inspected
     $ sudo $RTE_SDK/usertools/dpdk-devbind.py --bind=igb_uio PCI_NUM
 
 
+.. _spp_vf_gsg_virsh_setup:
+
 virsh setup
 -----------
 

@@ -13,7 +13,7 @@ spp_mirror.  Traffic from host2 is forwarded to each VM inside host1 thorough
 ``spp_vf``. ``spp_vf`` is required in usecase to forward traffic
 from host NIC to each VM.
 
-.. _figure_simple_mirroring:
+.. _figure_mirroring_from_vm:
 
 .. figure:: ../../images/spp_vf/spp_mirror_usecase_overview.*
    :width: 60%
@@ -21,14 +21,25 @@ from host NIC to each VM.
    Mirroring from a VM
 
 
-Launch SPP Processes
---------------------
+Network Configuration
+---------------------
 
-Move to spp directory.
+Detailed configuration of :numref:`figure_mirroring_from_vm` is described in
+:numref:`figure_spp_mirror_usecase_nwconfig`.
+In this senario, incoming packets though ``ring1`` are mirrored.
+In ``spp_mirror`` process, worker thread ``mirror1`` copies incoming packets and
+sends to orignal destination ``VM1`` and new one ``VM3``.
 
-.. code-block:: console
+.. _figure_spp_mirror_usecase_nwconfig:
 
-   $cd /path/to/spp
+.. figure:: ../../images/spp_vf/spp_mirror_usecase_nwconfig.*
+     :width: 80%
+
+     Network configuration of mirroring
+
+
+Setup SPP and VMs
+-----------------
 
 Launch ``spp-ctl`` before launching SPP primary and secondary processes.
 You also need to launch ``spp.py``  if you use ``spp_vf`` from CLI.
@@ -37,6 +48,8 @@ but no need to give it explicitly if ``127.0.0.1`` or ``localhost`` although
 doing explicitly in this example to be more understandable.
 
 .. code-block:: console
+
+    $cd /path/to/spp
 
     # Launch spp-ctl and spp.py
     $ python3 ./src/spp-ctl/spp-ctl -b 127.0.0.1
@@ -57,8 +70,11 @@ with ``-n 16`` for giving enough number of rings.
        -p 0x03 -n 16 -s 127.0.0.1:5555
 
 
-Then, create VM1 ``spp_vf`` and launch ``spp_vf`` with core list
-``-l 0,2-14`` in this usecase.
+Launch spp_vf
+~~~~~~~~~~~~~
+
+Launch ``VM1`` as described in :ref:`spp_vf_use_cases_usecase1_setup_vm`,
+and launch ``spp_vf`` with core list ``-l 0,2-14`` in this usecase.
 
 .. code-block:: console
 
@@ -126,26 +142,6 @@ You send packets from the remote host1 and confirm packets are received.
     $ ping 192.168.140.21
 
 
-Mirroring with spp_mirror
--------------------------
-
-The second step is starting with creating VM running with spp_mirror.
-
-Network Configuration
-~~~~~~~~~~~~~~~~~~~~~
-
-Incoming packets from NIC are forwarded to VM1 through spp_vf.
-
-Detailed configuration of :numref:`figure_simple_mirroring` is
-described below. There are two NICs on the host to send and receive packets.
-During that path, mirror component mirror1 replicates packet to merger3.
-
-.. _figure_spp_mirror_usecase_nwconfig:
-
-  .. figure:: ../../images/spp_vf/spp_mirror_usecase_nwconfig.*
-     :width: 80%
-
-     Network configuration of mirroring
 
 Launch spp_mirror
 ~~~~~~~~~~~~~~~~~
