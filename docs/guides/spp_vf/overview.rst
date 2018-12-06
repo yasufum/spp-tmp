@@ -54,7 +54,7 @@ by looking up destination MAC address in the packet.
     Overview of spp_vf
 
 
-SPP Mirror
+spp_mirror
 ----------
 
 ``spp_mirror`` is an implementation of

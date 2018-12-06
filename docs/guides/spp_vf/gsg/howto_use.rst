@@ -46,6 +46,9 @@ Then, spp primary can be launched like this.
       -- \
       -p 0x03 -n 9 -s 127.0.0.1:5555
 
+
+.. _spp_vf_gsg_howto_use_spp_vf:
+
 spp_vf
 ------
 
