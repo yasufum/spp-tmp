@@ -1,7 +1,7 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
-.. _spp_vf_gsg_build:
+.. _spp_vf_gsg_setup:
 
 Setup
 =====
@@ -19,9 +19,9 @@ Here is a recommended versions of each of software.
 
 .. note::
 
-    If you do not use ``--vhost-client`` described in
-    :ref:`How to Use<spp_vf_gsg_howto_use_spp_mirror>`
-    , you can use previous versions of qemu-kvm.
+    If you do not use ``--vhost-client`` as described in
+    :ref:`How to Use<spp_vf_gsg_howto_use_spp_vf>`
+    of spp_vf, you can use previous versions of qemu-kvm.
 
 
 Edit Config
@@ -326,7 +326,7 @@ using Secondary command.
 Setup spp_mirror
 ----------------
 
-Setup of ``spp_mirror`` is almost the same as :ref:`SPP VF<spp_vf_gsg_build>`.
+Setup of ``spp_mirror`` is almost the same as :ref:`SPP VF<spp_vf_gsg_setup>`.
 Configuration of use of ``shallowcopy`` or ``deepcopy`` is different from
 ``spp_vf``.
 It is defined in ``src/mirror/Makefile`` and which of copying is used is
