@@ -13,6 +13,5 @@ controller.
 
    primary
    secondary/index
-   spp_vf
    common
    experimental

@@ -6,7 +6,6 @@ Secondary Commands
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    spp_nfv
    spp_vf
