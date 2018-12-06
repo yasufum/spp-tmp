@@ -20,8 +20,8 @@ port.
     Simple SSH Login
 
 
-Launch SPP VF
-~~~~~~~~~~~~~
+Launch SPP Processes
+--------------------
 
 Change directory to spp and confirm that it is already compiled.
 
@@ -29,15 +29,19 @@ Change directory to spp and confirm that it is already compiled.
 
     $ cd /path/to/spp
 
-As spp, launch controller first. You notice that SPP VF has its own
-controller ``spp_vf.py`` and do not use ``spp.py``.
+Launch ``spp-ctl`` before launching SPP primary and secondary processes.
+You also need to launch ``spp.py``  if you use ``spp_vf`` from CLI.
+``-b`` option is for binding IP address to communicate other SPP processes,
+but no need to give it explicitly if ``127.0.0.1`` or ``localhost`` although
+doing explicitly in this example to be more understandable.
 
 .. code-block:: console
 
-    # Launch spp_vf.py
-    $ python ./src/spp_vf.py -p 5555 -s 6666
+    # Launch spp-ctl and spp.py
+    $ python3 ./src/spp-ctl/spp-ctl -b 127.0.0.1
+    $ python ./src/spp.py -b 127.0.0.1
 
-Then, run ``spp_primary``.
+Then, run ``spp_primary`` on the second core with ``-c 0x02``.
 
 .. code-block:: console
 
@@ -50,6 +54,8 @@ Then, run ``spp_primary``.
         -p 0x03 -n 8 -s 127.0.0.1:5555
 
 After ``spp_primary`` is launched, run secondary process ``spp_vf``.
+Core mask ``-c 0x3ffd`` indicates to use twelve cores except the second
+core, and it equals to ``-l 0,2-12``.
 
 .. code-block:: console
 
@@ -62,7 +68,7 @@ After ``spp_primary`` is launched, run secondary process ``spp_vf``.
 
 
 Network Configuration
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Detailed configuration of :numref:`figure_simple_ssh_login` is
 described below.
@@ -86,7 +92,7 @@ sent to SSH clinet via NIC0.
 You need to input a little bit large amount of commands for the
 configuration, or use ``playback`` command to load from config files.
 You can find a series of config files for this use case in
-``docs/samples/command/spp_vf/usecase1/``.
+``recipes/spp_vf/usecase1/``.
 
 First, lanch threads of SPP VF called ``component`` with its core ID
 and a directive for behaviour.
@@ -94,7 +100,7 @@ It is launched from ``component`` subcommand with options.
 
 .. code-block:: console
 
-    spp > sec [SEC_ID];component start [NAME] [CORE_ID] [BEHAVIOUR]
+    spp > sec SEC_ID; component start NAME CORE_ID BEHAVIOUR
 
 In this usecase, spp_vf is launched with ID=1. Let's start components
 for the first login path.
@@ -105,12 +111,12 @@ Core ID from 2 to 7 are assigned to each of components.
 .. code-block:: console
 
     # Start component to spp_vf
-    spp > sec 1;component start classifier1 2 classifier_mac
-    spp > sec 1;component start forwarder1 3 forward
-    spp > sec 1;component start forwarder2 4 forward
-    spp > sec 1;component start forwarder3 5 forward
-    spp > sec 1;component start forwarder4 6 forward
-    spp > sec 1;component start merger1 7 merge
+    spp > vf 1; component start classifier1 2 classifier_mac
+    spp > vf 1; component start forwarder1 3 forward
+    spp > vf 1; component start forwarder2 4 forward
+    spp > vf 1; component start forwarder3 5 forward
+    spp > vf 1; component start forwarder4 6 forward
+    spp > vf 1; component start merger1 7 merge
 
 Each of components must have rx and tx ports for forwarding.
 Add ports for each of components as following.
@@ -120,25 +126,30 @@ merger has two rx ports.
 .. code-block:: console
 
     # classifier1
-    spp > sec 1;port add phy:0 rx classifier1
-    spp > sec 1;port add ring:0 tx classifier1
-    spp > sec 1;port add ring:1 tx classifier1
+    spp > vf 1; port add phy:0 rx classifier1
+    spp > vf 1; port add ring:0 tx classifier1
+    spp > vf 1; port add ring:1 tx classifier1
+
     # forwarder1
-    spp > sec 1;port add ring:0 rx forwarder1
-    spp > sec 1;port add vhost:0 tx forwarder1
+    spp > vf 1; port add ring:0 rx forwarder1
+    spp > vf 1; port add vhost:0 tx forwarder1
+
     # forwarder2
-    spp > sec 1;port add ring:1 rx forwarder2
-    spp > sec 1;port add vhost:2 tx forwarder2
+    spp > vf 1; port add ring:1 rx forwarder2
+    spp > vf 1; port add vhost:2 tx forwarder2
+
     # forwarder3
-    spp > sec 1;port add vhost:0 rx forwarder3
-    spp > sec 1;port add ring:2 tx forwarder3
+    spp > vf 1; port add vhost:0 rx forwarder3
+    spp > vf 1; port add ring:2 tx forwarder3
+
     # forwarder4
-    spp > sec 1;port add vhost:2 rx forwarder4
-    spp > sec 1;port add ring:3 tx forwarder4
+    spp > vf 1; port add vhost:2 rx forwarder4
+    spp > vf 1; port add ring:3 tx forwarder4
+
     # merger1
-    spp > sec 1;port add ring:2 rx merger1
-    spp > sec 1;port add ring:3 rx merger1
-    spp > sec 1;port add phy:0 tx merger1
+    spp > vf 1; port add ring:2 rx merger1
+    spp > vf 1; port add ring:3 rx merger1
+    spp > vf 1; port add phy:0 tx merger1
 
 As given ``classifier_mac``, classifier component decides
 the destination with MAC address by referring ``classifier_table``.
@@ -147,20 +158,17 @@ MAC address and corresponging port is registered to the table with
 
 .. code-block:: console
 
-    spp > [SEC_ID];classifier_table add mac [MACADDRESS] [PORT]
+    spp > vf SEC_ID; classifier_table add mac MAC_ADDR PORT
 
-In this usecase, you need to register two MAC addresses for merger1.
+In this usecase, you need to register two MAC addresses of targetting VM
+for merger1.
 
 .. code-block:: console
 
     # Register MAC address to classifier
-    spp > sec 1;classifier_table add mac 52:54:00:12:34:56 ring:0
-    spp > sec 1;classifier_table add mac 52:54:00:12:34:58 ring:1
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:56 ring:0
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:58 ring:1
 
-.. note::
-
-    Please verify that MAC address of target VM is specified in
-    [MACADDRESS] parameter.
 
 Configuration for the second login path is almost similar to the first
 path.
@@ -169,56 +177,58 @@ Start components with core ID 8-13 and directives.
 
 .. code-block:: console
 
-    spp > sec 1;component start classifier2 8 classifier_mac
-    spp > sec 1;component start forwarder5 9 forward
-    spp > sec 1;component start forwarder6 10 forward
-    spp > sec 1;component start forwarder7 11 forward
-    spp > sec 1;component start forwarder8 12 forward
-    spp > sec 1;component start merger2 13 merge
+    spp > vf 1; component start classifier2 8 classifier_mac
+    spp > vf 1; component start forwarder5 9 forward
+    spp > vf 1; component start forwarder6 10 forward
+    spp > vf 1; component start forwarder7 11 forward
+    spp > vf 1; component start forwarder8 12 forward
+    spp > vf 1; component start merger2 13 merge
 
 Add ports to each of components.
 
 .. code-block:: console
 
     # classifier2
-    spp > sec 1;port add phy:1 rx classifier2
-    spp > sec 1;port add ring:4 tx classifier2
-    spp > sec 1;port add ring:5 tx classifier2
-    # forwarder5
-    spp > sec 1;port add ring:4 rx forwarder5
-    spp > sec 1;port add vhost:1 tx forwarder5
-    # forwarder6
-    spp > sec 1;port add ring:5 rx forwarder6
-    spp > sec 1;port add vhost:3 tx forwarder6
-    # forwarder7
-    spp > sec 1;port add vhost:1 rx forwarder7
-    spp > sec 1;port add ring:6 tx forwarder7
-    # forwarder8
-    spp > sec 1;port add vhost:3 rx forwarder8
-    spp > sec 1;port add ring:7 tx forwarder8
-    # merger2
-    spp > sec 1;port add ring:6 rx merger2
-    spp > sec 1;port add ring:7 rx merger2
-    spp > sec 1;port add phy:1 tx merger2
+    spp > vf 1; port add phy:1 rx classifier2
+    spp > vf 1; port add ring:4 tx classifier2
+    spp > vf 1; port add ring:5 tx classifier2
 
-Register entries to classifier_table for classifier2.
+    # forwarder5
+    spp > vf 1; port add ring:4 rx forwarder5
+    spp > vf 1; port add vhost:1 tx forwarder5
+
+    # forwarder6
+    spp > vf 1; port add ring:5 rx forwarder6
+    spp > vf 1; port add vhost:3 tx forwarder6
+
+    # forwarder7
+    spp > vf 1; port add vhost:1 rx forwarder7
+    spp > vf 1; port add ring:6 tx forwarder7
+
+    # forwarder8
+    spp > vf 1; port add vhost:3 rx forwarder8
+    spp > vf 1; port add ring:7 tx forwarder8
+
+    # merger2
+    spp > vf 1; port add ring:6 rx merger2
+    spp > vf 1; port add ring:7 rx merger2
+    spp > vf 1; port add phy:1 tx merger2
+
+Register entries to classifier_table for classifier2 with MAC address
+of targetting VM..
 
 .. code-block:: console
 
     # Register MAC address to classifier
-    spp > sec 1;classifier_table add mac 52:54:00:12:34:57 ring:4
-    spp > sec 1;classifier_table add mac 52:54:00:12:34:59 ring:5
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:57 ring:4
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:59 ring:5
 
-.. note::
-
-    Please verify that MAC address of target VM is specified in
-    [MACADDRESS] parameter.
 
 Setup for VMs
-~~~~~~~~~~~~~
+-------------
 
 Launch VM1 and VM2 with virsh command.
-Setup for virsh is described in :ref:`spp_vf_gsg_build`.
+Setup for virsh is described in :ref:`spp_vf_gsg_setup`.
 
 .. code-block:: console
 
@@ -264,7 +274,7 @@ Configurations also for ``spp-vm2`` as ``spp-vm1``.
 
 
 Login to VMs
-~~~~~~~~~~~~
+------------
 
 Now, you can login to VMs from the remote host1.
 
@@ -282,10 +292,11 @@ Now, you can login to VMs from the remote host1.
     # spp-vm2 via NIC1
     $ ssh sppuser@192.168.150.32
 
+
 .. _spp_vf_use_cases_usecase1_shutdown_spp_vf_components:
 
-Shutdown SPP VF Components
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shutdown spp_vf Components
+--------------------------
 
 Basically, you can shutdown all of SPP processes with ``bye all``
 command.
@@ -297,43 +308,46 @@ for the first SSH login path.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > sec 1;classifier_table del mac 52:54:00:12:34:56 ring:0
-    spp > sec 1;classifier_table del mac 52:54:00:12:34:58 ring:1
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:56 ring:0
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:58 ring:1
 
 .. code-block:: console
 
     # classifier1
-    spp > sec 1;port del phy:0 rx classifier1
-    spp > sec 1;port del ring:0 tx classifier1
-    spp > sec 1;port del ring:1 tx classifier1
+    spp > vf 1; port del phy:0 rx classifier1
+    spp > vf 1; port del ring:0 tx classifier1
+    spp > vf 1; port del ring:1 tx classifier1
     # forwarder1
-    spp > sec 1;port del ring:0 rx forwarder1
-    spp > sec 1;port del vhost:0 tx forwarder1
+    spp > vf 1; port del ring:0 rx forwarder1
+    spp > vf 1; port del vhost:0 tx forwarder1
     # forwarder2
-    spp > sec 1;port del ring:1 rx forwarder2
-    spp > sec 1;port del vhost:2 tx forwarder2
+    spp > vf 1; port del ring:1 rx forwarder2
+    spp > vf 1; port del vhost:2 tx forwarder2
+
     # forwarder3
-    spp > sec 1;port del vhost:0 rx forwarder3
-    spp > sec 1;port del ring:2 tx forwarder3
+    spp > vf 1; port del vhost:0 rx forwarder3
+    spp > vf 1; port del ring:2 tx forwarder3
+
     # forwarder4
-    spp > sec 1;port del vhost:2 rx forwarder4
-    spp > sec 1;port del ring:3 tx forwarder4
+    spp > vf 1; port del vhost:2 rx forwarder4
+    spp > vf 1; port del ring:3 tx forwarder4
+
     # merger1
-    spp > sec 1;port del ring:2 rx merger1
-    spp > sec 1;port del ring:3 rx merger1
-    spp > sec 1;port del phy:0 tx merger1
+    spp > vf 1; port del ring:2 rx merger1
+    spp > vf 1; port del ring:3 rx merger1
+    spp > vf 1; port del phy:0 tx merger1
 
 Then, stop components.
 
 .. code-block:: console
 
     # Stop component to spp_vf
-    spp > sec 1;component stop classifier1
-    spp > sec 1;component stop forwarder1
-    spp > sec 1;component stop forwarder2
-    spp > sec 1;component stop forwarder3
-    spp > sec 1;component stop forwarder4
-    spp > sec 1;component stop merger1
+    spp > vf 1; component stop classifier1
+    spp > vf 1; component stop forwarder1
+    spp > vf 1; component stop forwarder2
+    spp > vf 1; component stop forwarder3
+    spp > vf 1; component stop forwarder4
+    spp > vf 1; component stop merger1
 
 Second, do termination for the second path.
 Delete entries from ``classifier_table`` and ports from each of
@@ -342,40 +356,45 @@ components.
 .. code-block:: console
 
     # Delete MAC address from Classifier
-    spp > sec 1;classifier_table del mac 52:54:00:12:34:57 ring:4
-    spp > sec 1;classifier_table del mac 52:54:00:12:34:59 ring:5
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:57 ring:4
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:59 ring:5
 
 .. code-block:: console
 
     # classifier2
-    spp > sec 1;port del phy:1 rx classifier2
-    spp > sec 1;port del ring:4 tx classifier2
-    spp > sec 1;port del ring:5 tx classifier2
+    spp > vf 1; port del phy:1 rx classifier2
+    spp > vf 1; port del ring:4 tx classifier2
+    spp > vf 1; port del ring:5 tx classifier2
+
     # forwarder5
-    spp > sec 1;port del ring:4 rx forwarder5
-    spp > sec 1;port del vhost:1 tx forwarder5
+    spp > vf 1; port del ring:4 rx forwarder5
+    spp > vf 1; port del vhost:1 tx forwarder5
+
     # forwarder6
-    spp > sec 1;port del ring:5 rx forwarder6
-    spp > sec 1;port del vhost:3 tx forwarder6
+    spp > vf 1; port del ring:5 rx forwarder6
+    spp > vf 1; port del vhost:3 tx forwarder6
+
     # forwarder7
-    spp > sec 1;port del vhost:1 rx forwarder7
-    spp > sec 1;port del ring:6 tx forwarder7
+    spp > vf 1; port del vhost:1 rx forwarder7
+    spp > vf 1; port del ring:6 tx forwarder7
+
     # forwarder8
-    spp > sec 1;port del vhost:3 tx forwarder8
-    spp > sec 1;port del ring:7 rx forwarder8
+    spp > vf 1; port del vhost:3 tx forwarder8
+    spp > vf 1; port del ring:7 rx forwarder8
+
     # merger2
-    spp > sec 1;port del ring:6 rx merger2
-    spp > sec 1;port del ring:7 rx merger2
-    spp > sec 1;port del phy:1 tx merger2
+    spp > vf 1; port del ring:6 rx merger2
+    spp > vf 1; port del ring:7 rx merger2
+    spp > vf 1; port del phy:1 tx merger2
 
 Then, stop components.
 
 .. code-block:: console
 
     # Stop component to spp_vf
-    spp > sec 1;component stop classifier2
-    spp > sec 1;component stop forwarder5
-    spp > sec 1;component stop forwarder6
-    spp > sec 1;component stop forwarder7
-    spp > sec 1;component stop forwarder8
-    spp > sec 1;component stop merger2
+    spp > vf 1; component stop classifier2
+    spp > vf 1; component stop forwarder5
+    spp > vf 1; component stop forwarder6
+    spp > vf 1; component stop forwarder7
+    spp > vf 1; component stop forwarder8
+    spp > vf 1; component stop merger2
