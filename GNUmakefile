@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-VERSION := 18.05.1
+VERSION := 18.08
 
 ifneq ($(RTE_SDK),)
 # Default target, can be overriden by command line or environment
@@ -16,8 +16,7 @@ endif
 
 .PHONY: showversion
 showversion:
-	@set -- ;\
-		printf $(VERSION);\
+	@echo $(VERSION)
 
 # Compile RST documents
 DOC_ROOT = docs/guides

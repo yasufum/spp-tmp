@@ -40,7 +40,8 @@ author = ''
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-version = subprocess.check_output(['make', '-sRrC', '../../', 'showversion'])
+version = subprocess.check_output(['make', '-C', '../../',
+    '--no-print-directory', 'showversion']).decode('utf-8').rstrip()
 
 # The full version, including alpha/beta/rc tags.
 release = version
