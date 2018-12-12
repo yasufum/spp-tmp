@@ -6,7 +6,7 @@ from __future__ import absolute_import
 import cmd
 from .commands import bye
 from .commands import pri
-from .commands import sec
+from .commands import nfv
 from .commands import topo
 from .commands import vf
 from .commands import mirror
@@ -42,7 +42,10 @@ class Shell(cmd.Cmd, object):
         cmd.Cmd.__init__(self)
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = pri.SppPrimary(self.spp_ctl_cli)
-        self.spp_secondary = sec.SppSecondary(self.spp_ctl_cli)
+
+        self.spp_nfvs = {}
+        for sec_id in self.get_sec_ids('nfv'):
+            self.spp_nfvs[sec_id] = nfv.SppNfv(self.spp_ctl_cli, sec_id)
 
         self.spp_vfs = {}
         for sec_id in self.get_sec_ids('vf'):
@@ -55,7 +58,7 @@ class Shell(cmd.Cmd, object):
 
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
         self.spp_bye = bye.SppBye(self.spp_ctl_cli, self.spp_primary,
-                                  self.spp_secondary)
+                                  self.spp_nfvs)
 
     def default(self, line):
         """Define defualt behaviour.
@@ -141,7 +144,8 @@ class Shell(cmd.Cmd, object):
                 cnt = 1
                 for pt in ['nfv', 'vf', 'mirror']:
                     for obj in sec_obj[pt]:
-                        print('    %d: %s:%s' % (cnt, obj['type'], obj['client-id']))
+                        print('    %d: %s:%s' %
+                              (cnt, obj['type'], obj['client-id']))
                         cnt += 1
             elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 pass
@@ -264,20 +268,19 @@ class Shell(cmd.Cmd, object):
 
         return self.spp_primary.complete(text, line, begidx, endidx)
 
-    def do_sec(self, cmd):
-        """Send a command to secondary process specified with ID.
+    def do_nfv(self, cmd):
+        """Send a command to spp_nfv specified with ID.
 
-        SPP secondary process is specified with secondary ID and takes
-        sub commands.
+        Spp_nfv is specified with secondary ID and takes sub commands.
 
-        spp > sec 1; status
-        spp > sec 1; add ring:0
-        spp > sec 1; patch phy:0 ring:0
+        spp > nfv 1; status
+        spp > nfv 1; add ring:0
+        spp > nfv 1; patch phy:0 ring:0
 
         You can refer all of sub commands by pressing TAB after
-        'sec 1;'.
+        'nfv 1;'.
 
-        spp > sec 1;  # press TAB
+        spp > nfv 1;  # press TAB
         add     del     exit    forward patch   status  stop
         """
 
@@ -287,21 +290,44 @@ class Shell(cmd.Cmd, object):
         if len(cmds) < 2:
             print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
-            sec_id = int(cmds[0])
-            if self.check_sec_cmds(cmds[1]):
-                self.spp_secondary.run(sec_id, cmds[1])
-            else:
-                print("Invalid sec command")
+            self.spp_nfvs[int(cmds[0])].run(cmds[1])
         else:
-            print(cmds[0])
-            print("first %s" % cmds[1])
+            print('Invalid command: %s' % tmparg)
 
-    def complete_sec(self, text, line, begidx, endidx):
-        """Completion for secondary process commands"""
+    def complete_nfv(self, text, line, begidx, endidx):
+        """Completion for nfv command"""
 
         line = self.clean_cmd(line)
-        return self.spp_secondary.complete(
-                self.get_sec_ids('nfv'), text, line, begidx, endidx)
+
+        tokens = line.split(';')
+        if len(tokens) == 1:
+            # Add SppNfv of sec_id if it is not exist
+            sec_ids = self.get_sec_ids('nfv')
+            for idx in sec_ids:
+                if self.spp_nfvs[idx] is None:
+                    self.spp_nfvs[idx] = nfv.SppNfv(self.spp_ctl_cli, idx)
+
+            if len(line.split()) == 1:
+                res = [str(i)+';' for i in sec_ids]
+            else:
+                if not (';' in line):
+                    res = [str(i)+';'
+                           for i in sec_ids
+                           if (str(i)+';').startswith(text)]
+            return res
+        elif len(tokens) == 2:
+            first_tokens = tokens[0].split(' ')  # 'nfv 1' => ['nfv', '1']
+            if len(first_tokens) == 2:
+                idx = int(first_tokens[1])
+
+                # Add SppVf of sec_id if it is not exist
+                if self.spp_nfvs[idx] is None:
+                    self.spp_nfvs[idx] = nfv.SppNfv(self.spp_ctl_cli, idx)
+
+                res = self.spp_nfvs[idx].complete(self.get_sec_ids('nfv'),
+                                                  text, line, begidx, endidx)
+                # logger.info(res)
+                return res
 
     def do_vf(self, cmd):
         """Send a command to spp_vf.
@@ -451,7 +477,8 @@ class Shell(cmd.Cmd, object):
             sec_ids = self.get_sec_ids('mirror')
             for idx in sec_ids:
                 if self.spp_mirrors[idx] is None:
-                    self.spp_mirrors[idx] = mirror.SppMirror(self.spp_ctl_cli, idx)
+                    self.spp_mirrors[idx] = mirror.SppMirror(
+                            self.spp_ctl_cli, idx)
 
             if len(line.split()) == 1:
                 res = [str(i)+';' for i in sec_ids]
@@ -469,7 +496,8 @@ class Shell(cmd.Cmd, object):
 
                 # Add SppMirror of sec_id if it is not exist
                 if self.spp_mirrors[idx] is None:
-                    self.spp_mirrors[idx] = mirror.SppMirror(self.spp_ctl_cli, idx)
+                    self.spp_mirrors[idx] = mirror.SppMirror(
+                            self.spp_ctl_cli, idx)
 
                 return self.spp_mirrors[idx].complete(
                         self.get_sec_ids('mirror'), text, line, begidx, endidx)

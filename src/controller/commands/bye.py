@@ -14,10 +14,10 @@ class SppBye(object):
 
     BYE_CMDS = ['sec', 'all']
 
-    def __init__(self, spp_ctl_cli, spp_primary, spp_secondary):
+    def __init__(self, spp_ctl_cli, spp_primary, spp_nfvs):
         self.spp_ctl_cli = spp_ctl_cli
         self.spp_primary = spp_primary
-        self.spp_secondary = spp_secondary
+        self.spp_nfvs = spp_nfvs
 
     def run(self, args, sec_ids):
 
@@ -44,5 +44,5 @@ class SppBye(object):
     def close_all_secondary(self, sec_ids):
         """Terminate all secondary processes."""
 
-        for i in sec_ids:
-            self.spp_secondary.run(i, 'exit')
+        for i, nfv in self.spp_nfvs.items():
+            nfv.run(i, 'exit')
