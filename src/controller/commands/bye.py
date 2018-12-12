@@ -3,7 +3,7 @@
 
 
 class SppBye(object):
-    """Exec SPP bye command.
+    """Run SPP bye command.
 
     SppBye class is intended to be used in Shell class as a delegator
     for running 'bye' command.
@@ -14,21 +14,21 @@ class SppBye(object):
 
     BYE_CMDS = ['sec', 'all']
 
-    def __init__(self, spp_ctl_cli, spp_primary, spp_nfvs):
-        self.spp_ctl_cli = spp_ctl_cli
-        self.spp_primary = spp_primary
-        self.spp_nfvs = spp_nfvs
+    def __init__(self):
+        pass
 
-    def run(self, args, sec_ids):
+    def run(self, args, spp_primary, spp_secondaries):
 
         cmds = args.split(' ')
         if cmds[0] == 'sec':
-            self.close_all_secondary(sec_ids)
+            print('Closing secondary ...')
+            self.close_all_secondary(spp_secondaries)
+
         elif cmds[0] == 'all':
             print('Closing secondary ...')
-            self.close_all_secondary(sec_ids)
+            self.close_all_secondary(spp_secondaries)
             print('Closing primary ...')
-            self.spp_primary.do_exit()
+            spp_primary.do_exit()
 
     def complete(self, text, line, begidx, endidx):
 
@@ -41,8 +41,11 @@ class SppBye(object):
                            ]
         return completions
 
-    def close_all_secondary(self, sec_ids):
+    def close_all_secondary(self, spp_secondaries):
         """Terminate all secondary processes."""
 
-        for i, nfv in self.spp_nfvs.items():
-            nfv.run(i, 'exit')
+        for sec_type, spp_procs in spp_secondaries.items():
+            # TODO(yasufum) Remove if they support exit command.
+            if not (sec_type in ['vf', 'mirror']):
+                for sec in spp_procs.values():
+                    sec.run('exit')
