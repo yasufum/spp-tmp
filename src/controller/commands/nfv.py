@@ -44,38 +44,57 @@ class SppNfv(object):
                     print('Error: unknown response.')
 
         elif cmd == 'add':
-            if self.use_cache is True:
-                self.ports.append(params[0])
+            if self.use_cache is False:
+                self.ports = self.get_registered_ports()
 
-            req_params = {'action': 'add', 'port': params[0]}
+            if params[0] in self.ports:
+                print("'%s' is already added." % params[0])
+            else:
+                if self.use_cache is True:
+                    self.ports.append(params[0])
 
-            res = self.spp_ctl_cli.put('nfvs/%d/ports' %
-                                       self.sec_id, req_params)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print('Add %s.' % params[0])
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+                req_params = {'action': 'add', 'port': params[0]}
+
+                res = self.spp_ctl_cli.put('nfvs/%d/ports' %
+                                           self.sec_id, req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        print('Add %s.' % params[0])
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
 
         elif cmd == 'del':
-            if self.use_cache is True:
-                if params[0] in self.ports:
-                    self.ports.remove(params[0])
+            if self.use_cache is False:
+                self.patches = self.get_registered_patches()
 
-            req_params = {'action': 'del', 'port': params[0]}
-            res = self.spp_ctl_cli.put('nfvs/%d/ports' %
-                                       self.sec_id, req_params)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print('Delete %s.' % params[0])
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            # Patched ports should not be deleted.
+            patched_ports = []
+            for pport in self.patches:
+                patched_ports.append(pport['src'])
+                patched_ports.append(pport['dst'])
+            patched_ports = list(set(patched_ports))
+
+            if params[0] in patched_ports:
+                print("Cannot delete patched port '%s'." % params[0])
+            else:
+                if self.use_cache is True:
+                    if params[0] in self.ports:
+                        self.ports.remove(params[0])
+
+                req_params = {'action': 'del', 'port': params[0]}
+                res = self.spp_ctl_cli.put('nfvs/%d/ports' %
+                                           self.sec_id, req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        print('Delete %s.' % params[0])
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
 
         elif cmd == 'forward' or cmd == 'stop':
             if cmd == 'forward':
@@ -257,17 +276,16 @@ class SppNfv(object):
                 self.ports = self.get_registered_ports()
                 self.patches = self.get_registered_patches()
 
-            # Used ports should not be included in the candidate of del.
-            used_ports = []
-            for pt in self.ports:
-                for ppt in self.patches:
-                    if ((pt in ppt['src']) or (pt in ppt['dst'])):
-                            used_ports.append(pt)
-            used_ports = list(set(used_ports))
+            # Patched ports should not be included in the candidate of del.
+            patched_ports = []
+            for pport in self.patches:
+                patched_ports.append(pport['src'])
+                patched_ports.append(pport['dst'])
+            patched_ports = list(set(patched_ports))
 
             # Remove ports already used from candidate.
             for kw in self.ports:
-                if not (kw in used_ports):
+                if not (kw in patched_ports):
                     if kw.startswith(sub_tokens[1]):
                         if ':' in sub_tokens[1]:  # exp, 'ring:' or 'ring:0'
                             res.append(kw.split(':')[1])
