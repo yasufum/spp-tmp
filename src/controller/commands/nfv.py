@@ -10,14 +10,21 @@ class SppNfv(object):
     SppNfv lass is intended to be used in Shell class as a delegator for
     running 'nfv' command.
 
-    'self.command()' is called from do_nfv() and 'self.complete()' is called
-    from complete_nfv() of both of which is defined in Shell.
+    'self.command()' is called from do_nfv() and 'self.complete()' is
+    called from complete_nfv() of both of which is defined in Shell.
     """
 
-    # All of commands and sub-commands used for validation and completion.
-    NFV_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch', 'del']
+    # All of spp_nfv commands used for validation and completion.
+    NFV_CMDS = ['status', 'exit', 'forward', 'stop', 'add', 'patch',
+                'del']
 
     def __init__(self, spp_ctl_cli, sec_id, use_cache=False):
+        """Initialize SppNfv.
+
+        Turn use_cache `True` if you do not request to spp-ctl each
+        time.
+        """
+
         self.spp_ctl_cli = spp_ctl_cli
         self.sec_id = sec_id
         self.ports = []  # registered ports
@@ -33,126 +40,22 @@ class SppNfv(object):
         params = cmdline.split(' ')[1:]
 
         if cmd == 'status':
-            res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 200:
-                    self.print_nfv_status(res.json())
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            self._run_status()
 
         elif cmd == 'add':
-            if self.use_cache is False:
-                self.ports = self.get_registered_ports()
-
-            if params[0] in self.ports:
-                print("'%s' is already added." % params[0])
-            else:
-                if self.use_cache is True:
-                    self.ports.append(params[0])
-
-                req_params = {'action': 'add', 'port': params[0]}
-
-                res = self.spp_ctl_cli.put('nfvs/%d/ports' %
-                                           self.sec_id, req_params)
-                if res is not None:
-                    error_codes = self.spp_ctl_cli.rest_common_error_codes
-                    if res.status_code == 204:
-                        print('Add %s.' % params[0])
-                    elif res.status_code in error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
+            self._run_add(params)
 
         elif cmd == 'del':
-            if self.use_cache is False:
-                self.patches = self.get_registered_patches()
-
-            # Patched ports should not be deleted.
-            patched_ports = []
-            for pport in self.patches:
-                patched_ports.append(pport['src'])
-                patched_ports.append(pport['dst'])
-            patched_ports = list(set(patched_ports))
-
-            if params[0] in patched_ports:
-                print("Cannot delete patched port '%s'." % params[0])
-            else:
-                if self.use_cache is True:
-                    if params[0] in self.ports:
-                        self.ports.remove(params[0])
-
-                req_params = {'action': 'del', 'port': params[0]}
-                res = self.spp_ctl_cli.put('nfvs/%d/ports' %
-                                           self.sec_id, req_params)
-                if res is not None:
-                    error_codes = self.spp_ctl_cli.rest_common_error_codes
-                    if res.status_code == 204:
-                        print('Delete %s.' % params[0])
-                    elif res.status_code in error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
+            self._run_del(params)
 
         elif cmd == 'forward' or cmd == 'stop':
-            if cmd == 'forward':
-                req_params = {'action': 'start'}
-            elif cmd == 'stop':
-                req_params = {'action': 'stop'}
-            else:
-                print('Unknown command. "forward" or "stop"?')
-
-            res = self.spp_ctl_cli.put('nfvs/%d/forward' %
-                                       self.sec_id, req_params)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    if cmd == 'forward':
-                        print('Start forwarding.')
-                    else:
-                        print('Stop forwarding.')
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            self._run_forward_or_stop(cmd)
 
         elif cmd == 'patch':
-            if params[0] == 'reset':
-                res = self.spp_ctl_cli.delete('nfvs/%d/patches' % self.sec_id)
-                if res is not None:
-                    error_codes = self.spp_ctl_cli.rest_common_error_codes
-                    if res.status_code == 204:
-                        print('Clear all of patches.')
-                    elif res.status_code in error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
-            else:
-                req_params = {'src': params[0], 'dst': params[1]}
-                res = self.spp_ctl_cli.put(
-                        'nfvs/%d/patches' % self.sec_id, req_params)
-                if res is not None:
-                    error_codes = self.spp_ctl_cli.rest_common_error_codes
-                    if res.status_code == 204:
-                        print('Patch ports (%s -> %s).' % (
-                            params[0], params[1]))
-                    elif res.status_code in error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
+            self._run_patch(params)
 
         elif cmd == 'exit':
-            res = self.spp_ctl_cli.delete('nfvs/%d' % self.sec_id)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print('Exit nfv %d' % self.sec_id)
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            self._run_exit()
 
         else:
             print('Invalid command "%s".' % cmd)
@@ -167,11 +70,6 @@ class SppNfv(object):
           - ports:
             - phy:0 -> ring:0
             - phy:1
-
-        The format of the received message is JSON and ended with
-        series of null character "\x00".
-
-          {"client-id":1,...,"patches":[{"src":"phy:0"...},...]}'\x00..
         """
 
         nfv_attr = json_obj
@@ -188,7 +86,9 @@ class SppNfv(object):
             else:
                 print('  - %s -> %s' % (port, dst))
 
-    def get_registered_ports(self):
+    def get_ports(self):
+        """Get all of ports as a list."""
+
         res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
@@ -199,7 +99,14 @@ class SppNfv(object):
             else:
                 print('Error: unknown response.')
 
-    def get_registered_patches(self):
+    def get_patches(self):
+        """Get all of patched ports as a list of dicts.
+
+        Returned value is like as
+          [{'src': 'phy:0', 'dst': 'ring:0'},
+           {'src': 'ring:1', 'dst':'vhost:1'}, ...]
+        """
+
         res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
@@ -209,6 +116,41 @@ class SppNfv(object):
                 pass
             else:
                 print('Error: unknown response.')
+
+    def get_ports_and_patches(self):
+        """Get all of ports and patchs at once.
+
+        This method is to execute `get_ports()` and `get_patches()` at
+        once to reduce request to spp-ctl. Returned value is a set of
+        lists. You use this method as following.
+          ports, patches = get_ports_and_patches()
+        """
+
+        res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 200:
+                ports = res.json()['ports']
+                patches = res.json()['patches']
+                return ports, patches
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def get_patched_ports(self):
+        """Get all of patched ports as a list.
+
+        This method is to get a list of patched ports instead of a dict.
+        You use this method if you simply get patches without `src` and
+        `dst`.
+        """
+
+        patched_ports = []
+        for pport in self.patches:
+            patched_ports.append(pport['src'])
+            patched_ports.append(pport['dst'])
+        return list(set(patched_ports))
 
     def complete(self, sec_ids, text, line, begidx, endidx):
         """Completion for spp_nfv commands.
@@ -248,6 +190,8 @@ class SppNfv(object):
             print(e)
 
     def _compl_first_tokens(self, token):
+        """Complete spp_nfv command."""
+
         res = []
         for kw in self.NFV_CMDS:
             if kw.startswith(token):
@@ -255,6 +199,8 @@ class SppNfv(object):
         return res
 
     def _compl_add(self, sub_tokens):
+        """Complete `add` command."""
+
         if len(sub_tokens) < 3:
             res = []
 
@@ -267,21 +213,18 @@ class SppNfv(object):
             return res
 
     def _compl_del(self, sub_tokens):
+        """Complete `del` command."""
+
         # Del command consists of two tokens max, for instance,
         # `nfv 1; del ring:1`.
         if len(sub_tokens) < 3:
             res = []
 
             if self.use_cache is False:
-                self.ports = self.get_registered_ports()
-                self.patches = self.get_registered_patches()
+                self.ports, self.patches = self.get_ports_and_patches()
 
             # Patched ports should not be included in the candidate of del.
-            patched_ports = []
-            for pport in self.patches:
-                patched_ports.append(pport['src'])
-                patched_ports.append(pport['dst'])
-            patched_ports = list(set(patched_ports))
+            patched_ports = self.get_patched_ports()
 
             # Remove ports already used from candidate.
             for kw in self.ports:
@@ -300,14 +243,15 @@ class SppNfv(object):
             return res
 
     def _compl_patch(self, sub_tokens):
+        """Complete `patch` command."""
+
         # Patch command consists of three tokens max, for instance,
         # `nfv 1; patch phy:0 ring:1`.
         if len(sub_tokens) < 4:
             res = []
 
             if self.use_cache is False:
-                self.ports = self.get_registered_ports()
-                self.patches = self.get_registered_patches()
+                self.ports, self.patches = self.get_ports_and_patches()
 
             # Get patched ports of src and dst to be used for completion.
             src_ports = []
@@ -344,3 +288,148 @@ class SppNfv(object):
                         res.append(kw)
 
             return res
+
+    def _run_status(self):
+        """Run `status` command."""
+
+        res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 200:
+                self.print_nfv_status(res.json())
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _run_add(self, params):
+        """Run `add` command."""
+
+        if len(params) == 0:
+            print('Port is required!')
+        elif params[0] in self.ports:
+            print("'%s' is already added." % params[0])
+        else:
+            if self.use_cache is False:
+                self.ports = self.get_ports()
+
+            req_params = {'action': 'add', 'port': params[0]}
+
+            res = self.spp_ctl_cli.put('nfvs/%d/ports' %
+                                       self.sec_id, req_params)
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    if self.use_cache is True:
+                        if not (params[0] in self.ports):
+                            self.ports.append(params[0])
+                    print('Add %s.' % params[0])
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
+
+    def _run_del(self, params):
+        """Run `del` command."""
+
+        if len(params) == 0:
+            print('Port is required!')
+        elif 'phy:' in params[0]:
+            print("Cannot delete phy port '%s'." % params[0])
+        else:
+            if self.use_cache is False:
+                self.patches = self.get_patches()
+
+            # Patched ports should not be deleted.
+            patched_ports = self.get_patched_ports()
+
+            if params[0] in patched_ports:
+                print("Cannot delete patched port '%s'." % params[0])
+            else:
+                req_params = {'action': 'del', 'port': params[0]}
+                res = self.spp_ctl_cli.put('nfvs/%d/ports' %
+                                           self.sec_id, req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        if self.use_cache is True:
+                            if params[0] in self.ports:
+                                self.ports.remove(params[0])
+                        print('Delete %s.' % params[0])
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
+
+    def _run_forward_or_stop(self, cmd):
+        """Run `forward` or `stop` command.
+
+        Spp-ctl accepts this two commands via single API, so this method
+        runs one of which commands by referring `cmd` param.
+        """
+
+        if cmd == 'forward':
+            req_params = {'action': 'start'}
+        elif cmd == 'stop':
+            req_params = {'action': 'stop'}
+        else:
+            print('Unknown command. "forward" or "stop"?')
+
+        res = self.spp_ctl_cli.put('nfvs/%d/forward' %
+                                   self.sec_id, req_params)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                if cmd == 'forward':
+                    print('Start forwarding.')
+                else:
+                    print('Stop forwarding.')
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _run_patch(self, params):
+        """Run `patch` command."""
+
+        if len(params) == 0:
+            print('Params are required!')
+        elif params[0] == 'reset':
+            res = self.spp_ctl_cli.delete('nfvs/%d/patches' % self.sec_id)
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    print('Clear all of patches.')
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
+        else:
+            if len(params) < 2:
+                print('Dst port is required!')
+            else:
+                req_params = {'src': params[0], 'dst': params[1]}
+                res = self.spp_ctl_cli.put(
+                        'nfvs/%d/patches' % self.sec_id, req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        print('Patch ports (%s -> %s).' % (
+                            params[0], params[1]))
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
+
+    def _run_exit(self):
+        """Run `exit` command."""
+
+        res = self.spp_ctl_cli.delete('nfvs/%d' % self.sec_id)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print('Exit nfv %d' % self.sec_id)
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
