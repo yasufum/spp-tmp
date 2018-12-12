@@ -248,19 +248,33 @@ class SppNfv(object):
             return res
 
     def _compl_del(self, sub_tokens):
+        # Del command consists of two tokens max, for instance,
+        # `nfv 1; del ring:1`.
         if len(sub_tokens) < 3:
             res = []
 
             if self.use_cache is False:
                 self.ports = self.get_registered_ports()
+                self.patches = self.get_registered_patches()
 
+            # Used ports should not be included in the candidate of del.
+            used_ports = []
+            for pt in self.ports:
+                for ppt in self.patches:
+                    if ((pt in ppt['src']) or (pt in ppt['dst'])):
+                            used_ports.append(pt)
+            used_ports = list(set(used_ports))
+
+            # Remove ports already used from candidate.
             for kw in self.ports:
-                if kw.startswith(sub_tokens[1]):
-                    if ':' in sub_tokens[1]:  # exp, 'ring:' or 'ring:0'
-                        res.append(kw.split(':')[1])
-                    else:
-                        res.append(kw)
+                if not (kw in used_ports):
+                    if kw.startswith(sub_tokens[1]):
+                        if ':' in sub_tokens[1]:  # exp, 'ring:' or 'ring:0'
+                            res.append(kw.split(':')[1])
+                        else:
+                            res.append(kw)
 
+            # Physical port cannot be removed.
             for p in res:
                 if p.startswith('phy:'):
                     res.remove(p)
