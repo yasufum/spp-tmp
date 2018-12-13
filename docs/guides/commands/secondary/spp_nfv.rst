@@ -4,18 +4,18 @@
 spp_nfv
 =======
 
-Each of ``spp_nfv`` and ``spp_vm`` processes is managed with ``sec`` command.
+Each of ``spp_nfv`` and ``spp_vm`` processes is managed with ``nfv`` command.
 It is for sending sub commands to secondary with specific ID called
 secondary ID.
 
-``sec`` command takes an secondary ID and a sub command. They must be
+``nfv`` command takes an secondary ID and a sub command. They must be
 separated with delimiter ``;``.
 Some of sub commands take additional arguments for speicfying resource
 owned by secondary process.
 
 .. code-block:: console
 
-    spp > sec SEC_ID; SUB_CMD
+    spp > nfv SEC_ID; SUB_CMD
 
 All of Sub commands are referred with ``help`` command.
 
@@ -28,14 +28,14 @@ All of Sub commands are referred with ``help`` command.
         SPP secondary process is specified with secondary ID and takes
         sub commands.
 
-        spp > sec 1; status
-        spp > sec 1; add ring:0
-        spp > sec 1; patch phy:0 ring:0
+        spp > nfv 1; status
+        spp > nfv 1; add ring:0
+        spp > nfv 1; patch phy:0 ring:0
 
         You can refer all of sub commands by pressing TAB after
-        'sec 1;'.
+        'nfv 1;'.
 
-        spp > sec 1;  # press TAB
+        spp > nfv 1;  # press TAB
         add     del     exit    forward patch   status  stop
 
 status
@@ -47,7 +47,7 @@ source if it is not patched.
 
 .. code-block:: console
 
-    spp > sec 1; status
+    spp > nfv 1; status
     - status: idling
     - ports:
       - phy:0 -> ring:0
@@ -63,13 +63,13 @@ For example, adding ``ring:0`` by
 
 .. code-block:: console
 
-    spp> sec 1; add ring:0
+    spp> nfv 1; add ring:0
 
 Or adding ``vhost:0`` by
 
 .. code-block:: console
 
-    spp> sec 1; add vhost:0
+    spp> nfv 1; add vhost:0
 
 
 patch
@@ -80,7 +80,7 @@ This command just creates a path and does not start forwarding.
 
 .. code-block:: console
 
-    spp > sec 1; patch phy:0 ring:0
+    spp > nfv 1; patch phy:0 ring:0
 
 
 forward
@@ -90,14 +90,14 @@ Start forwarding.
 
 .. code-block:: console
 
-    spp > sec 1; forward
+    spp > nfv 1; forward
 
 Running status is changed from ``idling`` to ``running`` by
 executing it.
 
 .. code-block:: console
 
-    spp > sec 1; status
+    spp > nfv 1; status
     - status: running
     - ports:
       - phy:0
@@ -111,14 +111,14 @@ Stop forwarding.
 
 .. code-block:: console
 
-    spp > sec 1; stop
+    spp > nfv 1; stop
 
 Running status is changed from ``running`` to ``idling`` by
 executing it.
 
 .. code-block:: console
 
-    spp > sec 1; status
+    spp > nfv 1; status
     - status: idling
     - ports:
       - phy:0
@@ -132,7 +132,7 @@ Delete a port from the secondary.
 
 .. code-block:: console
 
-    spp> sec 1; del ring:0
+    spp> nfv 1; del ring:0
 
 
 exit
@@ -143,4 +143,4 @@ use ``bye sec`` command instead of it.
 
 .. code-block:: console
 
-    spp> sec 1; exit
+    spp> nfv 1; exit
