@@ -206,9 +206,12 @@ Python 2 or 3 ?
 ~~~~~~~~~~~~~~~
 
 You need to install Python for using usertools of DPDK or SPP controller.
-DPDK and SPP support both of Python2 and 3.
+DPDK supports both of Python2 and 3.
 Howevrer, Python2 will not be maintained after 2020 and SPP is going to update
 only supporting Python3.
+
+In SPP, it supports both of Python2 and 3 without spp-ctl currently, but is
+going to support only Python3 before the end of 2019.
 
 
 Binding Network Ports to DPDK
@@ -380,8 +383,11 @@ Compiled PDF file is created as ``docs/guides/_build/html/SoftPatchPanel.pdf``.
 
     $ make doc-pdf
 
-You can also compile both of HTML and PDF documentations with ``doc-all``.
+You can also compile both of HTML and PDF documentations with ``doc`` or
+``doc-all``.
 
 .. code-block:: console
 
+    $ make doc
+    # or
     $ make doc-all
