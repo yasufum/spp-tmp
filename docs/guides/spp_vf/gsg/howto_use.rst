@@ -9,11 +9,23 @@ How to Use
 SPP Controller
 --------------
 
-First, run SPP Controller with port numbers for spp primary and secondary.
+Go to the SPP's directory first.
 
 .. code-block:: console
 
-    $ python ./src/spp_vf.py -p 5555 -s 6666
+    $ cd /path/to/spp
+
+Launch ``spp-ctl`` before launching SPP primary and secondary processes.
+You also need to launch ``spp.py``  if you use ``spp_vf`` from CLI.
+``-b`` option is for binding IP address to communicate other SPP processes,
+but no need to give it explicitly if ``127.0.0.1`` or ``localhost`` although
+doing explicitly in this example to be more understandable.
+
+.. code-block:: console
+
+    # Launch spp-ctl and spp.py
+    $ python3 ./src/spp-ctl/spp-ctl -b 127.0.0.1
+    $ python ./src/spp.py -b 127.0.0.1
 
 
 SPP Primary
