@@ -41,11 +41,11 @@ events such as receiving a request or terminating a process.
     $ cd /path/to/spp
     $ python3 src/spp-ctl/spp-ctl
 
-Notice that It is implemented in ``python3`` and cannot launch
+Notice that ``spp-ctl`` is implemented in ``python3`` and cannot launch
 with ``python`` or ``python2``.
 
-It has a option ``-b`` for binding address to be accessed from other than
-``127.0.0.1`` or ``localhost``.
+It has a option ``-b`` for binding address explicitly to be accessed
+from other than default, ``127.0.0.1`` or ``localhost``.
 
 .. code-block:: console
 
@@ -164,7 +164,7 @@ physical ports.
         --socket-mem 512,512 \
         --huge-dir=/dev/hugepages \
         --vdev eth_vhost1,iface=/tmp/sock1  # used as 1st phy port
-        --vdev eth_vhost2,iface=/tmp/sock2  # used as 2nd
+        --vdev eth_vhost2,iface=/tmp/sock2  # used as 2nd phy port
         --proc-type=primary \
         -- \
         -p 0x03 \
@@ -243,9 +243,9 @@ Run ``add`` command with resource UID ``vhost:0`` to create socket file.
 
 .. code-block:: console
 
-    spp > sec 1;add vhost:0
+    spp > nfv 1; add vhost:0
 
-In this example, create socket file with index 0 from secondary of ID 1.
+In this example, create socket file with index 0 from ``spp_nfv`` of ID 1.
 Socket file is created as ``/tmp/sock0``.
 It is used as a qemu option to add vhost interface.
 
