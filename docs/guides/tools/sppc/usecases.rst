@@ -49,61 +49,67 @@ all of app container processes run on a single node.
     Test of vhost PMD in a single node
 
 
-You use two terminals in this example, one is for SPP controller
-and other one is for managing app containers.
-First of all, launch SPP controller in terminal 1.
+You use three terminals in this example, first one is for ``spp-ctl``,
+second one is for SPP CLI and third one is for managing app containers.
+First of all, launch ``spp-ctl`` in terminal 1.
 
 .. code-block:: console
 
     # Terminal 1
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp-ctl/spp-ctl
 
-Move to terminal 2, launch app containers of ``spp_primary``
-and ``spp_nfv`` step by step in background mode.
-You notice that TAP device is attached with ``-dt 1`` which is not used
-actually.
-It is because that SPP primary requires at least one port even if
-it is no need.
-You can also assign a physical port or vhost instead of this TAP device.
-
+Then, ``spp.py`` in terminal 2.
 
 .. code-block:: console
 
     # Terminal 2
-    $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dt 1
-    $ python app/spp-nfv.py -i 1 -l 1-2
-    $ python app/spp-nfv.py -i 2 -l 3-4
+    $ cd /path/to/spp
+    $ python src/spp.py
 
-Then, add two vhost PMDs for pktgen app container from SPP controller.
+Move to terminal 3, launch app containers of ``spp_primary``
+and ``spp_nfv`` step by step in background mode.
+You notice that vhost device is attached with ``-dv 1`` which is not used
+actually.
+It is because that SPP primary requires at least one port even if
+it is no need.
+You can also assign a physical port instead of this vhost device.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add vhost 1
-    spp > sec 2;add vhost 2
+    # Terminal 3
+    $ cd /path/to/spp/tools/sppc
+    $ python app/spp-primary.py -l 0 -p 0x01 -dv 1
+    $ python app/spp-nfv.py -i 1 -l 1-2
+    $ python app/spp-nfv.py -i 2 -l 3-4
 
-Now, it is ready for launching pktgen app container.
-In this use case, use five lcores for pktgen.
-One lcore is used for master, and remaining lcores are used for
-rx and tx evenly.
+Then, add two vhost PMDs for pktgen app container from SPP CLI.
+
+.. code-block:: console
+
+    # Terminal 2
+    spp > nfv 1; add vhost 1
+    spp > nfv 2; add vhost 2
+
+It is ready for launching pktgen app container. In this usecase,
+use five lcores for pktgen. One lcore is used for master, and remaining
+lcores are used for rx and tx evenly.
 Device ID option ``-d 1,2`` is for refferring vhost 1 and 2.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ python app/pktgen.py -fg -l 5-9 -d 1,2
 
 Finally, configure network path from SPP controller,
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;patch ring:0 vhost:1
-    spp > sec 2;patch vhost:2 ring:0
-    spp > sec 1;forward
-    spp > sec 2;forward
+    # Terminal 2
+    spp > nfv 1; patch ring:0 vhost:1
+    spp > nfv 2; patch vhost:2 ring:0
+    spp > nfv 1; forward
+    spp > nfv 2; forward
 
 and start forwarding from pktgen.
 
@@ -142,27 +148,34 @@ with ring PMDs in serial.
 
    Test of ring PMD
 
-You use two terminals on host 1, one is for SPP controller and another one
-for ``spp_nfv`` app containers.
+You use three terminals on host 1, first one is for ``spp-ctl``,
+second one is for ``spp.py``, and third one is for ``spp_nfv`` app containers.
 Pktgen on host 2 is started forwarding after setup on host 1 is finished.
 
-First, Launch SPP controller in terminal 1 as
-:ref:`sppc_usecases_test_ring`.
+First, launch ``spp-ctl`` in terminal 1.
 
 .. code-block:: console
 
     # Terminal 1
     $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl
+
+Then, launch ``spp.py`` in terminal 2.
+
+.. code-block:: console
+
+    # Terminal 2
+    $ cd /path/to/spp
     $ python src/spp.py
 
-In terminal 2, launch ``spp_primary`` and ``spp_nfv`` containers
+In terminal 3, launch ``spp_primary`` and ``spp_nfv`` containers
 in background mode.
 In this case, you attach physical ports to ``spp_primary`` with
 portmask option.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
     $ python app/spp-primary.py -l 0 -p 0x03
     $ python app/spp-nfv.py -i 1 -l 1-2
@@ -223,17 +236,17 @@ containers.
 You can use recipe scripts from ``playback`` command instead of
 typing commands step by step.
 For this usecase example, it is included in
-``recipes/sppc/usecases/test_ring``.
+``recipes/sppc/samples/test_ring.rcp``.
 
 .. code-block:: console
 
     # Terminal 2
-    spp > sec 1;add ring:0
-    spp > sec 2;add ring:1
-    spp > sec 2;add ring:2
-    spp > sec 3;add ring:2
-    spp > sec 3;add ring:3
-    spp > sec 4;add ring:3
+    spp > nfv 1; add ring:0
+    spp > nfv 2; add ring:1
+    spp > nfv 2; add ring:2
+    spp > nfv 3; add ring:2
+    spp > nfv 3; add ring:3
+    spp > nfv 4; add ring:3
 
 Then, patch all of ports to be configured containers are connected
 in serial.
@@ -241,15 +254,15 @@ in serial.
 .. code-block:: console
 
     # Terminal 2
-    spp > sec 1;patch phy:0 ring:0
-    spp > sec 2;patch ring:0 ring:1
-    spp > sec 3;patch ring:1 ring:2
-    spp > sec 3;patch ring:2 ring:3
-    spp > sec 4;patch ring:3 phy:1
-    spp > sec 1;forward
-    spp > sec 2;forward
-    spp > sec 3;forward
-    spp > sec 4;forward
+    spp > nfv 1; patch phy:0 ring:0
+    spp > nfv 2; patch ring:0 ring:1
+    spp > nfv 3; patch ring:1 ring:2
+    spp > nfv 3; patch ring:2 ring:3
+    spp > nfv 4; patch ring:3 phy:1
+    spp > nfv 1; forward
+    spp > nfv 2; forward
+    spp > nfv 3; forward
+    spp > nfv 4; forward
 
 After setup on host 1 is finished, start forwarding from pktgen on host 2.
 You can see the throughput of rx and tx ports on pktgen's terminal.
@@ -289,26 +302,28 @@ Here is a list of lcore assignment for each of app containers.
 * Three lcores for ``pktgen`` container.
 * Two lcores for ``l2fwd`` container.
 
-First of all, launch SPP controller.
+First of all, launch ``spp-ctl`` and ``spp.py``.
 
 .. code-block:: console
 
     # Terminal 1
     $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl
+
+    # Terminal 2
+    $ cd /path/to/spp
     $ python src/spp.py
 
-Launch ``spp_primary`` and ``spp_nfv`` containers in background.
+Then, launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
 :ref:`sppc_usecases_test_vhost_single`.
 Use four of ``spp_nfv`` containers for using four vhost PMDs.
-For this usecase example, recipe scripts are included in
-``recipes/sppc/usecases/pg_l2fwd``.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dt 1
+    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
     $ python app/spp-nfv.py -i 1 -l 1-2
     $ python app/spp-nfv.py -i 2 -l 3-4
     $ python app/spp-nfv.py -i 3 -l 5-6
@@ -319,15 +334,15 @@ its secondary ID.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add vhost 1
-    spp > sec 2;add vhost 2
-    spp > sec 3;add vhost 3
-    spp > sec 4;add vhost 4
-    spp > sec 1;add ring 0
-    spp > sec 4;add ring 0
-    spp > sec 2;add ring 1
-    spp > sec 3;add ring 1
+    # Terminal 2
+    spp > nfv 1; add vhost:1
+    spp > nfv 2; add vhost:2
+    spp > nfv 3; add vhost:3
+    spp > nfv 4; add vhost:4
+    spp > nfv 1; add ring:0
+    spp > nfv 4; add ring:0
+    spp > nfv 2; add ring:1
+    spp > nfv 3; add ring:1
 
 
 After vhost PMDs are created, you can launch containers
@@ -337,14 +352,15 @@ In this case, ``pktgen`` container owns vhost 1 and 2,
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
+    $ cd /path/to/spp/tools/sppc
     $ python app/pktgen.py -l 9-11 -d 1,2
 
 and ``l2fwd`` container owns vhost 3 and 4.
 
 .. code-block:: console
 
-    # Terminal 3
+    # Terminal 4
     $ cd /path/to/spp/tools/sppc
     $ python app/l2fwd.py -l 12-13 -d 3,4
 
@@ -354,20 +370,22 @@ and start forwarding from SPP controller.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;patch ring:0 vhost:1
-    spp > sec 2;patch vhost:2 ring:1
-    spp > sec 3;patch ring:1 vhost:3
-    spp > sec 4;patch vhost:4 ring:0
-    spp > sec 1;forward
-    spp > sec 2;forward
-    spp > sec 3;forward
-    spp > sec 4;forward
+    # Terminal 2
+    spp > nfv 1; patch ring:0 vhost:1
+    spp > nfv 2; patch vhost:2 ring:1
+    spp > nfv 3; patch ring:1 vhost:3
+    spp > nfv 4; patch vhost:4 ring:0
+    spp > nfv 1; forward
+    spp > nfv 2; forward
+    spp > nfv 3; forward
+    spp > nfv 4; forward
 
 Finally, start forwarding from ``pktgen`` container.
 You can see that packet count is increased on both of
 ``pktgen`` and ``l2fwd``.
 
+For this usecase example, recipe scripts are included in
+``recipes/sppc/samples/pg_l2fwd.rcp``.
 
 .. _sppc_usecases_pktgen_l2fwd_less_lcores:
 
@@ -380,8 +398,8 @@ This section describes the effort of reducing the usage of lcore for
 Here is a list of lcore assignment for each of app containers.
 It is totally 7 lcores while the maximum number is 14.
 
-* One lcore for spp_primary container.
-* Three lcores for four spp_nfv containers.
+* One lcore for ``spp_primary`` container.
+* Three lcores for four ``spp_nfv`` containers.
 * Two lcores for pktgen container.
 * One lcores for l2fwd container.
 
@@ -392,11 +410,15 @@ It is totally 7 lcores while the maximum number is 14.
 
     Pktgen and l2fwd using less lcores
 
-First of all, launch SPP controller.
+First of all, launch ``spp-ctl`` and ``spp.py``.
 
 .. code-block:: console
 
     # Terminal 1
+    $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl
+
+    # Terminal 2
     $ cd /path/to/spp
     $ python src/spp.py
 
@@ -404,14 +426,12 @@ Launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
 :ref:`sppc_usecases_test_vhost_single`.
 Use two of ``spp_nfv`` containers for using four vhost PMDs.
-For this usecase example, recipe scripts are included in
-``recipes/sppc/usecases/pg_l2fwd_less``.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dt 1
+    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
     $ python app/spp-nfv.py -i 1 -l 1,2
     $ python app/spp-nfv.py -i 2 -l 1,3
 
@@ -426,15 +446,15 @@ Assign each of two vhost PMDs to the processes.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add vhost 1
-    spp > sec 1;add vhost 2
-    spp > sec 2;add vhost 3
-    spp > sec 2;add vhost 4
-    spp > sec 1;add ring 0
-    spp > sec 1;add ring 1
-    spp > sec 2;add ring 0
-    spp > sec 2;add ring 1
+    # Terminal 2
+    spp > nfv 1; add vhost:1
+    spp > nfv 1; add vhost:2
+    spp > nfv 2; add vhost:3
+    spp > nfv 2; add vhost:4
+    spp > nfv 1; add ring:0
+    spp > nfv 1; add ring:1
+    spp > nfv 2; add ring:0
+    spp > nfv 2; add ring:1
 
 After vhost PMDs are created, you can launch containers
 of ``pktgen`` and ``l2fwd``.
@@ -444,14 +464,14 @@ In this case, ``pktgen`` container uses vhost 1 and 2,
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ python app/pktgen.py -l 1,4,5 -d 1,2
 
 and ``l2fwd`` container uses vhost 3 and 4.
 
 .. code-block:: console
 
-    # Terminal 3
+    # Terminal 4
     $ cd /path/to/spp/tools/sppc
     $ python app/l2fwd.py -l 1,6 -d 3,4
 
@@ -461,20 +481,22 @@ and start forwarding from SPP controller.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;patch ring:0 vhost:1
-    spp > sec 1;patch vhost:2 ring:1
-    spp > sec 3;patch ring:1 vhost:3
-    spp > sec 4;patch vhost:4 ring:0
-    spp > sec 1;forward
-    spp > sec 2;forward
-    spp > sec 3;forward
-    spp > sec 4;forward
+    # Terminal 2
+    spp > nfv 1; patch ring:0 vhost:1
+    spp > nfv 1; patch vhost:2 ring:1
+    spp > nfv 3; patch ring:1 vhost:3
+    spp > nfv 4; patch vhost:4 ring:0
+    spp > nfv 1; forward
+    spp > nfv 2; forward
+    spp > nfv 3; forward
+    spp > nfv 4; forward
 
 Finally, start forwarding from ``pktgen`` container.
 You can see that packet count is increased on both of
 ``pktgen`` and ``l2fwd``.
 
+For this usecase example, recipe scripts are included in
+``recipes/sppc/samples/pg_l2fwd_less.rcp``.
 
 .. _sppc_usecases_lb_pktgen:
 
@@ -517,11 +539,15 @@ Here is a list of lcore assignment for each of app containers.
 * Three lcores for ``pktgen`` container.
 * Four lcores for ``load_balancer`` container.
 
-First of all, launch SPP controller.
+First of all, launch ``spp-ctl`` and ``spp.py``.
 
 .. code-block:: console
 
     # Terminal 1
+    $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl
+
+    # Terminal 2
     $ cd /path/to/spp
     $ python src/spp.py
 
@@ -529,14 +555,12 @@ Launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
 :ref:`sppc_usecases_test_vhost_single`.
 Use six ``spp_nfv`` containers for using six vhost PMDs.
-For this usecase example, recipe scripts are included in
-``recipes/sppc/usecases/lb_pg``.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dt 1
+    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
     $ python app/spp-nfv.py -i 1 -l 1,2
     $ python app/spp-nfv.py -i 2 -l 1,3
     $ python app/spp-nfv.py -i 3 -l 1,4
@@ -549,32 +573,31 @@ its secondary ID.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add vhost 1
-    spp > sec 2;add vhost 2
-    spp > sec 3;add vhost 3
-    spp > sec 4;add vhost 4
-    spp > sec 5;add vhost 5
-    spp > sec 6;add vhost 6
-    spp > sec 1;add ring 0
-    spp > sec 2;add ring 1
-    spp > sec 3;add ring 2
-    spp > sec 4;add ring 0
-    spp > sec 5;add ring 1
-    spp > sec 6;add ring 2
+    # Terminal 2
+    spp > nfv 1; add vhost:1
+    spp > nfv 2; add vhost:2
+    spp > nfv 3; add vhost:3
+    spp > nfv 4; add vhost:4
+    spp > nfv 5; add vhost:5
+    spp > nfv 6; add vhost:6
+    spp > nfv 1; add ring:0
+    spp > nfv 2; add ring:1
+    spp > nfv 3; add ring:2
+    spp > nfv 4; add ring:0
+    spp > nfv 5; add ring:1
+    spp > nfv 6; add ring:2
 
 And patch all of ports.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;patch vhost:1 ring:0
-    spp > sec 2;patch ring:1 vhost:2
-    spp > sec 3;patch ring:2 vhost:3
-    spp > sec 4;patch ring:0 vhost:4
-    spp > sec 5;patch vhost:5 ring:1
-    spp > sec 6;patch vhost:6 ring:2
-
+    # Terminal 2
+    spp > nfv 1; patch vhost:1 ring:0
+    spp > nfv 2; patch ring:1 vhost:2
+    spp > nfv 3; patch ring:2 vhost:3
+    spp > nfv 4; patch ring:0 vhost:4
+    spp > nfv 5; patch vhost:5 ring:1
+    spp > nfv 6; patch vhost:6 ring:2
 
 You had better to check that network path is configured properly.
 ``topo`` command is useful for checking it with a graphical image.
@@ -583,7 +606,7 @@ Define two groups of vhost PMDs as ``c1`` and ``c2`` with
 
 .. code-block:: console
 
-    # Terminal 1
+    # Terminal 2
     # define c1 and c2 to help your understanding
     spp > topo_subgraph add c1 vhost:1,vhost:2,vhost:3
     spp > topo_subgraph add c2 vhost:4,vhost:5,vhost:6
@@ -600,7 +623,7 @@ For ``pktgen`` container, assign lcores 8-10 and vhost 1-3.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
     $ python app/pktgen.py -l 8-10 -d 1-3 -T
 
@@ -612,7 +635,7 @@ or more queues. In this case, assign 4 queues.
 
 .. code-block:: console
 
-    # Terminal 3
+    # Terminal 4
     $ cd /path/to/spp/tools/sppc
     $ python app/load_balancer.py -l 11-14 -d 4-6 -fg -nq 4
       -rx "(0,0,11),(0,1,11),(0,2,11)" \
@@ -626,13 +649,13 @@ and start forwarding from SPP controller.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;forward
-    spp > sec 2;forward
-    spp > sec 3;forward
-    spp > sec 4;forward
-    spp > sec 5;forward
-    spp > sec 6;forward
+    # Terminal 2
+    spp > nfv 1; forward
+    spp > nfv 2; forward
+    spp > nfv 3; forward
+    spp > nfv 4; forward
+    spp > nfv 5; forward
+    spp > nfv 6; forward
 
 You start forwarding from ``pktgen`` container.
 The destination of ``load_balancer`` is decided by considering
@@ -666,3 +689,6 @@ You might not be able to stop ``load_balancer`` application with *Ctrl-C*.
 In this case, terminate it with ``docker kill`` directly as explained in
 :ref:`sppc_appl_load_balancer`.
 You can find the name of container from ``docker ps``.
+
+For this usecase example, recipe scripts are included in
+``recipes/sppc/samples/lb_pg.rcp``.
