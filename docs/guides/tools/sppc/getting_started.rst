@@ -142,15 +142,14 @@ It is better to define this variable in ``$HOME/.bashrc``.
 .. code-block:: console
 
     # Set your host IP address
-    export SPP_CTRL_IP=[HOST_IPADDR]
+    export SPP_CTRL_IP=HOST_IPADDR
 
 
 SPP Controller
 ~~~~~~~~~~~~~~
 
-Launch SPP controller to be ready
-before primary and secondary processes.
-SPP controller is launched in the terminal 1 in this guide.
+Launch ``spp-ctl`` and ``spp.py`` to be ready before primary and secondary
+processes.
 
 .. note::
 
@@ -161,9 +160,19 @@ SPP controller is launched in the terminal 1 in this guide.
     ``mlterm`` is the most useful and easy to customize.
     Refer :doc:`../../commands/experimental` for ``topo`` command.
 
+``spp-ctl`` is launched in the termina l.
+
 .. code-block:: console
 
     # Terminal 1
+    $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl
+
+``spp.py`` is launched in the terminal 2.
+
+.. code-block:: console
+
+    # Terminal 2
     $ cd /path/to/spp
     $ python src/spp.py
 
@@ -173,13 +182,13 @@ SPP Primary Container
 
 As ``SPP_CTRL_IP`` is activated, you are enalbed to run
 ``app/spp-primary.py`` with options of EAL and SPP primary
-in terminal 2.
+in terminal 3.
 In this case, launch spp-primary in background mode using one core
 and two ports.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
     $ python app/spp-primary.py -l 0 -p 0x03
 
@@ -194,13 +203,13 @@ There behave as similar to ``spp_nfv`` running on host and
 The difference is that both of them are running on containers.
 
 You use only ``spp_nfv.py`` in this guide.
-Launch ``spp_nfv`` in terminal 2
+Launch ``spp_nfv`` in terminal 3
 with options for secondary ID is ``1`` and
 core list is ``1-2`` for using 2nd and 3rd cores.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ python app/spp-nfv.py -i 1 -l 1-2
 
 If it is succeeded, container is running in background.
@@ -218,9 +227,9 @@ before launching the app container.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add vhost 1
-    spp > sec 1;add vhost 2
+    # Terminal 2
+    spp > nfv 1; add vhost 1
+    spp > nfv 1; add vhost 2
 
 ``spp_nfv`` of ID 1 running inside container creates
 ``vhost:1`` and ``vhost:2``.
@@ -229,7 +238,7 @@ app container launcher.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ cd /path/to/spp/tools/sppc
     $ app/testpmd.py -l 3-4 -d 1,2
     sudo docker run -it \
@@ -272,17 +281,17 @@ and start forwarding from testpmd.
 
    SPP and testpmd on containers
 
-From terminal 1, add ``ring:0``, connect ``vhost:1`` and ``vhost:2``
+In terminal 2, add ``ring:0``, connect ``vhost:1`` and ``vhost:2``
 with it.
 
 .. code-block:: console
 
-    # Terminal 1
-    spp > sec 1;add ring 0
-    spp > sec 1;patch vhost:1 ring:0
-    spp > sec 1;patch ring:0 vhost:2
-    spp > sec 1;forward
-    spp > sec 1;status
+    # Terminal 2
+    spp > nfv 1; add ring 0
+    spp > nfv 1; patch vhost:1 ring:0
+    spp > nfv 1; patch ring:0 vhost:2
+    spp > nfv 1; forward
+    spp > nfv 1; status
     status: running
     ports:
       - 'ring:0 -> vhost:2'
@@ -293,7 +302,7 @@ Start forwarding on port 0 by ``start tx_first``.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     testpmd> start tx_first
     io packet forwarding - ports=2 - cores=1 - streams=2 - NUMA support...
     Logical Core 4 (socket 0) forwards packets on 2 streams:
@@ -306,7 +315,7 @@ In this case, about 35 million packets are forwarded.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     testpmd> stop
     Telling cores to stop...
     Waiting for lcores to finish...
