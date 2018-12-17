@@ -8,7 +8,7 @@ class SppPrimary(object):
     SppPrimary class is intended to be used in Shell class as a delegator
     for running 'pri' command.
 
-    'self.command()' is called from do_pri() and 'self.complete()' is called
+    'self.run()' is called from do_pri() and 'self.complete()' is called
     from complete_pri() of both of which is defined in Shell.
     """
 

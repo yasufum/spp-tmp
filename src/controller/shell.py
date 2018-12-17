@@ -7,6 +7,7 @@ import cmd
 from .commands import bye
 from .commands import pri
 from .commands import nfv
+from .commands import server
 from .commands import topo
 from .commands import vf
 from .commands import mirror
@@ -38,9 +39,10 @@ class Shell(cmd.Cmd, object):
     else:
         readline.write_history_file(hist_file)
 
-    def __init__(self, spp_ctl_cli, use_cache=False):
+    def __init__(self, spp_cli_objs, use_cache=False):
         cmd.Cmd.__init__(self)
-        self.spp_ctl_cli = spp_ctl_cli
+        self.spp_ctl_server = server.SppCtlServer(spp_cli_objs)
+        self.spp_ctl_cli = spp_cli_objs[0]
         self.use_cache = use_cache
         self.init_spp_procs()
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
@@ -128,6 +130,9 @@ class Shell(cmd.Cmd, object):
     def print_status(self):
         """Display information about connected clients."""
 
+        print('- spp-ctl:')
+        print('  - address: %s:%s' % (self.spp_ctl_cli.ip_addr,
+                                      self.spp_ctl_cli.port))
         res = self.spp_ctl_cli.get('processes')
         if res is not None:
             if res.status_code == 200:
@@ -251,6 +256,26 @@ class Shell(cmd.Cmd, object):
             print("closing file")
             self.recorded_file.close()
             self.recorded_file = None
+
+    def do_server(self, commands):
+        """Switch SPP REST API server.
+
+        spp > server  # or 'server list'
+          1: 192.168.1.101:7777 *
+          2: 192.168.1.102:7777
+
+        spp > server 2
+        Switch spp-ctl to "2: 192.168.1.102:7777".
+        """
+
+        self.spp_ctl_server.run(commands)
+        self.spp_ctl_cli = self.spp_ctl_server.get_current_server()
+
+    def complete_server(self, text, line, begidx, endidx):
+        """Completion for server command."""
+
+        res = self.spp_ctl_server.complete(text, line, begidx, endidx)
+        return res
 
     def do_status(self, _):
         """Display status info of SPP processes
