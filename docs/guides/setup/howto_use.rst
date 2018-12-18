@@ -11,11 +11,12 @@ send it to SPP processes.
 
 You should keep in mind the order of launching processes.
 Primary process must be launched before secondary processes.
-``spp-ctl`` need to be launched before ``spp.py``, but no need to be launched
-before other processes. If ``spp-ctl`` is not running after primary and
-secondary processes are launched, they wait ``spp-ctl`` is launched.
+``spp-ctl`` need to be launched before SPP CLI, but no need to be launched
+before other processes. SPP CLI is launched from ``spp.py``.
+If ``spp-ctl`` is not running after primary and
+secondary processes are launched, processes wait ``spp-ctl`` is launched.
 
-In general, ``spp-ctl`` should be launched first, then ``spp.py`` and
+In general, ``spp-ctl`` should be launched first, then SPP CLI and
 ``spp_primary`` in each of terminals without running as background process.
 After ``spp_primary``, you launch secondary processes for your usage.
 If you just patch two DPDK applications on host, it is enough to use one
@@ -26,14 +27,17 @@ How to use of these secondary processes is described in next chapters.
 SPP Controller
 --------------
 
+SPP Controller consists of ``spp-ctl`` and SPP CLI.
+
 spp-ctl
 ~~~~~~~
 
-``spp-ctl`` is launched as a HTTP server for REST APIs for managing SPP
+``spp-ctl`` is a HTTP server for REST APIs for managing SPP
 processes. In default, it is accessed with URL ``http://127.0.0.1:7777``
 or ``http://localhost:7777``.
-``spp-ctl`` shows no messages after launched, but shows log messages for
-events such as receiving a request or terminating a process.
+``spp-ctl`` shows no messages at first after launched, but shows
+log messages for events such as receiving a request or terminating
+a process.
 
 .. code-block:: console
 
@@ -41,11 +45,13 @@ events such as receiving a request or terminating a process.
     $ cd /path/to/spp
     $ python3 src/spp-ctl/spp-ctl
 
-Notice that ``spp-ctl`` is implemented in ``python3`` and cannot launch
-with ``python`` or ``python2``.
+Notice that ``spp-ctl`` is implemented in ``python3`` and cannot be
+launched with ``python`` or ``python2``.
 
 It has a option ``-b`` for binding address explicitly to be accessed
 from other than default, ``127.0.0.1`` or ``localhost``.
+If you deploy SPP on multiple nodes, you might need to use ``-b`` option
+to be accessed from other processes running on other than local node.
 
 .. code-block:: console
 
@@ -69,10 +75,10 @@ All of options can be referred with help option ``-h``.
       -s SEC_PORT           secondary port, default=6666
       -a API_PORT           web api port, default=7777
 
-spp.py
-~~~~~~
+SPP CLI
+~~~~~~~
 
-If ``spp-ctl`` is launched, go to the next terminal and launch ``spp.py``.
+If ``spp-ctl`` is launched, go to the next terminal and launch SPP CLI.
 It supports both of Python 2 and 3, so use ``python`` in this case.
 
 .. code-block:: console
@@ -95,6 +101,49 @@ option for ``spp.py``, or failed to connect and to launch.
 
     spp >
 
+One of the typical usecase of this option is to deploy multiple SPP nodes.
+:numref:`figure_spp_howto_multi_spp` is an exmaple of multiple nodes case.
+There are three nodes on each of which ``spp-ctl`` is running for accepting
+requests for SPP. These ``spp-ctl`` processes are controlled from
+``spp.py`` on host1 and all of paths are configured across the nodes.
+It is also able to be configured between hosts by changing
+soure or destination of phy ports.
+
+.. _figure_spp_howto_multi_spp:
+
+.. figure:: ../images/setup/howto_use/spp_howto_multi_spp.*
+   :width: 70%
+
+   Multiple SPP nodes
+
+Launch SPP CLI with three entries of binding addresses with ``-b`` option
+for specifying ``spp-ctl``. Here is an example.
+
+.. code-block:: console
+
+    # Launch SPP CLI
+    $ python src/spp.py -b 192.168.11.101 \
+        -b 192.168.11.102 \
+        -b 192.168.11.103 \
+
+You can find the host under the management of SPP CLI and switch with
+``server`` command.
+
+.. code-block:: console
+
+    spp > server list
+      1: 192.168.1.101:7777 *
+      2: 192.168.1.102:7777
+      3: 192.168.1.103:7777
+
+To change the server, add an index number after ``server``.
+
+.. code-block:: console
+
+    # Launch SPP CLI
+    spp > server 3
+    Switch spp-ctl to "3: 192.168.1.103:7777".
+
 All of options can be referred with help option ``-h``.
 
 .. code-block:: console
@@ -111,17 +160,17 @@ All of options can be referred with help option ``-h``.
       -a API_PORT, --api-port API_PORT
                         bind address, default=777
 
-:doc:`../../commands/index` describes
-how to manage SPP processes from SPP controller.
+All of SPP CLI commands are described in :doc:`../../commands/index`.
 
 
 SPP Primary
 -----------
 
-SPP primary is a resource manager and initializing EAL
-for secondary processes.
+SPP primary is a resource manager and has a responsibility for
+initializing EAL for secondary processes. It should be launched before
+secondary.
 
-To launch primary, run ``spp_primary`` with options.
+To launch SPP primary, run ``spp_primary`` with specific options.
 
 .. code-block:: console
 
@@ -136,7 +185,7 @@ To launch primary, run ``spp_primary`` with options.
         -n 10 \
         -s 192.168.1.100:5555
 
-SPP primary takes EAL options before other application specific options.
+SPP primary takes EAL options and application specific options.
 
 Core list option ``-l`` is for assigining cores and SPP primary requires just
 one core. You can use core mask option ``-c`` instead of ``-l``.
@@ -146,16 +195,23 @@ use single NUMA node.
 
 .. note::
 
-    SPP primary show statistics within interval time periodically if you
-    assign two lcores. However, you can retrieve it with ``status`` command
-    of spp_primary. Second core of spp_primary is not used for counting
-    packets but used just for displaying the statistics.
+    Spp primary shows messages in the terminal after launched. However, the
+    contents of the message is different for the number of lcores assigned.
+
+    If you assign two lcores, SPP primary show statistics within
+    interval time periodically. On the other hand, just one lcore, it shows
+    log messages.
+
+    Anyway, you can retrieve it with ``status`` command of spp_primary.
+    The second core of spp_primary is not used for counting
+    packets actually, but used just for displaying the statistics.
 
 Primary process sets up physical ports of given port mask with ``-p`` option
 and ring ports of the number of ``-n`` option. Ports of  ``-p`` option is for
 accepting incomming packets and ``-n`` option is for inter-process packet
 forwarding. You can also add ports initialized with ``--vdev`` option to
-physical ports.
+physical ports. However, ports added with ``--vdev`` cannot referred from
+secondary processes.
 
 .. code-block:: console
 
@@ -189,7 +245,7 @@ SPP Secondary
 -------------
 
 Secondary process behaves as a client of primary process and a worker
-for doing tasks.
+for doing tasks for packet processing.
 
 This section describes about ``spp_nfv`` and ``spp_vm``,
 which just simply forward packets similar to ``l2fwd``.
@@ -197,8 +253,8 @@ The difference between them is running on host or VM.
 ``spp_vm`` runs inside a VM as described in name.
 
 
-Launch on Host
-~~~~~~~~~~~~~~
+Launch spp_nfv on Host
+~~~~~~~~~~~~~~~~~~~~~~
 
 Run ``spp_nfv`` with options.
 
@@ -225,12 +281,11 @@ Run ``spp_nfv`` with options.
 
 Secondary ID is used to identify for sending messages and must be
 unique among all of secondaries.
-If you attempt to launch a secondary process with the same ID,
-SPP controller does not accept it and assign unused number.
+If you attempt to launch a secondary process with the same ID, it
+is failed.
 
-
-Launch on VM
-~~~~~~~~~~~~
+Launch spp_vf on VM
+~~~~~~~~~~~~~~~~~~~
 
 To communicate DPDK application running on a VM,
 it is required to create a virtual device for the VM.
@@ -290,9 +345,12 @@ For other options, please refer to
 
 .. note::
 
-    To launch several VMs, you have to prepare qemu images for the VMs.
-    You shortcut installing and setting up DPDK and SPP for each of
-    VMs by creating a tmeplate image and copy it to the VMs.
+    In general, you need to prepare several qemu images for launcing
+    several VMs, but installing DPDK and SPP for several images is bother
+    and time consuming.
+
+    You can shortcut this tasks by creating a template image and copy it
+    to the VMs. It is just one time for installing for template.
 
 After booted, you install DPDK and SPP in the VM as in the host.
 
@@ -324,7 +382,7 @@ Run ``spp_vm`` with options.
 Secondary ID is used to identify for sending messages and must be
 unique among all of secondaries.
 If you attempt to launch a secondary process with the same ID,
-SPP controller does not accept it and assign unused number.
+it is failed.
 
 In this case, port mask option is ``-p 0x01`` (using one port) because
 the VM is launched with just one vhost interface.
