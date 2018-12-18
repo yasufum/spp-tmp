@@ -81,6 +81,32 @@ Execute command of index of history.
     spp > redo 5  # exec 5th command in the history
 
 
+server
+------
+
+Show a list of SPP REST API servers and switch to control for multiple
+nodes.
+
+Show all of registered REST API servers. Run ``server list`` or simply
+``server``.
+
+.. code-block:: console
+
+    spp > server
+      1: 192.168.1.101:7777 *
+      2: 192.168.1.102:7777
+
+    spp > server list  # same as above
+      1: 192.168.1.101:7777 *
+      2: 192.168.1.102:7777
+
+Switch to other server with index number displayed in ``server list``.
+
+.. code-block:: console
+
+    spp > server 2
+    Switch spp-ctl to "2: 192.168.1.102:7777".
+
 pwd
 ---
 
