@@ -21,7 +21,7 @@ All of Sub commands are referred with ``help`` command.
 
 .. code-block:: console
 
-    spp > help sec
+    spp > help nfv
 
     Send a command to secondary process specified with ID.
 
@@ -64,12 +64,14 @@ For example, adding ``ring:0`` by
 .. code-block:: console
 
     spp> nfv 1; add ring:0
+    Add ring:0.
 
 Or adding ``vhost:0`` by
 
 .. code-block:: console
 
     spp> nfv 1; add vhost:0
+    Add vhost:0.
 
 
 patch
@@ -81,6 +83,7 @@ This command just creates a path and does not start forwarding.
 .. code-block:: console
 
     spp > nfv 1; patch phy:0 ring:0
+    Patch ports (phy:0 -> ring:0).
 
 
 forward
@@ -91,6 +94,7 @@ Start forwarding.
 .. code-block:: console
 
     spp > nfv 1; forward
+    Start forwarding.
 
 Running status is changed from ``idling`` to ``running`` by
 executing it.
@@ -112,6 +116,7 @@ Stop forwarding.
 .. code-block:: console
 
     spp > nfv 1; stop
+    Stop forwarding.
 
 Running status is changed from ``running`` to ``idling`` by
 executing it.
@@ -133,6 +138,7 @@ Delete a port from the secondary.
 .. code-block:: console
 
     spp> nfv 1; del ring:0
+    Delete ring:0.
 
 
 exit
