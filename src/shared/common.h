@@ -188,6 +188,12 @@ get_null_pmd_name(int id)
 	return buffer;
 }
 
+/* Set log level of type RTE_LOGTYPE_USER* to given level. */
+int set_user_log_level(int num_user_log, uint32_t log_level);
+
+/* Set log level of type RTE_LOGTYPE_USER* to RTE_LOG_DEBUG. */
+int set_user_log_debug(int num_user_log);
+
 void check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 		uint32_t port_mask);
 

@@ -66,6 +66,41 @@ check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 }
 
 /**
+ * Set log level of type RTE_LOGTYPE_USER* to given level, for instance,
+ * RTE_LOG_INFO or RTE_LOG_DEBUG.
+ *
+ * This function is typically used to output debug log as following.
+ *
+ *   #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
+ *   ...
+ *   set_user_log_level(1, RTE_LOG_DEBUG);
+ *   ...
+ *   RTE_LOG(APP, DEBUG, "Your debug log...");
+ */
+int
+set_user_log_level(int num_user_log, uint32_t log_level)
+{
+	char userlog[8];
+
+	if (num_user_log < 1 || num_user_log > 8)
+		return -1;
+
+	memset(userlog, '\0', sizeof(userlog));
+	sprintf(userlog, "user%d", num_user_log);
+
+	rte_log_set_level(rte_log_register(userlog), log_level);
+	return 0;
+}
+
+/* Set log level of type RTE_LOGTYPE_USER* to RTE_LOG_DEBUG. */
+int
+set_user_log_debug(int num_user_log)
+{
+	set_user_log_level(num_user_log, RTE_LOG_DEBUG);
+	return 0;
+}
+
+/**
  * Initialise an individual port:
  * - configure number of rx and tx rings
  * - set up each rx ring, to pull from the main mbuf pool
@@ -538,7 +573,7 @@ dev_detach_by_port_id(uint16_t port_id)
 
 	if (rte_eth_devices[port_id].data == NULL) {
 		RTE_LOG(INFO, APP,
-			"rte_eth_devices[%d].data is  NULL\n", port_id);
+			"rte_eth_devices[%"PRIu16"].data is  NULL\n", port_id);
 		return 0;
 	}
 	dev_flags = rte_eth_devices[port_id].data->dev_flags;
