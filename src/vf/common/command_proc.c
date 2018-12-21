@@ -1600,8 +1600,10 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	if (request.is_requested_exit) {
 		/* Terminated by process exit command.                       */
 		/* Other route is normal end because it responds to command. */
+		set_command_results(&command_results[0], CRES_SUCCESS, "");
+		send_command_result_response(sock, &request, command_results);
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"No response with process exit command.\n");
+				"Terminate process for exit.\n");
 		return SPP_RET_NG;
 	}
 
