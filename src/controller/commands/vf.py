@@ -73,6 +73,9 @@ class SppVf(object):
         elif cmd == 'classifier_table':
             self._run_cls_table(params)
 
+        elif cmd == 'exit':
+            self._run_exit()
+
         else:
             print('Invalid command "%s".' % cmd)
 
@@ -346,6 +349,19 @@ class SppVf(object):
                     pass
                 else:
                     print('Error: unknown response.')
+
+    def _run_exit(self):
+        """Run `exit` command."""
+
+        res = self.spp_ctl_cli.delete('vfs/%d' % self.sec_id)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print('Exit vf %d.' % self.sec_id)
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
 
     def _compl_component(self, sub_tokens):
         if len(sub_tokens) < 6:

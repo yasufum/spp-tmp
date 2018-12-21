@@ -45,7 +45,5 @@ class SppBye(object):
         """Terminate all secondary processes."""
 
         for sec_type, spp_procs in spp_secondaries.items():
-            # TODO(yasufum) Remove if they support exit command.
-            if not (sec_type in ['vf', 'mirror']):
-                for sec in spp_procs.values():
-                    sec.run('exit')
+            for sec in spp_procs.values():
+                sec.run('exit')

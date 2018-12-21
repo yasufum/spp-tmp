@@ -69,6 +69,9 @@ class SppMirror(object):
         elif cmd == 'port':
             self._run_port(params)
 
+        elif cmd == 'exit':
+            self._run_exit()
+
         else:
             print('Invalid command "%s".' % cmd)
 
@@ -267,6 +270,19 @@ class SppMirror(object):
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
                 print("Succeeded to %s port" % params[0])
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _run_exit(self):
+        """Run `exit` command."""
+
+        res = self.spp_ctl_cli.delete('mirrors/%d' % self.sec_id)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print('Exit mirror %d.' % self.sec_id)
             elif res.status_code in error_codes:
                 pass
             else:
