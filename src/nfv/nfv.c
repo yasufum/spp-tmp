@@ -959,6 +959,8 @@ main(int argc, char *argv[])
 		ports = mz->addr;
 	}
 
+	set_user_log_debug(1);
+
 	RTE_LOG(INFO, APP, "Number of Ports: %d\n", nb_ports);
 
 	/* update port_forward_array with active port */
