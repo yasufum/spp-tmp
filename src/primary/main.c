@@ -393,6 +393,8 @@ main(int argc, char *argv[])
 	if (init(argc, argv) < 0)
 		return -1;
 
+	set_user_log_debug(1);
+
 	RTE_LOG(INFO, APP, "Finished Process Init.\n");
 
 	/* clear statistics */
