@@ -21,6 +21,11 @@ showversion:
 # Compile RST documents
 DOC_ROOT = docs/guides
 
+.PHONY: dist-clean
+dist-clean:
+	make clean
+	rm -rf $(wildcard src/*/$(RTE_TARGET))
+
 .PHONY: doc
 doc: doc-all
 doc-all: doc-pdf doc-html
