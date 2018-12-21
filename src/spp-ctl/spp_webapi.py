@@ -117,6 +117,7 @@ class WebServer(BaseHandler):
        /mirrors    V1MirrorHandler
        /nfvs       V1NFVHandler
        /primary    V1PrimaryHandler
+       /pcaps      V1PcapHandler
     """
 
     def __init__(self, controller, host, api_port):
@@ -145,6 +146,7 @@ class V1Handler(BaseHandler):
         self.mount("/mirrors", V1MirrorHandler(controller))
         self.mount("/nfvs", V1NFVHandler(controller))
         self.mount("/primary", V1PrimaryHandler(controller))
+        self.mount("/pcaps", V1PcapHandler(controller))
 
         self.install(self.make_response)
 
@@ -194,6 +196,10 @@ class V1VFCommon(object):
             raise KeyInvalid('dir', body['dir'])
         self._validate_port(body['port'])
 
+    def vf_exit(self, proc):
+        self.ctrl.do_exit(proc.type, proc.id)
+        proc.do_exit()
+
 
 class V1VFHandler(BaseHandler, V1VFCommon):
 
@@ -209,6 +215,7 @@ class V1VFHandler(BaseHandler, V1VFCommon):
 
     def set_route(self):
         self.route('/<sec_id:int>', 'GET', callback=self.vf_get)
+        self.route('/<sec_id:int>', 'DELETE', callback=self.vf_exit)
         self.route('/<sec_id:int>/components', 'POST',
                    callback=self.vf_comp_start)
         self.route('/<sec_id:int>/components/<name>', 'DELETE',
@@ -319,6 +326,7 @@ class V1MirrorHandler(BaseHandler, V1VFCommon):
 
     def set_route(self):
         self.route('/<sec_id:int>', 'GET', callback=self.mirror_get)
+        self.route('/<sec_id:int>', 'DELETE', callback=self.vf_exit)
         self.route('/<sec_id:int>/components', 'POST',
                    callback=self.mirror_comp_start)
         self.route('/<sec_id:int>/components/<name>', 'DELETE',
@@ -469,5 +477,43 @@ class V1PrimaryHandler(BaseHandler):
 
     def pri_exit(self):
         proc = self._get_proc()
+        self.ctrl.do_exit(proc.type, proc.id)
+        proc.do_exit()
+
+
+class V1PcapHandler(BaseHandler):
+
+    def __init__(self, controller):
+        super(V1PcapHandler, self).__init__(controller)
+        self.type = spp_proc.TYPE_PCAP
+
+        self.set_route()
+
+        self.install(self.check_sec_id)
+        self.install(self.get_body)
+        self.install(self.make_response)
+
+    def set_route(self):
+        self.route('/<sec_id:int>', 'GET', callback=self.pcap_get)
+        self.route('/<sec_id:int>', 'DELETE', callback=self.pcap_exit)
+        self.route('/<sec_id:int>/capture', 'PUT', callback=self.pcap_action)
+
+    def pcap_get(self, proc):
+        return proc.get_status()["info"]
+
+    def _validate_pcap_action(self, body):
+        if 'action' not in body:
+            raise KeyRequired('action')
+        if body['action'] not in ["start", "stop"]:
+            raise KeyInvalid('action', body['action'])
+
+    def pcap_action(self, proc, body):
+        self._validate_pcap_action(body)
+        if body['action'] == "start":
+            proc.start()
+        else:
+            proc.stop()
+
+    def pcap_exit(self, proc):
         self.ctrl.do_exit(proc.type, proc.id)
         proc.do_exit()

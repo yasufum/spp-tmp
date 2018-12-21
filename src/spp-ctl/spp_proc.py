@@ -16,6 +16,7 @@ TYPE_PRIMARY = "primary"
 TYPE_VF = "vf"
 TYPE_NFV = "nfv"
 TYPE_MIRROR = "mirror"
+TYPE_PCAP = "pcap"
 
 
 def exec_command(func):
@@ -53,12 +54,6 @@ class SppProc(object):
         self.sem = eventlet.semaphore.Semaphore(value=1)
         self.conn = conn
 
-
-class VfCommon(SppProc):
-
-    def __init__(self, proc_type, id, conn):
-        super(VfCommon, self).__init__(proc_type, id, conn)
-
     @staticmethod
     def _decode_reply(data):
         data = json.loads(data)
@@ -67,6 +62,21 @@ class VfCommon(SppProc):
             msg = result["error_details"]["message"]
             raise bottle.HTTPError(400, "command error: %s" % msg)
         return data
+
+    @staticmethod
+    def _decode_client_id_common(data, proc_type):
+        try:
+            data = SppProc._decode_reply(data)
+            if data["process_type"] == proc_type:
+                return data["client_id"]
+        except:
+            return None
+
+
+class VfCommon(SppProc):
+
+    def __init__(self, proc_type, id, conn):
+        super(VfCommon, self).__init__(proc_type, id, conn)
 
     @exec_command
     def get_status(self):
@@ -85,6 +95,10 @@ class VfCommon(SppProc):
     def port_del(self, port, direction, comp_name):
         return "port del {port} {direction} {comp_name}".format(**locals())
 
+    @exec_command
+    def do_exit(self):
+        return "exit"
+
 
 class VfProc(VfCommon):
 
@@ -93,12 +107,7 @@ class VfProc(VfCommon):
 
     @staticmethod
     def _decode_client_id(data):
-        try:
-            data = VfCommon._decode_reply(data)
-            if data["process_type"] == TYPE_VF:
-                return data["client_id"]
-        except:
-            return None
+        return SppProc._decode_client_id_common(data, TYPE_VF)
 
     @exec_command
     def port_add(self, port, direction, comp_name, op, vlan_id, pcp):
@@ -139,12 +148,7 @@ class MirrorProc(VfCommon):
 
     @staticmethod
     def _decode_client_id(data):
-        try:
-            data = VfCommon._decode_reply(data)
-            if data["process_type"] == TYPE_MIRROR:
-                return data["client_id"]
-        except:
-            return None
+        return SppProc._decode_client_id_common(data, TYPE_MIRROR)
 
     @exec_command
     def port_add(self, port, direction, comp_name):
@@ -216,6 +220,32 @@ class PrimaryProc(SppProc):
     @exec_command
     def clear(self):
         return "clear"
+
+    @exec_command
+    def do_exit(self):
+        return "exit"
+
+
+class PcapProc(SppProc):
+
+    def __init__(self, id, conn):
+        super(PcapProc, self).__init__(TYPE_PCAP, id, conn)
+
+    @staticmethod
+    def _decode_client_id(data):
+        return SppProc._decode_client_id_common(data, TYPE_PCAP)
+
+    @exec_command
+    def get_status(self):
+        return "status"
+
+    @exec_command
+    def start(self):
+        return "start"
+
+    @exec_command
+    def stop(self):
+        return "stop"
 
     @exec_command
     def do_exit(self):
