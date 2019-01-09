@@ -13,7 +13,7 @@ functionality for Service Function Chaining in
 NFV (Network Function Virtualization).
 
 .. figure:: ../images/overview/spp_overview.*
-    :width: 50%
+    :width: 95%
 
     SPP overview
 
