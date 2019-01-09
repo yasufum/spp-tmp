@@ -6,38 +6,6 @@
 spp-ctl
 =======
 
-Overview
---------
-
-``spp-ctl`` is an alternative SPP controller which provides a REST-like
-APIs.
-
-It maintains connections between SPP processes for managing them
-via the REST-like APIs for users or other processes.
-
-Background and Motivation
--------------------------
-
-``spp-ctl`` is designed for supporting to manage SPP from several
-controllers.
-
-There are some usecases where SPP is managed from other
-process without user inputs.
-For example, you need a intermediate process if you think of using SPP
-from a framework, such as OpenStack.
-`networking-spp
-<https://github.com/openstack/networking-spp>`_
-is a Neutron ML2 plugin for SPP and `spp-agent` works as a
-SPP controller.
-
-It is a problem to prepare several controllers for each of usages for
-CLI, OpenStack or others because it would be hard to maintain for
-updates.
-
-Spp-ctl is designed to solve the problem of several controllers with
-application-independent REST APIs.
-You can manage SPP by requesting via this APIs.
-
 Architecture
 ------------
 

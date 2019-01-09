@@ -30,6 +30,23 @@ By using networking-spp and doing some of extra tunings for optimization, you
 can deploy high-performance NFV services on OpenStack [2].
 
 
+SPP Controller
+--------------
+
+spp-ctl
+~~~~~~~
+
+``spp-ctl`` is designed for managing SPP from several controllers
+via REST-like APIs for users or other applications.
+
+There are several usecases where SPP is managed from other process without
+user inputs. For example, you need a intermediate process if you think of
+using SPP from a framework, such as OpenStack.
+`networking-spp
+<https://github.com/openstack/networking-spp>`_
+is a Neutron ML2 plugin for SPP and `spp-agent` works as a SPP controller.
+
+
 Reference
 ---------
 
