@@ -1,5 +1,6 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
 
 .. _spp_overview_overview:
 
@@ -12,7 +13,7 @@ Overview
 functionality for Service Function Chaining in
 NFV (Network Function Virtualization).
 
-.. figure:: ../images/overview/spp_overview.*
+.. figure:: ./images/overview/spp_overview.*
     :width: 95%
 
     SPP overview

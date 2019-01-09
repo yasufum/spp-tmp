@@ -1,38 +1,10 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
-    Copyright(c) 2010-2014 Intel Corporation
     Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
-
-.. _spp_overview_design:
-
-Design
-======
-
-SPP is composed of several DPDK processes and controller processes for
-connecting each of client processes with high-throughput path of DPDK.
-:numref:`figure_spp_overview_design_all` shows SPP processes and client apps
-for describing overview of design of SPP. In this diagram, solid line arrows
-describe a data path for packet forwarding and it can be configured from
-controller via command messaging of blue dashed line arrows.
-
-.. _figure_spp_overview_design_all:
-
-.. figure:: ../images/overview/design/spp_overview_design_all.*
-   :width: 85%
-
-   Overview of design of SPP
-
-In terms of DPDK processes, SPP is derived from DPDK's multi-process sample
-application and it consists of a primary process and multiple secondary
-processes.
-SPP primary process is responsible for resource management, for example,
-initializing ports, mbufs or shared memory. On the other hand,
-secondary processes of ``spp_nfv`` are working for forwarding [1].
-
 
 .. _spp_overview_spp_controller:
 
 SPP Controller
---------------
+==============
 
 SPP is controlled from python based management framework. It consists of
 front-end CLI and back-end server process.
@@ -45,10 +17,12 @@ plugin for other framework.
 <https://github.com/openstack/networking-spp>`_
 is a Neutron ML2 plugin for using SPP with OpenStack.
 By using networking-spp and doing some of extra tunings for optimization, you
-can deploy high-performance NFV services on OpenStack [2].
+can deploy high-performance NFV services on OpenStack
+`[1]
+<https://www.openstack.org/summit/vancouver-2018/summit-schedule/events/20826>`_.
 
 spp-ctl
-~~~~~~~
+-------
 
 ``spp-ctl`` is designed for managing SPP from several controllers
 via REST-like APIs for users or other applications.
@@ -75,7 +49,7 @@ The default port numbers are ``5555``, ``6666`` and ``7777``.
    Spp-ctl as a REST API server
 
 SPP CLI
-~~~~~~~
+-------
 
 SPP CLI is a user interface for managing SPP and implemented as a client of
 ``spp-ctl``. It provides several kinds of command for inspecting SPP
@@ -92,33 +66,8 @@ SPP CLI is able to communicate several ``spp-ctl`` to support multiple nodes
 configuration.
 
 
-.. _spp_overview_design_spp_primary:
-
-SPP Primary
------------
-
-SPP is originally derived from
-`Client-Server Multi-process Example
-<https://doc.dpdk.org/guides/sample_app_ug/multi_process.html#client-server-multi-process-example>`_
-of
-`Multi-process Sample Application
-<https://doc.dpdk.org/guides/sample_app_ug/multi_process.html>`_
-in DPDK's sample applications.
-``spp_primary`` is a server process for other secondary processes and
-basically working as described in
-"How the Application Works" section of the sample application.
-
-However, there are also differences between ``spp_primary`` and
-the server process of the sample application.
-``spp_primary`` has no limitation of the number of secondary processes.
-It does not work for packet forwaring, but just provide rings and memory pools
-for secondary processes.
-
-
 Reference
 ---------
 
-* [1] `Implementation and Testing of Soft Patch Panel
-  <https://dpdksummit.com/Archive/pdf/2017USA/Implementation%20and%20Testing%20of%20Soft%20Patch%20Panel.pdf>`_
-* [2] `Integrating OpenStack with DPDK for High Performance Applications
+* [1] `Integrating OpenStack with DPDK for High Performance Applications
   <https://www.openstack.org/summit/vancouver-2018/summit-schedule/events/20826>`_

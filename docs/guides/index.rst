@@ -5,9 +5,10 @@ SPP documentation
 =================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   overview/index
+   overview
+   design/index
    setup/index
    commands/index
    tools/index
