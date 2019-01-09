@@ -60,6 +60,19 @@ to be accessed from other processes running on other than local node.
     # launch with URL http://192.168.1.100:7777
     $ python3 src/spp-ctl/spp-ctl -b 192.168.1.100
 
+``spp-ctl`` is also launched as a daemon process, or managed
+by ``systemd``.
+Here is a simple example of service file for systemd.
+
+.. code-block:: none
+
+    [Unit]
+    Description = SPP Controller
+
+    [Service]
+    ExecStart = /usr/bin/python3 /path/to/spp/src/spp-ctl/spp-ctl
+    User = root
+
 All of options can be referred with help option ``-h``.
 
 .. code-block:: console

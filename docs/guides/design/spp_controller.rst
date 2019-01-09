@@ -21,11 +21,15 @@ can deploy high-performance NFV services on OpenStack
 `[1]
 <https://www.openstack.org/summit/vancouver-2018/summit-schedule/events/20826>`_.
 
+
 spp-ctl
 -------
 
 ``spp-ctl`` is designed for managing SPP from several controllers
 via REST-like APIs for users or other applications.
+It is implemented to be simple and it is stateless.
+Basically, it only converts a request into a command of SPP process and
+forward it to the process without any of syntax or lexical checking.
 
 There are several usecases where SPP is managed from other process without
 user inputs. For example, you need a intermediate process if you think of
@@ -47,6 +51,16 @@ The default port numbers are ``5555``, ``6666`` and ``7777``.
    :width: 48%
 
    Spp-ctl as a REST API server
+
+``spp-ctl`` accepts multiple requests at the same time and serializes them
+by using
+`bottle
+<https://bottlepy.org/docs/dev/>`_
+which is simple and well known as a web framework and
+`eventlet
+<http://eventlet.net/>`_
+for parallel processing.
+
 
 SPP CLI
 -------

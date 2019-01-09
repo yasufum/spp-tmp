@@ -15,7 +15,7 @@ SPP documentation
    commands/index
    tools/index
    spp_vf/index
-   spp-ctl/index
+   api_ref/index
 
 This documentation is the latest tagged version, but some of the latest
 developing features might be not included.
