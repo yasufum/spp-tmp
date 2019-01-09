@@ -7,14 +7,32 @@
 Design
 ======
 
-SPP is composed of several DPDK processes and controller processes [1].
+SPP is composed of several DPDK processes and controller processes for
+connecting each of client processes with high-throughput path of DPDK.
+:numref:`figure_spp_overview_design_all` shows SPP processes and client apps
+for describing overview of design of SPP. In this diagram, solid line arrows
+describe a data path for packet forwarding and it can be configured from
+controller via command messaging of blue dashed line arrows.
+
+.. _figure_spp_overview_design_all:
+
+.. figure:: ../images/overview/design/spp_overview_design_all.*
+   :width: 85%
+
+   Overview of design of SPP
 
 In terms of DPDK processes, SPP is derived from DPDK's multi-process sample
 application and it consists of a primary process and multiple secondary
 processes.
-SPP primary process is responsible for resource management, for example, ports,
-mbufs or shared memory. On the other hand, secondary processes are working for
-tasks.
+SPP primary process is responsible for resource management, for example,
+initializing ports, mbufs or shared memory. On the other hand,
+secondary processes of ``spp_nfv`` are working for forwarding [1].
+
+
+.. _spp_overview_spp_controller:
+
+SPP Controller
+--------------
 
 SPP is controlled from python based management framework. It consists of
 front-end CLI and back-end server process.
@@ -29,10 +47,6 @@ is a Neutron ML2 plugin for using SPP with OpenStack.
 By using networking-spp and doing some of extra tunings for optimization, you
 can deploy high-performance NFV services on OpenStack [2].
 
-
-SPP Controller
---------------
-
 spp-ctl
 ~~~~~~~
 
@@ -45,6 +59,37 @@ using SPP from a framework, such as OpenStack.
 `networking-spp
 <https://github.com/openstack/networking-spp>`_
 is a Neutron ML2 plugin for SPP and `spp-agent` works as a SPP controller.
+
+As shown in :numref:`figure_spp_overview_design_spp_ctl`,
+``spp-ctl`` behaves as a TCP server for SPP primary and secondary processes,
+and REST API server for client applications.
+It should be launched in advance to setup connections with other processes.
+``spp-ctl``  uses three TCP ports for primary, secondaries and clients.
+The default port numbers are ``5555``, ``6666`` and ``7777``.
+
+.. _figure_spp_overview_design_spp_ctl:
+
+.. figure:: ../images/overview/design/spp_overview_design_spp-ctl.*
+   :width: 48%
+
+   Spp-ctl as a REST API server
+
+SPP CLI
+~~~~~~~
+
+SPP CLI is a user interface for managing SPP and implemented as a client of
+``spp-ctl``. It provides several kinds of command for inspecting SPP
+processes, changing path configuration or showing statistics of packets.
+However, you do not need to use SPP CLI if you use ``netowrking-spp`` or
+other client applications of ``spp-ctl``. SPP CLI is one of them.
+
+From SPP CLI, user is able to configure paths as similar as
+patch panel like manner by sending commands to each of SPP secondary processes.
+``patch phy:0 ring:0`` is to connect two ports, ``phy:0`` and ``ring:0``.
+
+As described in :ref:`Getting Started<spp_setup_howto_use_spp_cli>` guide,
+SPP CLI is able to communicate several ``spp-ctl`` to support multiple nodes
+configuration.
 
 
 Reference

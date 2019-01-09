@@ -1,6 +1,8 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
+.. _spp_setup_howto_use:
+
 How to Use
 ==========
 
@@ -74,6 +76,8 @@ All of options can be referred with help option ``-h``.
       -p PRI_PORT           primary port, default=5555
       -s SEC_PORT           secondary port, default=6666
       -a API_PORT           web api port, default=7777
+
+.. _spp_setup_howto_use_spp_cli:
 
 SPP CLI
 ~~~~~~~
