@@ -4,7 +4,7 @@
 How to Use
 ==========
 
-As described in :ref:`Overview<spp_overview>`, SPP consists of
+As described in :ref:`Design<spp_overview_design>`, SPP consists of
 primary process for managing resources, secondary processes for
 forwarding packet, and SPP controller to accept user commands and
 send it to SPP processes.

@@ -7,7 +7,7 @@ SPP documentation
 .. toctree::
    :maxdepth: 1
 
-   overview
+   overview/index
    setup/index
    commands/index
    tools/index
