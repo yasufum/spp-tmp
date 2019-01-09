@@ -1,5 +1,6 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
 
 SPP documentation
 =================
@@ -10,6 +11,7 @@ SPP documentation
    overview
    design/index
    setup/index
+   use_cases/index
    commands/index
    tools/index
    spp_vf/index

@@ -1,8 +1,9 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
 
-Use Cases
-=========
+spp_nfv
+=======
 
 .. _single_spp_nfv:
 
@@ -308,7 +309,7 @@ Vhost PMD
 
 Vhost PMD is an interface for communicating between on hsot and guest VM.
 As described in
-:doc:`How to Use<howto_use>`,
+:ref:`How to Use<spp_setup_howto_use>`,
 vhost must be created by ``add`` subcommand before the VM is launched.
 
 
@@ -344,7 +345,7 @@ Uni-Directional L2fwd with Vhost PMD
 
 Launch a VM by using the vhost interface created as previous step.
 Lauunching VM is described in
-:doc:`How to Use<howto_use>`
+:ref:`How to Use<spp_setup_howto_use>`
 and launch ``spp_vm`` with secondary ID 2.
 You find ``nfv 2`` from controller after launched.
 
