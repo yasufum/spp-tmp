@@ -2,7 +2,7 @@
     Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
 
 
-.. _spp_design_spp_secondary:
+.. _spp_design_spp_sec:
 
 SPP Secondary
 =============
@@ -32,9 +32,55 @@ a simple pseudo SR-IOV feature for classifying or merging packets.
 ``spp_mirror`` is to duplicate incoming packets to several destination ports.
 
 
-.. _spp_design_spp_secondary_nfv:
+.. _spp_design_spp_sec_nfv:
 
 spp_nfv
 -------
 
-``spp_nfv`` is ...
+``spp_nfv`` is the simplest SPP secondary to connect two of processes or other
+feature ports. Each of ``spp_nfv`` processes has a list of entries including
+source and destination ports, and forwards packets by referring the list.
+It means that one ``spp_nfv`` might have several forwarding paths, but
+throughput is gradually decreased if it has too much paths.
+This list is implemented as an array of ``port`` structure and named
+``ports_fwd_array``. The index of ``ports_fwd_array`` is the same as unique
+port ID.
+
+.. code-block:: c
+
+    struct port {
+      int in_port_id;
+      int out_port_id;
+      ...
+    };
+    ...
+
+    /* ports_fwd_array is an array of port */
+    static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
+
+:numref:`figure_design_spp_sec_nfv_port_fwd_array` describes an example of
+forwarding between ports. In this case, ``spp_nfv`` is responsible for
+forwarding from ``port#0`` to ``port#2``. You notice that each of ``out_port``
+entry has the destination port ID.
+
+.. _figure_design_spp_sec_nfv_port_fwd_array:
+
+.. figure:: ../images/design/spp_design_spp_sec_nfv.*
+   :width: 75%
+
+   Forwarding by referring ports_fwd_array
+
+``spp_nfv`` consists of main thread and worker thread to update the entry
+while running the process. Main thread is for waiting user command for
+updating the entry. Worker thread is for dedicating packet forwarding.
+:numref:`figure_design_spp_sec_nfv_threads` describes tasks in each of
+threads. Worker thread is launched from main thread after initialization.
+In worker thread, it starts forwarding if user send forward command and
+main thread accepts it.
+
+.. _figure_design_spp_sec_nfv_threads:
+
+.. figure:: ../images/design/spp_design_spp_sec_nfv_threads.*
+   :width: 70%
+
+   Main thread and worker thread in spp_nfv
