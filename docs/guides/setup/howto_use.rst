@@ -129,7 +129,7 @@ soure or destination of phy ports.
 .. _figure_spp_howto_multi_spp:
 
 .. figure:: ../images/setup/howto_use/spp_howto_multi_spp.*
-   :width: 70%
+   :width: 80%
 
    Multiple SPP nodes
 

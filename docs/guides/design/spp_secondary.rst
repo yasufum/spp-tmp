@@ -66,7 +66,7 @@ entry has the destination port ID.
 .. _figure_design_spp_sec_nfv_port_fwd_array:
 
 .. figure:: ../images/design/spp_design_spp_sec_nfv.*
-   :width: 75%
+   :width: 80%
 
    Forwarding by referring ports_fwd_array
 
