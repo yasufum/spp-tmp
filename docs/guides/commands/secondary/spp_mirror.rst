@@ -106,7 +106,7 @@ consists of three parts.
 
 .. code-block:: console
 
-    spp > vf 1; status
+    spp > mirror 1; status
     Basic Information:
       - client-id: 3
       - ports: [phy:0, phy:1, ring:0, ring:1, ring:2, ring:3, ring:4]
@@ -146,19 +146,19 @@ cores which are reserved with ``-c`` or ``-l`` option while launching
     # release worker 'NAME' from the role
     spp > mirror SEC_ID; component stop NAME
 
-Here is some examples of assigning roles with ``component`` command.
+Here is an example of assigning role with ``component`` command.
 
 .. code-block:: console
 
     # assign 'mirror' role with name 'mr1' on core 2
     spp > mirror 2; component start mr1 2 mirror
 
-Or examples of releasing roles.
+And an examples of releasing role.
 
 .. code-block:: console
 
     # release mirror role
-    spp > vf 2; component stop mr1
+    spp > mirror 2; component stop mr1
 
 
 .. _commands_spp_mirror_port:
@@ -173,7 +173,7 @@ Adding port
 
 .. code-block:: console
 
-    spp > vf SEC_ID; port add RES_UID DIR NAME
+    spp > mirror SEC_ID; port add RES_UID DIR NAME
 
 ``RES_UID`` is with replaced with resource UID such as ``ring:0`` or
 ``vhost:1``. ``spp_mirror`` supports three types of port.
@@ -202,14 +202,14 @@ by duplicating the packets.
 Deleting port
 ~~~~~~~~~~~~~
 
-Delete a port which is not used anymore. It is almost same as adding port.
+Delete a port which is not be used anymore. It is almost same as adding port.
 
 .. code-block:: console
 
     spp > mirror SEC_ID; port del RES_UID DIR NAME
 
 
-Here is an example.
+Here is some examples.
 
 .. code-block:: console
 
@@ -222,7 +222,7 @@ Here is an example.
 exit
 ----
 
-Terminate the spp_mirror.
+Terminate ``spp_mirror`` process.
 
 .. code-block:: console
 
