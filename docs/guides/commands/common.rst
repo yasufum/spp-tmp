@@ -1,5 +1,6 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
 
 Common Commands
 ===============
@@ -7,17 +8,19 @@ Common Commands
 status
 ------
 
-Show the number of connected primary and secondary processes.
-It also show a list of secondary IDs
+Show the status of SPP processes.
 
 .. code-block:: console
 
     spp > status
-    Soft Patch Panel Status :
-    primary: 1
-    secondary count: 2
-    Connected secondary id: 1
-    Connected secondary id: 2
+    - spp-ctl:
+      - address: 172.30.202.151:7777
+    - primary:
+      - status: running
+    - secondary:
+      - processes:
+        1: nfv:1
+        2: vf:3
 
 
 playback
@@ -182,17 +185,21 @@ First one is for terminating only secondary processes at once.
 .. code-block:: console
 
     spp > bye sec
-    closing:<socket._socketobject object at 0x105750910>
-    closing:<socket._socketobject object at 0x105750a60>
+    Closing secondary ...
+    Exit nfv 1
+    Exit vf 3.
+
 
 Second one is for all SPP processes other than controller.
 
 .. code-block:: console
 
     spp > bye all
-    closing:<socket._socketobject object at 0x10bd95910>
-    closing:<socket._socketobject object at 0x10bd95a60>
-    closing:('127.0.0.1', 53620)
+    Closing secondary ...
+    Exit nfv 1
+    Exit vf 3.
+    Closing primary ...
+    Exit primary
 
 
 exit
@@ -218,20 +225,26 @@ Show help message for SPP commands.
 
     Documented commands (type help <topic>):
     ========================================
-    bye  cd    help  load_cmd  mkdir     pri  record  status  topo_subgraph
-    cat  exit  less  ls        playback  pwd  sec     topo
+    bye  exit     inspect   ls      nfv       pwd     server  topo_resize
+    cat  help     less      mirror  playback  record  status  topo_subgraph
+    cd   history  load_cmd  mkdir   pri       redo    topo    vf
 
     spp > help status
     Display status info of SPP processes
 
         spp > status
 
-    spp > help sec
-    Send command to secondary process
+    spp > help nfv
+    Send a command to spp_nfv specified with ID.
 
-        SPP secondary process is specified with secondary ID and takes
-        sub commands.
+        Spp_nfv is specified with secondary ID and takes sub commands.
 
-        spp > sec 1;status
-        spp > sec 1;add ring 0
-        spp > sec 1;patch 0 2
+        spp > nfv 1; status
+        spp > nfv 1; add ring:0
+        spp > nfv 1; patch phy:0 ring:0
+
+        You can refer all of sub commands by pressing TAB after
+        'nfv 1;'.
+
+        spp > nfv 1;  # press TAB
+        add     del     exit    forward patch   status  stop
