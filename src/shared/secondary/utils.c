@@ -19,7 +19,7 @@ parse_resource_uid(char *str, char **port_type, int *port_id)
 	char delim[] = ":";
 	char *endp;
 
-	RTE_LOG(DEBUG, SHARED, "Parsing resource UID: '%s\n'", str);
+	RTE_LOG(DEBUG, SHARED, "Parsing resource UID: '%s'\n", str);
 	if (strstr(str, delim) == NULL) {
 		RTE_LOG(ERR, SHARED, "Invalid resource UID: '%s'\n", str);
 		return -1;
