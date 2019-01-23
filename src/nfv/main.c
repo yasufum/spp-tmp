@@ -24,6 +24,22 @@
 
 static sig_atomic_t on = 1;
 
+enum {
+	/*
+	 * Long options mapped to a short option.
+	 *
+	 * First long only option value must be >= 256, so that we won't
+	 * conflict with short options.
+	 */
+	CMD_LINE_OPT_MIN_NUM = 256,
+	CMD_OPT_ENABLE_VHOST_CLI,
+};
+
+static struct option lgopts[] = {
+	{"vhost-client", no_argument, NULL, CMD_OPT_ENABLE_VHOST_CLI},
+	{0}
+};
+
 /*
  * print a usage message
  */
@@ -31,7 +47,9 @@ static void
 usage(const char *progname)
 {
 	RTE_LOG(INFO, SPP_NFV,
-		"Usage: %s [EAL args] -- -n <client_id>\n\n", progname);
+		"Usage: %s [EAL args] -- %s %s %s\n\n",
+		progname, "-n <client_id>", "-s <ipaddr:port>",
+		"--vhost-client");
 }
 
 /*
@@ -43,12 +61,14 @@ parse_app_args(int argc, char *argv[])
 	int option_index, opt;
 	char **argvopt = argv;
 	const char *progname = argv[0];
-	static struct option lgopts[] = { {0} };
 	int ret;
 
 	while ((opt = getopt_long(argc, argvopt, "n:s:", lgopts,
 			&option_index)) != EOF) {
 		switch (opt) {
+		case CMD_OPT_ENABLE_VHOST_CLI:
+			g_enable_vhost_cli = 1;
+			break;
 		case 'n':
 			if (parse_num_clients(&client_id, optarg) != 0) {
 				usage(progname);
@@ -172,6 +192,9 @@ main(int argc, char *argv[])
 
 	if (parse_app_args(argc, argv) < 0)
 		rte_exit(EXIT_FAILURE, "Invalid command-line arguments\n");
+
+	if (g_enable_vhost_cli == 1)
+		RTE_LOG(INFO, SPP_NFV, "vhost client mode is enabled.\n");
 
 	/* initialize port forward array*/
 	forward_array_init();
