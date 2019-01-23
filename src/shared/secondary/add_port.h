@@ -20,6 +20,8 @@
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
+extern int g_enable_vhost_cli;
+
 /**
  * Get unique name used to reserve vhost interface.
  *
