@@ -184,6 +184,7 @@ YYYYMMDDhhmmss is the time when ``spp_pcap`` receives ``start`` command.
 .. code-block:: none
 
     /tmp/spp_pcap.20181108110600.ring0.1.2.pcap.lz4.tmp
+
 This example shows that ``receiver`` thread receives ``start`` command at
 20181108110600.  Port is ring:0, wcore_num is 1 and sequential number is 2.
 
