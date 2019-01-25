@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import argparse
 import re
 from .shell import Shell
+from .shell_lib import common
 from . import spp_ctl_client
 import sys
 
@@ -30,11 +31,14 @@ def main(argv):
     for addr in args.bind_addr:
         if ':' in addr:
             api_ipaddr, api_port = addr.split(':')
+            if common.is_valid_port(api_port) is False:
+                print('Error: Invalid port in "{}"'.format(addr))
+                exit()
         else:
             api_ipaddr = addr
 
-        if not re.match(r'\d*\.\d*\.\d*\.\d*', addr):
-            print('Invalid address "%s"' % args.bind_addr)
+        if common.is_valid_ipv4_addr(api_ipaddr) is False:
+            print('Error: Invalid address "{}"'.format(addr))
             exit()
 
         spp_ctl_cli = spp_ctl_client.SppCtlClient(api_ipaddr, int(api_port))

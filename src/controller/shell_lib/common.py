@@ -100,3 +100,25 @@ def is_comment_line(line):
             return True
         else:
             return False
+
+
+def is_valid_ipv4_addr(ipaddr):
+    ip_nums = ipaddr.split('.')
+
+    if len(ip_nums) != 4:
+        return False
+
+    for num in ip_nums:
+        num = int(num)
+        if (num < 0) or (num > 255):
+            return False
+
+    return True
+
+
+def is_valid_port(port_num):
+    num = int(port_num)
+    if (num < 1023) or (num > 65535):
+        return False
+
+    return True
