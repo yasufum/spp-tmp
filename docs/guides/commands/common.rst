@@ -87,11 +87,14 @@ Execute command of index of history.
 server
 ------
 
-Show a list of SPP REST API servers and switch to control for multiple
-nodes.
+Switch SPP REST API server.
 
-Show all of registered REST API servers. Run ``server list`` or simply
-``server``.
+SPP CLI is able to manage several SPP nodes via REST API servers.
+It is also abaivable to register new one, or unregister.
+
+Show all of registered servers by running ``server list`` or simply
+``server``. Notice that ``*`` means that the first node is under the
+control of SPP CLI.
 
 .. code-block:: console
 
@@ -103,12 +106,39 @@ Show all of registered REST API servers. Run ``server list`` or simply
       1: 192.168.1.101:7777 *
       2: 192.168.1.102:7777
 
-Switch to other server with index number displayed in ``server list``.
+Switch to other server by running ``server`` with index or address displayed
+in the list. Port number can be omitted if it is default ``7777``.
 
 .. code-block:: console
 
+    # Switch to the second node
     spp > server 2
     Switch spp-ctl to "2: 192.168.1.102:7777".
+
+    # Switch to firt one again with address
+    spp > server 192.168.1.101  # no need for port num
+    Switch spp-ctl to "1: 192.168.1.101:7777".
+
+Register new one by using ``add`` command, or unregister by ``del`` command
+with address. For unregistering, node is also specified with index.
+
+.. code-block:: console
+
+    # Register
+    spp > server add 192.168.122.177
+    Registered spp-ctl "192.168.122.177:7777".
+
+    # Unregister second one
+    spp > server del 2  # or 192.168.1.102
+    Unregistered spp-ctl "192.168.1.102:7777".
+
+You cannot unregister node under the control, or switch to other one before.
+
+.. code-block:: console
+
+    spp > server del 1
+    Cannot del server "1" in use!
+
 
 pwd
 ---
