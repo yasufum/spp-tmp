@@ -136,7 +136,8 @@ class SppPrimary(object):
         candidates = []
         tokens = line.split(' ')
 
-        mytemplate = "-l 1,2 -m 512 -- -n {} -s {}"
+        base_core = 1  # shared among secondaries
+        mytemplate = "-l {},{} -m 512 -- {} {} -s {}"
 
         # Show sub commands
         if len(tokens) == 2:
@@ -156,8 +157,30 @@ class SppPrimary(object):
         elif len(tokens) == 5 and tokens[1] == 'launch':
             if (tokens[2] in spp_common.SEC_TYPES) and \
                     (int(tokens[3])-1 in range(spp_common.MAX_SECONDARY)):
+                ptype = tokens[2]
                 sid = tokens[3]
-                candidates = [mytemplate.format(sid, common.current_server_addr())]
+
+                if ptype == 'nfv':
+                    opt_sid = '-n'
+                else:
+                    opt_sid = '--client-id'
+
+                server_addr = common.current_server_addr()
+                server_addr = server_addr.replace('7777', '6666')
+
+                # Define rest of cores dynamically.
+                # TODO(yasufum) decide rest of cores considering used cores
+                if ptype == 'nfv':  # one core is enough
+                    rest_core = sid
+                elif ptype == 'vf':  # at least three cores
+                    rest_core = '{}-{}'.format(int(sid), int(sid)+2)
+                elif ptype == 'mirror':  # two cores
+                    rest_core = sid
+                elif ptype == 'pcap':  # at least two cores
+                    rest_core = '{}-{}'.format(int(sid), int(sid)+1)
+
+                candidates = [mytemplate.format(
+                    base_core, rest_core, opt_sid, sid, server_addr)]
 
         if not text:
             completions = candidates
@@ -165,8 +188,6 @@ class SppPrimary(object):
             completions = [p for p in candidates
                            if p.startswith(text)
                            ]
-
-        #completions.append("nof_tokens:{}".format(len(tokens)))
 
         return completions
 
@@ -299,7 +320,7 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
-                print('Succeeded to launch {}:{}.'.format(
+                print('Send request to launch {}:{}.'.format(
                     proc_type, sec_id))
             elif res.status_code in error_codes:
                 pass
