@@ -127,4 +127,6 @@ int set_user_log_debug(int num_user_log);
 int parse_num_clients(uint16_t *num_clients, const char *clients);
 int parse_server(char **server_ip, int *server_port, char *server_addr);
 
+extern uint8_t lcore_id_used[RTE_MAX_LCORE];
+
 #endif

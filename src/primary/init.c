@@ -9,8 +9,8 @@
 #include <rte_malloc.h>
 #include <rte_memzone.h>
 
+#include "shared/common.h"
 #include "args.h"
-#include "common.h"
 #include "init.h"
 #include "primary.h"
 
@@ -22,6 +22,8 @@ static struct rte_mempool *pktmbuf_pool;
 
 /* the port details */
 struct port_info *ports;
+
+uint8_t lcore_id_used[RTE_MAX_LCORE] = {};
 
 /**
  * Initialise the mbuf pool for packet reception for the NIC, and any other
@@ -104,8 +106,10 @@ int
 init(int argc, char *argv[])
 {
 	int retval;
+	int lcore_id;
 	const struct rte_memzone *mz;
 	uint16_t count, total_ports;
+	char log_msg[1024] = { '\0' };
 
 	/* init EAL, parsing EAL args */
 	retval = rte_eal_init(argc, argv);
@@ -158,6 +162,16 @@ init(int argc, char *argv[])
 
 	/* Initialise the ring_port. */
 	init_shm_rings();
+
+	RTE_LCORE_FOREACH(lcore_id) {
+		lcore_id_used[lcore_id] = 1;
+	}
+	sprintf(log_msg, "Used lcores: ");
+	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+		if (lcore_id_used[i] == 1)
+			sprintf(log_msg + strlen(log_msg), "%d ", i);
+	}
+	RTE_LOG(DEBUG, PRIMARY, "%s\n", log_msg);
 
 	return 0;
 }
