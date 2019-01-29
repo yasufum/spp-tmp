@@ -7,7 +7,7 @@
 
 #include <rte_memory.h>
 
-#include "common.h"
+#include "shared/common.h"
 #include "args.h"
 #include "init.h"
 #include "primary.h"

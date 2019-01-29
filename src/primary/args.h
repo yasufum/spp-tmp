@@ -7,7 +7,7 @@
 #define _PRIMARY_ARGS_H_
 
 #include <stdint.h>
-#include "common.h"
+#include "shared/common.h"
 
 extern uint16_t num_rings;
 extern char *server_ip;

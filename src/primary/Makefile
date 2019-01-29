@@ -25,7 +25,7 @@ INC := $(wildcard *.h)
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3 -MMD
-CFLAGS += -I$(SRCDIR)/../shared
+CFLAGS += -I$(SRCDIR)/../
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)
 LDLIBS += -lrte_pmd_ring
