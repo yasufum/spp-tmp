@@ -25,6 +25,16 @@
 #define PRI_BUF_SIZE_RING 1512
 
 #define SPP_PATH_LEN 1024  /* seems enough for path of spp procs */
+#define NOF_TOKENS 48  /* seems enough to contain tokens */
+/* should be contain extra two tokens for `python` and path of launcher */
+#define NOF_CMD_LIST (NOF_TOKENS + 2)
+
+#define LAUNCH_CMD "python"
+#define LCMD_LEN 8
+
+#define LAUNCHER_NAME "sec_launcher.py"
+#define LAUNCHER_LEN 16
+
 #define POLL_TIMEOUT_MS 100
 
 static sig_atomic_t on = 1;
@@ -182,7 +192,17 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 	char path_spp_pri[SPP_PATH_LEN];
 	char path_spp_sec[SPP_PATH_LEN];
 	char path_spp_log[SPP_PATH_LEN];
-	char *token_list[48] = {NULL};  /* contains elems of path_spp_pri */
+
+	char cmd[LCMD_LEN];  /* Command for launcher */
+	char launcher[LAUNCHER_LEN];  /* Name of launcher script */
+	char path_launcher[SPP_PATH_LEN];
+
+	/* Contains elems of path_spp_pri */
+	char *token_list[NOF_TOKENS] = {NULL};
+
+	/* Contains cmd and args for execvp() */
+	char *cmd_list[NOF_CMD_LIST] = {NULL};
+
 	int num_token = 0;
 	int i = 0;
 	char sec_dirname[16];
@@ -204,7 +224,7 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 			token_list[i] = strtok(NULL, "/");
 		}
 
-		/* Get src dir */
+		/* Get path of `src` dir used as a basename */
 		for (i = 0; i < num_token - 3; i++) {
 			if (i == 0)
 				sprintf(path_spp_sec, "/%s/", token_list[i]);
@@ -213,17 +233,45 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 						"%s/", token_list[i]);
 		}
 
-		/* logfile is located in the parent dir of src */
+		/* Dir of logfile is located in the parent dir of src */
 		sprintf(path_spp_log, "%s../log/%s-%d.log",
 				path_spp_sec, sec_name, sec_id);
+
+		/* Setup cmd list */
+		memset(cmd, '\0', sizeof(cmd));
+		sprintf(cmd, "%s", LAUNCH_CMD);
+		cmd_list[0] = cmd;
+
+		/* Path of launcher is `spp/tools/helpers/sec_launcher.py` */
+		memset(launcher, '\0', sizeof(launcher));
+		sprintf(launcher, "%s", LAUNCHER_NAME);
+		memset(path_launcher, '\0', sizeof(path_launcher));
+		sprintf(path_launcher, "%s../tools/helpers/%s",
+				path_spp_sec, launcher);
+		cmd_list[1] = path_launcher;
 
 		/* path of sec proc */
 		get_sec_dir(sec_name, sec_dirname);
 		sprintf(path_spp_sec + strlen(path_spp_sec), "%s/%s/%s",
 				sec_dirname, token_list[num_token-2],
 				sec_name);
+		cmd_list[2] = path_spp_sec;
 
-		RTE_LOG(DEBUG, PRIMARY, "sec_cmd: '%s'.\n", path_spp_sec);
+		i = 0;
+		while (sec_args[i] != NULL) {
+			cmd_list[i+3] = sec_args[i];
+			i++;
+		}
+
+		/* Output debug log for checking tokens of cmd_list */
+		i = 0;
+		while (cmd_list[i] != NULL) {
+			RTE_LOG(DEBUG, PRIMARY, "launch, token[%2d] = %s\n",
+					i, cmd_list[i]);
+			i++;
+		}
+
+		RTE_LOG(DEBUG, PRIMARY, "sec_path: '%s'.\n", path_spp_sec);
 		RTE_LOG(DEBUG, PRIMARY, "sec_log: '%s'.\n", path_spp_log);
 
 		pid_t pid;
@@ -240,7 +288,8 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 			dup2(fd, 2);
 			close(fd);
 
-			if (execv(path_spp_sec, sec_args) != 0)
+			printf("%s\n", sec_args[0]);
+			if (execvp(cmd_list[0], cmd_list) != 0)
 				RTE_LOG(ERR, PRIMARY,
 					"Failed to open child proc!\n");
 		} else
@@ -371,7 +420,7 @@ parse_command(char *str)
 {
 	char *token_list[MAX_PARAMETER] = {NULL};
 	char sec_name[16];
-	char *sec_args[48] = {NULL};
+	char *sec_args[NOF_TOKENS] = {NULL};
 	int num_args = 0;
 	int ret = 0;
 	int i = 0;
@@ -382,7 +431,7 @@ parse_command(char *str)
 	token_list[i] = strtok(str, " ");
 	while (token_list[i] != NULL) {
 		RTE_LOG(DEBUG, PRIMARY,
-				"parse_command: received token %d = %s\n",
+				"parse command, token[%2d] = %s\n",
 				i, token_list[i]);
 		if (i == 2)
 			sprintf(sec_name, "%s", token_list[i]);
