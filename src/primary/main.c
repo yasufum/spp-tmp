@@ -7,19 +7,24 @@
 #include <arpa/inet.h>
 #include <inttypes.h>
 #include <poll.h>
+#include <fcntl.h>
 
 #include <rte_atomic.h>
 #include <rte_eth_ring.h>
 
+#include "shared/common.h"
 #include "args.h"
-#include "common.h"
 #include "init.h"
 #include "primary.h"
 
-/* Buffer sizes of status message of primary. Total must be equal to MSG_SIZE */
+/*
+ * Buffer sizes of status message of primary. Total number of size
+ * must be equal to MSG_SIZE 2048 defined in `shared/common.h`.
+ */
 #define PRI_BUF_SIZE_PHY 512
 #define PRI_BUF_SIZE_RING 1512
 
+#define SPP_PATH_LEN 1024  /* seems enough for path of spp procs */
 #define POLL_TIMEOUT_MS 100
 
 static sig_atomic_t on = 1;
@@ -161,6 +166,91 @@ do_send(int *connected, int *sock, char *str)
 	return 0;
 }
 
+/*
+ * Launch secondary process of given name and ID.
+ *
+ * This function finds the path of secondary by using the path of spp_primary
+ * itself and given proc name.
+ *
+ * Output of launched proc is sent to logfile located in `log` directory in
+ * the project root, and the name of logfile is a combination of proc name
+ * and ID, such as `spp_nfv-1.log`.
+ */
+static int
+launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
+{
+	char path_spp_pri[SPP_PATH_LEN];
+	char path_spp_sec[SPP_PATH_LEN];
+	char path_spp_log[SPP_PATH_LEN];
+	char *token_list[48] = {NULL};  /* contains elems of path_spp_pri */
+	int num_token = 0;
+	int i = 0;
+	char sec_dirname[16];
+	int fd;
+
+	/* Get path of spp_primary to be used to find secondary */
+	if (readlink("/proc/self/exe",
+				path_spp_pri, sizeof(path_spp_pri)) == -1)
+		RTE_LOG(INFO, PRIMARY,
+				"Failed to find exec file of spp_primary.\n");
+	else {
+		/* Tokenize path of spp_primary */
+		token_list[i] = strtok(path_spp_pri, "/");
+		while (token_list[i] != NULL) {
+			// RTE_LOG(DEBUG, PRIMARY, "token: %s\n",
+			//		token_list[i]);
+			i++;
+			num_token++;
+			token_list[i] = strtok(NULL, "/");
+		}
+
+		/* Get src dir */
+		for (i = 0; i < num_token - 3; i++) {
+			if (i == 0)
+				sprintf(path_spp_sec, "/%s/", token_list[i]);
+			else
+				sprintf(path_spp_sec + strlen(path_spp_sec),
+						"%s/", token_list[i]);
+		}
+
+		/* logfile is located in the parent dir of src */
+		sprintf(path_spp_log, "%s../log/%s-%d.log",
+				path_spp_sec, sec_name, sec_id);
+
+		/* path of sec proc */
+		get_sec_dir(sec_name, sec_dirname);
+		sprintf(path_spp_sec + strlen(path_spp_sec), "%s/%s/%s",
+				sec_dirname, token_list[num_token-2],
+				sec_name);
+
+		RTE_LOG(DEBUG, PRIMARY, "sec_cmd: '%s'.\n", path_spp_sec);
+		RTE_LOG(DEBUG, PRIMARY, "sec_log: '%s'.\n", path_spp_log);
+
+		pid_t pid;
+		pid = fork();
+		if (pid < 0)
+			RTE_LOG(ERR, PRIMARY,
+					"Failed to open secondary proc.\n");
+		else if (pid == 0) {
+			/* Open log file with permission `0664` */
+			fd = open(path_spp_log, O_RDWR | O_CREAT, 0664);
+
+			/* change to output of stdout and stderr to logfile */
+			dup2(fd, 1);
+			dup2(fd, 2);
+			close(fd);
+
+			if (execv(path_spp_sec, sec_args) != 0)
+				RTE_LOG(ERR, PRIMARY,
+					"Failed to open child proc!\n");
+		} else
+			RTE_LOG(INFO, PRIMARY, "Launched '%s' with ID %d.\n",
+					path_spp_sec, sec_id);
+	}
+
+	return 0;
+}
+
 /**
  * Retrieve all of statu of ports as JSON format managed by primary.
  *
@@ -280,26 +370,45 @@ static int
 parse_command(char *str)
 {
 	char *token_list[MAX_PARAMETER] = {NULL};
+	char sec_name[16];
+	char *sec_args[48] = {NULL};
+	int num_args = 0;
 	int ret = 0;
 	int i = 0;
+
+	memset(sec_name, '\0', 16);
 
 	/* tokenize the user commands from controller */
 	token_list[i] = strtok(str, " ");
 	while (token_list[i] != NULL) {
-		RTE_LOG(DEBUG, PRIMARY, "token %d = %s\n", i, token_list[i]);
+		RTE_LOG(DEBUG, PRIMARY,
+				"parse_command: received token %d = %s\n",
+				i, token_list[i]);
+		if (i == 2)
+			sprintf(sec_name, "%s", token_list[i]);
+		else if (i > 2)
+			sec_args[i-3] = token_list[i];
+			num_args++;
 		i++;
 		token_list[i] = strtok(NULL, " ");
 	}
 
 	if (!strcmp(token_list[0], "status")) {
-		RTE_LOG(DEBUG, PRIMARY, "status\n");
+		RTE_LOG(DEBUG, PRIMARY, "'status' command received.\n");
 
+		/* Clear str and token_list nouse already */
 		memset(str, '\0', MSG_SIZE);
 		ret = get_status_json(str);
 
+	} else if (!strcmp(token_list[0], "launch")) {
+		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
+				token_list[0]);
+
+		ret = launch_sec_proc(sec_name,
+				strtod(token_list[1], NULL), sec_args);
+
 	} else if (!strcmp(token_list[0], "exit")) {
-		RTE_LOG(DEBUG, PRIMARY, "exit\n");
-		RTE_LOG(DEBUG, PRIMARY, "stop\n");
+		RTE_LOG(DEBUG, PRIMARY, "'exit' command received.\n");
 		cmd = STOP;
 		ret = -1;
 
@@ -395,14 +504,14 @@ main(int argc, char *argv[])
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;
 
+	set_user_log_debug(1);
+
 	/* Register signals */
 	signal(SIGINT, turn_off);
 
 	/* initialise the system */
 	if (init(argc, argv) < 0)
 		return -1;
-
-	set_user_log_debug(1);
 
 	RTE_LOG(INFO, PRIMARY, "Finished Process Init.\n");
 

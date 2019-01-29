@@ -19,7 +19,7 @@
 #define MAX_CLIENT  99
 
 // The number of tokens in a command line.
-#define MAX_PARAMETER 10
+#define MAX_PARAMETER 48
 
 #define NO_FLAGS 0
 
