@@ -14,14 +14,8 @@
 #include "init.h"
 #include "primary.h"
 
-#define CLIENT_QUEUE_RINGSIZE 128
-
-#define MBUFS_PER_CLIENT 1536
-#define MBUFS_PER_PORT 1536
-#define MBUF_CACHE_SIZE 512
-
-/* array of info/queues for clients */
-struct client *clients;
+/* array of info/queues for ring_ports */
+struct ring_port *ring_ports;
 
 /* The mbuf pool for packet rx */
 static struct rte_mempool *pktmbuf_pool;
@@ -36,7 +30,7 @@ struct port_info *ports;
 static int
 init_mbuf_pools(void)
 {
-	const unsigned int num_mbufs = (num_clients * MBUFS_PER_CLIENT)
+	const unsigned int num_mbufs = (num_rings * MBUFS_PER_CLIENT)
 		+ (ports->num_ports * MBUFS_PER_PORT);
 
 	/*
@@ -65,7 +59,7 @@ init_mbuf_pools(void)
 /**
  * Set up the DPDK rings which will be used to pass packets, via
  * pointers, between the multi-process server and client processes.
- * Each client needs one RX queue.
+ * Each ring_port needs one RX queue.
  */
 static int
 init_shm_rings(void)
@@ -75,27 +69,27 @@ init_shm_rings(void)
 	const char *q_name;
 	unsigned int i;
 
-	clients = rte_malloc("client details",
-		sizeof(*clients) * num_clients, 0);
-	if (clients == NULL)
+	ring_ports = rte_malloc("ring_port details",
+		sizeof(*ring_ports) * num_rings, 0);
+	if (ring_ports == NULL)
 		rte_exit(EXIT_FAILURE,
-			"Cannot allocate memory for client program details\n");
+			"Cannot allocate memory for ring_port details\n");
 
-	for (i = 0; i < num_clients; i++) {
-		/* Create an RX queue for each client */
+	for (i = 0; i < num_rings; i++) {
+		/* Create an RX queue for each ring_ports */
 		socket_id = rte_socket_id();
 		q_name = get_rx_queue_name(i);
 		if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
-			clients[i].rx_q = rte_ring_lookup(q_name);
+			ring_ports[i].rx_q = rte_ring_lookup(q_name);
 		} else {
-			clients[i].rx_q = rte_ring_create(q_name,
+			ring_ports[i].rx_q = rte_ring_create(q_name,
 				ringsize, socket_id,
 				/* single prod, single cons */
 				RING_F_SP_ENQ | RING_F_SC_DEQ);
 		}
-		if (clients[i].rx_q == NULL)
+		if (ring_ports[i].rx_q == NULL)
 			rte_exit(EXIT_FAILURE,
-				"Cannot create rx ring queue for client %u\n",
+				"Cannot create rx ring queue for ring_port %u\n",
 				i);
 	}
 
@@ -162,7 +156,7 @@ init(int argc, char *argv[])
 	}
 	check_all_ports_link_status(ports, ports->num_ports, (~0x0));
 
-	/* initialise the client queues/rings for inter-eu comms */
+	/* Initialise the ring_port. */
 	init_shm_rings();
 
 	return 0;
@@ -179,7 +173,7 @@ check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 	uint16_t portid;
 	struct rte_eth_link link;
 
-	RTE_LOG(INFO, PRIMARY, "\nChecking link status");
+	RTE_LOG(INFO, PRIMARY, "Checking link status ");
 	fflush(stdout);
 	for (count = 0; count <= MAX_CHECK_TIME; count++) {
 		all_ports_up = 1;
@@ -206,6 +200,7 @@ check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 			break;
 		}
 	}
+	printf("\n");
 
 	/* all ports up or timed out */
 	for (portid = 0; portid < port_num; portid++) {
@@ -253,7 +248,7 @@ init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 	struct rte_eth_conf local_port_conf = port_conf;
 	struct rte_eth_txconf txq_conf;
 
-	RTE_LOG(INFO, PRIMARY, "Port %u init ... ", port_num);
+	RTE_LOG(INFO, PRIMARY, "Port %u init ...\n", port_num);
 	fflush(stdout);
 
 	rte_eth_dev_info_get(port_num, &dev_info);

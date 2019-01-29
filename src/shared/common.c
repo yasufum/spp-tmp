@@ -44,8 +44,12 @@ set_user_log_debug(int num_user_log)
 }
 
 /**
- * Take the number of clients parameter passed to the app
- * and convert to a number to store in the num_clients variable
+ * Take the number of clients passed with `-n` option and convert to
+ * to a number to store in the num_clients variable.
+ *
+ * TODO(yasufum): Revise the usage of this function for spp_primary because
+ * it does not use for the number of ring ports, but clients. The name of
+ * function is inadequte.
  */
 int
 parse_num_clients(uint16_t *num_clients, const char *clients)

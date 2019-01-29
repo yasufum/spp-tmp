@@ -20,6 +20,8 @@
 #define PRI_BUF_SIZE_PHY 512
 #define PRI_BUF_SIZE_RING 1512
 
+#define POLL_TIMEOUT_MS 100
+
 static sig_atomic_t on = 1;
 
 static enum cmd_type cmd = STOP;
@@ -89,7 +91,7 @@ do_stats_display(void)
 
 	printf("\nCLIENTS\n");
 	printf("-------\n");
-	for (i = 0; i < num_clients; i++) {
+	for (i = 0; i < num_rings; i++) {
 		printf("Client %2u - rx: %9"PRIu64", rx_drop: %9"PRIu64"\n"
 			"            tx: %9"PRIu64", tx_drop: %9"PRIu64"\n",
 			i, ports->client_stats[i].rx,
@@ -233,7 +235,7 @@ get_status_json(char *str)
 	}
 
 	char ring_port[buf_size];
-	for (i = 0; i < num_clients; i++) {
+	for (i = 0; i < num_rings; i++) {
 
 		RTE_LOG(DEBUG, PRIMARY, "Size of ring_ports str: %d\n",
 				(int)strlen(ring_ports));
@@ -254,14 +256,14 @@ get_status_json(char *str)
 		if (cur_buf_size > ringp_buf_size - 1) {
 			RTE_LOG(ERR, PRIMARY,
 				"Cannot send all of ring_port stats (%d/%d)\n",
-				i, num_clients);
+				i, num_rings);
 			sprintf(ring_ports + strlen(ring_ports) - 1, "%s", "");
 			break;
 		}
 
 		sprintf(ring_ports + strlen(ring_ports), "%s", ring_port);
 
-		if (i < num_clients - 1)
+		if (i < num_rings - 1)
 			sprintf(ring_ports, "%s,", ring_ports);
 	}
 
@@ -316,7 +318,6 @@ do_receive(int *connected, int *sock, char *str)
 
 	memset(str, '\0', MSG_SIZE);
 
-#define POLL_TIMEOUT_MS 100
 	ret = poll(&pfd, 1, POLL_TIMEOUT_MS);
 	if (ret <= 0) {
 		if (ret < 0) {

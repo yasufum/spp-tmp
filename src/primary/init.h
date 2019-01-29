@@ -8,20 +8,27 @@
 
 #include <stdint.h>
 
+#define CLIENT_QUEUE_RINGSIZE 128
+
+#define MBUFS_PER_CLIENT 1536
+#define MBUFS_PER_PORT 1536
+#define MBUF_CACHE_SIZE 512
+
 #define MBUF_OVERHEAD (sizeof(struct rte_mbuf) + RTE_PKTMBUF_HEADROOM)
 #define RX_MBUF_DATA_SIZE 2048
 #define MBUF_SIZE (RX_MBUF_DATA_SIZE + MBUF_OVERHEAD)
 
 /*
- * Define a client structure with all needed info, including
- * stats from the clients.
+ * Define a ring_port structure with all needed info, including
+ * stats from the ring_ports.
  */
-struct client {
+struct ring_port {
 	struct rte_ring *rx_q;
-	unsigned int client_id;
+	unsigned int ring_id;
 	/*
-	 * These stats hold how many packets the client will actually receive,
-	 * and how many packets were dropped because the client's queue was full
+	 * These stats hold how many packets the ring_port will actually
+	 * receive, and how many packets were dropped because the ring_port's
+	 * queue was full.
 	 * The port-info stats, in contrast, record how many packets were
 	 * received or transmitted on an actual NIC port.
 	 */
@@ -31,7 +38,7 @@ struct client {
 	} stats;
 };
 
-extern struct client *clients;
+extern struct ring_port *ring_ports;
 
 /* the shared port information: port numbers, rx and tx stats etc. */
 extern struct port_info *ports;

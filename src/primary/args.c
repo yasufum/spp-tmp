@@ -12,8 +12,8 @@
 #include "init.h"
 #include "primary.h"
 
-/* global var for number of clients - extern in header */
-uint16_t num_clients;
+/* global var for number of rings - extern in header */
+uint16_t num_rings;
 char *server_ip;
 int server_port;
 
@@ -28,7 +28,7 @@ usage(void)
 	RTE_LOG(INFO, PRIMARY,
 	    "%s [EAL options] -- -p PORTMASK -n NUM_CLIENTS [-s NUM_SOCKETS]\n"
 	    " -p PORTMASK: hexadecimal bitmask of ports to use\n"
-	    " -n NUM_CLIENTS: number of client processes to use\n"
+	    " -n NUM_RINGS: number of ring ports used from secondaries\n"
 	    , progname);
 }
 
@@ -97,7 +97,7 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			if (parse_num_clients(&num_clients, optarg) != 0) {
+			if (parse_num_clients(&num_rings, optarg) != 0) {
 				usage();
 				return -1;
 			}
@@ -117,7 +117,7 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 		}
 	}
 
-	if (ports->num_ports == 0 || num_clients == 0) {
+	if (ports->num_ports == 0 || num_rings == 0) {
 		usage();
 		return -1;
 	}

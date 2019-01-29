@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include "common.h"
 
-extern uint16_t num_clients;
+extern uint16_t num_rings;
 extern char *server_ip;
 extern int server_port;
 
