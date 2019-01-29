@@ -89,3 +89,29 @@ parse_server(char **server_ip, int *server_port, char *server_addr)
 	*server_port = atoi(token);
 	return 0;
 }
+
+/* Get directory name of given proc_name */
+int get_sec_dir(char *proc_name, char *dir_name)
+{
+	if (!strcmp(proc_name, "spp_nfv")) {
+		sprintf(dir_name, "%s", "nfv");
+		RTE_LOG(DEBUG, SHARED, "Found dir 'nfv' for '%s'.\n",
+				proc_name);
+	} else if (!strcmp(proc_name, "spp_vf")) {
+		sprintf(dir_name, "%s", "vf");
+		RTE_LOG(DEBUG, SHARED, "Found dir 'vf' for '%s'.\n",
+				proc_name);
+	} else if (!strcmp(proc_name, "spp_mirror")) {
+		sprintf(dir_name, "%s", "mirror");
+		RTE_LOG(DEBUG, SHARED, "Found dir 'mirror' for '%s'.\n",
+				proc_name);
+	} else if (!strcmp(proc_name, "spp_pcap")) {
+		sprintf(dir_name, "%s", "pcap");
+		RTE_LOG(DEBUG, SHARED, "Found dir 'pcap' for '%s'.\n",
+				proc_name);
+	} else {
+		RTE_LOG(DEBUG, SHARED, "No dir found for '%s'.\n",
+				proc_name);
+	}
+	return 0;
+}
