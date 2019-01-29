@@ -436,10 +436,13 @@ class V1PrimaryHandler(BaseHandler):
         self.set_route()
 
         self.install(self.make_response)
+        self.install(self.get_body)
 
     def set_route(self):
         self.route('/status', 'GET', callback=self.get_status)
         self.route('/status', 'DELETE', callback=self.clear_status)
+        self.route('/launch', 'PUT',
+                   callback=self.launch_sec_proc)
         self.route('/', 'DELETE', callback=self.pri_exit)
 
     def _get_proc(self):
@@ -463,6 +466,14 @@ class V1PrimaryHandler(BaseHandler):
     def clear_status(self):
         proc = self._get_proc()
         proc.clear()
+
+    def launch_sec_proc(self, body):  # the arg should be "body"
+        for key in ['client_id', 'proc_name', 'eal', 'app']:
+            if key not in body:
+                raise KeyRequired(key)
+
+        proc = self._get_proc()
+        proc.do_launch_sec_proc(body)
 
     def pri_exit(self):
         proc = self._get_proc()

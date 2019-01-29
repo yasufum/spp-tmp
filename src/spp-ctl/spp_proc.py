@@ -18,6 +18,76 @@ TYPE_NFV = "nfv"
 TYPE_MIRROR = "mirror"
 TYPE_PCAP = "pcap"
 
+EAL_OPTS = [
+        # Lcore-related options
+        '-c',  # core mask
+        '-l',  # core list
+        '--lcores',  # core map
+        '--master-lcore',  # is used as master
+        '-s',  # Hex bitmask of cores used as service cores
+        # Device-related options
+        '-b', '--pci-blacklist',  # Blacklist of PCI devs
+        '-w', '--pci-whitelist',  # Blacklist of PCI devs
+        '--vdev',  # Add a virtual device
+        '-d',  # Load external drivers
+        '--no-pci',  # Disable PCI bus.
+        # Multiprocessing-related options
+        '--proc-type',  # primamry, secondary or auto
+        # Memory-related options
+        '-n',  # number of memory channels
+        '-r',  # number of memory ranks
+        '-m',  # Amount of memory to preallocate at startup
+        '--in-memory',  # not create shared data and run entirely in memory
+        '--iova-mode',  # Force IOVA mode to a specific value
+        # Debugging options
+        '--no-shconf',  # No shared files created (no sec)
+        '--no-huge',  # Use anonymous memory instead of hugepages (no sec)
+        '--log-level',   # Specify log level, e.g. '--log-level eal:8'
+        '--file-prefix',  # Use different shared file prefix for a DPDK process
+        # Linux-specific EAL parameters
+        '--create-uio-dev',  # Create /dev/uioX bound to igb_uio
+        '--vmware-tsc-map',  # Use VMware TSC map instead of native RDTSC
+        '--no-hpet',  # Do not use the HPET timer
+        '--vfio-intr',  # Use specified interrupt mode for devs bound to VFIO
+        '--base-virtaddr',  # use different addr for all memmaps of primary
+        '--legacy-mem',  # Use legacy DPDK memory allocation mode
+        '--socket-mem',  # Preallocate memory per socket
+        '--socket-limit',  # Place a per-socket upper limit on memory
+        '--single-file-segments',  # Create fewer files in hugetlbfs
+        '--huge-dir',  # Use specified hugetlbfs instead of autodetected
+        '--huge-unlink',  # Unlink hugepage files after creating
+        '--match-allocations',  # Free hugepages back as original
+        '--syslog'  # syslog facility
+        ]
+
+APP_OPTS = {
+        'spp_nfv':
+        [
+            '-n',  # sec ID
+            '-s',  # address and port
+            '--vhost-client'  # enable client mode
+            ],
+        'spp_vf':
+        [
+            '--client-id',  # sec ID
+            '-s',  # address nd port
+            '--vhost-client'  # enable client mode
+            ],
+        'spp_mirror':
+        [
+            '--client-id',  # sec ID
+            '-s',  # address nd port
+            '--vhost-client'  # enable client mode
+            ],
+        'spp_pcap':
+        [
+            '--client-id',  # sec ID
+            '-s',  # address nd port
+            '-i',
+            '--output',
+            '--limit_file_size'
+            ]}
+
 
 def exec_command(func):
     """Decorator for Sending command and receiving reply.
@@ -225,6 +295,49 @@ class PrimaryProc(SppProc):
     @exec_command
     def clear(self):
         return "clear"
+
+    @exec_command
+    def do_launch_sec_proc(self, args):
+        proc_name = args['proc_name']
+        sec_id = args['client_id']
+
+        eal_opts = []
+        app_opts = []
+
+        # EAL options
+        # Check mandatory options
+        mandatory = False
+        for key in ['-c', '-l', '--lcores']:
+            if key in args['eal'].keys():
+                mandatory = True
+                break
+        if mandatory is False:
+            return None
+
+        if '--proc-type' not in args['eal'].keys():
+            return None
+
+        for opt in EAL_OPTS:
+            if opt in args['eal'].keys():
+                eal_opts.append(opt)
+                val = args['eal'][opt]
+                if (val is not None) and (val != ''):
+                    eal_opts.append(str(val))
+
+        if proc_name in APP_OPTS.keys():
+            for opt in APP_OPTS[proc_name]:
+                if opt in args['app'].keys():
+                    app_opts.append(opt)
+                    val = args['app'][opt]
+                    if (val is not None) and (val != ''):
+                        app_opts.append(str(val))
+
+        query = "launch {} {} {} -- {}".format(
+                sec_id, proc_name, ' '.join(eal_opts), ' '.join(app_opts))
+
+        LOG.info("Query: {}".format(query))
+
+        return query
 
     @exec_command
     def do_exit(self):
