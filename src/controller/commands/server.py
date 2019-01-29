@@ -123,6 +123,10 @@ class SppCtlServer(object):
         if len(self.spp_cli_objs) > idx:
             self.current_idx = idx
             cli_obj = self.spp_cli_objs[self.current_idx]
+
+            common.set_current_server_addr(
+                 cli_obj.ip_addr, cli_obj.port)
+
             print('Switch spp-ctl to "{}: {}:{}".'.format(
                  idx+1, cli_obj.ip_addr, cli_obj.port))
         else:

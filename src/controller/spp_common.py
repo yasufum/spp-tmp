@@ -7,6 +7,10 @@ import os
 
 PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
+SEC_TYPES = ['nfv', 'vf', 'mirror', 'pcap']
+
+cur_server_addr = None
+
 # Maximum num of sock queues for secondaries
 MAX_SECONDARY = 16
 

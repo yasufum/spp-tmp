@@ -3,7 +3,7 @@
 # Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
 
 import os
-
+from .. import spp_common
 
 def decorate_dir(curdir, filelist):
     """Add '/' the end of dirname for path completion
@@ -122,3 +122,9 @@ def is_valid_port(port_num):
         return False
 
     return True
+
+def current_server_addr():
+    return spp_common.cur_server_addr
+
+def set_current_server_addr(ipaddr, port):
+    spp_common.cur_server_addr = '{}:{}'.format(ipaddr, port)

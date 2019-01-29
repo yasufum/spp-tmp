@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
+from __future__ import absolute_import
+
+from .. import spp_common
+from ..shell_lib import common
 
 class SppPrimary(object):
     """Exec SPP primary command.
@@ -13,7 +17,7 @@ class SppPrimary(object):
     """
 
     # All of primary commands used for validation and completion.
-    PRI_CMDS = ['status', 'clear']
+    PRI_CMDS = ['status', 'launch', 'clear']
 
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
@@ -21,11 +25,15 @@ class SppPrimary(object):
     def run(self, cmd):
         """Called from do_pri() to Send command to primary process."""
 
-        if not (cmd in self.PRI_CMDS):
-            print("Invalid pri command: '%s'" % cmd)
+        tmpary = cmd.split(' ')
+        subcmd = tmpary[0]
+        params = tmpary[1:]
+
+        if not (subcmd in self.PRI_CMDS):
+            print("Invalid pri command: '%s'" % subcmd)
             return None
 
-        if cmd == 'status':
+        if subcmd == 'status':
             res = self.spp_ctl_cli.get('primary/status')
             if res is not None:
                 if res.status_code == 200:
@@ -36,7 +44,10 @@ class SppPrimary(object):
                 else:
                     print('Error: unknown response.')
 
-        elif cmd == 'clear':
+        elif subcmd == 'launch':
+            self._run_launch(params)
+
+        elif subcmd == 'clear':
             res = self.spp_ctl_cli.delete('primary/status')
             if res is not None:
                 if res.status_code == 204:
@@ -122,10 +133,175 @@ class SppPrimary(object):
         Called from complete_pri() to complete primary command.
         """
 
+        candidates = []
+        tokens = line.split(' ')
+
+        mytemplate = "-l 1,2 -m 512 -- -n {} -s {}"
+
+        # Show sub commands
+        if len(tokens) == 2:
+            # Add sub commands
+            candidates = candidates + self.PRI_CMDS[:]
+
+        # Show args of `launch` sub command.
+        elif len(tokens) == 3 and tokens[1] == 'launch':
+            for pt in spp_common.SEC_TYPES:
+                candidates.append('{}'.format(pt))
+
+        elif len(tokens) == 4 and tokens[1] == 'launch':
+            if tokens[2] in spp_common.SEC_TYPES:
+                candidates = [
+                        str(i+1) for i in range(spp_common.MAX_SECONDARY)]
+
+        elif len(tokens) == 5 and tokens[1] == 'launch':
+            if (tokens[2] in spp_common.SEC_TYPES) and \
+                    (int(tokens[3])-1 in range(spp_common.MAX_SECONDARY)):
+                sid = tokens[3]
+                candidates = [mytemplate.format(sid, common.current_server_addr())]
+
         if not text:
-            completions = self.PRI_CMDS[:]
+            completions = candidates
         else:
-            completions = [p for p in self.PRI_CMDS
+            completions = [p for p in candidates
                            if p.startswith(text)
                            ]
+
+        #completions.append("nof_tokens:{}".format(len(tokens)))
+
         return completions
+
+    def _get_sec_ids(self):
+        sec_ids = []
+        res = self.spp_ctl_cli.get('processes')
+        if res is not None:
+            if res.status_code == 200:
+                for proc in res.json():
+                    if proc['type'] != 'primary':
+                        sec_ids.append(proc['client-id'])
+            elif res.status_code in self.rest_common_error_codes:
+                # Print default error message
+                pass
+            else:
+                print('Error: unknown response.')
+        return sec_ids
+
+    def _setup_opts_dict(self, opts_list):
+        """Setup options for sending to spp-ctl as a request body.
+
+        Options is setup from given list. If option has no value, None is
+        assgined for the value. For example,
+          ['-l', '1-2', --no-pci, '-m', '512', ...]
+          => {'-l':'1-2', '--no-pci':None, '-m':'512', ...}
+        """
+        prekey = None
+        opts_dict = {}
+        for opt in opts_list:
+            if opt.startswith('-'):
+                opts_dict[opt] = None
+                prekey = opt
+            else:
+                if prekey is not None:
+                    opts_dict[prekey] = opt
+                    prekey = None
+        return opts_dict
+
+    def _run_launch(self, params):
+        """Launch secondary process.
+
+        Parse `launch` command and send request to spp-ctl. Params of the
+        consists of proc type, sec ID and arguments. It allows to skip some
+        params which are completed. All of examples here are same.
+
+        spp > lanuch nfv -l 1-2 ... -- -n 1 ...  # sec ID '1' is skipped
+        spp > lanuch spp_nfv -l 1-2 ... -- -n 1 ...  # use 'spp_nfv' insteads
+        """
+
+        # Check params
+        if len(params) < 2:
+            print('Invalid syntax! Proc type, ID and options are required.')
+            print('E.g. "nfv 1 -l 1-2 -m 512 -- -n 1 -s 192.168.1.100:6666"')
+            return None
+
+        proc_type = params[0]
+        if params[1].startswith('-'):
+            sec_id = None  # should be found later, or failed
+            args = params[1:]
+        else:
+            sec_id = params[1]
+            args = params[2:]
+
+        if proc_type.startswith('spp_') is not True:
+            proc_name = 'spp_' + proc_type
+        else:
+            proc_name = proc_type
+            proc_type = proc_name[len('spp_'):]
+
+        if proc_type not in spp_common.SEC_TYPES:
+            print("'{}' is not supported in launch cmd.".format(proc_type))
+            return None
+
+        if '--' not in args:
+            print('Arguments should include separator "--".')
+            return None
+
+        # Setup options of JSON sent to spp-ctl. Here is an example for
+        # launching spp_nfv.
+        #   {
+        #      'client_id': '1',
+        #      'proc_name': 'spp_nfv',
+        #      'eal': {'-l': '1-2', '-m': '1024', ...},
+        #      'app': {'-n': '1', '-s': '192.168.1.100:6666'}
+        #   }
+        idx_separator = args.index('--')
+        eal_opts = args[:idx_separator]
+        app_opts = args[(idx_separator+1):]
+
+        if '--proc-type' not in args:
+            eal_opts.append('--proc-type')
+            eal_opts.append('secondary')
+
+        opts = {'proc_name': proc_name}
+        opts['eal'] = self._setup_opts_dict(eal_opts)
+        opts['app'] = self._setup_opts_dict(app_opts)
+
+        # Try to find sec_id from app options.
+        if sec_id is None:
+            if (proc_type == 'nfv') and ('-n' in opts['app']):
+                sec_id = opts['app']['-n']
+            elif ('--client-id' in opts['app']):  # vf, mirror or pcap
+                sec_id = opts['app']['--client-id']
+            else:
+                print('Secondary ID is required!')
+                return None
+
+        if sec_id in self._get_sec_ids():
+            print("Cannot add '{}' already used.".format(sec_id))
+            return None
+
+        opts['client_id'] = sec_id
+
+        # Complete or correct sec_id.
+        if proc_name == 'spp_nfv':
+            if '-n' in opts['app'].keys():
+                if (opts['app']['-n'] != sec_id):
+                    opts['app']['-n'] = sec_id
+            else:
+                opts['app']['-n'] = sec_id
+        else:  # vf, mirror or pcap
+            if '--client-id' in opts['app'].keys():
+                if (opts['app']['--client-id'] != sec_id):
+                    opts['app']['--client-id'] = sec_id
+            else:
+                opts['app']['--client-id'] = sec_id
+
+        # Send request for launch secondary.
+        res = self.spp_ctl_cli.put('primary/launch', opts)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print('Succeeded to launch {}:{}.'.format(
+                    proc_type, sec_id))
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')

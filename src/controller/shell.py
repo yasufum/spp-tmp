@@ -47,6 +47,9 @@ class Shell(cmd.Cmd, object):
         self.init_spp_procs()
         self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
 
+        common.set_current_server_addr(
+                self.spp_ctl_cli.ip_addr, self.spp_ctl_cli.port)
+
     def init_spp_procs(self):
         """Initialize delegators of SPP processes.
 
