@@ -5,6 +5,9 @@
 import os
 from .. import spp_common
 
+CHAR_EXCEPT = '-'
+
+
 def decorate_dir(curdir, filelist):
     """Add '/' the end of dirname for path completion
 
@@ -21,39 +24,91 @@ def decorate_dir(curdir, filelist):
 
 
 def compl_common(text, line, ftype=None):
-    """File path completion for 'complete_*' method
+    """File path completion for 'complete_*' method.
 
-    This method is called from 'complete_*' to complete 'do_*'.
-    'text' and 'line' are arguments of 'complete_*'.
+    This is a helper method for `complete_*` methods implemented in a
+    sub class of Cmd. `text` and `line` are arguments of `complete_*`.
 
-    `complete_*` is a member method of builtin Cmd class and
-    called if tab key is pressed in a command defiend by 'do_*'.
-    'text' and 'line' are contents of command line.
-    For example, if you type tab at 'command arg1 ar',
-    last token 'ar' is assigned to 'text' and whole line
-    'command arg1 ar' is assigned to 'line'.
+    `complete_*` is a member method of Cmd class and called if TAB key
+    is pressed in a command defiend by `do_*`. `text` and `line` are
+    contents of command line. For example, if you type TAB after
+    'command arg1 ar', the last token 'ar' is assigned to 'text' and
+    whole line 'command arg1 ar' is assigned to 'line'.
+
+    `ftype` is used to filter the result of completion. If you give 'py'
+    or 'python', the result only includes python scripts.
+      * 'py' or 'python': python scripts.
+      * 'log': log files of extension is 'log'.
+      * 'directory': get only directories, excludes files.
+      * 'file' get only files, excludes directories.
 
     NOTE:
-    If tab is typed after '/', empty text '' is assigned to
-    'text'. For example 'aaa b/', text is not 'b/' but ''.
+    Cmd treats '/' and '-' as special characters. If you type TAB after
+    them, empty text '' is assigned to `text`. For example after
+    'aaa b/', `text` is not 'b/' but ''. It means that completion might
+    not work correctly if given path includes these characters while
+    getting candidates with `os.getcwd()` or `os.listdir()`.
+
+    This method is implemented to complete the path correctly even if
+    special characters are included.
     """
 
+    # spp_common.logger.debug('completion, text = "%s"' % text)
+
+    tokens = line.split(' ')
+    target = tokens[-1]  # get argument given by user
+
     if text == '':  # tab is typed after command name or '/'
-        tokens = line.split(' ')
-        target_dir = tokens[-1]  # get dirname for competion
+
+        # spp_common.logger.debug("tokens: %s" % tokens)
+        # spp_common.logger.debug("target: '%s'" % target)
+
+        # check chars Cmd treats as delimiter
+        if target.endswith(CHAR_EXCEPT):
+            target_dir = '/'.join(target.split('/')[0:-1])
+            target = target.split('/')[-1]
+        else:
+            target_dir = target
+
+        # spp_common.logger.debug("text is '', tokens: '%s'" % tokens)
+        # spp_common.logger.debug("text is '', target_dir: '%s'" % target_dir)
+
         if target_dir == '':  # no dirname means current dir
-            res = decorate_dir(
+            decorated_list = decorate_dir(
                 '.', os.listdir(os.getcwd()))
         else:  # after '/'
-            res = decorate_dir(
+            decorated_list = decorate_dir(
                 target_dir, os.listdir(target_dir))
+
+        # spp_common.logger.debug('decorated_list: %s' % decorated_list)
+
+        res = []
+        if target.endswith(CHAR_EXCEPT):
+            for d in decorated_list:
+                if d.startswith(target):
+
+                    nof_delims_t = target.count(CHAR_EXCEPT)
+                    nof_delims_d = d.count(CHAR_EXCEPT)
+                    idx = nof_delims_d - nof_delims_t + 1
+                    d = d.split(CHAR_EXCEPT)[(-idx):]
+                    d = CHAR_EXCEPT.join(d)
+
+                    res.append(d)
+        else:
+            res = decorated_list
+
     else:  # tab is typed in the middle of a word
-        tokens = line.split(' ')
-        target = tokens[-1]  # target dir for completion
+
+        # spp_common.logger.debug("text is not '', tokens: '%s'" % tokens)
+        # spp_common.logger.debug("text is not '', target: '%s'" % target)
 
         if '/' in target:  # word is a path such as 'path/to/file'
             seg = target.split('/')[-1]  # word to be completed
             target_dir = '/'.join(target.split('/')[0:-1])
+
+            # spp_common.logger.debug('word be completed: "%s"' % seg)
+            # spp_common.logger.debug('target_dir: "%s"' % target_dir)
+
         else:
             seg = text
             target_dir = os.getcwd()
@@ -62,7 +117,31 @@ def compl_common(text, line, ftype=None):
         for t in os.listdir(target_dir):
             if t.find(seg) == 0:  # get words matched with 'seg'
                 matched.append(t)
-        res = decorate_dir(target_dir, matched)
+        decorated_list = decorate_dir(target_dir, matched)
+
+        # spp_common.logger.debug('decorated_list: %s' % decorated_list)
+
+        res = []
+        target_last = target.split('/')[-1]
+        if CHAR_EXCEPT in target_last:
+            for d in decorated_list:
+                if d.startswith(seg):
+
+                    # spp_common.logger.debug('pd: %s' % d)
+
+                    nof_delims_t = target_last.count(CHAR_EXCEPT)
+                    nof_delims_d = d.count(CHAR_EXCEPT)
+                    idx = nof_delims_d - nof_delims_t + 1
+                    d = d.split(CHAR_EXCEPT)[(-idx):]
+                    d = CHAR_EXCEPT.join(d)
+
+                    # spp_common.logger.debug('ad: %s' % d)
+
+                res.append(d)
+        else:
+            res = decorated_list
+
+    # spp_common.logger.debug('res: %s' % res)
 
     if ftype is not None:  # filtering by ftype
         completions = []
@@ -74,6 +153,10 @@ def compl_common(text, line, ftype=None):
             for fn in res:
                 if fn[-3:] == '.py':
                     completions.append(fn)
+        elif ftype == 'log':
+            for fn in res:
+                if fn[-3:] == '.log':
+                    completions.append(fn)
         elif ftype == 'file':
             for fn in res:
                 if fn[-1] != '/':
@@ -82,6 +165,7 @@ def compl_common(text, line, ftype=None):
             completions = res
     else:
         completions = res
+
     return completions
 
 
