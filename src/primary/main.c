@@ -421,7 +421,6 @@ parse_command(char *str)
 	char *token_list[MAX_PARAMETER] = {NULL};
 	char sec_name[16];
 	char *sec_args[NOF_TOKENS] = {NULL};
-	int num_args = 0;
 	int ret = 0;
 	int i = 0;
 
@@ -437,7 +436,6 @@ parse_command(char *str)
 			sprintf(sec_name, "%s", token_list[i]);
 		else if (i > 2)
 			sec_args[i-3] = token_list[i];
-			num_args++;
 		i++;
 		token_list[i] = strtok(NULL, " ");
 	}
