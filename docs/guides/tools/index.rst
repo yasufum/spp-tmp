@@ -11,3 +11,4 @@ Tools
    :numbered:
 
    sppc/index
+   helpers/index
