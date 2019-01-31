@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from .. import spp_common
 from ..shell_lib import common
 
+
 class SppPrimary(object):
     """Exec SPP primary command.
 
@@ -33,12 +34,15 @@ class SppPrimary(object):
             print("Invalid pri command: '%s'" % subcmd)
             return None
 
+        # use short name
+        common_err_codes = self.spp_ctl_cli.rest_common_error_codes
+
         if subcmd == 'status':
             res = self.spp_ctl_cli.get('primary/status')
             if res is not None:
                 if res.status_code == 200:
                     self.print_status(res.json())
-                elif res.status_code in self.rest_common_error_codes:
+                elif res.status_code in common_err_codes:
                     # Print default error message
                     pass
                 else:
@@ -52,7 +56,7 @@ class SppPrimary(object):
             if res is not None:
                 if res.status_code == 204:
                     print('Clear port statistics.')
-                elif res.status_code in self.rest_common_error_codes:
+                elif res.status_code in common_err_codes:
                     pass
                 else:
                     print('Error: unknown response.')
@@ -62,6 +66,7 @@ class SppPrimary(object):
 
     def do_exit(self):
         res = self.spp_ctl_cli.delete('primary')
+
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
@@ -199,7 +204,7 @@ class SppPrimary(object):
                 for proc in res.json():
                     if proc['type'] != 'primary':
                         sec_ids.append(proc['client-id'])
-            elif res.status_code in self.rest_common_error_codes:
+            elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 # Print default error message
                 pass
             else:
