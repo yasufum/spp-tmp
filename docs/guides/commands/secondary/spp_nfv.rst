@@ -49,6 +49,7 @@ source if it is not patched.
 
     spp > nfv 1; status
     - status: idling
+    - lcores: [1, 2]
     - ports:
       - phy:0 -> ring:0
       - phy:1
