@@ -174,3 +174,97 @@ Response
 ~~~~~~~~
 
 There is no body content for the response of a successful ``DELETE`` request.
+
+
+PUT /v1/primary/launch
+----------------------
+
+Launch a secondary process.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+
+Request (path)
+~~~~~~~~~~~~~~
+
+There is no params in this API.
+
+
+Request (body)
+~~~~~~~~~~~~~~
+
+There are four params for launching secondary process. ``eal`` object
+contains a set of EAL options, and ``app`` contains options of teh process.
+
+.. _table_spp_ctl_spp_primary_launch_body:
+
+.. table:: Request body params for launch secondary for spp_primary.
+
+    +-----------+---------+-------------------------------------------------+
+    | Name      | Type    | Description                                     |
+    |           |         |                                                 |
+    +===========+=========+=================================================+
+    | proc_name | string  | Process name such as ``spp_nfv`` or ``spp_vf``. |
+    +-----------+---------+-------------------------------------------------+
+    | client_id | integer | Secondary ID for the process.                   |
+    +-----------+---------+-------------------------------------------------+
+    | eal       | object  | Hash obj of DPDK's EAL options.                 |
+    +-----------+---------+-------------------------------------------------+
+    | app       | object  | Hash obj of options of secondary process.       |
+    +-----------+---------+-------------------------------------------------+
+
+``eal`` object is a hash of EAL options and its values. All of EAL options
+are referred in
+`EAL parameters
+<https://doc.dpdk.org/guides/linux_gsg/linux_eal_parameters.html>`_
+in DPDK's
+`Getting Started Guide for Linux
+<https://doc.dpdk.org/guides/linux_gsg/index.html>`_.
+
+``app`` object is a hash of options of secondary process, and you can refer
+options of each of processes in
+`How to Use
+<https://spp-tmp.readthedocs.io/en/latest/setup/howto_use.html>`_
+section.
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+Launch ``spp_nfv`` with secondary ID 1 and lcores ``1,2``.
+
+.. code-block:: console
+
+    $ curl -X PUT -H 'application/json' \
+      -d "{'proc_name': 'spp_nfv', 'client_id': '1', \
+        'eal': {'-m': '512', '-l': '1,2', '--proc-type': 'secondary'}, \
+        'app': {'-s': '192.168.11.59:6666', '-n': '1'}}"
+      http://127.0.0.1:7777/v1/primary/launch
+
+Launch ``spp_vf`` with secondary ID 2 and lcores ``1,4-7``.
+
+.. code-block:: console
+
+    $ curl -X PUT -H 'application/json' \
+      -d "{'proc_name': 'spp_vf', 'client_id': '2', \
+        'eal': {'-m': '512', '-l': '1,4-7', '--proc-type': 'secondary'}, \
+        'app': {'-s': '192.168.11.59:6666', '--client-id': '2'}}"
+      http://127.0.0.1:7777/v1/primary/launch
+
+
+Response
+~~~~~~~~
+
+There is no body content for the response of a successful ``PUT`` request.
+
+
+Equivalent CLI command
+~~~~~~~~~~~~~~~~~~~~~~
+
+``proc_type`` is ``nfv``, ``vf`` or ``mirror`` or so.
+``eal_opts`` and ``app_opts`` are the same as launching from command line.
+
+.. code-block:: none
+
+    pri; launch {proc_type} {sec_id} {eal_opts} -- {app_opts}
