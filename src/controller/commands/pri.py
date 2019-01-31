@@ -83,6 +83,7 @@ class SppPrimary(object):
         long.
 
             {
+                "lcores": [0, 3],
                 "phy_ports": [
                     {
                         "eth": "56:48:4f:12:34:00",
@@ -107,28 +108,34 @@ class SppPrimary(object):
 
         It is formatted to be simple and more understandable.
 
-            Physical Ports:
-              ID          rx          tx     tx_drop  mac_addr
-               0    78932932    78932931           1  56:48:4f:53:54:00
-            Ring Ports:
-              ID          rx          tx     rx_drop     rx_drop
-               0       89283       89283           0           0
-               ...
+            - lcores:
+                [0, 3]
+            - physical ports:
+                ID          rx          tx     tx_drop  mac_addr
+                 0    78932932    78932931           1  56:48:4f:53:54:00
+            - ring ports:
+                ID          rx          tx     rx_drop     rx_drop
+                 0       89283       89283           0           0
+                 ...
         """
 
+        if 'lcores' in json_obj:
+            print('- lcores:')
+            print('  - {}'.format(json_obj['lcores']))
+
         if 'phy_ports' in json_obj:
-            print('Physical Ports:')
-            print('  ID          rx          tx     tx_drop  mac_addr')
+            print('- physical ports:')
+            print('    ID          rx          tx     tx_drop  mac_addr')
             for pports in json_obj['phy_ports']:
-                print('  %2d  %10d  %10d  %10d  %s' % (
+                print('    %2d  %10d  %10d  %10d  %s' % (
                     pports['id'], pports['rx'],  pports['tx'],
                     pports['tx_drop'], pports['eth']))
 
         if 'ring_ports' in json_obj:
-            print('Ring Ports:')
-            print('  ID          rx          tx     rx_drop     rx_drop')
+            print('- ring Ports:')
+            print('    ID          rx          tx     rx_drop     rx_drop')
             for rports in json_obj['ring_ports']:
-                print('  %2d  %10d  %10d  %10d  %10d' % (
+                print('    %2d  %10d  %10d  %10d  %10d' % (
                     rports['id'], rports['rx'],  rports['tx'],
                     rports['rx_drop'], rports['tx_drop']))
 
