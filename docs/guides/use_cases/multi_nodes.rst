@@ -49,8 +49,24 @@ for each of hosts. SPP CLI is able to be launched on any of nodes.
         -b 192.168.11.103 \
         -b 192.168.11.104 \
 
-If you succeeded to launch all of processes before, you can find them
-by running ``sever list`` command.
+Or you can add nodes after launching SPP CLI. Here is an example of
+launching it with first node, and adding the rest of nodes after.
+
+.. code-block:: console
+
+    # Launch SPP CLI
+    $ python src/spp.py -b 192.168.11.101
+    Welcome to the spp.  Type help or ? to list commands.
+
+    spp > server add 192.168.11.102
+    Registered spp-ctl "192.168.11.102:7777".
+    spp > server add 192.168.11.103
+    Registered spp-ctl "192.168.11.103:7777".
+    spp > server add 192.168.11.104
+    Registered spp-ctl "192.168.11.104:7777".
+
+If you have succeeded to launch all of ``spp-ctl`` processes before,
+you can find them by running ``sever list`` command.
 
 .. code-block:: console
 
