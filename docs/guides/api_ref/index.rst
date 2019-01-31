@@ -1,11 +1,17 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
-    Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
+    Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
 
 API Reference
 =============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :numbered:
 
-   spp-ctl
+   overview
+   proc_independ
+   spp_primary
+   spp_nfv
+   spp_vf
+   spp_mirror
+   spp_pcap
