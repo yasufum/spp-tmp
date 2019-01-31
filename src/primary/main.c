@@ -21,8 +21,9 @@
  * Buffer sizes of status message of primary. Total number of size
  * must be equal to MSG_SIZE 2048 defined in `shared/common.h`.
  */
+#define PRI_BUF_SIZE_LCORE 128
 #define PRI_BUF_SIZE_PHY 512
-#define PRI_BUF_SIZE_RING 1512
+#define PRI_BUF_SIZE_RING (MSG_SIZE - PRI_BUF_SIZE_LCORE - PRI_BUF_SIZE_PHY)
 
 #define SPP_PATH_LEN 1024  /* seems enough for path of spp procs */
 #define NOF_TOKENS 48  /* seems enough to contain tokens */
@@ -42,6 +43,9 @@ static sig_atomic_t on = 1;
 static enum cmd_type cmd = STOP;
 
 static struct pollfd pfd;
+
+/* global var for number of rings - extern in header */
+uint8_t lcore_id_used[RTE_MAX_LCORE];
 
 static void
 turn_off(int sig)
@@ -306,6 +310,7 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
  * Here is an exmaple.
  *
  * {
+ *     "lcores": [0],
  *     "ring_ports": [
  *     {
  *         "id": 0,
@@ -332,15 +337,30 @@ static int
 get_status_json(char *str)
 {
 	int i;
+	int lcore_buf_size = PRI_BUF_SIZE_LCORE;
 	int phyp_buf_size = PRI_BUF_SIZE_PHY;
 	int ringp_buf_size = PRI_BUF_SIZE_RING;
+	char lcore_ids[PRI_BUF_SIZE_LCORE];
 	char phy_ports[phyp_buf_size];
 	char ring_ports[ringp_buf_size];
+	memset(lcore_ids, '\0', lcore_buf_size);
 	memset(phy_ports, '\0', phyp_buf_size);
 	memset(ring_ports, '\0', ringp_buf_size);
 
-	int buf_size = 256;
+	int buf_size = 256;  /* size of temp buffer */
+	char lcore_id[108];  /* seems enough */
 	char phy_port[buf_size];
+	char ring_port[buf_size];
+
+	memset(lcore_id, '\0', sizeof(lcore_id));
+	for (i = 0; i < RTE_MAX_LCORE; i++) {
+		if (lcore_id_used[i] == 1)
+			sprintf(lcore_id + strlen(lcore_id), "%d,", i);
+	}
+	sprintf(lcore_id + strlen(lcore_id) - 1, "%s", "");
+
+	sprintf(lcore_ids, "\"lcores\":[%s]", lcore_id);
+
 	for (i = 0; i < ports->num_ports; i++) {
 
 		RTE_LOG(DEBUG, PRIMARY, "Size of phy_ports str: %d\n",
@@ -373,7 +393,6 @@ get_status_json(char *str)
 			sprintf(phy_ports, "%s,", phy_ports);
 	}
 
-	char ring_port[buf_size];
 	for (i = 0; i < num_rings; i++) {
 
 		RTE_LOG(DEBUG, PRIMARY, "Size of ring_ports str: %d\n",
@@ -406,11 +425,12 @@ get_status_json(char *str)
 			sprintf(ring_ports, "%s,", ring_ports);
 	}
 
-	RTE_LOG(DEBUG, PRIMARY, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
-			phy_ports, ring_ports);
+	RTE_LOG(DEBUG, PRIMARY,
+			"{%s, \"phy_ports\": [%s], \"ring_ports\": [%s]}\n",
+			lcore_ids, phy_ports, ring_ports);
 
-	sprintf(str, "{\"phy_ports\": [%s], \"ring_ports\": [%s]}",
-			phy_ports, ring_ports);
+	sprintf(str, "{%s, \"phy_ports\": [%s], \"ring_ports\": [%s]}",
+			lcore_ids, phy_ports, ring_ports);
 
 	return 0;
 }

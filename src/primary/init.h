@@ -38,6 +38,8 @@ struct ring_port {
 	} stats;
 };
 
+extern uint8_t lcore_id_used[RTE_MAX_LCORE];
+
 extern struct ring_port *ring_ports;
 
 /* the shared port information: port numbers, rx and tx stats etc. */
