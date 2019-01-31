@@ -67,6 +67,7 @@ class SppNfv(object):
 
           spp > nfv 1;status
           - status: idling
+          - lcores: [1, 2]
           - ports:
             - phy:0 -> ring:0
             - phy:1
@@ -74,6 +75,7 @@ class SppNfv(object):
 
         nfv_attr = json_obj
         print('- status: %s' % nfv_attr['status'])
+        print('- lcores: %s' % nfv_attr['lcores'])
         print('- ports:')
         for port in nfv_attr['ports']:
             dst = None
