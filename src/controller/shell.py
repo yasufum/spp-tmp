@@ -311,10 +311,19 @@ class Shell(cmd.Cmd, object):
     def do_pri(self, command):
         """Send a command to primary process.
 
-        Spp primary takes sub commands.
+        Show resources and statistics, or clear it.
 
-        spp > pri;status
-        spp > pri;clear
+            spp > pri; status  # show status
+
+            spp > pri; clear   # clear statistics
+
+        Launch secondary process..
+
+            # Launch nfv:1
+            spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 192.168....
+
+            # Launch vf:2
+            spp > pri; launch vf 2 -l 1,4-7 -m 512 -- --client-id 2 -s ...
         """
 
         # Remove unwanted spaces and first char ';'
