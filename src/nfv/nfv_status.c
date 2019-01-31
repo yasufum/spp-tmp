@@ -9,15 +9,15 @@
 #include "nfv_status.h"
 
 /*
- * Get status of spp_nfv or spp_vm as JSON format. It consists of running
+ * Get status of spp_nfv as JSON format. It consists of running
  * status and patch info of ports.
  *
  * Here is an example of well-formatted JSON status to better understand.
- * Actual status has no spaces and new lines inserted as
- * '{"status":"running","ports":[{"src":"phy:0","dst":"ring:0"},...]}'
+ * Actual status has no spaces and new lines inserted.
  *
  *   {
  *     "status": "running",
+ *     "lcores": [1, 2],
  *     "ports": ["phy:0", "phy:1", "ring:0", "vhost:0"],
  *     "patches": [
  *       {"src":"phy:0","dst": "ring:0"},
@@ -28,6 +28,7 @@
 void
 get_sec_stats_json(char *str, uint16_t client_id,
 		const char *running_stat,
+		uint8_t lcore_id_used[RTE_MAX_LCORE],
 		struct port *ports_fwd_array,
 		struct port_map *port_map)
 {
@@ -36,14 +37,33 @@ get_sec_stats_json(char *str, uint16_t client_id,
 	sprintf(str + strlen(str), "\"status\":");
 	sprintf(str + strlen(str), "\"%s\",", running_stat);
 
+	append_lcore_info_json(str, lcore_id_used);
+	sprintf(str + strlen(str), ",");
+
 	append_port_info_json(str, ports_fwd_array, port_map);
 	sprintf(str + strlen(str), ",");
 
 	append_patch_info_json(str, ports_fwd_array, port_map);
 	sprintf(str + strlen(str), "}");
 
-	// make sure to be terminated with null character
+	/* Make sure to be terminated with null character. */
 	sprintf(str + strlen(str), "%c", '\0');
+}
+
+int
+append_lcore_info_json(char *str,
+		uint8_t lcore_id_used[RTE_MAX_LCORE])
+{
+
+	sprintf(str + strlen(str), "\"lcores\":[");
+	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+		if (lcore_id_used[i] == 1)
+			sprintf(str + strlen(str), "%d,", i);
+	}
+
+	/* Remove last ','. */
+	sprintf(str + strlen(str) - 1, "%s", "]");
+	return 0;
 }
 
 
@@ -96,10 +116,10 @@ append_port_info_json(char *str,
 		}
 	}
 
-	// Check if it has at least one port to remove ",".
+	/* Check if it has at least one port to remove ",". */
 	if (has_port == 0) {
 		sprintf(str + strlen(str), "]");
-	} else {  // Remove last ','
+	} else {  /* Remove last ',' .*/
 		sprintf(str + strlen(str) - 1, "]");
 	}
 
@@ -238,10 +258,10 @@ append_patch_info_json(char *str,
 	}
 
 
-	// Check if it has at least one patch to remove ",".
+	/* Check if it has at least one patch to remove ",". */
 	if (has_patch == 0) {
 		sprintf(str + strlen(str), "]");
-	} else {  // Remove last ','
+	} else {  /* Remove last ','. */
 		sprintf(str + strlen(str) - 1, "]");
 	}
 

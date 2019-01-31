@@ -24,6 +24,8 @@
 
 static sig_atomic_t on = 1;
 
+uint8_t lcore_id_used[RTE_MAX_LCORE] = {};
+
 enum {
 	/*
 	 * Long options mapped to a short option.
@@ -182,6 +184,7 @@ main(int argc, char *argv[])
 	unsigned int i;
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;
+	char log_msg[1024] = {'\0'};  /* temporary log message */
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
@@ -228,17 +231,28 @@ main(int argc, char *argv[])
 
 	cmd = STOP;
 
-	/* update port_forward_array with active port */
+	/* update port_forward_array with active port. */
 	for (i = 0; i < nb_ports; i++) {
 		if (!rte_eth_dev_is_valid_port(i))
 			continue;
 
-		/* Update ports_fwd_array with phy port*/
+		/* Update ports_fwd_array with phy port. */
 		ports_fwd_array[i].in_port_id = i;
 		port_map[i].port_type = PHY;
 		port_map[i].id = i;
 		port_map[i].stats = &ports->port_stats[i];
 	}
+
+	/* Inspect lcores in use. */
+	RTE_LCORE_FOREACH(lcore_id) {
+		lcore_id_used[lcore_id] = 1;
+	}
+	sprintf(log_msg, "Used lcores: ");
+	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+		if (lcore_id_used[i] == 1)
+			sprintf(log_msg + strlen(log_msg), "%d ", i);
+	}
+	RTE_LOG(DEBUG, SPP_NFV, "%s\n", log_msg);
 
 	lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {

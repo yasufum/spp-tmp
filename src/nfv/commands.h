@@ -174,9 +174,11 @@ parse_command(char *str)
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
 			get_sec_stats_json(str, client_id, "running",
+					lcore_id_used,
 					ports_fwd_array, port_map);
 		else
 			get_sec_stats_json(str, client_id, "idling",
+					lcore_id_used,
 					ports_fwd_array, port_map);
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
