@@ -6,7 +6,9 @@ eventlet.monkey_patch()
 
 import argparse
 import errno
+import json
 import logging
+import os
 import socket
 import subprocess
 
@@ -19,6 +21,8 @@ LOG = logging.getLogger(__name__)
 
 MSG_SIZE = 4096
 
+# relative path of `cpu_layout.py`
+CPU_LAYOUT_TOOL = 'tools/helpers/cpu_layout.py'
 
 class Controller(object):
 
@@ -141,6 +145,27 @@ class Controller(object):
                 p["client-id"] = proc.id
             procs.append(p)
         return procs
+
+    def get_cpu_layout(self):
+        """Get cpu layout with helper tool 'cpu_layout.py'."""
+
+        # This script is 'src/spp-ctl/spp_ctl.py' and it expect to find
+        # the tool in tools/helpers/cpu_layout.py'.
+        cmd_path = "{}/../../{}".format(
+                os.path.dirname(__file__), CPU_LAYOUT_TOOL)
+
+        if os.path.exists(cmd_path):
+            # Get cpu layout as bytes of JSON foramtted string
+            cmd_res = subprocess.check_output(
+                    [cmd_path, '--json'],  # required '--json' option
+                    stderr=subprocess.STDOUT)
+
+            # Decode bytes to str
+            return json.loads(cmd_res.decode('utf-8'))
+
+        else:
+            LOG.error("'{}' cannot be found.".format(CPU_LAYOUT_TOOL))
+            return None
 
     def do_exit(self, proc_type, proc_id):
         removed_id = None  # remove proc info of ID from self.procs

@@ -152,11 +152,15 @@ class V1Handler(BaseHandler):
 
     def set_route(self):
         self.route('/processes', 'GET', callback=self.get_processes)
+        self.route('/cpus', 'GET', callback=self.get_cpu_layout)
 
     def get_processes(self):
         LOG.info("get processes called.")
         return self.ctrl.get_processes()
 
+    def get_cpu_layout(self):
+        LOG.info("get cpu layout called.")
+        return self.ctrl.get_cpu_layout()
 
 class V1VFCommon(object):
     """Define common methods for vf and mirror handler."""
