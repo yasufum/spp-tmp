@@ -44,7 +44,7 @@ static enum cmd_type cmd = STOP;
 
 static struct pollfd pfd;
 
-/* global var for number of rings - extern in header */
+/* global var - extern in header */
 uint8_t lcore_id_used[RTE_MAX_LCORE];
 
 static void

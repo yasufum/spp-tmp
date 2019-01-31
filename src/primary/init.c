@@ -23,6 +23,7 @@ static struct rte_mempool *pktmbuf_pool;
 /* the port details */
 struct port_info *ports;
 
+/* global var - extern in header */
 uint8_t lcore_id_used[RTE_MAX_LCORE] = {};
 
 /**
@@ -109,7 +110,7 @@ init(int argc, char *argv[])
 	int lcore_id;
 	const struct rte_memzone *mz;
 	uint16_t count, total_ports;
-	char log_msg[1024] = { '\0' };
+	char log_msg[1024] = { '\0' };  /* temporary log message */
 
 	/* init EAL, parsing EAL args */
 	retval = rte_eal_init(argc, argv);
@@ -163,6 +164,7 @@ init(int argc, char *argv[])
 	/* Initialise the ring_port. */
 	init_shm_rings();
 
+	/* Inspect lcores in use */
 	RTE_LCORE_FOREACH(lcore_id) {
 		lcore_id_used[lcore_id] = 1;
 	}
