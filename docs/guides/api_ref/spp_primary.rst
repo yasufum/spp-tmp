@@ -31,14 +31,16 @@ Response
 
 .. table:: Response params of primary status.
 
-    +------------+-------+-------------------------------------------+
-    | Name       | Type  | Description                               |
-    |            |       |                                           |
-    +============+=======+===========================================+
-    | phy_ports  | array | An array of statistics of physical ports. |
-    +------------+-------+-------------------------------------------+
-    | ring_ports | array | An array of statistics of ring ports.     |
-    +------------+-------+-------------------------------------------+
+    +------------+-------+----------------------------------------+
+    | Name       | Type  | Description                            |
+    |            |       |                                        |
+    +============+=======+========================================+
+    | lcores     | array | Array of lcores spp_primary is using.  |
+    +------------+-------+----------------------------------------+
+    | phy_ports  | array | Array of statistics of physical ports. |
+    +------------+-------+----------------------------------------+
+    | ring_ports | array | Array of statistics of ring ports.     |
+    +------------+-------+----------------------------------------+
 
 Physical port object.
 
@@ -89,6 +91,9 @@ Response example
 .. code-block:: json
 
     {
+      "lcores": [
+        0
+      ],
       "phy_ports": [
         {
           "id": 0,
@@ -120,20 +125,7 @@ Response example
           "tx": 0,
           "tx_drop": 0
         },
-        {
-          "id": 2,
-          "rx": 0,
-          "rx_drop": 0,
-          "tx": 0,
-          "tx_drop": 0
-        },
-        {
-          "id": 3,
-          "rx": 0,
-          "rx_drop": 0,
-          "tx": 0,
-          "tx_drop": 0
-        }
+        ...
       ]
     }
 
