@@ -284,8 +284,10 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 			RTE_LOG(ERR, PRIMARY,
 					"Failed to open secondary proc.\n");
 		else if (pid == 0) {
-			/* Open log file with permission `0664` */
-			fd = open(path_spp_log, O_RDWR | O_CREAT, 0664);
+			/* Open log file with mode equals to 'a+' */
+			fd = open(path_spp_log,
+					O_RDWR | O_CREAT | O_APPEND,
+					0666);
 
 			/* change to output of stdout and stderr to logfile */
 			dup2(fd, 1);
