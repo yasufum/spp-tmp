@@ -1,5 +1,8 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
-    Copyright(c) 2017 Nippon Telegraph and Telephone Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
+
+
+.. _commands_experimental:
 
 Experimental Commands
 =====================
@@ -7,6 +10,9 @@ Experimental Commands
 There are experimental commands in SPP controller.
 It might not work for some cases properly because it is not well tested
 currently.
+
+
+.. _commands_experimental_topo:
 
 topo
 ----
@@ -143,6 +149,8 @@ To generate a jpg image, run ``topo`` with the name ``network.jpg``.
     ...  network.jpg  ...
 
 
+.. _commands_experimental_topo_subgraph:
+
 topo_subgraph
 -------------
 
@@ -214,8 +222,16 @@ delete subgraph ``guest_vm``.
     spp > topo_subgraph del guest_vm
 
 
+.. _commands_experimental_topo_resize:
+
 topo_resize
 -----------
+
+.. note::
+
+    This command will be removed because the size of image is configurable
+    with :ref:`config<commands_common_config>` command. You can resize images by changing the value of
+    ``topo_size``.
 
 ``topo_resize`` is a supplemental command for changing the size of
 images displayed on the terminal with ``topo``.
@@ -249,6 +265,8 @@ or ratio.
     spp > topo_resize 0.8
     80%
 
+
+.. _commands_experimental_load_cmd:
 
 load_cmd
 --------
