@@ -203,43 +203,6 @@ class Shell(cmd.Cmd, object):
                             return True
         return False
 
-    def check_sec_cmds(self, cmds):
-        """Validate secondary commands before sending"""
-
-        # TODO(yasufum) change to return True or False, or None
-        # instead of 0 or 1
-
-        level1 = ['status', 'exit', 'forward', 'stop']
-        level2 = ['add', 'patch', 'del']
-        patch_args = ['reset']
-        add_del_args = ['ring', 'vhost', 'pcap', 'nullpmd']
-        cmdlist = cmds.split(' ')
-        valid = 0
-
-        length = len(cmdlist)
-        if length == 1:
-            if cmdlist[0] in level1:
-                valid = 1
-
-        elif length == 2:
-            if cmdlist[0] == 'patch':
-                if cmdlist[1] in patch_args:
-                    valid = 1
-
-            elif cmdlist[0] == 'add' or cmdlist[0] == 'del':
-                p_type, p_id = cmdlist[1].split(':')
-                if p_type in add_del_args:
-                    if str.isdigit(p_id):
-                        valid = 1
-
-        elif length == 3:
-            if cmdlist[0] in level2:
-                if cmdlist[0] == 'patch':
-                    if self.is_patched_ids_valid(cmdlist[1], cmdlist[2]):
-                        valid = 1
-
-        return valid
-
     def clean_cmd(self, cmdstr):
         """remove unwanted spaces to avoid invalid command error"""
 
