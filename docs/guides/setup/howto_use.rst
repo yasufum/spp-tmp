@@ -301,6 +301,58 @@ unique among all of secondaries.
 If you attempt to launch a secondary process with the same ID, it
 is failed.
 
+
+Launch from SPP CLI
+~~~~~~~~~~~~~~~~~~~
+
+You can launch SPP secondary processes from SPP CLI wihtout openning
+other terminals. ``pri; launch`` command is for any of secondary processes
+with specific options. It takes secondary type, ID and options of EAL
+and application itself as similar to launching from terminal.
+Here is an example of launching ``spp_nfv``. You notice that there is no
+``--proc-type secondary`` which should be required for secondary.
+It is added to the options by SPP CLI before launching the process.
+
+.. code-block:: none
+
+   # launch spp_nfv with sec ID 2
+   spp > pri; launch nfv 2 -l 1,2 -m 512 -- -n 2 -s 192.168.1.100:6666
+   Send request to launch nfv:2.
+
+After running this command, you can find ``nfv:2`` is launched
+successfully.
+
+.. code-block:: none
+
+   spp > status
+   - spp-ctl:
+     - address: 192.168.1.100:7777
+   - primary:
+     - status: running
+   - secondary:
+     - processes:
+       1: nfv:2
+
+Instead of displaying log messages in terminal, it outputs the messages
+in a log file. All of log files of secondary processes launched with
+``pri`` are located in ``log/`` directory under the project root.
+The name of log file is found ``log/spp_nfv-2.log``.
+
+.. code-block:: console
+
+    $ tail -f log/spp_nfv-2.log
+    SPP_NFV: Used lcores: 1 2
+    SPP_NFV: entering main loop on lcore 2
+    SPP_NFV: My ID 2 start handling message
+    SPP_NFV: [Press Ctrl-C to quit ...]
+    SPP_NFV: Creating socket...
+    SPP_NFV: Trying to connect ... socket 24
+    SPP_NFV: Connected
+    SPP_NFV: Received string: _get_client_id
+    SPP_NFV: token 0 = _get_client_id
+    SPP_NFV: To Server: {"results":[{"result":"success"}],"client_id":2, ...
+
+
 Launch SPP on VM
 ~~~~~~~~~~~~~~~~
 
@@ -313,7 +365,7 @@ Before launching VM, you need to prepare a socket file for creating
 ``vhost-user`` device.
 Run ``add`` command with resource UID ``vhost:0`` to create socket file.
 
-.. code-block:: console
+.. code-block:: none
 
     spp > nfv 1; add vhost:0
 
