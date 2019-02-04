@@ -1,6 +1,9 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
 
+
+.. _commands_spp_nfv:
+
 spp_nfv
 =======
 
@@ -38,6 +41,9 @@ All of Sub commands are referred with ``help`` command.
         spp > nfv 1;  # press TAB
         add     del     exit    forward patch   status  stop
 
+
+.. _commands_spp_nfv_status:
+
 status
 ------
 
@@ -54,6 +60,8 @@ source if it is not patched.
       - phy:0 -> ring:0
       - phy:1
 
+
+.. _commands_spp_nfv_add:
 
 add
 ---
@@ -75,6 +83,8 @@ Or adding ``vhost:0`` by
     Add vhost:0.
 
 
+.. _commands_spp_nfv_patch:
+
 patch
 ------
 
@@ -86,6 +96,8 @@ This command just creates a path and does not start forwarding.
     spp > nfv 1; patch phy:0 ring:0
     Patch ports (phy:0 -> ring:0).
 
+
+.. _commands_spp_nfv_forward:
 
 forward
 -------
@@ -109,6 +121,8 @@ executing it.
       - phy:1
 
 
+.. _commands_spp_nfv_stop:
+
 stop
 ----
 
@@ -131,6 +145,8 @@ executing it.
       - phy:1
 
 
+.. _commands_spp_nfv_del:
+
 del
 ---
 
@@ -141,6 +157,8 @@ Delete a port from the secondary.
     spp> nfv 1; del ring:0
     Delete ring:0.
 
+
+.. _commands_spp_nfv_exit:
 
 exit
 ----
