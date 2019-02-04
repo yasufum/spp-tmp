@@ -196,8 +196,9 @@ To launch SPP primary, run ``spp_primary`` with specific options.
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
         -l 1 -n 4 \
         --socket-mem 512,512 \
-        --huge-dir=/dev/hugepages \
-        --proc-type=primary \
+        --huge-dir /dev/hugepages \
+        --proc-type primary \
+        --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
         -n 10 \
@@ -207,23 +208,38 @@ SPP primary takes EAL options and application specific options.
 
 Core list option ``-l`` is for assigining cores and SPP primary requires just
 one core. You can use core mask option ``-c`` instead of ``-l``.
-
 You can use ``-m 1024`` for memory reservation instead of
 ``--socket-mem 1024,0`` if you use single NUMA node. In this case, 512 MB is
 reserved on each of nodes.
 
 .. note::
 
-    Spp primary shows messages in the terminal after launched. However, the
-    contents of the message is different for the number of lcores assigned.
+   If you use DPDK v18.08 or before,
+   you should consider give ``--base-virtaddr`` with 4 GiB or higher value
+   because a secondary process is accidentally failed to mmap while init
+   memory. The reason of the failure is secondary process tries to reserve
+   the region which is already used by some of thread of primary.
 
-    If you assign two lcores, SPP primary show statistics within
-    interval time periodically. On the other hand, just one lcore, it shows
-    log messages.
+   .. code-block:: console
 
-    Anyway, you can retrieve it with ``status`` command of spp_primary.
-    The second core of spp_primary is not used for counting
-    packets actually, but used just for displaying the statistics.
+      # Failed to secondary
+      EAL: Could not mmap 17179869184 ... - please use '--base-virtaddr' option
+
+   ``--base-virtaddr`` is to decide base address explicitly to avoid this
+   overlapping. 4 GiB ``0x100000000`` is enough for the purpose.
+
+   If you use DPDK v18.11 or later, ``--base-virtaddr 0x100000000`` is enabled
+   in default. You need to use this option only for changing the default value.
+
+
+In general, one lcore is enough for ``spp_primary``. If you give two or
+more, it uses second lcore to display statistics periodically and does not
+use others.
+
+.. note::
+
+    Anyway, you can get statistics in SPP CLI with ``pri; status`` command
+    actually even if you give only one core.
 
 Primary process sets up physical ports of given port mask with ``-p`` option
 and ring ports of the number of ``-n`` option. Ports of  ``-p`` option is for
@@ -242,6 +258,7 @@ secondary processes.
         --vdev eth_vhost1,iface=/tmp/sock1  # used as 1st phy port
         --vdev eth_vhost2,iface=/tmp/sock2  # used as 2nd phy port
         --proc-type=primary \
+        --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
         -n 10 \
@@ -250,15 +267,16 @@ secondary processes.
 - EAL options:
 
   - -l: core list
-  - --socket-mem: memory size on each of NUMA nodes
-  - --huge-dir: path of hugepage dir
-  - --proc-type: process type
+  - --socket-mem: Memory size on each of NUMA nodes.
+  - --huge-dir: Path of hugepage dir.
+  - --proc-type: Process type.
+  - --base-virtaddr: Specify base virtual address.
 
 - Application options:
 
-  - -p: port mask
-  - -n: number of ring PMD
-  - -s: IP address of controller and port prepared for primary
+  - -p: Port mask.
+  - -n: Number of ring PMD.
+  - -s: IP address of controller and port prepared for primary.
 
 
 SPP Secondary
@@ -478,6 +496,7 @@ launching DPDK processes.
         -m 1024 \
         --huge-dir=/dev/hugepages \
         --proc-type=primary \
+        --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
         -n 6 \
