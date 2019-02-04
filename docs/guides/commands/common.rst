@@ -2,8 +2,13 @@
     Copyright(c) 2010-2014 Intel Corporation
     Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
 
+
+.. _commands_common:
+
 Common Commands
 ===============
+
+.. _commands_common_status:
 
 status
 ------
@@ -22,6 +27,8 @@ Show the status of SPP processes.
         1: nfv:1
         2: vf:3
 
+
+.. _commands_common_config:
 
 config
 ------
@@ -96,6 +103,8 @@ After updating the param, expanded options is also updated.
     spp > pri; launch nfv 2 -l 1,2 --socket-mem 512,0 -- -n 2 -s ...
 
 
+.. _commands_common_playback:
+
 playback
 --------
 
@@ -112,6 +121,8 @@ a recipe, although you can use any of extensions such as ``.txt`` or
 
     spp > playback /path/to/my.rcp
 
+
+.. _commands_common_record:
 
 record
 ------
@@ -133,6 +144,8 @@ command.
     next relase.
 
 
+.. _commands_common_history:
+
 history
 -------
 
@@ -147,6 +160,8 @@ meaning for history, ``bye``, ``exit``, ``history`` and ``redo``.
       2  cat file.txt
 
 
+.. _commands_common_redo:
+
 redo
 ----
 
@@ -156,6 +171,8 @@ Execute command of index of history.
 
     spp > redo 5  # exec 5th command in the history
 
+
+.. _commands_common_server:
 
 server
 ------
@@ -213,6 +230,8 @@ You cannot unregister node under the control, or switch to other one before.
     Cannot del server "1" in use!
 
 
+.. _commands_common_pwd:
+
 pwd
 ---
 
@@ -224,6 +243,8 @@ Show current path.
     /path/to/curdir
 
 
+.. _commands_common_cd:
+
 cd
 --
 
@@ -233,6 +254,8 @@ Change current directory.
 
     spp> cd /path/to/dir
 
+
+.. _commands_common_ls:
 
 ls
 --
@@ -244,6 +267,8 @@ Show a list of directory contents.
     spp> ls /path/to/dir
 
 
+.. _commands_common_mkdir:
+
 mkdir
 -----
 
@@ -253,6 +278,8 @@ Make a directory.
 
     spp> mkdir /path/to/dir
 
+
+.. _commands_common_cat:
 
 cat
 ---
@@ -264,6 +291,8 @@ Show contents of a file.
     spp> cat /path/to/file
 
 
+.. _commands_common_less:
+
 less
 ----
 
@@ -273,6 +302,8 @@ Show contents of a file.
 
     spp> less /path/to/file
 
+
+.. _commands_common_bye:
 
 bye
 ---
@@ -305,6 +336,8 @@ Second one is for all SPP processes other than controller.
     Exit primary
 
 
+.. _commands_common_exit:
+
 exit
 ----
 
@@ -316,6 +349,8 @@ not for other processes.
     spp > exit
     Thank you for using Soft Patch Panel
 
+
+.. _commands_common_help:
 
 help
 ----
