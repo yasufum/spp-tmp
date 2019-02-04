@@ -5,6 +5,8 @@ from __future__ import absolute_import
 
 from .. import spp_common
 from ..shell_lib import common
+from ..spp_common import logger
+#from .. import spp_common
 
 
 class SppPrimary(object):
@@ -151,48 +153,50 @@ class SppPrimary(object):
         base_core = 1  # shared among secondaries
         mytemplate = "-l {},{} -m 512 -- {} {} -s {}"
 
-        # Show sub commands
-        if len(tokens) == 2:
-            # Add sub commands
-            candidates = candidates + self.PRI_CMDS[:]
+        if tokens[0].endswith(';'):
 
-        # Show args of `launch` sub command.
-        elif len(tokens) == 3 and tokens[1] == 'launch':
-            for pt in spp_common.SEC_TYPES:
-                candidates.append('{}'.format(pt))
+            # Show sub commands
+            if len(tokens) == 2:
+                # Add sub commands
+                candidates = candidates + self.PRI_CMDS[:]
 
-        elif len(tokens) == 4 and tokens[1] == 'launch':
-            if tokens[2] in spp_common.SEC_TYPES:
-                candidates = [
-                        str(i+1) for i in range(spp_common.MAX_SECONDARY)]
+            # Show args of `launch` sub command.
+            elif len(tokens) == 3 and tokens[1] == 'launch':
+                for pt in spp_common.SEC_TYPES:
+                    candidates.append('{}'.format(pt))
 
-        elif len(tokens) == 5 and tokens[1] == 'launch':
-            if (tokens[2] in spp_common.SEC_TYPES) and \
-                    (int(tokens[3])-1 in range(spp_common.MAX_SECONDARY)):
-                ptype = tokens[2]
-                sid = tokens[3]
+            elif len(tokens) == 4 and tokens[1] == 'launch':
+                if tokens[2] in spp_common.SEC_TYPES:
+                    candidates = [
+                            str(i+1) for i in range(spp_common.MAX_SECONDARY)]
 
-                if ptype == 'nfv':
-                    opt_sid = '-n'
-                else:
-                    opt_sid = '--client-id'
+            elif len(tokens) == 5 and tokens[1] == 'launch':
+                if (tokens[2] in spp_common.SEC_TYPES) and \
+                        (int(tokens[3])-1 in range(spp_common.MAX_SECONDARY)):
+                    ptype = tokens[2]
+                    sid = tokens[3]
 
-                server_addr = common.current_server_addr()
-                server_addr = server_addr.replace('7777', '6666')
+                    if ptype == 'nfv':
+                        opt_sid = '-n'
+                    else:
+                        opt_sid = '--client-id'
 
-                # Define rest of cores dynamically.
-                # TODO(yasufum) decide rest of cores considering used cores
-                if ptype == 'nfv':  # one core is enough
-                    rest_core = sid
-                elif ptype == 'vf':  # at least three cores
-                    rest_core = '{}-{}'.format(int(sid), int(sid)+2)
-                elif ptype == 'mirror':  # two cores
-                    rest_core = sid
-                elif ptype == 'pcap':  # at least two cores
-                    rest_core = '{}-{}'.format(int(sid), int(sid)+1)
+                    server_addr = common.current_server_addr()
+                    server_addr = server_addr.replace('7777', '6666')
 
-                candidates = [mytemplate.format(
-                    base_core, rest_core, opt_sid, sid, server_addr)]
+                    # Define rest of cores dynamically.
+                    # TODO(yasufum) decide rest of cores considering used cores
+                    if ptype == 'nfv':  # one core is enough
+                        rest_core = sid
+                    elif ptype == 'vf':  # at least three cores
+                        rest_core = '{}-{}'.format(int(sid), int(sid)+2)
+                    elif ptype == 'mirror':  # two cores
+                        rest_core = sid
+                    elif ptype == 'pcap':  # at least two cores
+                        rest_core = '{}-{}'.format(int(sid), int(sid)+1)
+
+                    candidates = [mytemplate.format(
+                        base_core, rest_core, opt_sid, sid, server_addr)]
 
         if not text:
             completions = candidates
