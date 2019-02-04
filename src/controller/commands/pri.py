@@ -179,13 +179,23 @@ class SppPrimary(object):
                     candidates.append('{}'.format(pt))
 
             elif len(tokens) == 4 and tokens[1] == 'launch':
+                if 'max_secondary' in cli_config.keys():
+                    max_secondary = int(cli_config['max_secondary']['val'])
+                else:
+                    max_secondary = spp_common.MAX_SECONDARY
+
                 if tokens[2] in spp_common.SEC_TYPES:
                     candidates = [
-                            str(i+1) for i in range(spp_common.MAX_SECONDARY)]
+                            str(i+1) for i in range(max_secondary)]
 
             elif len(tokens) == 5 and tokens[1] == 'launch':
+                if 'max_secondary' in cli_config.keys():
+                    max_secondary = int(cli_config['max_secondary']['val'])
+                else:
+                    max_secondary = spp_common.MAX_SECONDARY
+
                 if (tokens[2] in spp_common.SEC_TYPES) and \
-                        (int(tokens[3])-1 in range(spp_common.MAX_SECONDARY)):
+                        (int(tokens[3])-1 in range(max_secondary)):
                     ptype = tokens[2]
                     sid = tokens[3]
 

@@ -24,19 +24,29 @@ class Shell(cmd.Cmd, object):
     """SPP command prompt."""
 
     # Default config, but changed via `config` command
+    # TODO(yasufum) move defaults to config file and include from.
     cli_config = {
-            'prompt': {
-                'val': 'spp > ', 'desc': 'Command prompt'},
-            'topo_size': {
-                'val': '60%', 'desc': 'Percentage or ratio of topo'},
+            'max_secondary': {
+                'val': spp_common.MAX_SECONDARY,
+                'desc': 'The maximum number of secondary processes'},
             'sec_mem': {
-                'val': '-m 512', 'desc': 'Mem size'},
+                'val': '-m 512',
+                'desc': 'Mem size'},
             'sec_base_lcore': {
-                'val': '1', 'desc': 'Shared lcore among secondaryes'},
+                'val': '1',
+                'desc': 'Shared lcore among secondaryes'},
             'sec_vf_nof_lcores': {
-                'val': '3', 'desc': 'Number of lcores for vf workers'},
+                'val': '3',
+                'desc': 'Number of lcores for vf workers'},
             'sec_vhost_cli': {
-                'val': '', 'desc': 'Vhost client mode'},
+                'val': '',
+                'desc': 'Vhost client mode'},
+            'prompt': {
+                'val': 'spp > ',
+                'desc': 'Command prompt'},
+            'topo_size': {
+                'val': '60%',
+                'desc': 'Percentage or ratio of topo'},
             }
 
     hist_file = os.path.expanduser('~/.spp_history')
