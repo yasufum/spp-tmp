@@ -28,7 +28,11 @@ class SppPrimary(object):
         self.launch_default = {
                 'mem': '-m 512',
                 'base_lcore': '1',
-                'vhost_cli': ''
+                'vhost_cli': '',
+                'nof_lcores_nfv': '1',
+                'nof_lcores_vf': '3',
+                'nof_lcores_mirror': '2',
+                'nof_lcores_pcap': '2',
                 }
 
         # Setup template of args for `pri; launch`
@@ -204,19 +208,46 @@ class SppPrimary(object):
                     else:
                         opt_sid = '--client-id'
 
+                    # Need to replace port from `7777` of spp-ctl to `6666`
+                    # of secondary process.
                     server_addr = common.current_server_addr()
                     server_addr = server_addr.replace('7777', '6666')
 
-                    # Define rest of cores dynamically.
-                    # TODO(yasufum) decide rest of cores considering used cores
-                    if ptype == 'nfv':  # one core is enough
-                        rest_core = sid
-                    elif ptype == 'vf':  # at least three cores
-                        rest_core = '{}-{}'.format(int(sid), int(sid)+2)
-                    elif ptype == 'mirror':  # two cores
-                        rest_core = sid
-                    elif ptype == 'pcap':  # at least two cores
-                        rest_core = '{}-{}'.format(int(sid), int(sid)+1)
+                    # Lcore ID of worker lcore starts from sec ID in default.
+                    lcore_base = int(sid)
+
+                    # Define rest of worker lcores from config dynamically.
+                    if ptype == 'nfv':  # one worker lcore is enough
+                        if 'sec_nfv_nof_lcores' in cli_config.keys():
+                            nof_workers = int(cli_config['sec_nfv_nof_lcores']['val'])
+                        else:
+                            nof_workers = int(self.defaults['nof_lcores_nfv'])
+
+                    elif ptype == 'vf':
+                        if 'sec_vf_nof_lcores' in cli_config.keys():
+                            nof_workers = int(cli_config['sec_vf_nof_lcores']['val'])
+                        else:
+                            nof_workers = int(self.defaults['nof_lcores_vf'])
+
+                    elif ptype == 'mirror':  # two worker cores
+                        if 'sec_mirror_nof_lcores' in cli_config.keys():
+                            nof_workers = int(cli_config['sec_mirror_nof_lcores']['val'])
+                        else:
+                            nof_workers = int(self.defaults['nof_lcore_mirror'])
+
+                    elif ptype == 'pcap':  # at least two worker cores
+                        if 'sec_pcap_nof_lcores' in cli_config.keys():
+                            nof_workers = int(cli_config['sec_pcap_nof_lcores']['val'])
+                        else:
+                            nof_workers = int(self.defaults['nof_lcore_pcap'])
+
+                    last_core = lcore_base + nof_workers - 1
+
+                    # Decide lcore option based on configured number of lcores.
+                    if last_core == lcore_base:
+                        rest_core = '{}'.format(last_core)
+                    else:
+                        rest_core = '{}-{}'.format(lcore_base, last_core)
 
                     temp = self._setup_launch_template(
                             cli_config, self.launch_template,

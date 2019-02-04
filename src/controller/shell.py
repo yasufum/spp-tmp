@@ -35,12 +35,21 @@ class Shell(cmd.Cmd, object):
             'sec_base_lcore': {
                 'val': '1',
                 'desc': 'Shared lcore among secondaryes'},
+            'sec_nfv_nof_lcores': {
+                'val': '1',
+                'desc': 'Default num of lcores for workers of spp_nfv'},
             'sec_vf_nof_lcores': {
                 'val': '3',
-                'desc': 'Number of lcores for vf workers'},
+                'desc': 'Default num of lcores for workers of spp_vf'},
+            'sec_mirror_nof_lcores': {
+                'val': '2',
+                'desc': 'Default num of lcores for workers of spp_mirror'},
+            'sec_pcap_nof_lcores': {
+                'val': '2',
+                'desc': 'Default num of lcores for workers of spp_pcap'},
             'sec_vhost_cli': {
                 'val': '',
-                'desc': 'Vhost client mode'},
+                'desc': 'Vhost client mode, activated if set any of values'},
             'prompt': {
                 'val': 'spp > ',
                 'desc': 'Command prompt'},
