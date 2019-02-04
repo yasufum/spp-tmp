@@ -34,7 +34,7 @@ class Shell(cmd.Cmd, object):
                 'desc': 'Mem size'},
             'sec_base_lcore': {
                 'val': '1',
-                'desc': 'Shared lcore among secondaryes'},
+                'desc': 'Shared lcore among secondaries'},
             'sec_nfv_nof_lcores': {
                 'val': '1',
                 'desc': 'Default num of lcores for workers of spp_nfv'},

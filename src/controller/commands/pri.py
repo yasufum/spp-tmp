@@ -35,12 +35,13 @@ class SppPrimary(object):
                 'nof_lcores_pcap': '2',
                 }
 
+        # TODO(yasufum) replace placeholders __XXX__ to {keyword}.
         # Setup template of args for `pri; launch`
-        temp = "-l __BASE_LCORE__,{} "
+        temp = "-l __BASE_LCORE__,{wlcores} "
         temp = temp + "__MEM__ "
         temp = temp + "-- "
-        temp = temp + "{} {} "  # '-n 1' or '--client-id 1'
-        temp = temp + "-s {} "  # '-s 192.168.1.100:6666'
+        temp = temp + "{opt_sid} {sid} "  # '-n 1' or '--client-id 1'
+        temp = temp + "-s {sec_addr} "  # '-s 192.168.1.100:6666'
         temp = temp + "__VHOST_CLI__"
         self.launch_template = temp
 
@@ -52,7 +53,7 @@ class SppPrimary(object):
         params = tmpary[1:]
 
         if not (subcmd in self.PRI_CMDS):
-            print("Invalid pri command: '%s'" % subcmd)
+            print("Invalid pri command: '{}'".format(subcmd))
             return None
 
         # use short name
@@ -135,7 +136,7 @@ class SppPrimary(object):
                 ID          rx          tx     tx_drop  mac_addr
                  0    78932932    78932931           1  56:48:4f:53:54:00
             - ring ports:
-                ID          rx          tx     rx_drop     rx_drop
+                ID          rx          tx     rx_drop     tx_drop
                  0       89283       89283           0           0
                  ...
         """
@@ -147,18 +148,21 @@ class SppPrimary(object):
         if 'phy_ports' in json_obj:
             print('- physical ports:')
             print('    ID          rx          tx     tx_drop  mac_addr')
+
+            temp = '    {portid:2}  {rx:10}  {tx:10}  {tx_drop:10}  {eth}'
             for pports in json_obj['phy_ports']:
-                print('    %2d  %10d  %10d  %10d  %s' % (
-                    pports['id'], pports['rx'],  pports['tx'],
-                    pports['tx_drop'], pports['eth']))
+                print(temp.format(
+                    portid=pports['id'], rx=pports['rx'], tx=pports['tx'],
+                    tx_drop=pports['tx_drop'], eth=pports['eth']))
 
         if 'ring_ports' in json_obj:
-            print('- ring Ports:')
-            print('    ID          rx          tx     rx_drop     rx_drop')
+            print('- ring ports:')
+            print('    ID          rx          tx     rx_drop     tx_drop')
+            temp = '    {rid:2}  {rx:10}  {tx:10}  {rx_drop:10}  {tx_drop:10}'
             for rports in json_obj['ring_ports']:
-                print('    %2d  %10d  %10d  %10d  %10d' % (
-                    rports['id'], rports['rx'],  rports['tx'],
-                    rports['rx_drop'], rports['tx_drop']))
+                print(temp.format(
+                    rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
+                    rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
 
     def complete(self, text, line, begidx, endidx, cli_config):
         """Completion for primary process commands.
@@ -193,6 +197,7 @@ class SppPrimary(object):
                             str(i+1) for i in range(max_secondary)]
 
             elif len(tokens) == 5 and tokens[1] == 'launch':
+                # TODO(yasufum) move this long completion to method.
                 if 'max_secondary' in cli_config.keys():
                     max_secondary = int(cli_config['max_secondary']['val'])
                 else:
@@ -219,25 +224,30 @@ class SppPrimary(object):
                     # Define rest of worker lcores from config dynamically.
                     if ptype == 'nfv':  # one worker lcore is enough
                         if 'sec_nfv_nof_lcores' in cli_config.keys():
-                            nof_workers = int(cli_config['sec_nfv_nof_lcores']['val'])
+                            nof_workers = int(
+                                    cli_config['sec_nfv_nof_lcores']['val'])
                         else:
                             nof_workers = int(self.defaults['nof_lcores_nfv'])
 
                     elif ptype == 'vf':
                         if 'sec_vf_nof_lcores' in cli_config.keys():
-                            nof_workers = int(cli_config['sec_vf_nof_lcores']['val'])
+                            nof_workers = int(
+                                    cli_config['sec_vf_nof_lcores']['val'])
                         else:
                             nof_workers = int(self.defaults['nof_lcores_vf'])
 
                     elif ptype == 'mirror':  # two worker cores
                         if 'sec_mirror_nof_lcores' in cli_config.keys():
-                            nof_workers = int(cli_config['sec_mirror_nof_lcores']['val'])
+                            nof_workers = int(
+                                    cli_config['sec_mirror_nof_lcores']['val'])
                         else:
-                            nof_workers = int(self.defaults['nof_lcore_mirror'])
+                            nof_workers = int(
+                                    self.defaults['nof_lcore_mirror'])
 
                     elif ptype == 'pcap':  # at least two worker cores
                         if 'sec_pcap_nof_lcores' in cli_config.keys():
-                            nof_workers = int(cli_config['sec_pcap_nof_lcores']['val'])
+                            nof_workers = int(
+                                    cli_config['sec_pcap_nof_lcores']['val'])
                         else:
                             nof_workers = int(self.defaults['nof_lcore_pcap'])
 
@@ -253,7 +263,8 @@ class SppPrimary(object):
                             cli_config, self.launch_template,
                             self.launch_default)
                     candidates = [temp.format(
-                        rest_core, opt_sid, sid, server_addr)]
+                        wlcores=rest_core, opt_sid=opt_sid, sid=sid,
+                        sec_addr=server_addr)]
 
         if not text:
             completions = candidates
@@ -421,8 +432,8 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
-                print('Send request to launch {}:{}.'.format(
-                    proc_type, sec_id))
+                print('Send request to launch {ptype}:{sid}.'.format(
+                    ptype=proc_type, sid=sec_id))
             elif res.status_code in error_codes:
                 pass
             else:
