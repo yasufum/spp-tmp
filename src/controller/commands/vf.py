@@ -279,6 +279,7 @@ class SppVf(object):
                     print('Error: unknown response.')
 
     def _run_port(self, params):
+        req_params = None
         if len(params) == 4:
             if params[0] == 'add':
                 action = 'attach'
@@ -314,17 +315,20 @@ class SppVf(object):
                           'dir': params[2],
                           'vlan': {'operation': op, 'id': int(params[5]),
                                    'pcp': int(params[6])}}
+        else:
+            print('Error: Invalid syntax.')
 
-        res = self.spp_ctl_cli.put('vfs/%d/components/%s/ports'
-                                   % (self.sec_id, params[3]), req_params)
-        if res is not None:
-            error_codes = self.spp_ctl_cli.rest_common_error_codes
-            if res.status_code == 204:
-                print("Succeeded to %s port" % params[0])
-            elif res.status_code in error_codes:
-                pass
-            else:
-                print('Error: unknown response.')
+        if req_params is not None:
+            res = self.spp_ctl_cli.put('vfs/%d/components/%s/ports'
+                                       % (self.sec_id, params[3]), req_params)
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    print("Succeeded to %s port" % params[0])
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
 
     def _run_cls_table(self, params):
         req_params = None
@@ -337,7 +341,7 @@ class SppVf(object):
                           'vlan': params[2], 'mac_address': params[3],
                           'port': params[4]}
         else:
-            print('Error: Invalid params')
+            print('Error: Invalid syntax.')
 
         if req_params is not None:
             req = 'vfs/%d/classifier_table' % self.sec_id
