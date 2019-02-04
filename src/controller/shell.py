@@ -25,9 +25,11 @@ class Shell(cmd.Cmd, object):
 
     recorded_file = None
     hist_file = os.path.expanduser('~/.spp_history')
+
+    # Commands not included in history
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
-    intro = 'Welcome to the spp.   Type help or ? to list commands.\n'
+    intro = 'Welcome to the SPP CLI. Type `help` or `?` to list commands.\n'
     prompt = 'spp > '
 
     PLUGIN_DIR = 'plugins'
@@ -76,10 +78,19 @@ class Shell(cmd.Cmd, object):
             self.secondaries['mirror'][sec_id] = mirror.SppMirror(
                     self.spp_ctl_cli, sec_id)
 
+    # Called everytime after running command. `stop` is returned from `do_*`
+    # method and SPP CLI is terminated if it is True. It means that only
+    # `do_bye` and  `do_exit` return True.
+    def postcmd(self, stop, line):
+        # TODO(yasufum) do not add to history if command is failed.
+        if line.strip().split(' ')[0] not in self.HIST_EXCEPT:
+            readline.write_history_file(self.hist_file)
+        return stop
+
     def default(self, line):
         """Define defualt behaviour.
 
-        If user input is commend styled, controller simply echo
+        If user input is comment styled, controller simply echo
         as a comment.
         """
 
@@ -111,24 +122,6 @@ class Shell(cmd.Cmd, object):
                     if ent['type'] == ptype:
                         ids.append(ent['client-id'])
         return ids
-
-    def clean_hist_file(self):
-        """Remove useless entries in history file."""
-
-        entries = []
-
-        try:
-            for line in open(self.hist_file):
-                line_s = line.strip()
-                if not (line_s.split(' ')[0] in self.HIST_EXCEPT):
-                    entries.append(line_s)
-            f = open(self.hist_file, "w+")
-            contents = '\n'.join(entries)
-            contents += '\n'
-            f.write(contents)
-            f.close()
-        except IOError:
-            print('Error: Cannot open history file "%s"' % self.hist_file)
 
     def print_status(self):
         """Display information about connected clients."""
@@ -760,12 +753,6 @@ class Shell(cmd.Cmd, object):
         It does not add some command which are no meaning for history.
         'bye', 'exit', 'history', 'redo'
         """
-
-        # flush all of history to the hist_file.
-        readline.write_history_file(self.hist_file)
-
-        # remove commands defined in `self.HIST_EXCEPT`
-        self.clean_hist_file()
 
         try:
             f = open(self.hist_file)
