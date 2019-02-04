@@ -250,7 +250,8 @@ class SppVf(object):
                     print("Succeeded to start component '%s' on core:%d"
                           % (req_params['name'], req_params['core']))
                     self.worker_names.append(req_params['name'])
-                    self.unused_core_ids.remove(req_params['core'])
+                    if req_params['core'] in self.unused_core_ids:
+                        self.unused_core_ids.remove(req_params['core'])
                 elif res.status_code in error_codes:
                     pass
                 else:
