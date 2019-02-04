@@ -1,5 +1,9 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
+
+
+.. _commands_primary:
 
 Primary Commands
 ================
@@ -35,6 +39,8 @@ All of Sub commands are referred with ``help`` command.
             spp > pri; launch vf 2 -l 1,4-7 -m 512 -- --client-id 2 -s ...
 
 
+.. _commands_primary_status:
+
 status
 ------
 
@@ -56,6 +62,8 @@ Show status fo spp_primary and forwarding statistics of each of ports.
          ...
 
 
+.. _commands_primary_clear:
+
 clear
 -----
 
@@ -66,6 +74,8 @@ Clear statistics.
     spp > pri; clear
     Clear port statistics.
 
+
+.. _commands_primary_launch:
 
 launch
 ------
@@ -95,7 +105,9 @@ the process so that you do not need to input this option by yourself.
 
 ``launch`` command supports TAB completion for type, secondary ID and the rest
 of options. Some of EAL and application options are just a template, so you
-should update them before launching.
+should edit them before launching. Some of default params of options,
+for instance, the number of lcores or the amount of memory, are changed from
+``config`` command of :ref:`Common Commands<commands_common_config>`.
 
 In terms of log, each of secondary processes are output its log messages to
 files under ``log`` directory of project root. The name of log file is defined
