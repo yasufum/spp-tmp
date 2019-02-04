@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from .. import spp_common
 from ..shell_lib import common
 from ..spp_common import logger
-#from .. import spp_common
 
 
 class SppPrimary(object):
@@ -24,6 +23,22 @@ class SppPrimary(object):
 
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
+
+        # Default args for `pri; launch`, used if given cli_config is invalid
+        self.launch_default = {
+                'mem': '-m 512',
+                'base_lcore': '1',
+                'vhost_cli': ''
+                }
+
+        # Setup template of args for `pri; launch`
+        temp = "-l __BASE_LCORE__,{} "
+        temp = temp + "__MEM__ "
+        temp = temp + "-- "
+        temp = temp + "{} {} "  # '-n 1' or '--client-id 1'
+        temp = temp + "-s {} "  # '-s 192.168.1.100:6666'
+        temp = temp + "__VHOST_CLI__"
+        self.launch_template = temp
 
     def run(self, cmd):
         """Called from do_pri() to Send command to primary process."""
@@ -141,7 +156,7 @@ class SppPrimary(object):
                     rports['id'], rports['rx'],  rports['tx'],
                     rports['rx_drop'], rports['tx_drop']))
 
-    def complete(self, text, line, begidx, endidx, cli_config, template):
+    def complete(self, text, line, begidx, endidx, cli_config):
         """Completion for primary process commands.
 
         Called from complete_pri() to complete primary command.
@@ -150,13 +165,7 @@ class SppPrimary(object):
         candidates = []
         tokens = line.split(' ')
 
-        template = template.replace('__MEM__', cli_config['sec_mem']['val'])
-        template = template.replace('__BASE_LCORE__', cli_config['sec_base_lcore']['val'])
-        if cli_config['sec_vhost_cli']['val']:
-            template = template.replace('__VHOST_CLI__', '--vhost-client')
-        else:
-            template = template.replace('__VHOST_CLI__', '')
-
+        # Parse command line
         if tokens[0].endswith(';'):
 
             # Show sub commands
@@ -199,7 +208,10 @@ class SppPrimary(object):
                     elif ptype == 'pcap':  # at least two cores
                         rest_core = '{}-{}'.format(int(sid), int(sid)+1)
 
-                    candidates = [template.format(
+                    temp = self._setup_launch_template(
+                            cli_config, self.launch_template,
+                            self.launch_default)
+                    candidates = [temp.format(
                         rest_core, opt_sid, sid, server_addr)]
 
         if not text:
@@ -210,6 +222,32 @@ class SppPrimary(object):
                            ]
 
         return completions
+
+    def _setup_launch_template(self, cli_config, template, defaults):
+        """Check given `cli_config` for params of launch."""
+
+        if 'sec_mem' in cli_config.keys():
+            sec_mem = cli_config['sec_mem']['val']
+        else:
+            sec_mem = defaults['mem']
+        template = template.replace('__MEM__', sec_mem)
+
+        if 'sec_base_lcore' in cli_config.keys():
+            sec_base_lcore = cli_config['sec_base_lcore']['val']
+        else:
+            sec_base_lcore = defaults['base_lcore']
+        template = template.replace('__BASE_LCORE__', sec_base_lcore)
+
+        if 'sec_vhost_cli' in cli_config.keys():
+            if cli_config['sec_vhost_cli']['val']:
+                vhost_client = '--vhost-client'
+            else:
+                vhost_client = ''
+        else:
+            vhost_client = defaults['vhost_cli']
+        template = template.replace('__VHOST_CLI__', vhost_client)
+
+        return template
 
     def _get_sec_ids(self):
         sec_ids = []

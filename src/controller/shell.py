@@ -30,7 +30,7 @@ class Shell(cmd.Cmd, object):
             'topo_size': {
                 'val': '60%', 'desc': 'Percentage or ratio of topo'},
             'sec_mem': {
-                'val':'-m 512', 'desc': 'Mem size'},
+                'val': '-m 512', 'desc': 'Mem size'},
             'sec_base_lcore': {
                 'val': '1', 'desc': 'Shared lcore among secondaryes'},
             'sec_vf_nof_lcores': {
@@ -38,14 +38,6 @@ class Shell(cmd.Cmd, object):
             'sec_vhost_cli': {
                 'val': '', 'desc': 'Vhost client mode'},
             }
-
-    # Setup template of `pri; launch`
-    template = "-l __BASE_LCORE__,{} "
-    template = template + "__MEM__ "
-    template = template + "-- "
-    template = template + "{} {} "  # '-n 1' or '--client-id 1'
-    template = template + "-s {} "  # '-s 192.168.1.100:6666'
-    template = template + "__VHOST_CLI__"
 
     hist_file = os.path.expanduser('~/.spp_history')
     PLUGIN_DIR = 'plugins'
@@ -358,8 +350,9 @@ class Shell(cmd.Cmd, object):
         """Completion for primary process commands."""
 
         line = re.sub(r'\s+', " ", line)
-        return self.primary.complete(text, line, begidx, endidx,
-                self.cli_config, self.template)
+        return self.primary.complete(
+                text, line, begidx, endidx,
+                self.cli_config)
 
     def do_nfv(self, cmd):
         """Send a command to spp_nfv specified with ID.
@@ -660,7 +653,7 @@ class Shell(cmd.Cmd, object):
         if len(tokens) == 1:
             key = tokens[0]
             if key == '':
-                for k,v in self.cli_config.items():
+                for k, v in self.cli_config.items():
                     print('- {}: "{}"\t# {}'.format(k, v['val'], v['desc']))
             elif key in self.cli_config.keys():
                 print('- {}: "{}"\t# {}'.format(
