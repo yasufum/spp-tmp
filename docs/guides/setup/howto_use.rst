@@ -112,7 +112,8 @@ option for ``spp.py``, or failed to connect and to launch.
 
 .. code-block:: console
 
-    # to send request to http://192.168.1.100:7777
+    # terminal 2
+    # bind to spp-ctl on http://192.168.1.100:7777
     $ python src/spp.py -b 192.168.1.100
     Welcome to the spp.   Type help or ? to list commands.
 
@@ -207,8 +208,9 @@ SPP primary takes EAL options and application specific options.
 Core list option ``-l`` is for assigining cores and SPP primary requires just
 one core. You can use core mask option ``-c`` instead of ``-l``.
 
-You can use ``-m`` for memory reservation instead of ``--socket-mem`` if you
-use single NUMA node.
+You can use ``-m 1024`` for memory reservation instead of
+``--socket-mem 1024,0`` if you use single NUMA node. In this case, 512 MB is
+reserved on each of nodes.
 
 .. note::
 
@@ -232,6 +234,7 @@ secondary processes.
 
 .. code-block:: console
 
+    # terminal 3
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
         -l 1 -n 4 \
         --socket-mem 512,512 \
@@ -315,23 +318,25 @@ It is added to the options by SPP CLI before launching the process.
 
 .. code-block:: none
 
-   # launch spp_nfv with sec ID 2
-   spp > pri; launch nfv 2 -l 1,2 -m 512 -- -n 2 -s 192.168.1.100:6666
-   Send request to launch nfv:2.
+    # terminal 2
+    # launch spp_nfv with sec ID 2
+    spp > pri; launch nfv 2 -l 1,2 -m 512 -- -n 2 -s 192.168.1.100:6666
+    Send request to launch nfv:2.
 
 After running this command, you can find ``nfv:2`` is launched
 successfully.
 
 .. code-block:: none
 
-   spp > status
-   - spp-ctl:
-     - address: 192.168.1.100:7777
-   - primary:
-     - status: running
-   - secondary:
-     - processes:
-       1: nfv:2
+    # terminal 2
+    spp > status
+    - spp-ctl:
+      - address: 192.168.1.100:7777
+    - primary:
+      - status: running
+    - secondary:
+      - processes:
+        1: nfv:2
 
 Instead of displaying log messages in terminal, it outputs the messages
 in a log file. All of log files of secondary processes launched with
@@ -340,6 +345,7 @@ The name of log file is found ``log/spp_nfv-2.log``.
 
 .. code-block:: console
 
+    # terminal 5
     $ tail -f log/spp_nfv-2.log
     SPP_NFV: Used lcores: 1 2
     SPP_NFV: entering main loop on lcore 2
@@ -367,6 +373,7 @@ Run ``add`` command with resource UID ``vhost:0`` to create socket file.
 
 .. code-block:: none
 
+    # terminal 2
     spp > nfv 1; add vhost:0
 
 In this example, it creates socket file with index 0 from ``spp_nfv`` of ID 1.
@@ -375,10 +382,15 @@ It is used as a qemu option to add vhost interface.
 
 Launch VM with ``qemu-system-x86_64`` for x86 64bit architecture.
 Qemu takes many options for defining resources including virtual
-devices.
+devices. You cannot use this example as it is because some options are
+depend on your environment.
+You should specify disk image with ``-hda``, sixth option in this
+example, and ``qemu-ifup`` script for assigning an IP address for the VM
+to be able to access as 12th line.
 
 .. code-block:: console
 
+    # terminal 5
     $ sudo qemu-system-x86_64 \
         -cpu host \
         -enable-kvm \
@@ -421,4 +433,76 @@ For other options, please refer to
     You can shortcut this tasks by creating a template image and copy it
     to the VMs. It is just one time for installing for template.
 
-After booted, you install DPDK and SPP in the VM as in the host.
+After VM is booted, you install DPDK and SPP in the VM as in the host.
+IP address of the VM is assigned while it is created and you can find
+the address in a file generated from libvirt if you use Ubuntu.
+
+.. code-block:: console
+
+    # terminal 5
+    $ cat /var/lib/libvirt/dnsmasq/virbr0.status
+    [
+        {
+            "ip-address": "192.168.122.100",
+            ...
+
+    # Login VM, install DPDK and SPP
+    $ ssh user@192.168.122.100
+    ...
+
+It is recommended to configure ``/etc/default/grub`` for hugepages and
+reboot the VM after installation.
+
+Finally, login to the VM, bind ports to DPDK and launch ``spp-ctl``
+and ``spp_primamry``.
+You should add ``-b`` option to be accessed from SPP CLI on host.
+
+.. code-block:: console
+
+    # terminal 5
+    $ ssh user@192.168.122.100
+    $ cd /path/to/spp
+    $ python3 src/spp-ctl/spp-ctl -b 192.168.122.100
+    ...
+
+Confirm that virtio interfaces are under the management of DPDK before
+launching DPDK processes.
+
+.. code-block:: console
+
+    # terminal 6
+    $ ssh user@192.168.122.100
+    $ cd /path/to/spp
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 1 -n 4 \
+        -m 1024 \
+        --huge-dir=/dev/hugepages \
+        --proc-type=primary \
+        -- \
+        -p 0x03 \
+        -n 6 \
+        -s 192.168.122.100:5555
+
+You can configure SPP running on the VM from SPP CLI.
+Use ``server`` command is to switch node under the management.
+
+.. code-block:: none
+
+    # terminal 2
+    # show list of spp-ctl nodes
+    spp > server
+    1: 192.168.1.100:7777 *
+    2: 192.168.122.100:7777
+
+    # change node under the management
+    spp > server 2
+    Switch spp-ctl to "2: 192.168.122.100:7777".
+
+    # confirm node is switched
+    spp > server
+    1: 192.168.1.100:7777
+    2: 192.168.122.100:7777 *
+
+    # configure SPP on VM
+    spp > status
+    ...
