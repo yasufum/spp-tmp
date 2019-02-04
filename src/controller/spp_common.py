@@ -9,6 +9,8 @@ PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
 
 SEC_TYPES = ['nfv', 'vf', 'mirror', 'pcap']
 
+LOGFILE = 'spp_cli.log'  # name of logfile under `/src/controller/log/`
+
 cur_server_addr = None
 
 # Maximum num of sock queues for secondaries
@@ -19,7 +21,7 @@ logger = logging.getLogger(__name__)
 # handler = logging.StreamHandler()
 os.system("mkdir -p %s/log" % (os.path.dirname(__file__)))
 
-logfile = '%s/log/%s' % (os.path.dirname(__file__), 'spp.log')
+logfile = '%s/log/%s' % (os.path.dirname(__file__), LOGFILE)
 handler = logging.FileHandler(logfile)
 handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(

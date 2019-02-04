@@ -331,6 +331,8 @@ class SppPrimary(object):
             else:
                 opts['app']['--client-id'] = sec_id
 
+        logger.debug('launch, {}'.format(opts))
+
         # Send request for launch secondary.
         res = self.spp_ctl_cli.put('primary/launch', opts)
         if res is not None:
