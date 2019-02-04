@@ -59,7 +59,7 @@ To show the list of config all of params, simply run ``config``.
     - max_secondary: "16"       # The maximum number of secondary processes
     - sec_nfv_nof_lcores: "1"   # Default num of lcores for workers of spp_nfv
     - topo_size: "60%"  # Percentage or ratio of topo
-    - sec_base_lcore: "1"       # Shared lcore among secondaryes
+    - sec_base_lcore: "1"       # Shared lcore among secondaries
     ....
 
 Or show params only started from ``sec_``, add the keyword to the commnad.

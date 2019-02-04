@@ -56,7 +56,7 @@ Show status fo spp_primary and forwarding statistics of each of ports.
          0           0           0           0  56:48:4f:53:54:00
          1           0           0           0  56:48:4f:53:54:01
     - ring Ports:
-        ID          rx          tx     rx_drop     rx_drop
+        ID          rx          tx     rx_drop     tx_drop
          0           0           0           0           0
          1           0           0           0           0
          ...
