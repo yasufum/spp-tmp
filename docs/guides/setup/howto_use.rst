@@ -48,20 +48,20 @@ a process.
     $ python3 src/spp-ctl/spp-ctl
 
 Notice that ``spp-ctl`` is implemented in ``python3`` and cannot be
-launched with ``python`` or ``python2``.
+launched with ``python2``.
 
 It has a option ``-b`` for binding address explicitly to be accessed
 from other than default, ``127.0.0.1`` or ``localhost``.
 If you deploy SPP on multiple nodes, you might need to use ``-b`` option
-to be accessed from other processes running on other than local node.
+it to be accessed from other processes running on other than local node.
 
 .. code-block:: console
 
     # launch with URL http://192.168.1.100:7777
     $ python3 src/spp-ctl/spp-ctl -b 192.168.1.100
 
-``spp-ctl`` is also launched as a daemon process, or managed
-by ``systemd``.
+``spp-ctl`` is the most important process in SPP. For some usecases,
+you might better to manage this process with ``systemd``.
 Here is a simple example of service file for systemd.
 
 .. code-block:: none
@@ -484,7 +484,7 @@ launching DPDK processes.
         -s 192.168.122.100:5555
 
 You can configure SPP running on the VM from SPP CLI.
-Use ``server`` command is to switch node under the management.
+Use ``server`` command to switch node under the management.
 
 .. code-block:: none
 
@@ -506,3 +506,9 @@ Use ``server`` command is to switch node under the management.
     # configure SPP on VM
     spp > status
     ...
+
+Now, you are ready to setup your network environment for DPDK and non-DPDK
+applications with SPP.
+SPP enables users to configure service function chaining between applications
+running on host and VMs.
+Usecases of network configuration are explained in the next chapter.
