@@ -23,17 +23,43 @@ import subprocess
 class Shell(cmd.Cmd, object):
     """SPP command prompt."""
 
-    recorded_file = None
+    # Default config, but changed via `config` command
+    cli_config = {
+            'prompt': {
+                'val': 'spp > ', 'desc': 'Command prompt'},
+            'topo_size': {
+                'val': '60%', 'desc': 'Percentage or ratio of topo'},
+            'sec_mem': {
+                'val':'-m 512', 'desc': 'Mem size'},
+            'sec_base_lcore': {
+                'val': '1', 'desc': 'Shared lcore among secondaryes'},
+            'sec_vf_nof_lcores': {
+                'val': '3', 'desc': 'Number of lcores for vf workers'},
+            'sec_vhost_cli': {
+                'val': '', 'desc': 'Vhost client mode'},
+            }
+
+    # Setup template of `pri; launch`
+    template = "-l __BASE_LCORE__,{} "
+    template = template + "__MEM__ "
+    template = template + "-- "
+    template = template + "{} {} "  # '-n 1' or '--client-id 1'
+    template = template + "-s {} "  # '-s 192.168.1.100:6666'
+    template = template + "__VHOST_CLI__"
+
     hist_file = os.path.expanduser('~/.spp_history')
+    PLUGIN_DIR = 'plugins'
 
     # Commands not included in history
     HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
 
+    # Shell settings which are reserved vars of Cmd class.
+    # `intro` is to be shown as a welcome message.
     intro = 'Welcome to the SPP CLI. Type `help` or `?` to list commands.\n'
-    prompt = 'spp > '
+    prompt = cli_config['prompt']['val']  # command prompt
 
-    PLUGIN_DIR = 'plugins'
-    topo_size = '60%'
+    # Recipe file to be recorded with `record` command
+    recorded_file = None
 
     # setup history file
     if os.path.exists(hist_file):
@@ -47,7 +73,8 @@ class Shell(cmd.Cmd, object):
         self.spp_ctl_cli = spp_cli_objs[0]
         self.use_cache = use_cache
         self.init_spp_procs()
-        self.spp_topo = topo.SppTopo(self.spp_ctl_cli, {}, self.topo_size)
+        self.spp_topo = topo.SppTopo(
+                self.spp_ctl_cli, {}, self.cli_config['topo_size']['val'])
 
         common.set_current_server_addr(
                 self.spp_ctl_cli.ip_addr, self.spp_ctl_cli.port)
@@ -249,7 +276,7 @@ class Shell(cmd.Cmd, object):
         """Close record file"""
 
         if self.recorded_file:
-            print("closing file")
+            print("Closing file")
             self.recorded_file.close()
             self.recorded_file = None
 
@@ -331,7 +358,8 @@ class Shell(cmd.Cmd, object):
         """Completion for primary process commands."""
 
         line = re.sub(r'\s+', " ", line)
-        return self.primary.complete(text, line, begidx, endidx)
+        return self.primary.complete(text, line, begidx, endidx,
+                self.cli_config, self.template)
 
     def do_nfv(self, cmd):
         """Send a command to spp_nfv specified with ID.
@@ -617,6 +645,67 @@ class Shell(cmd.Cmd, object):
 
     def complete_playback(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
+
+    def do_config(self, args):
+        """Show or update config.
+
+        # show list of config
+        spp > config
+
+        # set prompt to "$ spp "
+        spp > config prompt "$ spp "
+        """
+
+        tokens = args.strip().split(' ')
+        if len(tokens) == 1:
+            key = tokens[0]
+            if key == '':
+                for k,v in self.cli_config.items():
+                    print('- {}: "{}"\t# {}'.format(k, v['val'], v['desc']))
+            elif key in self.cli_config.keys():
+                print('- {}: "{}"\t# {}'.format(
+                    key, self.cli_config[key]['val'],
+                    self.cli_config[key]['desc']))
+            else:
+                res = {}
+                for k, v in self.cli_config.items():
+                    if k.startswith(key):
+                        res[k] = {'val': v['val'], 'desc': v['desc']}
+                for k, v in res.items():
+                    print('- {}: "{}"\t# {}'.format(k, v['val'], v['desc']))
+
+        elif len(tokens) > 1:
+            key = tokens[0]
+            if key in self.cli_config.keys():
+                for s in ['"', "'"]:
+                    args = args.replace(s, '')
+
+                # TODO(yasufum) add validation for given value
+                self.cli_config[key]['val'] = args[(len(key) + 1):]
+                print('Set {}: "{}"'.format(key, self.cli_config[key]['val']))
+
+                # Command prompt should be updated immediately
+                if key == 'prompt':
+                    self.prompt = self.cli_config['prompt']['val']
+
+    def complete_config(self, text, line, begidx, endidx):
+        candidates = []
+        tokens = line.strip().split(' ')
+
+        if len(tokens) == 1:
+            candidates = self.cli_config.keys()
+        elif len(tokens) == 2:
+            if text:
+                candidates = self.cli_config.keys()
+
+        if not text:
+            completions = candidates
+        else:
+            logger.debug(candidates)
+            completions = [p for p in candidates
+                           if p.startswith(text)
+                           ]
+        return completions
 
     def do_pwd(self, args):
         """Show corrent directory.

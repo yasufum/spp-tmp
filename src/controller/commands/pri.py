@@ -141,7 +141,7 @@ class SppPrimary(object):
                     rports['id'], rports['rx'],  rports['tx'],
                     rports['rx_drop'], rports['tx_drop']))
 
-    def complete(self, text, line, begidx, endidx):
+    def complete(self, text, line, begidx, endidx, cli_config, template):
         """Completion for primary process commands.
 
         Called from complete_pri() to complete primary command.
@@ -150,8 +150,12 @@ class SppPrimary(object):
         candidates = []
         tokens = line.split(' ')
 
-        base_core = 1  # shared among secondaries
-        mytemplate = "-l {},{} -m 512 -- {} {} -s {}"
+        template = template.replace('__MEM__', cli_config['sec_mem']['val'])
+        template = template.replace('__BASE_LCORE__', cli_config['sec_base_lcore']['val'])
+        if cli_config['sec_vhost_cli']['val']:
+            template = template.replace('__VHOST_CLI__', '--vhost-client')
+        else:
+            template = template.replace('__VHOST_CLI__', '')
 
         if tokens[0].endswith(';'):
 
@@ -195,8 +199,8 @@ class SppPrimary(object):
                     elif ptype == 'pcap':  # at least two cores
                         rest_core = '{}-{}'.format(int(sid), int(sid)+1)
 
-                    candidates = [mytemplate.format(
-                        base_core, rest_core, opt_sid, sid, server_addr)]
+                    candidates = [template.format(
+                        rest_core, opt_sid, sid, server_addr)]
 
         if not text:
             completions = candidates
