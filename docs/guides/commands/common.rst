@@ -23,6 +23,79 @@ Show the status of SPP processes.
         2: vf:3
 
 
+config
+------
+
+Show or update config params.
+
+Config params used for changing behaviour of SPP CLI. For instance, if you
+change command prompt, you can set any of prompt with ``config`` command
+other than default ``spp >``.
+
+.. code-block:: none
+
+    # set prompt to "$ spp"
+    spp > config prompt "$ spp"
+    Set prompt: "$ spp "
+    $ spp
+
+
+Show Config
+~~~~~~~~~~~
+
+To show the list of config all of params, simply run ``config``.
+
+.. code-block:: none
+
+    # show list of config
+    spp > config
+    - max_secondary: "16"       # The maximum number of secondary processes
+    - sec_nfv_nof_lcores: "1"   # Default num of lcores for workers of spp_nfv
+    - topo_size: "60%"  # Percentage or ratio of topo
+    - sec_base_lcore: "1"       # Shared lcore among secondaryes
+    ....
+
+Or show params only started from ``sec_``, add the keyword to the commnad.
+
+.. code-block:: none
+
+    # show config started from `sec_`
+    spp > config sec_
+    - sec_vhost_cli: "" # Vhost client mode, activated if set any of values
+    - sec_mem: "-m 512" # Mem size
+    - sec_nfv_nof_lcores: "1"   # Default num of lcores for workers of spp_nfv
+    - sec_base_lcore: "1"       # Shared lcore among secondaryes
+    ....
+
+Set Config
+~~~~~~~~~~
+
+One of typical uses of ``config`` command is to change the default params of
+other commands. ``pri; launch`` takes several options for launching secondary
+process and it is completed by using default params started from ``sec_``.
+
+.. code-block:: none
+
+    spp > pri; launch nfv 2  # press TAB for completion
+    spp > pri; launch nfv 2 -l 1,2 -m 512 -- -n 2 -s 192.168.11.59:6666
+
+The default number of memory size is ``-m 512`` and the definition
+``sec_mem`` can be changed with ``config`` command.
+Here is an example of changing ``-m 512`` to ``--socket-mem 512,0``.
+
+.. code-block:: none
+
+    spp > config sec_mem "--socket-mem 512,0"
+    Set sec_mem: "--socket-mem 512,0"
+
+After updating the param, expanded options is also updated.
+
+.. code-block:: none
+
+    spp > pri; launch nfv 2  # press TAB for completion
+    spp > pri; launch nfv 2 -l 1,2 --socket-mem 512,0 -- -n 2 -s ...
+
+
 playback
 --------
 
