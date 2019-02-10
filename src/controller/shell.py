@@ -584,31 +584,21 @@ class Shell(cmd.Cmd, object):
     def do_pcap(self, cmd):
         """Send a command to spp_pcap.
 
-        spp_pcap is a secondary process for duplicating incoming
-        packets to be used as similar to TaaS in OpenStack. This
-        command has four sub commands.
-          * status
-          * start
-          * stop
-          * exit
+        Spp_pcap is a secondary process for capturing incoming packets.
 
-        Each of sub commands other than 'status' takes several parameters
-        for detailed operations. Notice that 'start' for launching a worker
-        is replaced with 'stop' for terminating. 'exit' for spp_pcap
-        terminating.
+        'start' for launching a worker is replaced with 'stop' for
+        terminating. 'exit' for spp_pcap terminating.
 
         Examples:
 
         # (1) show status of worker threads and resources
         spp > pcap 1; status
 
-        # (2) launch capture thread
+        # (2) launch or terminate capture thread
         spp > pcap 1; start
-
-        # (3) terminate capture thread
         spp > pcap 1; stop
 
-        # (4) terminate spp_pcap secondaryd
+        # (3) terminate spp_pcap secondaryd
         spp > pcap 1; exit
         """
 
@@ -620,7 +610,7 @@ class Shell(cmd.Cmd, object):
         elif str.isdigit(cmds[0]):
             self.spp_pcaps[int(cmds[0])].run(cmds[1])
         else:
-            print('Invalid command: %s' % tmparg)
+            print('Invalid command: {}'.format(tmparg))
 
     def complete_pcap(self, text, line, begidx, endidx):
         """Completion for pcap command"""

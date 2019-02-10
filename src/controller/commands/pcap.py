@@ -13,11 +13,7 @@ class SppPcap(object):
     """
 
     # All of commands and sub-commands used for validation and completion.
-    PCAP_CMDS = {
-            'status': None,
-            'start': None,
-            'stop': None,
-            'exit': None}
+    PCAP_CMDS = { 'status': None, 'start': None, 'stop': None, 'exit': None}
 
     WORKER_TYPES = ['receive', 'write']
 
@@ -104,14 +100,14 @@ class SppPcap(object):
             if res is not None:
                 error_codes = self.spp_ctl_cli.rest_common_error_codes
                 if res.status_code == 204:
-                    print("Exit pcap %d." % (self.sec_id))
+                    print("Exit pcap {}.".format(self.sec_id))
                 elif res.status_code in error_codes:
                     pass
                 else:
                     print('Error: unknown response.')
 
         else:
-            print('Invalid command "%s".' % cmd)
+            print('Invalid command "{}".'.format(cmd))
 
     def print_status(self, json_obj):
         """Parse and print message from SPP PCAP.
@@ -134,21 +130,21 @@ class SppPcap(object):
         """
 
         # client id and status
-        print('  - client-id: %d' % json_obj['client-id'])
-        print('  - status: %s' % json_obj['status'])
+        print('  - client-id: {}'.format(json_obj['client-id']))
+        print('  - status: {}'.format(json_obj['status']))
 
         # Core
         for worker in json_obj['core']:
             if 'role' in worker.keys():
-                print("  - core:%d %s" % (
-                        worker['core'], worker['role']))
+                print("  - core:{core_id} {role}".format(
+                        core_id=worker['core'], role=worker['role']))
 
                 if worker['role'] == 'receive':
                     pt = worker['rx_port'][0]['port']
-                    msg = '    - %s:%s'
-                    print(msg % ('rx', pt))
+                    msg = '    - {direction}: {res_id}'
+                    print(msg.format(direction='rx', res_id=pt))
                 else:
-                    print('    - filename: %s' % worker['filename'])
+                    print('    - filename: {}'.format(worker['filename']))
 
     def complete(self, sec_ids, text, line, begidx, endidx):
         """Completion for spp_pcap commands.
