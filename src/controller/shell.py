@@ -338,6 +338,7 @@ class Shell(cmd.Cmd, object):
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands."""
 
+        line = re.sub(r';\s*', "; ", line)
         line = re.sub(r'\s+', " ", line)
         return self.primary.complete(
                 text, line, begidx, endidx,
