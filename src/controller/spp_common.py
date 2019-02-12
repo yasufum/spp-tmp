@@ -13,9 +13,6 @@ LOGFILE = 'spp_cli.log'  # name of logfile under `/src/controller/log/`
 
 cur_server_addr = None
 
-# Maximum num of sock queues for secondaries
-MAX_SECONDARY = 16
-
 # Setup logger object
 logger = logging.getLogger(__name__)
 # handler = logging.StreamHandler()

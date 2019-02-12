@@ -19,45 +19,22 @@ from .shell_lib import common
 from . import spp_common
 from .spp_common import logger
 import subprocess
+import yaml
 
 
 class Shell(cmd.Cmd, object):
     """SPP command prompt."""
 
-    # Default config, but changed via `config` command
-    # TODO(yasufum) move defaults to config file and include from.
-    cli_config = {
-            'max_secondary': {
-                'val': spp_common.MAX_SECONDARY,
-                'desc': 'The maximum number of secondary processes'},
-            'sec_mem': {
-                'val': '-m 512',
-                'desc': 'Mem size'},
-            'sec_base_lcore': {
-                'val': '1',
-                'desc': 'Shared lcore among secondaries'},
-            'sec_nfv_nof_lcores': {
-                'val': '1',
-                'desc': 'Default num of lcores for workers of spp_nfv'},
-            'sec_vf_nof_lcores': {
-                'val': '3',
-                'desc': 'Default num of lcores for workers of spp_vf'},
-            'sec_mirror_nof_lcores': {
-                'val': '2',
-                'desc': 'Default num of lcores for workers of spp_mirror'},
-            'sec_pcap_nof_lcores': {
-                'val': '2',
-                'desc': 'Default num of lcores for workers of spp_pcap'},
-            'sec_vhost_cli': {
-                'val': '',
-                'desc': 'Vhost client mode, activated if set any of values'},
-            'prompt': {
-                'val': 'spp > ',
-                'desc': 'Command prompt'},
-            'topo_size': {
-                'val': '60%',
-                'desc': 'Percentage or ratio of topo'},
-            }
+    # Load default config, can be changed via `config` command
+    # TODO(yasufum) enable to give config file from option
+    try:
+        config_file = "{}/config/default.yml".format(
+                os.path.dirname(__file__))
+        cli_config = yaml.load(open(config_file))
+    except IOError as e:
+        print('Error: no config file found!')
+        print(e)
+        exit()
 
     hist_file = os.path.expanduser('~/.spp_history')
     PLUGIN_DIR = 'plugins'
