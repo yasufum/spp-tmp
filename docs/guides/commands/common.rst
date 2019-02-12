@@ -41,8 +41,8 @@ other than default ``spp >``.
 
 .. code-block:: none
 
-    # set prompt to "$ spp"
-    spp > config prompt "$ spp"
+    # set prompt to "$ spp "
+    spp > config prompt "$ spp "
     Set prompt: "$ spp "
     $ spp
 

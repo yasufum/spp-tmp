@@ -135,19 +135,33 @@ soure or destination of phy ports.
    Multiple SPP nodes
 
 Launch SPP CLI with three entries of binding addresses with ``-b`` option
-for specifying ``spp-ctl``. Here is an example.
+for specifying ``spp-ctl``.
 
 .. code-block:: console
 
-    # Launch SPP CLI
+    # Launch SPP CLI with three nodes
     $ python src/spp.py -b 192.168.11.101 \
         -b 192.168.11.102 \
         -b 192.168.11.103 \
 
-You can find the host under the management of SPP CLI and switch with
-``server`` command.
+You can also add nodes after SPP CLI is launched.
 
 .. code-block:: console
+
+    # Launch SPP CLI with one node
+    $ python src/spp.py -b 192.168.11.101
+    Welcome to the SPP CLI. Type `help` or `?` to list commands.
+
+    # Add the rest of nodes after
+    spp > server add 192.168.11.102
+    Registered spp-ctl "192.168.11.102:7777".
+    spp > server add 192.168.11.103
+    Registered spp-ctl "192.168.11.103:7777".
+
+You find the host under the management of SPP CLI and switch with
+``server`` command.
+
+.. code-block:: none
 
     spp > server list
       1: 192.168.1.101:7777 *
@@ -156,7 +170,7 @@ You can find the host under the management of SPP CLI and switch with
 
 To change the server, add an index number after ``server``.
 
-.. code-block:: console
+.. code-block:: none
 
     # Launch SPP CLI
     spp > server 3
@@ -179,6 +193,37 @@ All of options can be referred with help option ``-h``.
                         bind address, default=777
 
 All of SPP CLI commands are described in :doc:`../../commands/index`.
+
+
+Default Configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+SPP CLI imports several params from configuration file while launching.
+Some of behaviours of SPP CLI depends on the params.
+The default configuration is defined in
+``src/controller/config/default.yml``.
+You can change this params by editing the config file, or from ``config``
+command after SPP CLI is launched.
+
+All of config params are referred by ``config`` command.
+
+.. code-block:: none
+
+    # show list of config
+    spp > config
+    - max_secondary: "16"       # The maximum number of secondary processes
+    - sec_nfv_nof_lcores: "1"   # Default num of lcores for workers of spp_nfv
+    ....
+
+To change the config, set a value for the param.
+Here is an example for changing command prompt.
+
+.. code-block:: none
+
+    # set prompt to "$ spp "
+    spp > config prompt "$ spp "
+    Set prompt: "$ spp "
+    $ spp
 
 
 SPP Primary
