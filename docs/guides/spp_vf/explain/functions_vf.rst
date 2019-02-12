@@ -421,3 +421,37 @@ For distributing multicast packet, it is cloned with
                             (long)classifier_info->active_classifieds[i]);
             }
     }
+
+Two phase update for forwarding
+-------------------------------
+
+Updating netowrk configuration in ``spp_vf`` is done in a short period of
+time, but not so short considering the time scale of packet forwarding.
+It might forward packets before the updating is completed possibly.
+To avoid such kind of situation, ``spp_vf`` has two phase update mechanism.
+Status info is referred from forwarding process after the update is completed.
+
+.. code-block:: c
+
+        spp_flush(void)
+        {
+                int ret = SPP_RET_NG;
+                struct cancel_backup_info *backup_info = NULL;
+
+                spp_get_mng_data_addr(NULL, NULL, NULL,
+                                        NULL, NULL, NULL, &backup_info);
+
+                /* Initial setting of each interface. */
+                ret = flush_port();
+                        if (ret < SPP_RET_OK)
+                        return ret;
+
+                /* Flush of core index. */
+                flush_core();
+
+                /* Flush of component */
+                ret = flush_component();
+
+                backup_mng_info(backup_info);
+                return ret;
+        }
