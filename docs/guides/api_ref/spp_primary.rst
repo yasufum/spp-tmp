@@ -125,7 +125,13 @@ Response example
           "tx": 0,
           "tx_drop": 0
         },
-        ...
+        {
+          "id": 2,
+          "rx": 0,
+          "rx_drop": 0,
+          "tx": 0,
+          "tx_drop": 0
+        }
       ]
     }
 

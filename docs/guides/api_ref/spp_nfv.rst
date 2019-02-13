@@ -85,7 +85,7 @@ Response example
       "client-id": 1,
       "status": "running",
       "ports": [
-        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1", ...
+        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1"
       ],
       "patches": [
         {

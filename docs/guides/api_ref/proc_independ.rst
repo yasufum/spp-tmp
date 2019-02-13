@@ -62,5 +62,4 @@ Response example
         "type": "nfv",
         "client-id": 2
       }
-      ...
     ]

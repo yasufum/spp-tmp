@@ -139,7 +139,7 @@ Response example
     {
       "client-id": 1,
       "ports": [
-        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1", ...
+        "phy:0", "phy:1", "vhost:0", "vhost:1", "ring:0", "ring:1"
       ],
       "components": [
         {
@@ -440,7 +440,7 @@ Request example
 .. code-block:: console
 
     $ curl -X PUT -H 'application/json' \
-      -d '{"action": "detach", "port": "vhost:0", "dir": "tx"} \
+      -d '{"action": "detach", "port": "vhost:0", "dir": "tx"}' \
       http://127.0.0.1:7777/v1/vfs/1/components/fwd1/ports
 
 Response

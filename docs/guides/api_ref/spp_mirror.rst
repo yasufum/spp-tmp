@@ -316,7 +316,7 @@ Detach tx port of ``ring:1`` from component named ``mr1``.
 .. code-block:: console
 
     $ curl -X PUT -H 'application/json' \
-      -d '{"action": "detach", "port": "ring:0", "dir": "tx"} \
+      -d '{"action": "detach", "port": "ring:0", "dir": "tx"}' \
       http://127.0.0.1:7777/v1/mirrors/1/components/mr1/ports
 
 
