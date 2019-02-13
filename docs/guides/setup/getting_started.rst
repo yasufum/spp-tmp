@@ -387,6 +387,13 @@ For PDF, inkscape and latex packages are required.
     $ sudo apt install texlive-latex-extra
     $ sudo apt install texlive-latex-recommended
 
+You might also need to install ``latexmk`` in addition to if you use
+Ubuntu 18.04 LTS.
+
+.. code-block:: console
+
+    $ sudo apt install latexmk
+
 HTML documentation is compiled by running make with ``doc-html``. This
 command launch sphinx for compiling HTML documents.
 Compiled HTML files are created in ``docs/guides/_build/html/`` and
