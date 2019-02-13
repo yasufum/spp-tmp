@@ -376,8 +376,16 @@ def check_pkt_filter_size(pkt_size):
 
 
 def check_txpkts(txpkts):
-    # TODO(yasufum) add impl
-    # --txpkts is valid for 'tx-only' or 'flowgen' forwarding modes
+    """Check if txpkts is valid.
+
+    Txpkts is a TX segment sizes or total packet length. For example,
+    'txpkts=64,4,4,4,4,4'.
+    This option is valid for 'tx-only' or 'flowgen' forwarding modes.
+    """
+
+    for i in txpkts.split(','):
+        if not re.match(r'\d+', i):
+            return False
     return True
 
 
@@ -391,8 +399,58 @@ def check_event(event):
         return False
 
 
-def print_not_supported(opt_name):
-    print("Error: '%s' is not supported yet" % opt_name)
+def check_port_topology(mode):
+    if mode in ['paired', 'chained', 'loop']:
+        return True
+    else:
+        return False
+
+
+def check_forward_mode(mode):
+    modes = ['io', 'mac', 'macswap', 'flowgen', 'rxonly', 'txonly', 'csum',
+            'icmpecho', 'ieee1588', 'tm', 'noisy']
+    if mode in modes:
+        return True
+    else:
+        return False
+
+
+def check_port_numa_config(pnconf):
+    """Check if --port-numa-config is valid.
+
+    '--port-numa-config' is a tuples of port and socket such as
+    --port-numa-config=(port,socket),(port,socket),...
+    """
+
+    pnconf = pnconf.replace('),(', ')|(')
+    for s in pnconf.split('|'):
+        if not re.match(r'\(\w+,\w+\)', s):
+            return False
+    return True
+
+
+def check_ring_numa_config(rnconf):
+    """Check if --ring-numa-config is valid.
+
+    '--port-numa-config' is a tuples of port, flag and socket such as
+    --port-numa-config=(port,flag,socket),(port,flag,socket),...
+    """
+
+    rnconf = rnconf.replace('),(', ')|(')
+    for s in rnconf.split('|'):
+        if not re.match(r'\(\w+,\w+,\w+\)', s):
+            return False
+    return True
+
+
+def error_exit(opt):
+    print("Error: invalid '{}' option".format(opt))
+    exit()
+
+
+def not_supported_exit(opt):
+    print("Error: '{}' is not supported yet".format(opt))
+    exit()
 
 
 def main():
@@ -452,15 +510,19 @@ def main():
     if args.no_numa is True:
         testpmd_opts += ['--no-numa', '\\']
 
-    # TODO(yasufum) add impl
     if args.port_numa_config is not None:
-        print_not_supported('--port-numa-config')
-        exit()
+        if check_port_numa_config(args.port_numa_config) is True:
+            testpmd_opts += [
+                    '--port-numa-config={}'.format(
+                        args.port_numa_config),
+                    '\\']
 
-    # TODO(yasufum) add impl
     if args.ring_numa_config is not None:
-        print_not_supported('--ring-numa-config')
-        exit()
+        if check_ring_numa_config(args.ring_numa_config) is True:
+            testpmd_opts += [
+                    '--ring-numa-config={}'.format(
+                        args.ring_numa_config),
+                    '\\']
 
     if args.socket_num is not None:
         testpmd_opts += ['%s=%d' % (
@@ -506,8 +568,7 @@ def main():
             testpmd_opts += ['%s=%s' % (
                 '--eth-peer', args.eth_peer), '\\']
         else:
-            print("Error: invalid '--eth-peer' option")
-            exit()
+            error_exit('--eth-peer')
 
     if args.pkt_filter_mode is not None:
         if check_pkt_filter_mode(args.pkt_filter_mode) is True:
@@ -539,8 +600,8 @@ def main():
 
     # TODO(yasufum) Confirm this option is supported in dpdk 18.02
     if args.pkt_filter_flexbytes_offset is not None:
-        print_not_supported('--pkt-filter-flexbytes-offset')
-        exit()
+        not_supported_exit('--pkt-filter-flexbytes-offset')
+
     # It causes 'unrecognized option' error.
     # if args.pkt_filter_flexbytes_offset is not None:
     #     f_offset = args.pkt_filter_flexbytes_offset
@@ -589,15 +650,19 @@ def main():
     if args.disable_rss is True:
         testpmd_opts += ['--disable-rss', '\\']
 
-    # TODO(yasufum) add impl
     if args.port_topology is not None:
-        print_not_supported('--port-topology')
-        exit()
+        if check_port_topology(args.port_topology) is True:
+            testpmd_opts += [
+                    '--port-topology={}'.format(args.port_topology), '\\']
+        else:
+            error_exit('--port-topology')
 
-    # TODO(yasufum) add impl
     if args.forward_mode is not None:
-        print_not_supported('--forward-mode')
-        exit()
+        if check_forward_mode(args.forward_mode) is True:
+            testpmd_opts += [
+                    '--forward-mode={}'.format(args.forward_mode), '\\']
+        else:
+            error_exit('--forward-mode')
 
     if args.rss_ip is True:
         testpmd_opts += ['--rss-ip', '\\']
@@ -756,15 +821,17 @@ def main():
         else:
             testpmd_opts += ['%s=%d' % ('--txrst', args.txrst), '\\']
 
-    # TODO(yasufum) add impl
     if args.rx_queue_stats_mapping is not None:
-        print_not_supported('--rx-queue-stats-mapping')
-        exit()
+        testpmd_opts += [
+                '--rx-queue-stats-mapping={}'.format(
+                    args.rx_queue_stats_mapping),
+                '\\']
 
-    # TODO(yasufum) add impl
     if args.tx_queue_stats_mapping is not None:
-        print_not_supported('--tx-queue-stats-mapping')
-        exit()
+        testpmd_opts += [
+                '--tx-queue-stats-mapping={}'.format(
+                    args.tx_queue_stats_mapping),
+                '\\']
 
     if args.no_flush_rx is True:
         testpmd_opts += ['--no-flush-rx', '\\']
@@ -774,8 +841,7 @@ def main():
             testpmd_opts += ['%s=%s' % (
                 '--txpkts', args.txpkts), '\\']
         else:
-            print("Error: invalid '--txpkts' option")
-            exit()
+            error_exit('--txpkts')
 
     if args.disable_link_check is True:
         testpmd_opts += ['--disable-link-check', '\\']
@@ -801,24 +867,25 @@ def main():
             testpmd_opts += ['%s=%s' % (
                 '--print-event', args.print_event), '\\']
         else:
-            print("Error: invalid '--print-event' option")
-            exit()
+            error_exit('--print-event')
 
     if args.mask_event is not None:
         if check_event(args.mask_event) is True:
             testpmd_opts += ['%s=%s' % (
                 '--mask-event', args.mask_event), '\\']
         else:
-            print("Error: invalid '--mask-event' option")
-            exit()
+            error_exit('--mask-event')
 
     if args.flow_isolate_all is True:
         testpmd_opts += ['--flow-isolate-all', '\\']
 
     if args.tx_offloads is not None:
-        # TODO(yasufum) check if it is hexadecimal bitmask
-        testpmd_opts += ['%s=%s' % (
-            '--tx-offloads', args.tx_offloads), '\\']
+        ptn = r'^0x[0-9aA-Fa-f]+$'  # should be hexadecimal
+        if re.match(ptn, args.tx_offloads) is True:
+            testpmd_opts += ['%s=%s' % (
+                '--tx-offloads', args.tx_offloads), '\\']
+        else:
+            error_exit('--tx-offloads')
 
     if args.hot_plug is True:
         testpmd_opts += ['--hot-plug', '\\']
