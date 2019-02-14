@@ -113,7 +113,7 @@ struct pcap_packet_header {
 /* Option for pcap. */
 struct pcap_option {
 	struct timespec start_time; /* start time */
-	uint64_t file_limit;        /* file size limit */
+	uint64_t fsize_limit;        /* file size limit */
 	char compress_file_path[PCAP_FPATH_STRLEN]; /* file path */
 	char compress_file_date[PCAP_FDATE_STRLEN]; /* file name date */
 	struct spp_port_info port_cap;  /* capture port */
@@ -169,7 +169,7 @@ usage(const char *progname)
 		" --client-id CLIENT_ID"
 		" -s IPADDR:PORT"
 		" -c CAP_PORT"
-		" [--out-dir DIR_OUTPUT]"
+		" [--out-dir OUTPUT_DIR]"
 		" [--fsize MAX_FILE_SIZE]\n"
 		" --client-id CLIENT_ID: My client ID\n"
 		" -s IPADDR:PORT: IP addr and sec port for spp-ctl\n"
@@ -180,13 +180,11 @@ usage(const char *progname)
 }
 
 /**
- * Convert string of given client id to integer
- *
- * If succeeded, client id of integer is assigned to client_id and
- * return SPP_RET_OK. Or return -SPP_RET_NG if failed.
+ * Convert string type of client ID to integer and return SPP_RET_OK, or
+ * SPP_RET_NG if failed.
  */
 static int
-decode_client_id(const char *client_id_str, int *client_id)
+client_id_toi(const char *client_id_str, int *client_id)
 {
 	int id = 0;
 	char *endptr = NULL;
@@ -229,25 +227,25 @@ parse_server_ip(const char *server_str, char *server_ip, int *server_port)
 }
 
 
-/* Decode options for limit file size */
+/* Parse `--fsize` option and get the value */
 static int
-decode_limit_file_size(const char *limit_size_str, uint64_t *limit_size)
+parse_fsize(const char *fsize_str, uint64_t *fsize)
 {
-	uint64_t file_limit = 0;
+	uint64_t fs = 0;
 	char *endptr = NULL;
 
-	file_limit = strtoull(limit_size_str, &endptr, 10);
-	if (unlikely(limit_size_str == endptr) || unlikely(*endptr != '\0'))
+	fs = strtoull(fsize_str, &endptr, 10);
+	if (unlikely(fsize_str == endptr) || unlikely(*endptr != '\0'))
 		return SPP_RET_NG;
 
-	*limit_size = file_limit;
-	RTE_LOG(DEBUG, SPP_PCAP, "Set limit file zise = %ld\n", *limit_size);
+	*fsize = fs;
+	RTE_LOG(DEBUG, SPP_PCAP, "Set fzise = %ld\n", *fsize);
 	return SPP_RET_OK;
 }
 
-/* Decode options for port */
+/* Parse `-c` option for captured port and get the port type and ID */
 static int
-decode_capture_port(const char *port_str, enum port_type *iface_type,
+parse_captured_port(const char *port_str, enum port_type *iface_type,
 			int *iface_no)
 {
 	enum port_type type = UNDEF;
@@ -324,7 +322,7 @@ parse_args(int argc, char *argv[])
 	/* option parameters init */
 	memset(&g_pcap_option, 0x00, sizeof(g_pcap_option));
 	strcpy(g_pcap_option.compress_file_path, DEFAULT_OUTPUT_DIR);
-	g_pcap_option.file_limit = DEFAULT_FILE_LIMIT;
+	g_pcap_option.fsize_limit = DEFAULT_FILE_LIMIT;
 
 	/* Check options of application */
 	optind = 0;
@@ -333,7 +331,7 @@ parse_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (decode_client_id(optarg,
+			if (client_id_toi(optarg,
 					&g_startup_param.client_id) !=
 								SPP_RET_OK) {
 				usage(progname);
@@ -351,16 +349,15 @@ parse_args(int argc, char *argv[])
 			}
 			break;
 		case SPP_LONGOPT_RETVAL_FILE_SIZE:
-			if (decode_limit_file_size(optarg,
-						&g_pcap_option.file_limit) !=
-						SPP_RET_OK) {
+			if (parse_fsize(optarg, &g_pcap_option.fsize_limit) !=
+					SPP_RET_OK) {
 				usage(progname);
 				return SPP_RET_NG;
 			}
 			break;
 		case 'c':  /* captured port */
 			strcpy(port_str, optarg);
-			if (decode_capture_port(optarg,
+			if (parse_captured_port(optarg,
 					&g_pcap_option.port_cap.iface_type,
 					&g_pcap_option.port_cap.iface_no) !=
 					SPP_RET_OK) {
@@ -398,7 +395,7 @@ parse_args(int argc, char *argv[])
 			g_startup_param.server_port,
 			port_str,
 			g_pcap_option.compress_file_path,
-			g_pcap_option.file_limit);
+			g_pcap_option.fsize_limit);
 	return SPP_RET_OK;
 }
 
@@ -697,7 +694,7 @@ static int compress_file_packet(struct pcap_mng_info *info,
 		return SPP_RET_OK;
 
 	/* capture file rool */
-	if (info->file_size > g_pcap_option.file_limit) {
+	if (info->file_size > g_pcap_option.fsize_limit) {
 		if (file_compression_operation(info, UPDATE_MODE)
 							!= SPP_RET_OK)
 			return SPP_RET_NG;
