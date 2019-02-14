@@ -24,8 +24,8 @@ doing explicitly in this example to be more understandable.
 .. code-block:: console
 
     # Launch spp-ctl and spp.py
-    $ python3 ./src/spp-ctl/spp-ctl -b 127.0.0.1
-    $ python ./src/spp.py -b 127.0.0.1
+    $ python3 ./src/spp-ctl/spp-ctl -b 192.168.1.100
+    $ python ./src/spp.py -b 192.168.1.100
 
 
 SPP Primary
@@ -41,22 +41,23 @@ See `Running a Sample Application
 <http://dpdk.org/doc/guides/linux_gsg/build_sample_apps.html#running-a-sample-application>`_
 in DPDK documentation for options.
 
-Options of spp primary are:
+Application specific options of spp primary.
 
-  * -p : port mask
-  * -n : number of rings
-  * -s : IPv4 address and port for spp primary
+  * ``-p``: Port mask.
+  * ``-n``: Number of rings.
+  * ``-s``: IPv4 address and port for spp primary.
 
-Then, spp primary can be launched like this.
+This is an example of launching ``spp_primary``.
 
 .. code-block:: console
 
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
-      -l 1 -n 4 --socket-mem 512,512 \
-      --huge-dir=/run/hugepages/kvm \
-      --proc-type=primary \
+      -l 0 -n 4 --socket-mem 512,512 \
+      --huge-dir /run/hugepages/kvm \
+      --proc-type primary \
       -- \
-      -p 0x03 -n 9 -s 127.0.0.1:5555
+      -p 0x03 -n 10 \
+      -s 192.168.1.100:5555
 
 
 .. _spp_vf_gsg_howto_use_spp_vf:
@@ -64,18 +65,14 @@ Then, spp primary can be launched like this.
 spp_vf
 ------
 
-``spp_vf`` can be launched with two kinds of options, like primary process.
+``spp_vf`` is a kind of secondary process, so it takes both of EAL options and
+application specific options. Here is a list of application specific options.
 
-Like primary process, ``spp_vf`` has two kinds of options. One is for
-DPDK, the other is ``spp_vf``.
+  * ``--client-id``: Client ID unique among secondary processes.
+  * ``-s``: IPv4 address and secondary port of spp-ctl.
+  * ``--vhost-client``: Enable vhost-user client mode.
 
-``spp_vf`` specific options are:
-
-  * --client-id: client id which can be seen as secondary ID from spp.py
-  * -s: IPv4 address and port for spp secondary
-  * --vhost-client: vhost-user client enable setting
-
-``spp_vf`` can be launched like this.
+This is an example of launching ``spp_vf``.
 
 .. code-block:: console
 
@@ -84,7 +81,7 @@ DPDK, the other is ``spp_vf``.
       --proc-type=secondary \
       -- \
       --client-id 1 \
-      -s 127.0.0.1:6666 \
+      -s 192.168.1.100:6666 \
       --vhost-client
 
 If ``--vhost-client`` option is specified, then ``vhost-user`` act as
@@ -100,24 +97,27 @@ See also `Vhost Sample Application
 spp_mirror
 ----------
 
-``spp_mirror`` takes the same options as ``spp_vf``. Here is an example.
+``spp_mirror`` is a kind of secondary process, and options are same as
+``spp_vf``.
 
 .. code-block:: console
 
     $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/spp_mirror \
-      -l 2 -n 4 \
+      -l 1,2 -n 4 \
       --proc-type=secondary \
       -- \
       --client-id 1 \
-      -s 127.0.0.1:6666 \
+      -s 192.168.1.100:6666 \
       -vhost-client
+
 
 .. _spp_vf_gsg_howto_use_spp_pcap:
 
 spp_pcap
 --------
 
-After run ``spp_primary`` is launched, run secondary process ``spp_pcap``.
+``spp_pcap`` is a kind of secondary process, so it takes both of EAL options
+and application specific options.
 
 .. code-block:: console
 
@@ -126,15 +126,50 @@ After run ``spp_primary`` is launched, run secondary process ``spp_pcap``.
       --proc-type=secondary \
       -- \
       --client-id 1 \
-      -s 127.0.0.1:6666 \
-      -i phy:0 \
-      --output /mnt/pcap \
-      --limit_file_size 107374182
+      -s 192.168.1.100:6666 \
+      -c phy:0 \
+      --out-dir /path/to/dir \
+      --fsize 107374182
 
-VM
---
+Here is a list of ``spp_pcap`` specific options.
 
-VM is launched with ``virsh`` command.
+ * ``-c``: Captured port, e.g. ``phy:0``, ``ring:1`` or so.
+ * ``--out-dir``: Optional. Path of dir for captured file. Default is ``/tmp``.
+ * ``--fsize``: Optional. Maximum size of a capture file. Default is ``1GiB``.
+
+Captured file of LZ4 is generated in ``/tmp`` by default.
+The name of file is consists of timestamp, resource ID of captured port,
+ID of ``writer`` threads and sequential number.
+Timestamp is decided when capturing is started and formatted as
+``YYYYMMDDhhmmss``.
+Both of ``writer`` thread ID and sequential number are started from ``1``.
+Sequential number is required for the case if the size of
+captured file is reached to the maximum and another file is generated to
+continue capturing.
+
+This is an example of captured file. It consists of timestamp,
+``20190214154925``, port ``phy0``, thread ID ``1`` and sequential number
+``1``.
+
+.. code-block:: none
+
+    /tmp/spp_pcap.20190214154925.phy0.1.1.pcap.lz4
+
+``spp_pcap`` also generates temporary files which are owned by each of
+``writer`` threads until capturing is finished or the size of captured file
+is reached to the maximum.
+This temporary file has additional extension ``tmp`` at the end of file
+name.
+
+.. code-block:: none
+
+    /tmp/spp_pcap.20190214154925.phy0.1.1.pcap.lz4.tmp
+
+
+Using VM with virsh
+-------------------
+
+In this section, VM is launched with ``virsh`` command.
 
 .. code-block:: console
 
