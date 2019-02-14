@@ -25,16 +25,6 @@ class SppPrimary(object):
         self.spp_ctl_cli = spp_ctl_cli
 
         # Default args for `pri; launch`, used if given cli_config is invalid
-        # TODO(yasufum) remove local default and add checking config
-        self.launch_default = {
-                'mem': '-m 512',
-                'base_lcore': '1',
-                'vhost_cli': '',
-                'nof_lcores_nfv': '1',
-                'nof_lcores_vf': '3',
-                'nof_lcores_mirror': '2',
-                'nof_lcores_pcap': '2',
-                }
 
         # TODO(yasufum) replace placeholders __XXX__ to {keyword}.
         # Setup template of args for `pri; launch`
@@ -165,6 +155,7 @@ class SppPrimary(object):
                     rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
                     rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
 
+    # TODO(yasufum) add checking for cli_config has keys
     def complete(self, text, line, begidx, endidx, cli_config):
         """Completion for primary process commands.
 
@@ -230,35 +221,23 @@ class SppPrimary(object):
                                 tmpkey = 'sec_nfv_nof_lcores'
                                 nof_workers = int(
                                         cli_config[tmpkey]['val'])
-                            else:
-                                nof_workers = int(
-                                        self.defaults['nof_lcores_nfv'])
 
                         elif ptype == 'vf':
                             if 'sec_vf_nof_lcores' in cli_config.keys():
                                 nof_workers = int(
                                         cli_config['sec_vf_nof_lcores']['val'])
-                            else:
-                                nof_workers = int(
-                                        elf.defaults['nof_lcores_vf'])
 
                         elif ptype == 'mirror':  # two worker cores
                             if 'sec_mirror_nof_lcores' in cli_config.keys():
                                 tmpkey = 'sec_mirror_nof_lcores'
                                 nof_workers = int(
                                         cli_config[tmpkey]['val'])
-                            else:
-                                nof_workers = int(
-                                        self.defaults['nof_lcore_mirror'])
 
                         elif ptype == 'pcap':  # at least two worker cores
                             if 'sec_pcap_nof_lcores' in cli_config.keys():
                                 tmpkey = 'sec_pcap_nof_lcores'
                                 nof_workers = int(
                                         cli_config[tmpkey]['val'])
-                            else:
-                                nof_workers = int(
-                                        elf.defaults['nof_lcore_pcap'])
 
                         last_core = lcore_base + nof_workers - 1
 
@@ -270,8 +249,7 @@ class SppPrimary(object):
                             rest_core = '{}-{}'.format(lcore_base, last_core)
 
                         temp = self._setup_launch_template(
-                                cli_config, self.launch_template,
-                                self.launch_default)
+                                cli_config, self.launch_template)
                         candidates = [temp.format(
                             wlcores=rest_core, opt_sid=opt_sid, sid=sid,
                             sec_addr=server_addr)]
@@ -290,19 +268,16 @@ class SppPrimary(object):
 
         return completions
 
-    def _setup_launch_template(self, cli_config, template, defaults):
+    # TODO(yasufum) add checking for cli_config has keys
+    def _setup_launch_template(self, cli_config, template):
         """Check given `cli_config` for params of launch."""
 
         if 'sec_mem' in cli_config.keys():
             sec_mem = cli_config['sec_mem']['val']
-        else:
-            sec_mem = defaults['mem']
         template = template.replace('__MEM__', sec_mem)
 
         if 'sec_base_lcore' in cli_config.keys():
             sec_base_lcore = cli_config['sec_base_lcore']['val']
-        else:
-            sec_base_lcore = defaults['base_lcore']
         template = template.replace('__BASE_LCORE__', str(sec_base_lcore))
 
         if 'sec_vhost_cli' in cli_config.keys():
@@ -310,8 +285,6 @@ class SppPrimary(object):
                 vhost_client = '--vhost-client'
             else:
                 vhost_client = ''
-        else:
-            vhost_client = defaults['vhost_cli']
         template = template.replace('__VHOST_CLI__', vhost_client)
 
         return template
