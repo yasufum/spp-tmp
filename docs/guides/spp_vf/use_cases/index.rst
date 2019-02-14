@@ -7,8 +7,8 @@ Use Cases
 .. toctree::
    :maxdepth: 2
 
-   basic_usecase_vf
-   usecase1
-   basic_usecase_mirror
-   usecase2
-   usecase3
+   vf_simple
+   vf_ssh_login
+   mirror_simple
+   mirror_vms
+   pcap_simple
