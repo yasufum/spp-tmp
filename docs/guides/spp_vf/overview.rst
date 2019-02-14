@@ -101,7 +101,7 @@ threads unlike spp_vf.
 
 .. _figure_spp_pcap_overview:
 
-.. figure:: ../images/spp_pcap/spp_pcap_overview.*
-   :width: 55%
+.. figure:: ../images/spp_vf/spp_pcap_overview.*
+   :width: 50%
 
    Overview of spp_pcap

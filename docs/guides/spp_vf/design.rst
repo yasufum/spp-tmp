@@ -131,7 +131,7 @@ packets from ``phy:0`` are captured by using three ``writer`` threads.
 
 .. _figure_spp_pcap_design:
 
-.. figure:: ../images/spp_pcap/spp_pcap_design.*
+.. figure:: ../images/spp_vf/spp_pcap_design.*
     :width: 55%
 
     spp_pcap internal structure

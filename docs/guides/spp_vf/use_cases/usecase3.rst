@@ -13,8 +13,8 @@ Incoming packets received by ``phy:0`` is captured by ``spp_pcap``.
 
 .. _figure_simple_capture:
 
-.. figure:: ../../images/spp_pcap/spp_pcap_overview.*
-    :width: 40%
+.. figure:: ../../images/spp_vf/spp_pcap_overview.*
+    :width: 50%
 
     Simple Packet Capture
 
