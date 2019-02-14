@@ -239,6 +239,13 @@ class SppPrimary(object):
                                 nof_workers = int(
                                         cli_config[tmpkey]['val'])
 
+                            if 'sec_pcap_port' in cli_config.keys():
+                                temp = '-c {}'.format(
+                                        cli_config['sec_pcap_port']['val'])
+
+                                self.launch_template = '{} {}'.format(
+                                    self.launch_template, temp)
+
                         last_core = lcore_base + nof_workers - 1
 
                         # Decide lcore option based on configured number of

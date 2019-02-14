@@ -31,3 +31,6 @@ sec_pcap_nof_lcores:
 sec_vhost_cli:
     val: ""
     desc: Vhost client mode, activated if set any of values
+sec_pcap_port:
+    val: "phy:0"
+    desc: Default captured port
