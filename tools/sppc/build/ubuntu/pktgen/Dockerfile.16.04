@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     libarchive-dev \
     linux-headers-$(uname -r) \
     libpcap-dev \
+    liblua5*-dev \
     pkg-config \
     wget \
     && apt-get clean \
