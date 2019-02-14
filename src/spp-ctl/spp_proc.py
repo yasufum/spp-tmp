@@ -82,10 +82,10 @@ APP_OPTS = {
         'spp_pcap':
         [
             '--client-id',  # sec ID
-            '-s',  # address nd port
-            '-i',
-            '--output',
-            '--limit_file_size'
+            '-s',  # address and port
+            '-c',  # captured port
+            '--out-dir',  # captured file dir
+            '--fsize'  # max size of captured file
             ]}
 
 
@@ -332,8 +332,9 @@ class PrimaryProc(SppProc):
                     if (val is not None) and (val != ''):
                         app_opts.append(str(val))
 
-        query = "launch {} {} {} -- {}".format(
-                sec_id, proc_name, ' '.join(eal_opts), ' '.join(app_opts))
+        query = "launch {sid} {pname} {eal} -- {app}".format(
+                sid=sec_id, pname=proc_name, eal=' '.join(eal_opts),
+                app=' '.join(app_opts))
 
         LOG.info("Query: {}".format(query))
 
