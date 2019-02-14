@@ -25,8 +25,11 @@ DOC_ROOT = docs/guides
 dist-clean:
 	make clean
 	rm -rf $(wildcard src/*/$(RTE_TARGET))
+	rm -rf $(wildcard src/*/*.pyc)
+	rm -rf $(wildcard src/*/__pycache__)
 	rm -rf $(wildcard src/*/shared)
 	rm -rf $(wildcard src/mirror/vf)
+	rm -rf $(wildcard src/pcap/vf)
 
 .PHONY: doc
 doc: doc-all
