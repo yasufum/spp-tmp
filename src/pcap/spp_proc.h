@@ -90,9 +90,9 @@ enum SPP_LONGOPT_RETVAL {
 	 * Return value definition for getopt_long()
 	 * Only for long option
 	 */
-	SPP_LONGOPT_RETVAL_CLIENT_ID,      /* --client-id       */
-	SPP_LONGOPT_RETVAL_OUTPUT,         /* --output          */
-	SPP_LONGOPT_RETVAL_LIMIT_FILE_SIZE /* --limit_file_size */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,  /* --client-id */
+	SPP_LONGOPT_RETVAL_OUT_DIR,    /* --out-dir */
+	SPP_LONGOPT_RETVAL_FILE_SIZE   /* --fsize */
 };
 
 /* Interface information structure */

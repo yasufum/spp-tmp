@@ -167,17 +167,15 @@ usage(const char *progname)
 {
 	RTE_LOG(INFO, SPP_PCAP, "Usage: %s [EAL args] --"
 		" --client-id CLIENT_ID"
-		" -s SERVER_IP:SERVER_PORT"
-		" -i INPUT_PORT"
-		" [--output FILE_OUT_PUT_PATH]"
-		" [--limit_file_size LIMIT_FILE_SIZE]\n"
-		" --client-id CLIENT_ID   : My client ID\n"
-		" -s SERVER_IP:SERVER_PORT  : "
-				"Access information to the server\n"
-		" -i                        : capture port(phy,ring)\n"
-		" --output                  : file path(default:/tmp)\n"
-		" --limit_file_size         : "
-				"file limit size(default:1073741824 Byte)\n"
+		" -s IPADDR:PORT"
+		" -c CAP_PORT"
+		" [--out-dir DIR_OUTPUT]"
+		" [--fsize MAX_FILE_SIZE]\n"
+		" --client-id CLIENT_ID: My client ID\n"
+		" -s IPADDR:PORT: IP addr and sec port for spp-ctl\n"
+		" -c: Captured port (e.g. 'phy:0' or 'ring:1')\n"
+		" --out-dir: Output dir (Default is /tmp)\n"
+		" --fsize: Maximum captured file size (Default is 1GiB)\n"
 		, progname);
 }
 
@@ -305,13 +303,13 @@ parse_args(int argc, char *argv[])
 	const char *progname = argv[0];
 	char port_str[PORT_STR_SIZE];
 	static struct option lgopts[] = {
-			{ "client-id",       required_argument, NULL,
-					SPP_LONGOPT_RETVAL_CLIENT_ID },
-			{ "output",          required_argument, NULL,
-					SPP_LONGOPT_RETVAL_OUTPUT },
-			{ "limit_file_size", required_argument, NULL,
-					SPP_LONGOPT_RETVAL_LIMIT_FILE_SIZE},
-			{ 0 },
+		{ "client-id", required_argument, NULL,
+			SPP_LONGOPT_RETVAL_CLIENT_ID },
+		{ "out-dir", required_argument, NULL,
+			SPP_LONGOPT_RETVAL_OUT_DIR },
+		{ "fsize", required_argument, NULL,
+			SPP_LONGOPT_RETVAL_FILE_SIZE},
+		{ 0 },
 	};
 	/**
 	 * Save argv to argvopt to avoid losing the order of options
@@ -331,7 +329,7 @@ parse_args(int argc, char *argv[])
 	/* Check options of application */
 	optind = 0;
 	opterr = 0;
-	while ((opt = getopt_long(argc, argvopt, "i:s:", lgopts,
+	while ((opt = getopt_long(argc, argvopt, "c:s:", lgopts,
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
@@ -343,7 +341,7 @@ parse_args(int argc, char *argv[])
 			}
 			proc_flg = 1;
 			break;
-		case SPP_LONGOPT_RETVAL_OUTPUT:
+		case SPP_LONGOPT_RETVAL_OUT_DIR:
 			strcpy(g_pcap_option.compress_file_path, optarg);
 			struct stat statBuf;
 			if (g_pcap_option.compress_file_path[0] == '\0' ||
@@ -352,7 +350,7 @@ parse_args(int argc, char *argv[])
 				return SPP_RET_NG;
 			}
 			break;
-		case SPP_LONGOPT_RETVAL_LIMIT_FILE_SIZE:
+		case SPP_LONGOPT_RETVAL_FILE_SIZE:
 			if (decode_limit_file_size(optarg,
 						&g_pcap_option.file_limit) !=
 						SPP_RET_OK) {
@@ -360,7 +358,7 @@ parse_args(int argc, char *argv[])
 				return SPP_RET_NG;
 			}
 			break;
-		case 'i':
+		case 'c':  /* captured port */
 			strcpy(port_str, optarg);
 			if (decode_capture_port(optarg,
 					&g_pcap_option.port_cap.iface_type,
@@ -371,7 +369,7 @@ parse_args(int argc, char *argv[])
 			}
 			port_flg = 1;
 			break;
-		case 's':
+		case 's':  /* server addr */
 			if (parse_server_ip(optarg, g_startup_param.server_ip,
 					&g_startup_param.server_port) !=
 								SPP_RET_OK) {
@@ -393,8 +391,8 @@ parse_args(int argc, char *argv[])
 	}
 
 	RTE_LOG(INFO, SPP_PCAP,
-			"app opts (client_id=%d,server=%s:%d,"
-			"port=%s,output=%s,limit_file_size=%ld)\n",
+			"App opts: '--client-id %d', '-s %s:%d', "
+			"'-c %s', '--out-dir %s', '--fsize %ld'\n",
 			g_startup_param.client_id,
 			g_startup_param.server_ip,
 			g_startup_param.server_port,
