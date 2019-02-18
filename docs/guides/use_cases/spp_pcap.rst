@@ -2,20 +2,23 @@
     Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
 
 
-.. _spp_pcap_use_case:
+.. _spp_usecases_pcap:
 
-Packet Capture with spp_pcap
-============================
+spp_pcap
+========
 
-This section describes a usecase for capturing packets with ``spp_pcap``
-and seeing inside of the captured file with ``tcpdump`` command.
+Packet Capture
+--------------
+
+This section describes a usecase for capturing packets with ``spp_pcap``.
+See inside of the captured file with ``tcpdump`` command.
 :numref:`figure_simple_capture` shows the overview of scenario in which
 incoming packets via ``phy:0`` are dumped as compressed pcap files by using
 ``spp_pcap``.
 
 .. _figure_simple_capture:
 
-.. figure:: ../../images/spp_vf/spp_pcap_overview.*
+.. figure:: ../images/spp_vf/spp_pcap_overview.*
     :width: 50%
 
     Packet capture with spp_pcap

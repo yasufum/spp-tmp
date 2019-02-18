@@ -5,8 +5,7 @@ SPP VF
 ===========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :numbered:
 
-   use_cases/index
    explain/index

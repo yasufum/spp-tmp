@@ -11,4 +11,5 @@ Use Cases
    spp_nfv
    spp_vf
    spp_mirror
+   spp_pcap
    multi_nodes
