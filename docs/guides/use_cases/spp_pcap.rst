@@ -18,7 +18,7 @@ incoming packets via ``phy:0`` are dumped as compressed pcap files by using
 
 .. _figure_simple_capture:
 
-.. figure:: ../images/spp_vf/spp_pcap_overview.*
+.. figure:: ../images/design/spp_pcap_overview.*
     :width: 50%
 
     Packet capture with spp_pcap
