@@ -113,7 +113,7 @@ for two destinations of vhost interface.
 Incoming packets from rx on host1 are sent to each of vhosts of VM
 by looking up destination MAC address in the packet.
 
-.. figure:: ../images/spp_vf/spp_vf_overview.*
+.. figure:: ../images/design/spp_vf_overview.*
     :width: 72%
 
     Classification of spp_vf for two VMs
@@ -171,7 +171,7 @@ from ``rx`` port are duplicated and sent to each of ``tx`` ports.
 
 .. _figure_spp_mirror_design:
 
-.. figure:: ../images/spp_vf/spp_mirror_design.*
+.. figure:: ../images/design/spp_mirror_design.*
     :width: 45%
 
     Spp_mirror component
@@ -216,7 +216,7 @@ threads unlike spp_vf.
 
 .. _figure_spp_pcap_overview:
 
-.. figure:: ../images/spp_vf/spp_pcap_overview.*
+.. figure:: ../images/design/spp_pcap_overview.*
    :width: 50%
 
    Overview of spp_pcap
