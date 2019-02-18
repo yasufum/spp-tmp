@@ -17,7 +17,7 @@ Setup DPDK and SPP
 
 First of all, you need to clone DPDK and setup hugepages for running
 DPDK application as described in
-:doc:`../../setup/getting_started`
+:doc:`../../gsg/setup`
 or DPDK's
 `Gettting Started Guide
 <https://dpdk.org/doc/guides/linux_gsg/sys_reqs.html>`_.
@@ -26,7 +26,7 @@ You also need to load kernel modules and bind network ports as in
 <https://dpdk.org/doc/guides/linux_gsg/linux_drivers.html>`_.
 
 Then, as described in
-:doc:`../../setup/getting_started`
+:doc:`../../gsg/install`
 , clone and compile SPP in any directory.
 
 .. code-block:: console

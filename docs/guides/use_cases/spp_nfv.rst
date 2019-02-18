@@ -382,7 +382,7 @@ Pcap PMD is an interface for capturing or restoring traffic.
 For usign pcap PMD, you should set ``CONFIG_RTE_LIBRTE_PMD_PCAP``
 and ``CONFIG_RTE_PORT_PCAP`` to ``y`` and compile DPDK before SPP.
 Refer to
-:ref:`Install DPDK and SPP<install_dpdk_spp>`
+:ref:`Install DPDK and SPP<setup_install_dpdk_spp>`
 for details of setting up.
 
 Pcap PMD has two different streams for rx and tx.

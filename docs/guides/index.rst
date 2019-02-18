@@ -10,7 +10,7 @@ SPP documentation
 
    overview
    design/index
-   setup/index
+   gsg/index
    use_cases/index
    commands/index
    tools/index
