@@ -11,6 +11,8 @@ Setup
 This documentation is described for Ubuntu 16.04 and later.
 
 
+.. _gsg_reserve_hugep:
+
 Reserving Hugepages
 -------------------
 
@@ -29,6 +31,9 @@ It must be defined in boot loader configuration, usually is
 Add an entry to define pagesize and the number of pages.
 Here is an example. ``hugepagesz`` is for the size and ``hugepages``
 is for the number of pages.
+
+You can also configure isolcpus for performance tuning as described in
+:ref:`Performance Optimizing<gsg_performance_opt>`.
 
 .. code-block:: console
 
@@ -141,6 +146,102 @@ It means that you can launch a VM before secondary process create vhost port.
     Vhost client mode is supported by qemu 2.7 or later.
 
 
+Using Libvirt
+-------------
+
+If you use libvirt for managing virtual machines, you might need some
+additional configurations.
+
+Uncomment user and group in ``/etc/libvirt/qemu.conf``.
+
+.. code-block:: console
+
+    # /etc/libvirt/qemu.conf
+
+    user = "root"
+    group = "root"
+
+To use hugepages with libvirt, change ``KVM_HUGEPAGES`` from 0 to 1
+in ``/etc/default/qemu-kvm``.
+
+.. code-block:: console
+
+    # /etc/default/qemu-kvm
+
+    KVM_HUGEPAGES=1
+
+Change grub config as similar to
+:ref:`Reserving Hugepages<gsg_reserve_hugep>`.
+You can check hugepage settings as following.
+
+.. code-block:: console
+
+    $ cat /proc/meminfo | grep -i huge
+    AnonHugePages:      2048 kB
+    HugePages_Total:      36		#	/etc/default/grub
+    HugePages_Free:       36
+    HugePages_Rsvd:        0
+    HugePages_Surp:        0
+    Hugepagesize:    1048576 kB		#	/etc/default/grub
+
+    $ mount | grep -i huge
+    cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,...,nsroot=/)
+    hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime)
+    hugetlbfs-kvm on /run/hugepages/kvm type hugetlbfs (rw,...,gid=117)
+    hugetlb on /run/lxcfs/controllers/hugetlb type cgroup (rw,...,nsroot=/)
+
+Finally, you umount default hugepages.
+
+.. code-block:: console
+
+    $ sudo umount /dev/hugepages
+
+
+Trouble Shooting
+~~~~~~~~~~~~~~~~
+
+You might encounter a permission error while creating a resource,
+such as a socket file under ``tmp/``, because of AppArmor.
+
+You can avoid this error by editing ``/etc/libvirt/qemu.conf``.
+
+.. code-block:: console
+
+    # Set security_driver to "none"
+    $sudo vi /etc/libvirt/qemu.conf
+    ...
+    security_driver = "none"
+    ...
+
+Restart libvirtd to activate this configuration.
+
+.. code-block:: console
+
+    $sudo systemctl restart libvirtd.service
+
+Or, you can also avoid by simply removing AppArmor itself.
+
+.. code-block:: console
+
+    $ sudo apt-get remove apparmor
+
+If you use CentOS, not Ubuntu, confirm that SELinux doesn't prevent
+for permission.
+SELinux should be disabled in this case.
+
+.. code-block:: console
+
+    # /etc/selinux/config
+    SELINUX=disabled
+
+Check your SELinux configuration.
+
+.. code-block:: console
+
+    $ getenforce
+    Disabled
+
+
 Python 2 or 3 ?
 ---------------
 
@@ -150,3 +251,16 @@ are able to be launched both of Python2 and 3.
 Howevrer, Python2 will not be maintained after 2020 and SPP is going to update
 only supporting Python3.
 In SPP, it is planned to support only Python3 before the end of 2019.
+
+
+Reference
+---------
+
+* [1] `Use of Hugepages in the Linux Environment
+  <http://dpdk.org/doc/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`_
+
+* [2] `Using Linux Core Isolation to Reduce Context Switches
+  <http://dpdk.org/doc/guides/linux_gsg/enable_func.html#using-linux-core-isolation-to-reduce-context-switches>`_
+
+* [3] `Linux boot command line
+  <http://dpdk.org/doc/guides/linux_gsg/nic_perf_intel_platform.html#linux-boot-command-line>`_
