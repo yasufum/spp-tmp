@@ -22,15 +22,15 @@ Network Configuration
 Detailed configuration is described in
 :numref:`figure_spp_mirror_use_cases_nw_config`.
 In this diagram, incoming packets from ``phy:0`` are mirrored.
-In ``spp_mirror`` process, worker thread ``mir1`` copies incoming packets and
+In ``spp_mirror`` process, worker thread ``mir`` copies incoming packets and
 sends to two destinations ``phy:1`` and ``phy:2``.
 
 .. _figure_spp_mirror_use_cases_nw_config:
 
 .. figure:: ../images/usecases/mirror_dup_nwconf.*
-     :width: 80%
+     :width: 75%
 
-     Network configuration of mirroring
+     Duplicate packets with spp_mirror
 
 
 Setup SPP
@@ -237,13 +237,13 @@ Netowrk Configuration
 
 Detailed configuration of :numref:`figure_usecase_monitor_overview`
 is described in :numref:`figure_usecase_monitor_nwconfig`.
-In this senario, worker thread ``mir1`` copies incoming packets
+In this senario, worker thread ``mir`` copies incoming packets
 from though ``ring:0``.
 Then, sends to orignal destination ``VM1`` and anohter one ``VM3``.
 
 .. _figure_usecase_monitor_nwconfig:
 
-.. figure:: ../images/spp_vf/spp_mirror_usecase_nwconfig.*
+.. figure:: ../images/usecases/mirror_monitor_nwconf.*
      :width: 80%
 
      Network configuration of monitoring packets
@@ -268,12 +268,12 @@ Start components in ``spp_vf``.
 
    # terminal 2
    spp > vf 1; component start cls 2 classifier_mac
-   spp > vf 1; component start mgr1 3 merge
-   spp > vf 1; component start mgr2 4 merge
-   spp > vf 1; component start fwd1 5 forward
-   spp > vf 1; component start fwd2 6 forward
-   spp > vf 1; component start fwd3 7 forward
-   spp > vf 1; component start fwd4 8 forward
+   spp > vf 1; component start mgr 3 merge
+   spp > vf 1; component start fwd1 4 forward
+   spp > vf 1; component start fwd2 5 forward
+   spp > vf 1; component start fwd3 6 forward
+   spp > vf 1; component start fwd4 7 forward
+   spp > vf 1; component start fwd5 8 forward
 
 Add ports for components.
 
@@ -283,6 +283,10 @@ Add ports for components.
    spp > vf 1; port add phy:0 rx cls
    spp > vf 1; port add ring:0 tx cls
    spp > vf 1; port add ring:1 tx cls
+
+   spp > vf 1; port add ring:2 rx mgr
+   spp > vf 1; port add ring:3 rx mgr
+   spp > vf 1; port add phy:0 tx mgr
 
    spp > vf 1; port add ring:5 rx fwd1
    spp > vf 1; port add vhost:0 tx fwd1
@@ -296,12 +300,9 @@ Add ports for components.
    spp > vf 1; port add vhost:3 rx fwd4
    spp > vf 1; port add ring:3 tx fwd4
 
-   spp > vf 1; port add ring:2 rx mgr1
-   spp > vf 1; port add ring:3 rx mgr1
-   spp > vf 1; port add phy:0 tx mgr1
+   spp > vf 1; port add ring:4 rx fwd5
+   spp > vf 1; port add vhost:4 tx fwd5
 
-   spp > vf 1; port add ring:4 rx mgr2
-   spp > vf 1; port add vhost:4 tx mgr2
 
 Add classifier table entries.
 
@@ -337,36 +338,37 @@ Run ``spp_mirror``.
 
 .. code-block:: console
 
-   $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/app/spp_mirror \
-     -l 0,9 \
-     -n 4 --proc-type secondary \
-     -- \
-     --client-id 2 \
-     -s 192.168.1.100:6666 \
-     --vhost-client
+    # terminal 6
+    $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/app/spp_mirror \
+      -l 0,9 \
+      -n 4 --proc-type secondary \
+      -- \
+      --client-id 2 \
+      -s 192.168.1.100:6666 \
+      --vhost-client
 
 Start mirror component with lcore ID 9.
 
 .. code-block:: console
 
-    # Start component on lcore 9
-    spp > mirror 2; component start mir1 9 mirror
+    # terminal 2
+    spp > mirror 2; component start mir 9 mirror
 
 Add ``ring:0`` as rx port, ``ring:4`` and ``ring:5`` as tx ports.
 
 .. code-block:: none
 
    # terminal 2
-   spp > mirror 2; port add ring:0 rx mir1
-   spp > mirror 2; port add ring:4 tx mir1
-   spp > mirror 2; port add ring:5 tx mir1
+   spp > mirror 2; port add ring:0 rx mir
+   spp > mirror 2; port add ring:4 tx mir
+   spp > mirror 2; port add ring:5 tx mir
 
 
 Receive Packet on VM3
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can capture incoming packets on VM3.
-If you capture packet on VM1, the same packet would be captured.
+You can capture incoming packets on ``VM3``.
+If you capture packet on ``VM1``, the same packet would be captured.
 
 .. code-block:: console
 
