@@ -137,7 +137,7 @@ You can check the value as following.
 Vhost Client Mode
 -----------------
 
-SPP secondary process supports ``--vhost-client`` options for using vhost port.
+SPP secondary process supports ``--vhost-client`` option for using vhost port.
 In vhost client mode, qemu creates socket file instead of secondary process.
 It means that you can launch a VM before secondary process create vhost port.
 

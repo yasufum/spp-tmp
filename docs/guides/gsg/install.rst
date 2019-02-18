@@ -62,8 +62,8 @@ is included in ``wireshark``.
     $ sudo apt install wireshark
 
 PCAP is disabled by default in DPDK configuration.
-``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` define the
-configuration and enabled it to ``y``.
+``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
+config file ``common_base`` should be changed to ``y`` to enable PCAP.
 
 .. code-block:: console
 
@@ -85,7 +85,7 @@ Compile DPDK with target environment.
 SPP
 ---
 
-Clone repository and compile SPP in any directory.
+Clone SPP repository and compile it in any directory.
 
 .. code-block:: console
 
@@ -94,15 +94,30 @@ Clone repository and compile SPP in any directory.
     $ cd spp
     $ make  # Confirm that $RTE_SDK and $RTE_TARGET are set
 
-It also required to install Python3 and packages for running python scripts
-as following.
-You might need to run ``pip3`` with ``sudo`` if it is failed.
+If you use ``spp_mirror`` in deep copy mode, you should comment out
+the definition of copy mode in Makefile of ``spp_mirror`` before.
+It is for copying full payload into a new mbuf.
+Default mode is shallow copy.
+
+.. code-block:: console
+
+    # src/mirror/Makefile
+    #CFLAGS += -Dspp_mirror_SHALLOWCOPY
+
+.. note::
+
+    Before run make command, you might need to consider if using deep copy
+    for cloning packets in ``spp_mirror``. Comparing with shallow copy, it
+    clones entire packet payload into a new mbuf and it is modifiable,
+    but lower performance. Which of copy mode should be chosen depends on
+    your usage.
+
+SPP provides ``requirements.txt`` for installing required packages of Python3.
+You might fail to run ``pip3`` without sudo on some environments.
 
 .. code-block:: console
 
     $ sudo apt update
-    $ sudo apt install python3
-    $ sudo apt install python3-pip
     $ pip3 install -r requirements.txt
 
 
@@ -221,8 +236,8 @@ it is very similar to SPP's worker process for forwarding.
 In this case, run this application simply with just two options
 while DPDK has many kinds of options.
 
-  - -l: core list
-  - -p: port mask
+  * ``-l``: core list
+  * ``-p``: port mask
 
 .. code-block:: console
 
