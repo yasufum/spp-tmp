@@ -27,7 +27,7 @@ sends to two destinations ``phy:1`` and ``phy:2``.
 
 .. _figure_spp_mirror_use_cases_nw_config:
 
-.. figure:: ../images/spp_vf/basic_usecase_mirror_nwconfig.*
+.. figure:: ../images/usecases/mirror_dup_nwconf.*
      :width: 80%
 
      Network configuration of mirroring
