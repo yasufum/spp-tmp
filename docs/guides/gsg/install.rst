@@ -40,15 +40,25 @@ Python and pip are also required if not installed.
     # Python3
     $ sudo apt install python3 python3-pip
 
+Some of secondary processes depend on external libraries and you failed to
+compile SPP without them.
+
 SPP provides libpcap-based PMD for dumping packet to a file or retrieve
 it from the file.
-To use PCAP PMD, install ``libpcap-dev`` and enable it.
+``spp_nfv`` and ``spp_pcap`` use ``libpcap-dev`` for packet capture.
+``spp_pcap`` uses ``liblz4-dev`` and ``liblz4-tool`` to compress PCAP file.
+
+.. code-block:: console
+
+   $ sudo apt install libpcap-dev
+   $ sudo apt install liblz4-dev
+   $ sudo apt install liblz4-tool
+
 ``text2pcap`` is also required for creating pcap file which
 is included in ``wireshark``.
 
 .. code-block:: console
 
-    $ sudo apt install libpcap-dev
     $ sudo apt install wireshark
 
 PCAP is disabled by default in DPDK configuration.

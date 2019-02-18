@@ -84,18 +84,3 @@ Then, run make command to compile ``spp_mirror``.
 .. code-block:: console
 
    $ make
-
-Setup spp_pcap
---------------
-
-Setup of ``spp_pcap`` is almost the same as :ref:`SPP VF<spp_vf_gsg_setup>`.
-``libpcap-dev`` is  are used by ``spp_pcap`` when capturing and packet,
-so you need to install ``libpcap-dev`` .
-``liblz4-dev`` and ``liblz4-tool`` are used for compression and decompression
-respectively, so you need to install ``liblz4-dev`` and ``liblz4-tool`` .
-
-.. code-block:: console
-
-   $ sudo apt install libpcap-dev
-   $ sudo apt install liblz4-dev
-   $ sudo apt install liblz4-tool
