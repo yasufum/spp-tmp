@@ -315,17 +315,17 @@ secondary processes.
 
 - EAL options:
 
-  - -l: core list
-  - --socket-mem: Memory size on each of NUMA nodes.
-  - --huge-dir: Path of hugepage dir.
-  - --proc-type: Process type.
-  - --base-virtaddr: Specify base virtual address.
+  - ``-l``: core list
+  - ``--socket-mem``: Memory size on each of NUMA nodes.
+  - ``--huge-dir``: Path of hugepage dir.
+  - ``--proc-type``: Process type.
+  - ``--base-virtaddr``: Specify base virtual address.
 
 - Application options:
 
-  - -p: Port mask.
-  - -n: Number of ring PMD.
-  - -s: IP address of controller and port prepared for primary.
+  - ``-p``: Port mask.
+  - ``-n``: Number of ring PMD.
+  - ``-s``: IP address of controller and port prepared for primary.
 
 
 .. _spp_gsg_howto_sec:
@@ -342,8 +342,8 @@ This section describes about the simplest ``spp_nfv`` which simply forward
 packets similar to ``l2fwd``.
 
 
-Launch spp_nfv on Host
-~~~~~~~~~~~~~~~~~~~~~~
+spp_nfv
+~~~~~~~
 
 Run ``spp_nfv`` with options.
 
@@ -353,25 +353,133 @@ Run ``spp_nfv`` with options.
     $ cd /path/to/spp
     $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
         -l 2-3 -n 4 \
-        --proc-type=secondary \
+        --proc-type secondary \
         -- \
         -n 1 \
         -s 192.168.1.100:6666
 
-- EAL options:
+EAL options are the same as primary process. Here is a list of application
+options of ``spp_nfv``.
 
-  - -l: core list (two cores required)
-  - --proc-type: process type
-
-- Application options:
-
-  - -n: secondary ID
-  - -s: IP address of controller and port prepared for secondary
+* ``-n``: Secondary ID.
+* ``-s``: IP address and secondary port of spp-ctl.
+* ``--vhost-client``: Enable vhost-user client mode.
 
 Secondary ID is used to identify for sending messages and must be
 unique among all of secondaries.
 If you attempt to launch a secondary process with the same ID, it
 is failed.
+
+If ``--vhost-client`` option is specified, then ``vhost-user`` act as
+the client, otherwise the server.
+For reconnect feature from SPP to VM, ``--vhost-client`` option can be
+used. This reconnect features requires QEMU 2.7 (or later).
+See also `Vhost Sample Application
+<http://dpdk.org/doc/guides/sample_app_ug/vhost.html>`_.
+
+
+spp_vf
+~~~~~~
+
+``spp_vf`` is a kind of secondary process.
+
+.. code-block:: console
+
+    $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
+      -l 0,2-13 -n 4 \
+      --proc-type secondary \
+      -- \
+      --client-id 1 \
+      -s 192.168.1.100:6666 \
+      --vhost-client
+
+EAL options are the same as primary process. Here is a list of application
+options of ``spp_vf``.
+
+* ``--client-id``: Client ID unique among secondary processes.
+* ``-s``: IPv4 address and secondary port of spp-ctl.
+* ``--vhost-client``: Enable vhost-user client mode.
+
+
+spp_mirror
+~~~~~~~~~~
+
+``spp_mirror`` is a kind of secondary process, and options are same as
+``spp_vf``.
+
+.. code-block:: console
+
+    $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/spp_mirror \
+      -l 1,2 -n 4 \
+      --proc-type secondary \
+      -- \
+      --client-id 1 \
+      -s 192.168.1.100:6666 \
+      -vhost-client
+
+EAL options are the same as primary process. Here is a list of application
+options of ``spp_mirror``.
+
+* ``--client-id``: Client ID unique among secondary processes.
+* ``-s``: IPv4 address and secondary port of spp-ctl.
+* ``--vhost-client``: Enable vhost-user client mode.
+
+
+.. _spp_vf_gsg_howto_use_spp_pcap:
+
+spp_pcap
+~~~~~~~~
+
+``spp_pcap`` is a kind of secondary process.
+
+.. code-block:: console
+
+    $ sudo ./src/pcap/x86_64-native-linuxapp-gcc/spp_pcap \
+      -l 0-3 -n 4 \
+      --proc-type secondary \
+      -- \
+      --client-id 1 \
+      -s 192.168.1.100:6666 \
+      -c phy:0 \
+      --out-dir /path/to/dir \
+      --fsize 107374182
+
+EAL options are the same as primary process. Here is a list of application
+options of ``spp_pcap``.
+
+* ``--client-id``: Client ID unique among secondary processes.
+* ``-s``: IPv4 address and secondary port of spp-ctl.
+* ``-c``: Captured port, e.g. ``phy:0``, ``ring:1`` or so.
+* ``--out-dir``: Optional. Path of dir for captured file. Default is ``/tmp``.
+* ``--fsize``: Optional. Maximum size of a capture file. Default is ``1GiB``.
+
+Captured file of LZ4 is generated in ``/tmp`` by default.
+The name of file is consists of timestamp, resource ID of captured port,
+ID of ``writer`` threads and sequential number.
+Timestamp is decided when capturing is started and formatted as
+``YYYYMMDDhhmmss``.
+Both of ``writer`` thread ID and sequential number are started from ``1``.
+Sequential number is required for the case if the size of
+captured file is reached to the maximum and another file is generated to
+continue capturing.
+
+This is an example of captured file. It consists of timestamp,
+``20190214154925``, port ``phy0``, thread ID ``1`` and sequential number
+``1``.
+
+.. code-block:: none
+
+    /tmp/spp_pcap.20190214154925.phy0.1.1.pcap.lz4
+
+``spp_pcap`` also generates temporary files which are owned by each of
+``writer`` threads until capturing is finished or the size of captured file
+is reached to the maximum.
+This temporary file has additional extension ``tmp`` at the end of file
+name.
+
+.. code-block:: none
+
+    /tmp/spp_pcap.20190214154925.phy0.1.1.pcap.lz4.tmp
 
 
 Launch from SPP CLI
@@ -589,44 +697,55 @@ Usecases of network configuration are explained in the next chapter.
 Using virsh
 ~~~~~~~~~~~
 
-First of all, please check version of qemu-kvm.
+First of all, please check version of qemu.
 
 .. code-block:: console
 
     $ qemu-system-x86_64 --version
 
-If your system does not have qemu-kvm or the version of qemu is less than 2.7,
-then please install qemu following
-the instruction of https://wiki.qemu.org/index.php/Hosts/Linux
-to install qemu 2.7.
-You may need to install libvirt-bin,
-virtinst, bridge-utils packages via ``apt-get`` install to run
-``virt-install``.
-
+You should install qemu 2.7 or higher for using vhost-user client mode.
+Refer `instruction
+<https://wiki.qemu.org/index.php/Hosts/Linux>`_
+to install.
 
 ``virsh`` is a command line interface that can be used to create, destroy,
-stop start and edit VMs and configure. After create an image file,
-you can setup it with ``virt-install``.
-``--location`` is a URL of installer and it should be
-``http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/``
-for amd64.
+stop start and edit VMs and configure.
+
+You also need to install following packages to run ``virt-install``.
+
+* libvirt-bin
+* virtinst
+* bridge-utils
+
+virt-install
+^^^^^^^^^^^^
+
+Install OS image with ``virt-install`` command.
+``--location`` is a URL of installer. Use Ubuntu 16.04 for amd64 in this
+case.
+
+.. code-block:: none
+
+    http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/
+
+This is an example of ``virt-install``.
 
 .. code-block:: console
 
    virt-install \
-   --name [VM_NAME] \
+   --name VM_NAME \
    --ram 4096 \
-   --disk path=/var/lib/libvirt/images/[VM_NAME].img,size=30 \
+   --disk path=/var/lib/libvirt/images/VM_NAME.img,size=30 \
    --vcpus 4 \
    --os-type linux \
    --os-variant ubuntu16.04 \
    --network network=default \
    --graphics none \
    --console pty,target_type=serial \
-   --location '[LOCATION]' \
+   --location 'http://archive.ubuntu.com/ubuntu/dists/xenial/main/...'
    --extra-args 'console=ttyS0,115200n8 serial'
 
-You may need type the following commands through ssh to activate console.
+You might need to enable serial console as following.
 
 .. code-block:: console
 
@@ -634,26 +753,44 @@ You may need type the following commands through ssh to activate console.
     $sudo systemctl start serial-getty@ttyS0.service
 
 
-Edit VM configuration with virsh.
+Edit Config
+^^^^^^^^^^^
+
+Edit configuration of VM with virsh command. The name of VMs are found from
+``virsh list``.
 
 .. code-block:: console
 
-    $ virsh edit [VM_NAME]
+    # Find the name of VM
+    $ sudo virsh list --all
 
-You need to add ``xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'``
-into the domain tag because of adding ``<qemu:commandline>`` tag.
-In addition, you need to add the tag enclosed by ``<memoryBacking>`` and
-``</memoryBacking>``, ``<qemu:commandline>`` and ``</qemu:commandline>``
-because SPP uses vhost-user as interface with VM.
-Note that number used in those tags should be the same value
-(e.g. chr0,sock0,vhost-net0) and these values should correspond
-to "add vhost N" (in this example 0).
+    $ sudo virsh edit VM_NAME
+
+You need to define namespace ``qemu`` to use tags such as
+``<qemu:commandline>``.
+
+.. code-block:: none
+
+    xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'
+
+In addition, you need to add attributes for specific resources for DPDK and SPP.
+
+* ``<memoryBacking>``
+* ``<qemu:commandline>``
+
+Take care about the index numbers of devices should be the same value such as
+``chr0`` or ``sock0``. It is referred as ID of vhost port from SPP.
+
 MAC address used in
-``<qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>``
 can be specified when registering MAC address to classifier
 using Secondary command.
 
-        The following is an example of modified xml file:
+.. code-block:: none
+
+    <qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>
+
+
+Here is an example of XML config for using with SPP.
 
 .. code-block:: xml
 
@@ -745,3 +882,34 @@ using Secondary command.
         <qemu:arg value='vhost-user,id=vhost-net1,chardev=chr1,vhostforce'/>
       </qemu:commandline>
     </domain>
+
+
+Launch VM
+^^^^^^^^^
+
+After updating XML configuration, launch VM with ``virsh start``.
+
+.. code-block:: console
+
+    $ virsh start VM_NAME
+
+It is required to add network configurations for processes running on the VMs.
+If this configuration is skipped, processes cannot communicate with others
+via SPP.
+
+On the VMs, add an interface and disable offload.
+
+.. code-block:: console
+
+    # Add interface
+    $ sudo ifconfig IF_NAME inet IPADDR netmask NETMASK up
+
+    # Disable offload
+    $ sudo ethtool -K IF_NAME tx off
+
+On host machine, it is also required to disable offload.
+
+.. code-block:: console
+
+    # Disable offload for VM
+    $ sudo ethtool -K IF_NAME tx off

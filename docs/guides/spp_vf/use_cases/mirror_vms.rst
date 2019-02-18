@@ -73,7 +73,7 @@ with ``-n 16`` for giving enough number of rings.
 Launch spp_vf
 ~~~~~~~~~~~~~
 
-Launch ``VM1`` as described in :ref:`spp_vf_use_cases_usecase1_setup_vm`,
+Launch ``VM1``
 and launch ``spp_vf`` with core list ``-l 0,2-14`` in this usecase.
 
 .. code-block:: console
