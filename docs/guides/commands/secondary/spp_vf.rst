@@ -278,7 +278,7 @@ adds VLAN tag before sending packet outside.
 
 Adding port may cause component to start packet forwarding. Please see
 detail in
-:ref:`design spp_vf<spp_vf_design_spp_vf>`.
+:ref:`design spp_vf<spp_design_spp_sec_vf>`.
 
 Until one rx port and one tx port are added, forwarder does not start packet
 forwarding. If it is requested to add more than one rx and one tx port, it
@@ -315,7 +315,7 @@ Here is an example.
 .. note::
 
    Deleting port may cause component to stop packet forwarding.
-   Please see detail in :ref:`design spp_vf<spp_vf_design_spp_vf>`.
+   Please see detail in :ref:`design spp_vf<spp_design_spp_sec_vf>`.
 
 .. _commands_spp_vf_classifier_table:
 

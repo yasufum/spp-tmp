@@ -8,8 +8,6 @@ SPP VF
    :maxdepth: 2
    :numbered:
 
-   overview
-   design
    gsg/index
    use_cases/index
    explain/index

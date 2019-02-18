@@ -199,8 +199,8 @@ by duplicating the packets.
     spp > mirror 2; port add vhost:1 tx mr1
 
 Adding port may cause component to start packet forwarding. Please see
-detail in
-:ref:`design spp_mirror<spp_vf_design_spp_mirror>`.
+details in
+:ref:`design spp_mirror<spp_design_spp_sec_mirror>`.
 
 Until one rx and two tx ports are registered, ``spp_mirror`` does not start
 forwarding. If it is requested to add more than one rx and two tx ports, it
@@ -230,7 +230,7 @@ Here is some examples.
 .. note::
 
   Deleting port may cause component to stop packet forwarding.
-  Please see detail in :ref:`design spp_mirror<spp_vf_design_spp_mirror>`.
+  Please see detail in :ref:`design spp_mirror<spp_design_spp_sec_mirror>`.
 
 exit
 ----
