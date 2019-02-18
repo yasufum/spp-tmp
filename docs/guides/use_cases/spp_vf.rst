@@ -1,10 +1,242 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
-    Copyright(c) 2010-2014 Intel Corporation
+    Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
+
+
+.. _spp_usecases_vf:
+
+spp_vf
+======
+
+``spp_vf`` is a secondary process for providing L2 classification as a simple
+pusedo SR-IOV features.
+
+.. _spp_usecases_vf_cls_icmp:
+
+Classify ICMP Packets
+---------------------
+
+To confirm classifying packets, sends ICMP packet from remote node by using
+ping and watch the response.
+Incoming packets through ``NIC0`` are classified based on destination address.
+
+.. _figure_spp_vf_use_cases_nw_config:
+
+.. figure:: ../images/spp_vf/basic_usecase_vf_nwconfig.*
+    :width: 90%
+
+    Network Configuration
+
+
+Setup
+~~~~~
+
+Launch ``spp-ctl`` and SPP CLI before primary and secondary processes.
+
+.. code-block:: console
+
+    # terminal 1
+    $ python3 ./src/spp-ctl/spp-ctl -b 192.168.1.100
+
+.. code-block:: console
+
+    # terminal 2
+    $ python ./src/spp.py -b 192.168.1.100
+
+``spp_primary`` on the second lcore with ``-l 1`` and two ports ``-p 0x03``.
+
+.. code-block:: console
+
+    # terminal 3
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 1 -n 4 \
+        --socket-mem 512,512 \
+        --huge-dir=/run/hugepages/kvm \
+        --proc-type=primary \
+        -- \
+        -p 0x03 \
+        -n 10 -s 127.0.0.1:5555
+
+After ``spp_primary`` is launched, run secondary process ``spp_vf``.
+In this case, lcore options is ``-l 2-6`` for one master thread and four
+worker threads.
+
+.. code-block:: console
+
+     # terminal 4
+     $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
+        -l 2-6 \
+        -n 4 --proc-type=secondary \
+        -- \
+        --client-id 1 \
+        -s 127.0.0.1:6666 \
+
+
+Network Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+Configure network as described in :numref:`figure_spp_vf_use_cases_nw_config`
+step by step.
+
+First of all, setup worker threads from ``component`` command with lcore ID
+and other options on local host ``host2``.
+
+.. code-block:: console
+
+    # terminal 2
+    spp > vf 1; component start cls 3 classifier_mac
+    spp > vf 1; component start fwd1 4 forward
+    spp > vf 1; component start fwd2 5 forward
+    spp > vf 1; component start mgr 6 merge
+
+Add ports for each of components as following.
+The number of rx and tx ports are different for each of component's role.
+
+.. code-block:: console
+
+    # terminal 2
+
+    # classifier
+    spp > vf 1; port add phy:0 rx cls
+    spp > vf 1; port add ring:0 tx cls
+    spp > vf 1; port add ring:1 tx cls
+
+    # forwarders
+    spp > vf 1; port add ring:0 rx fwd1
+    spp > vf 1; port add ring:2 tx fwd1
+    spp > vf 1; port add ring:1 rx fwd2
+    spp > vf 1; port add ring:3 tx fwd2
+
+    # merger
+    spp > vf 1; port add ring:2 rx mgr
+    spp > vf 1; port add ring:3 rx mgr
+    spp > vf 1; port add phy:1 tx mgr
+
+You also need to configure MAC address table for classifier. In this case,
+you need to register two MAC addresses. Although any MAC can be used,
+you use ``52:54:00:12:34:56`` and ``52:54:00:12:34:58``.
+
+.. code-block:: console
+
+    # terminal 2
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:56 ring:0
+    spp > vf 1; classifier_table add mac 52:54:00:12:34:58 ring:1
+
+
+Send Packet from Remote Host
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ensure NICs, ``ens0`` and ``ens1`` in this case, are upped on remote host
+``host1``. You can up by using ifconfig if the status is down.
+
+.. code-block:: console
+
+    # terminal 1 on remote host
+    # Configure ip address of ens0
+    $ sudo ifconfig ens0 192.168.140.1 255.255.255.0 up
+
+Add arp entries of MAC addresses statically to be resolved.
+
+.. code-block:: console
+
+    # terminal 1 on remote host
+    # set MAC address
+    $ sudo arp -i ens0 -s 192.168.140.2 52:54:00:12:34:56
+    $ sudo arp -i ens0 -s 192.168.140.3 52:54:00:12:34:58
+
+Start tcpdump command for capturing ``ens1``.
+
+.. code-block:: console
+
+    # terminal 2 on remote host
+    $ sudo tcpdump -i ens1
+
+Then, start ping in other terminals.
+
+.. code-block:: console
+
+    # terminal 3 on remote host
+    # ping via NIC0
+    $ ping 192.168.140.2
+
+.. code-block:: console
+
+    # terminal 4 on remote host
+    # ping via NIC0
+    $ ping 192.168.140.3
+
+You can see ICMP Echo requests are received from ping on terminal 2.
+
+
+.. _spp_vf_use_cases_shutdown_comps:
+
+Shutdown spp_vf Components
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, delete entries of ``classifier_table`` and ports of components.
+
+.. code-block:: console
+
+    # terminal 2
+    # Delete MAC address from Classifier
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:56 ring:0
+    spp > vf 1; classifier_table del mac 52:54:00:12:34:58 ring:1
+
+.. code-block:: console
+
+    # terminal 2
+    # classifier
+    spp > vf 1; port del phy:0 rx cls
+    spp > vf 1; port del ring:0 tx cls
+    spp > vf 1; port del ring:1 tx cls
+
+    # forwarders
+    spp > vf 1; port del ring:0 rx fwd1
+    spp > vf 1; port del vhost:0 tx fwd1
+    spp > vf 1; port del ring:1 rx fwd2
+    spp > vf 1; port del vhost:2 tx fwd2
+
+    # mergers
+    spp > vf 1; port del ring:2 rx mgr
+    spp > vf 1; port del ring:3 rx mgr
+    spp > vf 1; port del phy:0 tx mgr
+
+Then, stop components.
+
+.. code-block:: console
+
+    # terminal 2
+    spp > vf 1; component stop cls
+    spp > vf 1; component stop fwd1
+    spp > vf 1; component stop fwd2
+    spp > vf 1; component stop mgr
+
+You can confirm that worker threads are cleaned from ``status``.
+
+.. code-block:: none
+
+    spp > vf 1; status
+    Basic Information:
+      - client-id: 1
+      - ports: [phy:0, phy:1]
+    Classifier Table:
+      No entries.
+    Components:
+      - core:3 '' (type: unuse)
+      - core:4 '' (type: unuse)
+      - core:5 '' (type: unuse)
+      - core:6 '' (type: unuse)
+
+Finally, terminate ``spp_vf`` by using ``exit`` or ``bye sec``.
+
+.. code-block:: console
+
+    spp > vf 0; exit
+
 
 .. _spp_vf_use_cases_usecase1:
 
 Simple SSH Login
-================
+----------------
 
 This section describes a usecase for simple SSH login through SPP VF.
 Incoming packets are classified based on destination addresses defined
@@ -14,14 +246,14 @@ port.
 
 .. _figure_simple_ssh_login:
 
-.. figure:: ../../images/spp_vf/usecase1_overview.*
+.. figure:: ../images/spp_vf/usecase1_overview.*
     :width: 55%
 
     Simple SSH Login
 
 
 Launch SPP Processes
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Change directory to spp and confirm that it is already compiled.
 
@@ -68,7 +300,7 @@ core, and it equals to ``-l 0,2-12``.
 
 
 Network Configuration
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Detailed configuration of :numref:`figure_simple_ssh_login` is
 described below.
@@ -84,7 +316,7 @@ sent to SSH clinet via NIC0.
 
 .. _figure_network_config:
 
-.. figure:: ../../images/spp_vf/usecase1_nwconfig.*
+.. figure:: ../images/spp_vf/usecase1_nwconfig.*
     :width: 100%
 
     Network Configuration
@@ -227,7 +459,7 @@ of targetting VM..
 .. _spp_vf_use_cases_usecase1_setup_vm:
 
 Setup for VMs
--------------
+~~~~~~~~~~~~~
 
 Launch VM1 and VM2 with virsh command.
 Setup for virsh is described in :ref:`spp_gsg_howto_virsh`.
@@ -276,7 +508,7 @@ Configurations also for ``spp-vm2`` as ``spp-vm1``.
 
 
 Login to VMs
-------------
+~~~~~~~~~~~~
 
 Now, you can login to VMs from the remote host1.
 
@@ -298,7 +530,7 @@ Now, you can login to VMs from the remote host1.
 .. _spp_vf_use_cases_usecase1_shutdown_spp_vf_components:
 
 Shutdown spp_vf Components
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Basically, you can shutdown all of SPP processes with ``bye all``
 command.
@@ -402,7 +634,7 @@ Then, stop components.
     spp > vf 1; component stop merger2
 
 Exit spp_vf
------------
+~~~~~~~~~~~
 
 Terminate spp_vf.
 

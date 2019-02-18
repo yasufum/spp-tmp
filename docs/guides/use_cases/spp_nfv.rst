@@ -2,10 +2,14 @@
     Copyright(c) 2010-2014 Intel Corporation
     Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
 
+
+.. _spp_usecases_nfv:
+
 spp_nfv
 =======
 
-.. _single_spp_nfv:
+
+.. _spp_usecases_nfv_single_spp_nfv:
 
 Single spp_nfv
 --------------
@@ -102,7 +106,7 @@ Dual spp_nfv
 Use case for testing performance of packet forwarding
 with two ``spp_nfv`` on host.
 Throughput is expected to be better than
-:ref:`Single spp_nfv<single_spp_nfv>`
+:ref:`Single spp_nfv<spp_usecases_nfv_single_spp_nfv>`
 usecase because bi-directional forwarding of single ``spp_nfv`` is shared
 with two of uni-directional forwarding between dual ``spp_nfv``.
 

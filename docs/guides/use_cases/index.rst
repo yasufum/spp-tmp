@@ -9,4 +9,5 @@ Use Cases
    :numbered:
 
    spp_nfv
+   spp_vf
    multi_nodes

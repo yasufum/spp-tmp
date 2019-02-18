@@ -7,8 +7,6 @@ Use Cases
 .. toctree::
    :maxdepth: 2
 
-   vf_simple
-   vf_ssh_login
    mirror_simple
    mirror_vms
    pcap_simple
