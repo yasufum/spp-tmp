@@ -335,17 +335,15 @@ SPP Secondary
 
 Secondary process behaves as a client of primary process and a worker
 for doing tasks for packet processing. There are several kinds of secondary
-process, for example, simply forwarding between ports or classsifying
-by referring packet header.
-
-This section describes about the simplest ``spp_nfv`` which simply forward
-packets similar to ``l2fwd``.
+process, for example, simply forwarding between ports, classsifying packets
+by referring its header or duplicate packets for redundancy.
 
 
 spp_nfv
 ~~~~~~~
 
-Run ``spp_nfv`` with options.
+Run ``spp_nfv`` with options which simply forward packets as similar
+as ``l2fwd``.
 
 .. code-block:: console
 
@@ -381,7 +379,7 @@ See also `Vhost Sample Application
 spp_vf
 ~~~~~~
 
-``spp_vf`` is a kind of secondary process.
+``spp_vf`` is a kind of secondary process for classify or merge packets.
 
 .. code-block:: console
 
@@ -404,8 +402,8 @@ options of ``spp_vf``.
 spp_mirror
 ~~~~~~~~~~
 
-``spp_mirror`` is a kind of secondary process, and options are same as
-``spp_vf``.
+``spp_mirror`` is a kind of secondary process for duplicating packets,
+and options are same as ``spp_vf``.
 
 .. code-block:: console
 
@@ -430,7 +428,8 @@ options of ``spp_mirror``.
 spp_pcap
 ~~~~~~~~
 
-``spp_pcap`` is a kind of secondary process.
+Other than PCAP feature implemented as pcap port in ``spp_nfv``,
+SPP provides ``spp_pcap`` for capturing comparatively heavy traffic.
 
 .. code-block:: console
 
@@ -779,13 +778,11 @@ In addition, you need to add attributes for specific resources for DPDK and SPP.
 * ``<qemu:commandline>``
 
 Take care about the index numbers of devices should be the same value such as
-``chr0`` or ``sock0``. It is referred as ID of vhost port from SPP.
+``chr0`` or ``sock0`` in ``virtio-net-pci`` device. This index is referred as
+ID of vhost port from SPP. MAC address defined in the attribute is used while
+registering destinations for classifier's table.
 
-MAC address used in
-can be specified when registering MAC address to classifier
-using Secondary command.
-
-.. code-block:: none
+.. code-block:: xml
 
     <qemu:arg value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>
 

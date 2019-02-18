@@ -197,23 +197,6 @@ You use ``spp_mirror`` for copying, and ``spp_vf`` classifying packets.
    Monitoring with spp_mirror
 
 
-Network Configuration
-~~~~~~~~~~~~~~~~~~~~~
-
-Detailed configuration of :numref:`figure_usecase_monitor_overview`
-is described in :numref:`figure_usecase_monitor_nwconfig`.
-In this senario, worker thread ``mir1`` copies incoming packets
-from though ``ring:0``.
-Then, sends to orignal destination ``VM1`` and anohter one ``VM3``.
-
-.. _figure_usecase_monitor_nwconfig:
-
-.. figure:: ../images/spp_vf/spp_mirror_usecase_nwconfig.*
-     :width: 80%
-
-     Network configuration of monitoring packets
-
-
 Setup SPP and VMs
 ~~~~~~~~~~~~~~~~~
 
@@ -249,8 +232,21 @@ Start spp_primary with core list option ``-l 1``.
         -n 10 -s 192.168.1.100:5555
 
 
-Launch spp_vf
-~~~~~~~~~~~~~
+Netowrk Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+Detailed configuration of :numref:`figure_usecase_monitor_overview`
+is described in :numref:`figure_usecase_monitor_nwconfig`.
+In this senario, worker thread ``mir1`` copies incoming packets
+from though ``ring:0``.
+Then, sends to orignal destination ``VM1`` and anohter one ``VM3``.
+
+.. _figure_usecase_monitor_nwconfig:
+
+.. figure:: ../images/spp_vf/spp_mirror_usecase_nwconfig.*
+     :width: 80%
+
+     Network configuration of monitoring packets
 
 Launch ``VM1``, ``VM2`` and ``spp_vf`` with core list ``-l 0,2-8``.
 
