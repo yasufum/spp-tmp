@@ -191,7 +191,7 @@ You use ``spp_mirror`` for copying, and ``spp_vf`` classifying packets.
 
 .. _figure_usecase_monitor_overview:
 
-.. figure:: ../images/spp_vf/spp_mirror_usecase_overview.*
+.. figure:: ../images/usecases/mirror_monitor_overview.*
    :width: 60%
 
    Monitoring with spp_mirror
