@@ -14,7 +14,6 @@ SPP documentation
    use_cases/index
    commands/index
    tools/index
-   spp_vf/index
    api_ref/index
 
 This documentation is the latest tagged version, but some of the latest
