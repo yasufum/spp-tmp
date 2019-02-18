@@ -7,6 +7,4 @@ Use Cases
 .. toctree::
    :maxdepth: 2
 
-   mirror_simple
-   mirror_vms
    pcap_simple
