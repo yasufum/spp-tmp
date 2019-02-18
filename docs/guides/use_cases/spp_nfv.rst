@@ -309,7 +309,7 @@ Vhost PMD
 
 Vhost PMD is an interface for communicating between on hsot and guest VM.
 As described in
-:ref:`How to Use<spp_setup_howto_use>`,
+:ref:`How to Use<spp_gsg_howto_use>`,
 vhost must be created by ``add`` subcommand before the VM is launched.
 
 
@@ -344,7 +344,7 @@ Setup Network Configuration in spp_nfv
 
 Launch a VM by using the vhost interface created in the previous step.
 Lauunching VM is described in
-:ref:`How to Use<spp_setup_howto_use>`.
+:ref:`How to Use<spp_gsg_howto_use>`.
 
 Patch ``phy:0`` to ``vhost:0`` and ``vhost:1`` to ``phy:1`` from ``nfv 1``
 running on host.

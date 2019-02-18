@@ -230,7 +230,7 @@ Setup for VMs
 -------------
 
 Launch VM1 and VM2 with virsh command.
-Setup for virsh is described in :ref:`spp_vf_gsg_virsh_setup`.
+Setup for virsh is described in :ref:`spp_gsg_howto_virsh`.
 
 .. code-block:: console
 
