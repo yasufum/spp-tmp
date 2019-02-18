@@ -21,7 +21,7 @@ Incoming packets through ``NIC0`` are classified based on destination address.
 
 .. _figure_spp_vf_use_cases_nw_config:
 
-.. figure:: ../images/spp_vf/basic_usecase_vf_nwconfig.*
+.. figure:: ../images/usecases/vf_cls_icmp_nwconf.*
     :width: 80%
 
     Network Configuration
