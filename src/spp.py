@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2015-2016 Intel Corporation
 
-from __future__ import absolute_import
 from controller import spp
 import sys
 

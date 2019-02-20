@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-from __future__ import absolute_import
-
 from .. import spp_common
 from ..shell_lib import common
 from ..spp_common import logger
