@@ -11,7 +11,7 @@ SPP documentation
    overview
    design/index
    gsg/index
-   use_cases/index
+   usecases/index
    commands/index
    tools/index
    api_ref/index
