@@ -94,17 +94,17 @@ Start mirror component with core ID 2.
 .. code-block:: console
 
     # terminal 2
-    spp > mirror 1; component start mir1 2 mirror
+    spp > mirror 1; component start mir 2 mirror
 
 Add ``phy:0`` as rx port, and ``phy:1`` and ``phy:2`` as tx ports.
 
 .. code-block:: none
 
     # terminal 2
-    # add ports to mir1
-    spp > mirror 1; port add phy:0 rx mir1
-    spp > mirror 1; port add phy:1 tx mir1
-    spp > mirror 1; port add phy:2 tx mir1
+    # add ports to mir
+    spp > mirror 1; port add phy:0 rx mir
+    spp > mirror 1; port add phy:1 tx mir
+    spp > mirror 1; port add phy:2 tx mir
 
 
 Duplicate Packets
@@ -152,17 +152,17 @@ Delete ports for components.
 
 .. code-block:: none
 
-   # Delete port for mir1
-   spp > mirror 1; port del phy:0 rx mir1
-   spp > mirror 1; port del phy:1 tx mir1
-   spp > mirror 1; port del phy:2 tx mir1
+   # Delete port for mir
+   spp > mirror 1; port del phy:0 rx mir
+   spp > mirror 1; port del phy:1 tx mir
+   spp > mirror 1; port del phy:2 tx mir
 
 Next, stop components.
 
 .. code-block:: console
 
    # Stop mirror
-   spp > mirror 1; component stop mir1 2 mirror
+   spp > mirror 1; component stop mir 2 mirror
 
    spp > mirror 1; status
    Basic Information:
@@ -186,7 +186,7 @@ Monitoring Packets
 Duplicate classified packets for monitoring before going to a VM.
 In this usecase, we are only interested in packets going to ``VM1``.
 Although you might be able to run packet monitor app on host,
-run minitor on ``VM3`` considering more NFV like senario.
+run monitor on ``VM3`` considering more NFV like senario.
 You use ``spp_mirror`` for copying, and ``spp_vf`` classifying packets.
 
 .. _figure_usecase_monitor_overview:
