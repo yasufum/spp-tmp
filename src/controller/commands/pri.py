@@ -4,6 +4,7 @@
 from .. import spp_common
 from ..shell_lib import common
 from ..spp_common import logger
+import time
 
 
 class SppPrimary(object):
@@ -18,6 +19,9 @@ class SppPrimary(object):
 
     # All of primary commands used for validation and completion.
     PRI_CMDS = ['status', 'launch', 'clear']
+
+    # Wait for launched secondary as best effort. 0.5 sec is enough.
+    WAIT_LAUNCH_SEC = 0.5
 
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
@@ -425,6 +429,9 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
+                # Wait for launch sec as best effort
+                time.sleep(self.WAIT_LAUNCH_SEC)
+
                 print('Send request to launch {ptype}:{sid}.'.format(
                     ptype=proc_type, sid=sec_id))
             elif res.status_code in error_codes:
