@@ -20,9 +20,6 @@ class SppPrimary(object):
     # All of primary commands used for validation and completion.
     PRI_CMDS = ['status', 'launch', 'clear']
 
-    # Wait for launched secondary as best effort. 0.5 sec is enough.
-    WAIT_LAUNCH_SEC = 0.5
-
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
 
@@ -38,7 +35,7 @@ class SppPrimary(object):
         temp = temp + "__VHOST_CLI__"
         self.launch_template = temp
 
-    def run(self, cmd):
+    def run(self, cmd, cli_config):
         """Called from do_pri() to Send command to primary process."""
 
         tmpary = cmd.split(' ')
@@ -64,7 +61,8 @@ class SppPrimary(object):
                     print('Error: unknown response.')
 
         elif subcmd == 'launch':
-            self._run_launch(params)
+            wait_time = float(cli_config['sec_wait_launch']['val'])
+            self._run_launch(params, wait_time)
 
         elif subcmd == 'clear':
             res = self.spp_ctl_cli.delete('primary/status')
@@ -333,7 +331,7 @@ class SppPrimary(object):
                     prekey = None
         return opts_dict
 
-    def _run_launch(self, params):
+    def _run_launch(self, params, wait_time):
         """Launch secondary process.
 
         Parse `launch` command and send request to spp-ctl. Params of the
@@ -429,8 +427,8 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
-                # Wait for launch sec as best effort
-                time.sleep(self.WAIT_LAUNCH_SEC)
+                # Wait for launch secondary as best effort
+                time.sleep(wait_time)
 
                 print('Send request to launch {ptype}:{sid}.'.format(
                     ptype=proc_type, sid=sec_id))

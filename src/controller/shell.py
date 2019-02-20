@@ -308,7 +308,7 @@ class Shell(cmd.Cmd, object):
         if logger is not None:
             logger.info("Receive pri command: '%s'" % command)
 
-        self.primary.run(command)
+        self.primary.run(command, self.cli_config)
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands."""
