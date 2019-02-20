@@ -9,4 +9,5 @@ tornado
 websocket-client
 
 # docs
+sphinx
 sphinx-rtd-theme

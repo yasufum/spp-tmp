@@ -31,21 +31,26 @@ gfor generating topology file.
 You can also generate a dot formatted file or image files supported by
 graphviz.
 
-Here is a list of required tools for ``topo term`` command to output
-in terminal.
-MacOS is also supported optionally for which SPP controller
-runs on a remote host.
+Here is an example for installing required tools for ``topo term`` command
+to output in a terminal.
 
-* graphviz
-* imagemagick
-* libsixel-bin (for Ubuntu)
-* iTerm2 and imgcat (for MacOS)
+.. code-block:: console
 
-To output in browser with ``topo http`` command,
-install packages for websocket with pip or pip3.
+    $ sudo apt install graphviz \
+      imagemagick \
+      libsixel-bin
 
-* tornado
-* websocket-client
+MacOS is also supported optionally for using SPP CLI runs on a remote host.
+In this case, iTerm2 and imgcat are required.
+
+To output in browser with ``topo http`` command, install required packages
+by using ``requirements.txt`` as described in
+:ref:`install SPP<setup_install_spp>`, or only for them as follwoing.
+
+.. code-block:: console
+
+    $ pip3 install tornado \
+      websocket-client
 
 
 Output to Terminal
@@ -159,7 +164,7 @@ for ``topo``.
 
 .. code-block:: console
 
-    spp > topo_subgraph [VERB] [LABEL] [RES_ID1,RES_ID2,...]
+    spp > topo_subgraph VERB LABEL RES_ID1,RES_ID2,...
 
 Each of options are:
 

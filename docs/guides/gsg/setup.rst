@@ -245,12 +245,8 @@ Check your SELinux configuration.
 Python 2 or 3 ?
 ---------------
 
-In SPP, Python3 is required only for running ``spp-ctl``. Other python scripts
-are able to be launched both of Python2 and 3.
-
-Howevrer, Python2 will not be maintained after 2020 and SPP is going to update
-only supporting Python3.
-In SPP, it is planned to support only Python3 before the end of 2019.
+In SPP, Python3 is required only for running ``spp-ctl`` and SPP CLI.
+Python2 is not supported anymore.
 
 
 Reference

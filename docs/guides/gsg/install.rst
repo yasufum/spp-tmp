@@ -14,6 +14,9 @@ Refer to `DPDK documentation
 For Linux, see `Getting Started Guide for Linux
 <http://www.dpdk.org/doc/guides/linux_gsg/index.html>`_ .
 
+
+.. _setup_install_dpdk:
+
 DPDK
 ----
 
@@ -30,15 +33,13 @@ To compile DPDK, required to install libnuma-devel library.
 
     $ sudo apt install libnuma-dev
 
-Python and pip are also required if not installed.
+Python3 and pip3 are also required if not installed.
 
 .. code-block:: console
 
-    # Python2
-    $ sudo apt install python python-pip
-
     # Python3
-    $ sudo apt install python3 python3-pip
+    $ sudo apt install python3 \
+      python3-pip
 
 Some of secondary processes depend on external libraries and you failed to
 compile SPP without them.
@@ -50,9 +51,9 @@ it from the file.
 
 .. code-block:: console
 
-   $ sudo apt install libpcap-dev
-   $ sudo apt install liblz4-dev
-   $ sudo apt install liblz4-tool
+   $ sudo apt install libpcap-dev \
+     liblz4-dev \
+     liblz4-tool
 
 ``text2pcap`` is also required for creating pcap file which
 is included in ``wireshark``.
@@ -81,6 +82,8 @@ Compile DPDK with target environment.
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
     $ make install T=$RTE_TARGET
 
+
+.. _setup_install_spp:
 
 SPP
 ---
@@ -117,7 +120,6 @@ You might fail to run ``pip3`` without sudo on some environments.
 
 .. code-block:: console
 
-    $ sudo apt update
     $ pip3 install -r requirements.txt
 
 
@@ -263,16 +265,16 @@ For HTML documentation, install sphinx and additional theme.
 
 .. code-block:: console
 
-    $ pip install sphinx
-    $ pip install sphinx-rtd-theme
+    $ pip install sphinx \
+      sphinx-rtd-theme
 
 For PDF, inkscape and latex packages are required.
 
 .. code-block:: console
 
-    $ sudo apt install inkscape
-    $ sudo apt install texlive-latex-extra
-    $ sudo apt install texlive-latex-recommended
+    $ sudo apt install inkscape \
+      texlive-latex-extra \
+      texlive-latex-recommended
 
 You might also need to install ``latexmk`` in addition to if you use
 Ubuntu 18.04 LTS.
