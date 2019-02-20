@@ -70,7 +70,7 @@ class Shell(cmd.Cmd, object):
         """Initialize delegators of SPP processes.
 
         Delegators accept a command and sent it to SPP proesses. This method
-        is also called from `precmd()` method to update it to the latest
+        is also called from `postcmd()` method to update it to the latest
         status.
         """
 
@@ -101,6 +101,9 @@ class Shell(cmd.Cmd, object):
     # method and SPP CLI is terminated if it is True. It means that only
     # `do_bye` and  `do_exit` return True.
     def postcmd(self, stop, line):
+        if self.use_cache is False:
+            self.init_spp_procs()
+
         # TODO(yasufum) do not add to history if command is failed.
         if line.strip().split(' ')[0] not in self.HIST_EXCEPT:
             readline.write_history_file(self.hist_file)
@@ -216,9 +219,6 @@ class Shell(cmd.Cmd, object):
 
         It is called for checking a contents of command line.
         """
-
-        if self.use_cache is False:
-            self.init_spp_procs()
 
         if self.recorded_file:
             if not (
