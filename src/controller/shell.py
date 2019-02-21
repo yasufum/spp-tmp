@@ -214,11 +214,26 @@ class Shell(cmd.Cmd, object):
         res = re.sub(r'\s?;\s?', ";", tmparg)
         return res
 
+    def _is_sec_registered(self, ptype, sid):
+        """Check secondary process is registered.
+
+        Return True if registered, or print error and return False if not.
+        """
+
+        if sid in self.secondaries[ptype]:
+            return True
+        else:
+            print('"{ptype} {sid}" does not exist.'.format(
+                ptype=ptype, sid=sid))
+            return False
+
     def precmd(self, line):
         """Called before running a command
 
         It is called for checking a contents of command line.
         """
+        if self.use_cache is False:
+            self.init_spp_procs()
 
         if self.recorded_file:
             if not (
@@ -341,7 +356,8 @@ class Shell(cmd.Cmd, object):
         if len(cmds) < 2:
             print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
-            self.secondaries['nfv'][int(cmds[0])].run(cmds[1])
+            if self._is_sec_registered('nfv', int(cmds[0])):
+                self.secondaries['nfv'][int(cmds[0])].run(cmds[1])
         else:
             print('Invalid command: %s' % tmparg)
 
@@ -440,7 +456,9 @@ class Shell(cmd.Cmd, object):
         if len(cmds) < 2:
             print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
-            self.secondaries['vf'][int(cmds[0])].run(cmds[1])
+
+            if self._is_sec_registered('vf', int(cmds[0])):
+                self.secondaries['vf'][int(cmds[0])].run(cmds[1])
         else:
             print('Invalid command: %s' % tmparg)
 
@@ -518,7 +536,8 @@ class Shell(cmd.Cmd, object):
         if len(cmds) < 2:
             print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
-            self.secondaries['mirror'][int(cmds[0])].run(cmds[1])
+            if self._is_sec_registered('mirror', int(cmds[0])):
+                self.secondaries['mirror'][int(cmds[0])].run(cmds[1])
         else:
             print('Invalid command: %s' % tmparg)
 
@@ -585,7 +604,8 @@ class Shell(cmd.Cmd, object):
         if len(cmds) < 2:
             print("Required an ID and ';' before the command.")
         elif str.isdigit(cmds[0]):
-            self.secondaries['pcap'][int(cmds[0])].run(cmds[1])
+            if self._is_sec_registered('pcap', int(cmds[0])):
+                self.secondaries['pcap'][int(cmds[0])].run(cmds[1])
         else:
             print('Invalid command: {}'.format(tmparg))
 
