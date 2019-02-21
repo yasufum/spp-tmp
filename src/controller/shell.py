@@ -362,7 +362,10 @@ class Shell(cmd.Cmd, object):
             print('Invalid command: %s' % tmparg)
 
     def complete_nfv(self, text, line, begidx, endidx):
-        """Completion for nfv command"""
+        """Completion for nfv command."""
+
+        if self.use_cache is False:
+            self.init_spp_procs()
 
         line = self.clean_cmd(line)
 
@@ -463,7 +466,10 @@ class Shell(cmd.Cmd, object):
             print('Invalid command: %s' % tmparg)
 
     def complete_vf(self, text, line, begidx, endidx):
-        """Completion for vf command"""
+        """Completion for vf command."""
+
+        if self.use_cache is False:
+            self.init_spp_procs()
 
         line = self.clean_cmd(line)
 
@@ -542,7 +548,10 @@ class Shell(cmd.Cmd, object):
             print('Invalid command: %s' % tmparg)
 
     def complete_mirror(self, text, line, begidx, endidx):
-        """Completion for mirror command"""
+        """Completion for mirror command."""
+
+        if self.use_cache is False:
+            self.init_spp_procs()
 
         line = self.clean_cmd(line)
 
@@ -610,7 +619,10 @@ class Shell(cmd.Cmd, object):
             print('Invalid command: {}'.format(tmparg))
 
     def complete_pcap(self, text, line, begidx, endidx):
-        """Completion for pcap command"""
+        """Completion for pcap command."""
+
+        if self.use_cache is False:
+            self.init_spp_procs()
 
         line = self.clean_cmd(line)
 
