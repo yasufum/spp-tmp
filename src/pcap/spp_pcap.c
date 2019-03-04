@@ -22,29 +22,28 @@
 /* Declare global variables */
 #define RTE_LOGTYPE_SPP_PCAP RTE_LOGTYPE_USER2
 
+/* Pcap file attributes */
 #define PCAP_FPATH_STRLEN 128
 #define PCAP_FNAME_STRLEN 64
 #define PCAP_FDATE_STRLEN 16
-/**
- * The first 4 bytes 0xa1b2c3d4 constitute the magic number which is used to
- * identify pcap files.
- */
+
+/* Used to identify pcap files */
 #define TCPDUMP_MAGIC 0xa1b2c3d4
-/* constant which indicates major verions of libpcap file */
+
+/* Indicates major verions of libpcap file */
 #define PCAP_VERSION_MAJOR 2
 #define PCAP_VERSION_MINOR 4
+
 #define PCAP_SNAPLEN_MAX 65535
-/**
- * pcap header value which indicates physical layer type.
- * 1 means LINKTYPE_ETHERNET
- */
-#define PCAP_LINKTYPE 1
+
+#define PCAP_LINKTYPE 1  /* Link type 1 means LINKTYPE_ETHERNET */
 #define IN_CHUNK_SIZE (16*1024)
 #define DEFAULT_OUTPUT_DIR "/tmp"
-#define DEFAULT_FILE_LIMIT 1073741824 /* 1GiB */
+#define DEFAULT_FILE_LIMIT 1073741824  /* 1GiB */
 #define PORT_STR_SIZE 16
 #define RING_SIZE 8192
-/* macro */
+#define MAX_PCAP_BURST 256  /* Num of received packets at once */
+
 /* Ensure snaplen not to be over the maximum size */
 #define TRANCATE_SNAPLEN(a, b) (((a) < (b))?(a):(b))
 
@@ -756,7 +755,7 @@ static int pcap_proc_receive(int lcore_id)
 	int nb_rx = 0;
 	int nb_tx = 0;
 	struct spp_port_info *rx;
-	struct rte_mbuf *bufs[MAX_PKT_BURST];
+	struct rte_mbuf *bufs[MAX_PCAP_BURST];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	struct rte_ring *write_ring = g_pcap_option.cap_ring;
 
@@ -786,7 +785,7 @@ static int pcap_proc_receive(int lcore_id)
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
 
-	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
+	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PCAP_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
@@ -810,7 +809,7 @@ static int pcap_proc_write(int lcore_id)
 	int ret = SPP_RET_OK;
 	int buf;
 	int nb_rx = 0;
-	struct rte_mbuf *bufs[MAX_PKT_BURST];
+	struct rte_mbuf *bufs[MAX_PCAP_BURST];
 	struct rte_mbuf *mbuf = NULL;
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	struct rte_ring *read_ring = g_pcap_option.cap_ring;
@@ -837,7 +836,7 @@ static int pcap_proc_write(int lcore_id)
 	}
 
 	/* Read packets */
-	nb_rx =  rte_ring_dequeue_bulk(read_ring, (void *)bufs, MAX_PKT_BURST,
+	nb_rx =  rte_ring_dequeue_bulk(read_ring, (void *)bufs, MAX_PCAP_BURST,
 									NULL);
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
@@ -860,6 +859,7 @@ static int pcap_proc_write(int lcore_id)
 	/* mbuf free */
 	for (buf = 0; buf < nb_rx; buf++)
 		rte_pktmbuf_free(bufs[buf]);
+
 	return ret;
 }
 
