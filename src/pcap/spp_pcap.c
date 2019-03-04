@@ -746,10 +746,10 @@ static int compress_file_packet(struct pcap_mng_info *info,
 	return SPP_RET_OK;
 }
 
-/* receive thread */
+/* Receive packets from shared ring buffer */
 static int pcap_proc_receive(int lcore_id)
 {
-	struct timespec now_time;
+	struct timespec cur_time;  /* Used as timestamp for the file name */
 	struct tm l_time;
 	int buf;
 	int nb_rx = 0;
@@ -761,36 +761,41 @@ static int pcap_proc_receive(int lcore_id)
 
 	if (g_capture_request == SPP_CAPTURE_IDLE) {
 		if (info->status == SPP_CAPTURE_RUNNING) {
-			RTE_LOG(DEBUG, SPP_PCAP, "recive[%d], run->idle\n",
-								lcore_id);
+			RTE_LOG(DEBUG, SPP_PCAP,
+					"Recive on lcore %d, run->idle\n",
+					lcore_id);
+
 			info->status = SPP_CAPTURE_IDLE;
 			g_capture_status = SPP_CAPTURE_IDLE;
 		}
 		return SPP_RET_OK;
 	}
 	if (info->status == SPP_CAPTURE_IDLE) {
-		/* get time */
-		clock_gettime(CLOCK_REALTIME, &now_time);
+		/* Get time for output file name */
+		clock_gettime(CLOCK_REALTIME, &cur_time);
 		memset(g_pcap_option.compress_file_date, 0, PCAP_FDATE_STRLEN);
-		localtime_r(&now_time.tv_sec, &l_time);
+		localtime_r(&cur_time.tv_sec, &l_time);
 		strftime(g_pcap_option.compress_file_date, PCAP_FDATE_STRLEN,
 					"%Y%m%d%H%M%S", &l_time);
 		info->status = SPP_CAPTURE_RUNNING;
 		g_capture_status = SPP_CAPTURE_RUNNING;
-		RTE_LOG(DEBUG, SPP_PCAP, "recive[%d], idle->run\n", lcore_id);
-		RTE_LOG(DEBUG, SPP_PCAP, "recive[%d], start time=%s\n",
-			lcore_id, g_pcap_option.compress_file_date);
+
+		RTE_LOG(DEBUG, SPP_PCAP,
+				"Recive on lcore %d, idle->run\n", lcore_id);
+		RTE_LOG(DEBUG, SPP_PCAP,
+				"Recive on lcore %d, start time=%s\n",
+				lcore_id, g_pcap_option.compress_file_date);
+
 	}
 
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
-
 	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PCAP_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
-	/* Write ring packets */
-	nb_tx = rte_ring_enqueue_bulk(write_ring, (void *)bufs, nb_rx, NULL);
+	/* Forward to ring for writer thread */
+	nb_tx = rte_ring_enqueue_burst(write_ring, (void *)bufs, nb_rx, NULL);
 
 	/* Discard remained packets to release mbuf */
 	if (unlikely(nb_tx < nb_rx)) {
@@ -803,7 +808,7 @@ static int pcap_proc_receive(int lcore_id)
 	return SPP_RET_OK;
 }
 
-/* write thread */
+/* Output packets to file on writer thread */
 static int pcap_proc_write(int lcore_id)
 {
 	int ret = SPP_RET_OK;
@@ -815,15 +820,8 @@ static int pcap_proc_write(int lcore_id)
 	struct rte_ring *read_ring = g_pcap_option.cap_ring;
 
 	if (g_capture_status == SPP_CAPTURE_IDLE) {
-		if (info->status == SPP_CAPTURE_RUNNING) {
-			RTE_LOG(DEBUG, SPP_PCAP, "write[%d] run->idle\n",
-								lcore_id);
-			info->status = SPP_CAPTURE_IDLE;
-			if (file_compression_operation(info, CLOSE_MODE)
-							!= SPP_RET_OK)
-				return SPP_RET_NG;
-		}
-		return SPP_RET_OK;
+		if (info->status == SPP_CAPTURE_IDLE)
+			return SPP_RET_OK;
 	}
 	if (info->status == SPP_CAPTURE_IDLE) {
 		RTE_LOG(DEBUG, SPP_PCAP, "write[%d] idle->run\n", lcore_id);
@@ -835,28 +833,40 @@ static int pcap_proc_write(int lcore_id)
 		}
 	}
 
-	/* Read packets */
-	nb_rx =  rte_ring_dequeue_bulk(read_ring, (void *)bufs, MAX_PCAP_BURST,
-									NULL);
-	if (unlikely(nb_rx == 0))
+	/* Read packets from shared ring */
+	nb_rx =  rte_ring_mc_dequeue_burst(read_ring, (void *)bufs,
+					   MAX_PCAP_BURST, NULL);
+	if (unlikely(nb_rx == 0)) {
+		if (g_capture_status == SPP_CAPTURE_IDLE) {
+			RTE_LOG(DEBUG, SPP_PCAP,
+					"Write on lcore %d, run->idle\n",
+					lcore_id);
+
+			info->status = SPP_CAPTURE_IDLE;
+			if (file_compression_operation(info, CLOSE_MODE)
+							!= SPP_RET_OK)
+				return SPP_RET_NG;
+		}
 		return SPP_RET_OK;
+	}
 
 	for (buf = 0; buf < nb_rx; buf++) {
 		mbuf = bufs[buf];
 		rte_prefetch0(rte_pktmbuf_mtod(mbuf, void *));
 		if (compress_file_packet(&g_pcap_info[lcore_id], mbuf)
 							!= SPP_RET_OK) {
-			RTE_LOG(ERR, SPP_PCAP, "capture file write error: "
-				"%d (%s)\n", errno, strerror(errno));
-			RTE_LOG(ERR, SPP_PCAP, "drop packets(write) %d\n",
-							(nb_rx - buf));
+			RTE_LOG(ERR, SPP_PCAP,
+					"Failed compress_file_packet(), "
+					"errno=%d (%s)\n",
+					errno, strerror(errno));
 			ret = SPP_RET_NG;
 			info->status = SPP_CAPTURE_IDLE;
 			file_compression_operation(info, CLOSE_MODE);
 			break;
 		}
 	}
-	/* mbuf free */
+
+	/* Free mbuf */
 	for (buf = 0; buf < nb_rx; buf++)
 		rte_pktmbuf_free(bufs[buf]);
 
