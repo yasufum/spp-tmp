@@ -111,6 +111,7 @@ init(int argc, char *argv[])
 	const struct rte_memzone *mz;
 	uint16_t count, total_ports;
 	char log_msg[1024] = { '\0' };  /* temporary log message */
+	int i;
 
 	/* init EAL, parsing EAL args */
 	retval = rte_eal_init(argc, argv);
@@ -169,7 +170,7 @@ init(int argc, char *argv[])
 		lcore_id_used[lcore_id] = 1;
 	}
 	sprintf(log_msg, "Used lcores: ");
-	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		if (lcore_id_used[i] == 1)
 			sprintf(log_msg + strlen(log_msg), "%d ", i);
 	}
