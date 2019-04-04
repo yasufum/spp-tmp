@@ -54,9 +54,9 @@ int
 append_lcore_info_json(char *str,
 		uint8_t lcore_id_used[RTE_MAX_LCORE])
 {
-
+	int i;
 	sprintf(str + strlen(str), "\"lcores\":[");
-	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		if (lcore_id_used[i] == 1)
 			sprintf(str + strlen(str), "%d,", i);
 	}

@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 		lcore_id_used[lcore_id] = 1;
 	}
 	sprintf(log_msg, "Used lcores: ");
-	for (int i = 0; i < RTE_MAX_LCORE; i++) {
+	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		if (lcore_id_used[i] == 1)
 			sprintf(log_msg + strlen(log_msg), "%d ", i);
 	}

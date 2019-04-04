@@ -107,7 +107,8 @@ forward_array_reset(void)
 /* Return a type of port as a enum member of porttype_map structure. */
 static enum port_type get_port_type(char *portname)
 {
-	for (int i = 0; portmap[i].port_name != NULL; i++) {
+	int i;
+	for (i = 0; portmap[i].port_name != NULL; i++) {
 		const char *port_name = portmap[i].port_name;
 		if (strncmp(portname, port_name, strlen(port_name)) == 0)
 			return portmap[i].port_type;
