@@ -132,7 +132,7 @@ Ensure NICs, ``ens0`` and ``ens1`` in this case, are upped on remote host
 
     # terminal 1 on remote host
     # Configure ip address of ens0
-    $ sudo ifconfig ens0 192.168.140.1 255.255.255.0 up
+    $ sudo ifconfig ens0 192.168.140.1 netmask 255.255.255.0 up
 
 Add arp entries of MAC addresses statically to be resolved.
 
@@ -233,7 +233,7 @@ Finally, terminate ``spp_vf`` by using ``exit`` or ``bye sec``.
 
 .. code-block:: console
 
-    spp > vf 0; exit
+    spp > vf 1; exit
 
 
 .. _spp_usecases_vf_ssh:
@@ -443,11 +443,11 @@ After VMs are launched, login to ``spp-vm1`` first to configure.
 .. note::
 
     To avoid asked for unknown keys while login VMs, use
-    ``-oStrictHostKeyChecking=no`` option for ssh.
+    ``-o StrictHostKeyChecking=no`` option for ssh.
 
     .. code-block:: console
 
-        $ ssh -oStrictHostKeyChecking=no sppuser at 192.168.122.31
+        $ ssh -o StrictHostKeyChecking=no sppuser at 192.168.122.31
 
 Up interfaces and disable TCP offload to avoid ssh login is failed.
 
