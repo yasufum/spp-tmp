@@ -49,9 +49,6 @@ a process.
     $ cd /path/to/spp
     $ python3 src/spp-ctl/spp-ctl
 
-Notice that ``spp-ctl`` is implemented in ``python3`` and cannot be
-launched with ``python2``.
-
 It has a option ``-b`` for binding address explicitly to be accessed
 from other than default, ``127.0.0.1`` or ``localhost``.
 If you deploy SPP on multiple nodes, you might need to use ``-b`` option
@@ -98,13 +95,12 @@ SPP CLI
 ~~~~~~~
 
 If ``spp-ctl`` is launched, go to the next terminal and launch SPP CLI.
-It supports both of Python 2 and 3, so use ``python`` in this case.
 
 .. code-block:: console
 
     # terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
     Welcome to the spp.   Type help or ? to list commands.
 
     spp >
@@ -116,7 +112,7 @@ option for ``spp.py``, or failed to connect and to launch.
 
     # terminal 2
     # bind to spp-ctl on http://192.168.1.100:7777
-    $ python src/spp.py -b 192.168.1.100
+    $ python3 src/spp.py -b 192.168.1.100
     Welcome to the spp.   Type help or ? to list commands.
 
     spp >
@@ -142,7 +138,7 @@ for specifying ``spp-ctl``.
 .. code-block:: console
 
     # Launch SPP CLI with three nodes
-    $ python src/spp.py -b 192.168.11.101 \
+    $ python3 src/spp.py -b 192.168.11.101 \
         -b 192.168.11.102 \
         -b 192.168.11.103 \
 
@@ -151,7 +147,7 @@ You can also add nodes after SPP CLI is launched.
 .. code-block:: console
 
     # Launch SPP CLI with one node
-    $ python src/spp.py -b 192.168.11.101
+    $ python3 src/spp.py -b 192.168.11.101
     Welcome to the SPP CLI. Type `help` or `?` to list commands.
 
     # Add the rest of nodes after
@@ -182,7 +178,7 @@ All of options can be referred with help option ``-h``.
 
 .. code-block:: console
 
-    $ python src/spp.py -h
+    $ python3 src/spp.py -h
     usage: spp.py [-h] [-b BIND_ADDR] [-a API_PORT]
 
     SPP Controller

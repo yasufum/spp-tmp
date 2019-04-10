@@ -40,7 +40,7 @@ Launch ``spp-ctl`` and SPP CLI before primary and secondary processes.
 .. code-block:: console
 
     # terminal 2
-    $ python ./src/spp.py -b 192.168.1.100
+    $ python3 ./src/spp.py -b 192.168.1.100
 
 ``spp_primary`` on the second lcore with ``-l 0`` and two ports ``-p 0x03``.
 

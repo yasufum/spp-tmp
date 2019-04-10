@@ -41,6 +41,17 @@ Python3 and pip3 are also required if not installed.
     $ sudo apt install python3 \
       python3-pip
 
+SPP provides ``requirements.txt`` for installing required packages of Python3.
+You might fail to run ``pip3`` without sudo on some environments.
+
+.. code-block:: console
+
+    $ pip3 install -r requirements.txt
+
+For some environments, ``pip3`` might install packages under your home
+directory ``$HOME/.local/bin`` and you should add it to ``$PATH`` environment
+variable.
+
 Some of secondary processes depend on external libraries and you failed to
 compile SPP without them.
 
@@ -114,13 +125,6 @@ Default mode is shallow copy.
     clones entire packet payload into a new mbuf and it is modifiable,
     but lower performance. Which of copy mode should be chosen depends on
     your usage.
-
-SPP provides ``requirements.txt`` for installing required packages of Python3.
-You might fail to run ``pip3`` without sudo on some environments.
-
-.. code-block:: console
-
-    $ pip3 install -r requirements.txt
 
 
 Binding Network Ports to DPDK

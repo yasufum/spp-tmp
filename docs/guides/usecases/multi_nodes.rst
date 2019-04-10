@@ -44,7 +44,7 @@ for each of hosts. SPP CLI is able to be launched on any of nodes.
 .. code-block:: console
 
     # Launch SPP CLI
-    $ python src/spp.py -b 192.168.11.101 \
+    $ python3 src/spp.py -b 192.168.11.101 \
         -b 192.168.11.102 \
         -b 192.168.11.103 \
         -b 192.168.11.104 \
@@ -55,7 +55,7 @@ launching it with first node, and adding the rest of nodes after.
 .. code-block:: console
 
     # Launch SPP CLI
-    $ python src/spp.py -b 192.168.11.101
+    $ python3 src/spp.py -b 192.168.11.101
     Welcome to the spp.  Type help or ? to list commands.
 
     spp > server add 192.168.11.102
