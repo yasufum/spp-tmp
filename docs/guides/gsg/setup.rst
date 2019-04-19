@@ -8,57 +8,78 @@
 Setup
 =====
 
-This documentation is described for Ubuntu 16.04 and later.
+This documentation is described for following distributions.
 
+- Ubuntu 16.04 and 18.04
+- CentOS 7.6
 
 .. _gsg_reserve_hugep:
 
 Reserving Hugepages
 -------------------
 
-Hugepages must be enabled for running DPDK with high performance.
-Hugepage support is required to reserve large amount size of pages,
+Hugepages should be enabled for running DPDK application.
+Hugepage support is to reserve large amount size of pages,
 2MB or 1GB per page, to less TLB (Translation Lookaside Buffers) and
 to reduce cache miss.
 Less TLB means that it reduce the time for translating virtual address
 to physical.
 
-Hugepage reservation might be different for 2MB or 1GB.
+How to configure reserving hugepages is different between 2MB or 1GB.
+In general, 1GB is better for getting high performance,
+but 2MB is easier for configuration than 1GB.
 
-For 1GB page, hugepage setting must be activated while booting system.
-It must be defined in boot loader configuration, usually is
+1GB Hugepage
+~~~~~~~~~~~~
+
+For 1GB page, hugepage setting is activated while booting system.
+It must be defined in boot loader configuration, usually it is
 ``/etc/default/grub``.
-Add an entry to define pagesize and the number of pages.
-Here is an example. ``hugepagesz`` is for the size and ``hugepages``
-is for the number of pages.
+Add an entry of configuration of the size and the number of pages.
 
+Here is an example for Ubuntu, but almost the same as CentOS. The point is
+that ``hugepagesz`` is for the size and ``hugepages`` is for the number of
+pages.
 You can also configure isolcpus for performance tuning as described in
 :ref:`Performance Optimizing<gsg_performance_opt>`.
 
-.. code-block:: console
+.. code-block:: none
 
     # /etc/default/grub
     GRUB_CMDLINE_LINUX="default_hugepagesz=1G hugepagesz=1G hugepages=8"
 
+For Ubuntu, you should run ``update-grub`` for updating
+``/boot/grub/grub.cfg`` after editing to update grub's
+config file, or this configuration is not activated.
+
+.. code-block:: console
+
+    $ sudo update-grub
+    Generating grub configuration file ...
+
+For CentOS7, you use ``grub2-mkconfig`` instead of ``update-grub``.
+In this case, you should give the output file with ``-o`` option.
+The output path might be different, so you should find your correct
+``grub.cfg`` by yourself.
+
+.. code-block:: console
+
+    $ sudo grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
+
 .. note::
 
-    1GB hugepages might not be supported in your machine. It depends on
-    that CPUs support 1GB pages or not. You can check it by referring
-    ``/proc/cpuinfo``. If it is supported, you can find ``pdpe1gb`` in
-    the ``flags`` attribute.
+    1GB hugepages might possibly not be supported on your hardware.
+    It depends on that CPUs support 1GB pages or not. You can check it
+    by referring ``/proc/cpuinfo``. If it is supported, you can find
+    ``pdpe1gb`` in the ``flags`` attribute.
 
     .. code-block:: console
 
         $ cat /proc/cpuinfo | grep pdpe1gb
         flags           : fpu vme ... pdpe1gb ...
 
-You should run ``update-grub`` after editing to update grub's config file,
-or this configuration is not activated.
-
-.. code-block:: console
-
-   $ sudo update-grub
-   Generating grub configuration file ...
+2MB Hugepage
+~~~~~~~~~~~~
 
 For 2MB page, you can activate hugepages while booting or at anytime
 after system is booted.
@@ -88,14 +109,14 @@ point in ``/etc/fstab``, or after booted.
 The mount point for 2MB or 1GB can be made permanent accross reboot.
 For 2MB, it is no need to declare the size of hugepages explicity.
 
-.. code-block:: console
+.. code-block:: none
 
     # /etc/fstab
     nodev /mnt/huge hugetlbfs defaults 0 0
 
 For 1GB, the size of hugepage must be specified.
 
-.. code-block:: console
+.. code-block:: none
 
     # /etc/fstab
     nodev /mnt/huge_1GB hugetlbfs pagesize=1GB 0 0
@@ -134,37 +155,46 @@ You can check the value as following.
     $ sysctl -n kernel.randomize_va_space
 
 
-Vhost Client Mode
------------------
+Using Virtual Machine
+---------------------
 
-SPP secondary process supports ``--vhost-client`` option for using vhost port.
-In vhost client mode, qemu creates socket file instead of secondary process.
+SPP provides vhost interface for inter VM communication.
+You can use any of hypervisors, but this document describes usecases of
+qemu and libvirt.
+
+Server mode v.s. Client mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For using vhost, vhost port should be created before VM is launched in
+server mode, or SPP is launched in client mode to be able to create
+vhost port after VM is launched.
+
+Client mode is optional and supported in qemu 2.7 or later.
+For using this mode, launch secondary process with ``--vhost-client``.
+Qemu creates socket file instead of secondary process.
 It means that you can launch a VM before secondary process create vhost port.
 
-.. note::
-
-    Vhost client mode is supported by qemu 2.7 or later.
-
-
-Using Libvirt
--------------
+Libvirt
+~~~~~~~
 
 If you use libvirt for managing virtual machines, you might need some
 additional configurations.
 
-Uncomment user and group in ``/etc/libvirt/qemu.conf``.
+To have access to resources with your account, update and
+activate user and group parameters in ``/etc/libvirt/qemu.conf``.
+Here is an example.
 
-.. code-block:: console
+.. code-block:: none
 
     # /etc/libvirt/qemu.conf
 
     user = "root"
     group = "root"
 
-To use hugepages with libvirt, change ``KVM_HUGEPAGES`` from 0 to 1
+For using hugepages with libvirt, change ``KVM_HUGEPAGES`` from 0 to 1
 in ``/etc/default/qemu-kvm``.
 
-.. code-block:: console
+.. code-block:: none
 
     # /etc/default/qemu-kvm
 

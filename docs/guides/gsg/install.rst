@@ -8,49 +8,36 @@ Install DPDK and SPP
 ====================
 
 Before using SPP, you need to install DPDK.
-In this document, briefly describ how to install and setup DPDK.
+In this document, briefly described how to install and setup DPDK.
 Refer to `DPDK documentation
 <https://dpdk.org/doc/guides/>`_ for more details.
 For Linux, see `Getting Started Guide for Linux
 <http://www.dpdk.org/doc/guides/linux_gsg/index.html>`_ .
 
+.. _setup_install_packages:
 
-.. _setup_install_dpdk:
+Required Packages
+-----------------
 
-DPDK
-----
+Installing packages for DPDK and SPP is almost the on Ubunu and CentOS,
+but names are different for some packages.
 
-Clone repository and compile DPDK in any directory.
+Ubuntu
+~~~~~~
 
-.. code-block:: console
-
-    $ cd /path/to/any
-    $ git clone http://dpdk.org/git/dpdk
-
-To compile DPDK, required to install libnuma-devel library.
+To compile DPDK, required to install following packages.
 
 .. code-block:: console
 
-    $ sudo apt install libnuma-dev
+    $ sudo apt install libnuma-dev \
+      libarchive-dev \
+      build-essential
 
-Python3 and pip3 are also required if not installed.
-
-.. code-block:: console
-
-    # Python3
-    $ sudo apt install python3 \
-      python3-pip
-
-SPP provides ``requirements.txt`` for installing required packages of Python3.
-You might fail to run ``pip3`` without sudo on some environments.
+You also need to install linux-headers of your kernel version.
 
 .. code-block:: console
 
-    $ pip3 install -r requirements.txt
-
-For some environments, ``pip3`` might install packages under your home
-directory ``$HOME/.local/bin`` and you should add it to ``$PATH`` environment
-variable.
+    $ sudo apt install linux-headers-$(uname -r)
 
 Some of secondary processes depend on external libraries and you failed to
 compile SPP without them.
@@ -73,6 +60,64 @@ is included in ``wireshark``.
 
     $ sudo apt install wireshark
 
+
+CentOS
+~~~~~~
+
+Before installing packages for DPDK, you should add
+`IUS Community repositories
+<https://ius.io/GettingStarted/>`_
+with yum command.
+
+.. code-block:: console
+
+    $ sudo yum install https://centos7.iuscommunity.org/ius-release.rpm
+
+To compile DPDK, required to install following packages.
+
+.. code-block:: console
+
+    $ sudo yum install numactl-devel \
+      libarchive-devel \
+      kernel-headers \
+      kernel-devel
+
+Some of secondary processes depend on external libraries and you failed to
+compile SPP without them.
+
+SPP provides libpcap-based PMD for dumping packet to a file or retrieve
+it from the file.
+``spp_nfv`` and ``spp_pcap`` use ``libpcap-dev`` for packet capture.
+``spp_pcap`` uses ``liblz4-dev`` and ``liblz4-tool`` to compress PCAP file.
+``text2pcap`` is also required for creating pcap file which is included in ``wireshark``.
+
+.. code-block:: console
+
+   $ sudo apt install libpcap-dev \
+     libpcap \
+     libpcap-devel \
+     lz4 \
+     lz4-devel \
+     wireshark \
+     wireshark-devel \
+     libX11-devel
+
+
+.. _setup_install_dpdk:
+
+DPDK
+----
+
+Clone repository and compile DPDK in any directory.
+
+.. code-block:: console
+
+    $ cd /path/to/any
+    $ git clone http://dpdk.org/git/dpdk
+
+Installing on Ubuntu and CentOS are almost the same, but packages are
+different.
+
 PCAP is disabled by default in DPDK configuration.
 ``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
 config file ``common_base`` should be changed to ``y`` to enable PCAP.
@@ -92,6 +137,59 @@ Compile DPDK with target environment.
     $ export RTE_SDK=$(pwd)
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
     $ make install T=$RTE_TARGET
+
+
+PCAP is disabled by default in DPDK configuration.
+``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
+config file ``common_base`` should be changed to ``y`` to enable PCAP.
+
+.. code-block:: console
+
+    # dpdk/config/common_base
+    CONFIG_RTE_LIBRTE_PMD_PCAP=y
+    ...
+    CONFIG_RTE_PORT_PCAP=y
+
+Compile DPDK with target environment.
+
+.. code-block:: console
+
+    $ cd dpdk
+    $ export RTE_SDK=$(pwd)
+    $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
+    $ make install T=$RTE_TARGET
+
+
+Pyhton
+------
+
+Python3 and pip3 are also required if not installed.
+
+.. code-block:: console
+
+    # Ubuntu
+    $ sudo apt install python3 \
+      python3-pip
+
+For CentOS, you need to specify minor version of python3.
+Here is an example of installing python3.6.
+
+.. code-block:: console
+
+    # CentOS
+    $ sudo yum install python36 \
+      python36-pip
+
+SPP provides ``requirements.txt`` for installing required packages of Python3.
+You might fail to run ``pip3`` without sudo on some environments.
+
+.. code-block:: console
+
+    $ pip3 install -r requirements.txt
+
+For some environments, ``pip3`` might install packages under your home
+directory ``$HOME/.local/bin`` and you should add it to ``$PATH`` environment
+variable.
 
 
 .. _setup_install_spp:
@@ -261,7 +359,7 @@ for more details.
 Build Documentation
 -------------------
 
-This documentation is able to be biult as HTML and PDF formats from make
+This documentation is able to be built as HTML and PDF formats from make
 command. Before compiling the documentation, you need to install some of
 packages required to compile.
 
@@ -269,16 +367,23 @@ For HTML documentation, install sphinx and additional theme.
 
 .. code-block:: console
 
-    $ pip install sphinx \
+    $ pip3 install sphinx \
       sphinx-rtd-theme
 
 For PDF, inkscape and latex packages are required.
 
 .. code-block:: console
 
+    # Ubuntu
     $ sudo apt install inkscape \
       texlive-latex-extra \
       texlive-latex-recommended
+
+.. code-block:: console
+
+    # CentOS
+    $ sudo yum install inkscape \
+      texlive-latex
 
 You might also need to install ``latexmk`` in addition to if you use
 Ubuntu 18.04 LTS.
@@ -311,3 +416,7 @@ You can also compile both of HTML and PDF documentations with ``doc`` or
     $ make doc
     # or
     $ make doc-all
+
+.. note::
+
+    For CentOS, compilation PDF document is not supported.
