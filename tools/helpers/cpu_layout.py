@@ -7,41 +7,40 @@
 from __future__ import print_function
 import argparse
 import json
-import sys
+
 try:
     xrange  # Python 2
 except NameError:
     xrange = range  # Python 3
 
-base_path = "/sys/devices/system/cpu"
+BASE_PATH = "/sys/devices/system/cpu"
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Show CPU layout")
-
     parser.add_argument(
-            "--json", action="store_true",
-            help="Output in JSON format")
+        "--json", action="store_true",
+        help="Output in JSON format")
     return parser.parse_args()
 
 
 def get_max_cpus():
-    fd = open("{}/kernel_max".format(base_path))
+    fd = open("{}/kernel_max".format(BASE_PATH))
     max_cpus = int(fd.read())
     fd.close()
     return max_cpus
 
 
 def get_resource_info(max_cpus):
-    """Return a set of sockets, cores and core_map as a tuple."""
+    """Return a set of sockets, cores and core_map as tuple."""
     sockets = []
     cores = []
     core_map = {}
 
     for cpu in xrange(max_cpus + 1):
         try:
-            topo_path = "{}/cpu{}/topology".format(base_path, cpu)
+            topo_path = "{}/cpu{}/topology".format(BASE_PATH, cpu)
 
             # Get physical core ID.
             fd = open("{}/core_id".format(topo_path))
@@ -72,10 +71,10 @@ def get_resource_info(max_cpus):
 
 
 def print_header(cores, sockets):
-    print(format("=" * (47 + len(base_path))))
+    print(format("=" * (47 + len(BASE_PATH))))
     print("Core and Socket Information (as reported by '{}')".format(
-        base_path))
-    print("{}\n".format("=" * (47 + len(base_path))))
+        BASE_PATH))
+    print("{}\n".format("=" * (47 + len(BASE_PATH))))
     print("cores = ", cores)
     print("sockets = ", sockets)
     print("")
@@ -92,7 +91,7 @@ def print_body(cores, sockets, core_map):
     output = " ".ljust(max_core_id_len + len('Core '))
     for s in sockets:
         output += " Socket %s" % str(s).ljust(
-                max_core_map_len - len('Socket '))
+            max_core_map_len - len('Socket '))
     print(output)
 
     output = " ".ljust(max_core_id_len + len('Core '))
@@ -115,10 +114,10 @@ def core_map_to_json(core_map):
     cpu_layout = []
     cpu_sockets = {}
     for (s, c), cpus in core_map.items():
-        if not (s in cpu_sockets):
+        if not s in cpu_sockets:
             cpu_sockets[s] = {}
             cpu_sockets[s]["cores"] = []
-        cpu_sockets[s]["cores"].append({"core_id": c, "cpus": cpus})
+        cpu_sockets[s]["cores"].append({"core_id": c, "lcores": cpus})
 
     for sid, val in cpu_sockets.items():
         cpu_layout.append({"socket_id": sid, "cores": val["cores"]})
