@@ -7,9 +7,9 @@
 
 #include <rte_log.h>
 
-#include "string_buffer.h"
+#include "shared/secondary/spp_worker_th/string_buffer.h"
 #include "spp_pcap.h"
-#include "command_conn.h"
+#include "shared/secondary/spp_worker_th/command_conn.h"
 #include "command_dec.h"
 #include "command_proc.h"
 
