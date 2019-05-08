@@ -9,14 +9,13 @@
 #include <rte_common.h>
 #include <rte_cycles.h>
 
+#include "shared/secondary/spp_worker_th/mirror_deps.h"
 #include "shared/common.h"
 #include "shared/secondary/utils.h"
-
-#include "spp_proc.h"
-#include "spp_mirror.h"
-#include "command_proc.h"
-#include "command_dec.h"
-#include "spp_port.h"
+#include "shared/secondary/spp_worker_th/command_proc.h"
+#include "shared/secondary/spp_worker_th/command_dec.h"
+#include "shared/secondary/spp_worker_th/spp_proc.h"
+#include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */
 #define RTE_LOGTYPE_MIRROR RTE_LOGTYPE_USER1

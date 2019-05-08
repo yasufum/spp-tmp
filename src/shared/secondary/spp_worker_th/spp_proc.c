@@ -12,15 +12,12 @@
 #include <rte_branch_prediction.h>
 
 #include "vf_deps.h"
+#include "mirror_deps.h"
 #include "spp_proc.h"
 #include "spp_port.h"
 
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
-
-#ifdef SPP_MIRROR_MODULE
-#include "../../mirror/spp_mirror.h"
-#endif /* SPP_MIRROR_MODULE */
 
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
