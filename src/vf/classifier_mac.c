@@ -50,6 +50,47 @@
 /* VID of VLAN untagged */
 #define VLAN_UNTAGGED_VID 0x0fff
 
+/* classifier management information */
+struct management_info {
+	/* classifier information */
+	struct component_info cmp_infos[NUM_CLASSIFIER_MAC_INFO];
+
+	/* Reference index number for classifier information */
+	volatile int ref_index;
+
+	/* Update index number for classifier information */
+	volatile int upd_index;
+
+	/* used flag */
+	volatile int is_used;
+};
+
+struct management_info g_mng_infos[RTE_MAX_LCORE];
+
+/* uninitialize classifier. */
+static void
+uninit_classifier(struct management_info *mng_info)
+{
+	int i;
+
+	mng_info->is_used = 0;
+
+	for (i = 0; i < NUM_CLASSIFIER_MAC_INFO; ++i)
+		uninit_component_info(mng_info->cmp_infos + (long)i);
+
+	memset(mng_info, 0, sizeof(struct management_info));
+}
+
+/* initialize classifier information. */
+void
+init_classifier_info(int component_id)
+{
+	struct management_info *mng_info = NULL;
+
+	mng_info = g_mng_infos + component_id;
+	uninit_classifier(mng_info);
+}
+
 /*
  * hash table name buffer size
  *[reson for value]

@@ -9,12 +9,9 @@
 #include <rte_branch_prediction.h>
 
 #include "vf_deps.h"
+#include "mirror_deps.h"
 #include "spp_port.h"
 #include "string_buffer.h"
-
-#ifdef SPP_MIRROR_MODULE
-#include "../../mirror/spp_mirror.h"
-#endif /* SPP_MIRROR_MODULE */
 
 #include "command_conn.h"
 #include "command_dec.h"
@@ -101,30 +98,6 @@ const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
 
 	/* termination */ "",
 };
-
-/* uninitialize classifier. */
-static void
-uninit_classifier(struct management_info *mng_info)
-{
-	int i;
-
-	mng_info->is_used = 0;
-
-	for (i = 0; i < NUM_CLASSIFIER_MAC_INFO; ++i)
-		uninit_component_info(mng_info->cmp_infos + (long)i);
-
-	memset(mng_info, 0, sizeof(struct management_info));
-}
-
-/* initialize classifier information. */
-void
-init_classifier_info(int component_id)
-{
-	struct management_info *mng_info = NULL;
-
-	mng_info = g_mng_infos + component_id;
-	uninit_classifier(mng_info);
-}
 
 /* get client id */
 static int
