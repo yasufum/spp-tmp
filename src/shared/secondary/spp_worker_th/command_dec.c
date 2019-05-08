@@ -302,7 +302,7 @@ get_uint_value(
 static int
 decode_str_value(char *output, const char *arg_val)
 {
-	if (strlen(arg_val) >= SPP_CMD_VALUE_BUFSZ)
+	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
 		return SPP_RET_NG;
 
 	strcpy(output, arg_val);
@@ -1035,7 +1035,7 @@ decode_command_in_list(struct spp_command_request *request,
 	int i = 0;
 	int argc = 0;
 	char *argv[SPPWK_MAX_PARAMS];
-	char tmp_str[SPPWK_MAX_PARAMS*SPP_CMD_VALUE_BUFSZ];
+	char tmp_str[SPPWK_MAX_PARAMS*SPPWK_VAL_BUFSZ];
 	memset(argv, 0x00, sizeof(argv));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 

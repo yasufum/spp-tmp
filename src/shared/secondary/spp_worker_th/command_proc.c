@@ -48,7 +48,7 @@ struct command_result {
 	int code;
 
 	/* Response message */
-	char result[SPP_CMD_NAME_BUFSZ];
+	char result[SPPWK_NAME_BUFSZ];
 
 	/* Detailed response message */
 	char error_message[CMD_RES_ERR_MSG_SIZE];
@@ -57,7 +57,7 @@ struct command_result {
 /* command response list control structure */
 struct command_response_list {
 	/* Tag name */
-	char tag_name[SPP_CMD_NAME_BUFSZ];
+	char tag_name[SPPWK_NAME_BUFSZ];
 
 	/* Pointer to handling function */
 	int (*func)(const char *name, char **output, void *tmp);

@@ -19,10 +19,10 @@
 #define SPPWK_MAX_PARAMS 8
 
 /* Size of string buffer of message including null char. */
-#define SPP_CMD_NAME_BUFSZ  32
+#define SPPWK_NAME_BUFSZ  32
 
 /* Size of string buffer of detailed message including null char. */
-#define SPP_CMD_VALUE_BUFSZ 111
+#define SPPWK_VAL_BUFSZ 111
 
 /* Fix value for 'unused' status. */
 #define SPP_CMD_UNUSE "unuse"
@@ -76,7 +76,7 @@ struct spp_command_classifier_table {
 	enum sppwk_action wk_action;  /**< add or del */
 	enum spp_classifier_type type;  /**< currently only for mac */
 	int vid;  /**< VLAN ID  */
-	char mac[SPP_CMD_VALUE_BUFSZ];  /**< MAC address  */
+	char mac[SPPWK_VAL_BUFSZ];  /**< MAC address  */
 	struct spp_port_index port;/**< Destination port type and number */
 };
 
@@ -88,7 +88,7 @@ struct spp_command_flush {
 /* `component` command parameters. */
 struct spp_command_component {
 	enum sppwk_action wk_action;  /**< start or stop */
-	char name[SPP_CMD_NAME_BUFSZ];  /**< component name */
+	char name[SPPWK_NAME_BUFSZ];  /**< component name */
 	unsigned int core;  /**< logical core number */
 	enum spp_component_type type;  /**< component type */
 };
@@ -98,7 +98,7 @@ struct spp_command_port {
 	enum sppwk_action wk_action;  /**< add or del */
 	struct spp_port_index port;  /**< port type and number */
 	enum spp_port_rxtx rxtx;  /**< rx or tx identifier */
-	char name[SPP_CMD_NAME_BUFSZ];  /**<  component name */
+	char name[SPPWK_NAME_BUFSZ];  /**<  component name */
 	struct spp_port_ability ability;  /**< port ability */
 };
 
@@ -127,8 +127,8 @@ struct spp_command_request {
 /* Error message if parse failed. */
 struct sppwk_parse_err_msg {
 	int code;  /**< Code in enu sppwk_parse_error_code */
-	char msg[SPP_CMD_NAME_BUFSZ];   /**< Message in short */
-	char details[SPP_CMD_VALUE_BUFSZ];  /**< Detailed message */
+	char msg[SPPWK_NAME_BUFSZ];   /**< Message in short */
+	char details[SPPWK_VAL_BUFSZ];  /**< Detailed message */
 };
 
 /**
