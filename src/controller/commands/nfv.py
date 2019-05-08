@@ -74,8 +74,15 @@ class SppNfv(object):
         """
 
         nfv_attr = json_obj
-        print('- status: %s' % nfv_attr['status'])
-        print('- lcores: %s' % nfv_attr['lcores'])
+        print('- status: {}'.format(nfv_attr['status']))
+        print('- lcore_ids:')
+        print('  - master: {}'.format(nfv_attr['master-lcore']))
+        # remove master and show remained
+        nfv_attr['lcores'].remove(nfv_attr['master-lcore'])
+        if len(nfv_attr['lcores']) > 1:
+            print('  - slaves: {}'.format(nfv_attr['lcores']))
+        else:
+            print('  - slave: {}'.format(nfv_attr['lcores'][0]))
         print('- ports:')
         for port in nfv_attr['ports']:
             dst = None
@@ -84,9 +91,9 @@ class SppNfv(object):
                     dst = patch['dst']
 
             if dst is None:
-                print('  - %s' % port)
+                print('  - {}'.format(port))
             else:
-                print('  - %s -> %s' % (port, dst))
+                print('  - {} -> {}'.format(port, dst))
 
     def get_ports(self):
         """Get all of ports as a list."""
