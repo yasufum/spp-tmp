@@ -11,19 +11,25 @@ include $(RTE_SDK)/mk/rte.vars.mk
 # binary name
 APP = spp_pcap
 
+SPP_WKT_DIR = ../shared/secondary/spp_worker_th
+
 # all source are stored in SRCS-y
 SRCS-y := spp_pcap.c
 SRCS-y += spp_proc.c
 SRCS-y += command_proc.c command_dec.c
 SRCS-y += ../shared/common.c
-SRCS-y += ../vf/common/command_conn.c ../vf/common/spp_port.c
-SRCS-y += ../vf/common/ringlatencystats.c ../vf/common/string_buffer.c
+SRCS-y += $(SPP_WKT_DIR)/command_conn.c
+SRCS-y += $(SPP_WKT_DIR)/spp_port.c
+SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
+SRCS-y += $(SPP_WKT_DIR)/string_buffer.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3 -MMD
 CFLAGS += -I$(SRCDIR)/../
-CFLAGS += -I$(SRCDIR)/../vf/common
+CFLAGS += -I$(SRCDIR)/../$(SPP_WKT_DIR)
 CFLAGS += -I$(SRCDIR)/../shared
+
+# Optional Settings
 #CFLAGS += -DSPP_DEMONIZE
 #CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
