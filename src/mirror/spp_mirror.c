@@ -13,7 +13,7 @@
 #include "shared/common.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/command_proc.h"
-#include "shared/secondary/spp_worker_th/command_dec.h"
+#include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/spp_proc.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 

@@ -9,7 +9,7 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
-#include "command_dec.h"
+#include "cmd_parser.h"
 
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
@@ -58,7 +58,7 @@ const char *CLASSIFILER_TYPE_STRINGS[] = {
 
 /*
  * command action type string list
- * do it same as the order of enum spp_command_action (command_dec.h)
+ * do it same as the order of enum spp_command_action (cmd_parser.h)
  */
 const char *COMMAND_ACTION_STRINGS[] = {
 	SPP_ACTION_NONE_STR,
@@ -201,29 +201,29 @@ spp_convert_component_type(const char *type_str)
 	return SPP_COMPONENT_UNUSE;
 }
 
-/* Format error message object and return error code for an error case */
+/* Format error message object and return error code for an error case. */
 static inline int
-set_parse_error(struct sppwk_parse_err_msg *err_msg,
-		const int err_code, const char *err_name)
+set_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
+		const int err_code, const char *err_msg)
 {
-	err_msg->code = err_code;
+	wk_err_msg->code = err_code;
 
-	if (likely(err_name != NULL))
-		strcpy(err_msg->value_name, err_name);
+	if (likely(err_msg != NULL))
+		strcpy(wk_err_msg->msg, err_msg);
 
-	return err_msg->code;
+	return wk_err_msg->code;
 }
 
-/* set decode error */
+/* Set parse error message. */
 static inline int
-set_string_value_decode_error(struct sppwk_parse_err_msg *error,
-		const char *value, const char *error_name)
+set_string_value_decode_error(struct sppwk_parse_err_msg *wk_err_msg,
+		const char *err_details, const char *err_msg)
 {
-	strcpy(error->value, value);
-	return set_parse_error(error, SPPWK_PARSE_INVALID_VALUE, error_name);
+	strcpy(wk_err_msg->details, err_details);
+	return set_parse_error(wk_err_msg, SPPWK_PARSE_INVALID_VALUE, err_msg);
 }
 
-/* Split command line parameter with spaces */
+/* Split command line parameter with spaces. */
 static int
 decode_parameter_value(char *string, int max, int *argc, char *argv[])
 {
@@ -453,7 +453,7 @@ decode_port_action_value(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of port for port command */
+/* decoding procedure of port for port command. */
 static int
 decode_port_port_value(void *output, const char *arg_val, int allow_override)
 {
@@ -894,11 +894,11 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 	{ DECODE_PARAMETER_LIST_EMPTY }, /* termination      */
 };
 
-/* check by list for each command line parameter component */
+/* Validate given command. */
 static int
 decode_command_parameter_component(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct sppwk_parse_err_msg *error,
+				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
@@ -912,34 +912,34 @@ decode_command_parameter_component(struct spp_command_request *request,
 				argv[pi], 0);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Bad value. command=%s, name=%s, "
+					"Invalid value. command=%s, name=%s, "
 					"index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(error, argv[pi],
-					list->name);
+			return set_string_value_decode_error(wk_err_msg,
+					argv[pi], list->name);
 		}
 	}
 	return SPP_RET_OK;
 }
 
-/* check by list for each command line parameter clssfier_table */
+/* Validate given command for clssfier_table. */
 static int
 decode_command_parameter_cls_table(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct sppwk_parse_err_msg *error,
+				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc)
 {
 	return decode_command_parameter_component(request,
 						argc,
 						argv,
-						error,
+						wk_err_msg,
 						maxargc);
 }
-/* check by list for each command line parameter clssfier_table(vlan) */
+/* Validate given command for clssfier_table of vlan. */
 static int
 decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct sppwk_parse_err_msg *error,
+				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
@@ -955,18 +955,18 @@ decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(error, argv[pi],
-				list->name);
+			return set_string_value_decode_error(wk_err_msg,
+					argv[pi], list->name);
 		}
 	}
 	return SPP_RET_OK;
 }
 
-/* check by list for each command line parameter port */
+/* Validate given command for port. */
 static int
 decode_command_parameter_port(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct sppwk_parse_err_msg *error,
+				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc)
 {
 	int ret = SPP_RET_OK;
@@ -988,8 +988,8 @@ decode_command_parameter_port(struct spp_command_request *request,
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(error, argv[pi],
-				list->name);
+			return set_string_value_decode_error(wk_err_msg,
+					argv[pi], list->name);
 		}
 	}
 	return SPP_RET_OK;
@@ -1001,7 +1001,7 @@ struct decode_command_list {
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
 	int (*func)(struct spp_command_request *request, int argc,
-			char *argv[], struct sppwk_parse_err_msg *error,
+			char *argv[], struct sppwk_parse_err_msg *wk_err_msg,
 			int maxargc);
 				/* Pointer to command handling function */
 };
@@ -1024,11 +1024,11 @@ static struct decode_command_list command_list[] = {
 	{ "",				 0, 0, NULL }  /* termination     */
 };
 
-/* Decode command line parameters */
+/* Parse command line parameters. */
 static int
 decode_command_in_list(struct spp_command_request *request,
 			const char *request_str,
-			struct sppwk_parse_err_msg *error)
+			struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int ret = SPP_RET_OK;
 	int command_name_check = 0;
@@ -1046,7 +1046,8 @@ decode_command_in_list(struct spp_command_request *request,
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number over limit."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
+		return set_parse_error(wk_err_msg, SPPWK_PARSE_WRONG_FORMAT,
+				NULL);
 	}
 	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Decode array. num=%d\n", argc);
 
@@ -1063,7 +1064,7 @@ decode_command_in_list(struct spp_command_request *request,
 
 		request->commands[0].type = i;
 		if (list->func != NULL)
-			return (*list->func)(request, argc, argv, error,
+			return (*list->func)(request, argc, argv, wk_err_msg,
 							list->param_max);
 
 		return SPP_RET_OK;
@@ -1072,13 +1073,14 @@ decode_command_in_list(struct spp_command_request *request,
 	if (command_name_check != 0) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number out of range."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
+		return set_parse_error(wk_err_msg, SPPWK_PARSE_WRONG_FORMAT,
+				NULL);
 	}
 
 	RTE_LOG(ERR, SPP_COMMAND_PROC,
 			"Unknown command. command=%s, request_str=%s\n",
 			argv[0], request_str);
-	return set_string_value_decode_error(error, argv[0], "command");
+	return set_string_value_decode_error(wk_err_msg, argv[0], "command");
 }
 
 /* decode request from no-null-terminated string */
@@ -1086,14 +1088,14 @@ int
 spp_command_decode_request(
 		struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
-		struct sppwk_parse_err_msg *error)
+		struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int ret = SPP_RET_NG;
 	int i;
 
 	/* decode request */
 	request->num_command = 1;
-	ret = decode_command_in_list(request, request_str, error);
+	ret = decode_command_in_list(request, request_str, wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Cannot decode command request. "

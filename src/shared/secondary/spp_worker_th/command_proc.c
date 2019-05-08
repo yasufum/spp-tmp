@@ -14,7 +14,7 @@
 #include "string_buffer.h"
 
 #include "command_conn.h"
-#include "command_dec.h"
+#include "cmd_parser.h"
 #include "command_proc.h"
 
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
@@ -802,7 +802,7 @@ execute_command(const struct spp_command *command)
 	return ret;
 }
 
-/* make decode error message for response */
+/* Fill err_msg obj with given error message. */
 static const char *
 make_decode_error_message(
 		const struct sppwk_parse_err_msg *err_msg,
@@ -815,21 +815,21 @@ make_decode_error_message(
 
 	case SPPWK_PARSE_UNKNOWN_CMD:
 		/* TODO(yasufum) Fix compile err if space exists before "(" */
-		sprintf(message, "Unknown command(%s)", err_msg->value);
+		sprintf(message, "Unknown command(%s)", err_msg->details);
 		break;
 
 	case SPPWK_PARSE_NO_PARAM:
 		sprintf(message, "No or insufficient number of params (%s)",
-				err_msg->value_name);
+				err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_TYPE:
 		sprintf(message, "Invalid value type (%s)",
-				err_msg->value_name);
+				err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_VALUE:
-		sprintf(message, "Invalid value (%s)", err_msg->value_name);
+		sprintf(message, "Invalid value (%s)", err_msg->msg);
 		break;
 
 	default:
