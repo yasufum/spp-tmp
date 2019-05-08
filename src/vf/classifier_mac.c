@@ -330,7 +330,7 @@ init_component_info(struct component_info *cmp_info,
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
 	struct classified_data *clsd_data_rx = &cmp_info->classified_data_rx;
 	struct classified_data *clsd_data_tx = cmp_info->classified_data_tx;
-	struct spp_port_info *tx_port = NULL;
+	struct sppwk_port_info *tx_port = NULL;
 	uint16_t vid;
 
 	/* set rx */
@@ -816,8 +816,8 @@ spp_classifier_get_component_status(
 	struct management_info *mng_info;
 	struct component_info *cmp_info;
 	struct classified_data *clsd_data;
-	struct spp_port_index rx_ports[RTE_MAX_ETHPORTS];
-	struct spp_port_index tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
 	mng_info = g_mng_infos + id;
 	if (!is_used_mng_info(mng_info)) {
@@ -870,7 +870,7 @@ mac_classification_iterate_table(
 	const void *key;
 	void *data;
 	uint32_t next;
-	struct spp_port_index port;
+	struct sppwk_port_idx port;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
 	enum spp_classifier_type type;
 

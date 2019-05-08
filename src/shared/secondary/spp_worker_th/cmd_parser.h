@@ -78,12 +78,12 @@ struct sppwk_cls_cmd_attr {
 	enum spp_classifier_type type;  /**< currently only for mac */
 	int vid;  /**< VLAN ID  */
 	char mac[SPPWK_VAL_BUFSZ];  /**< MAC address  */
-	struct spp_port_index port;/**< Destination port type and number */
+	struct sppwk_port_idx port;/**< Destination port type and number */
 };
 
 /* `flush` command specific parameters. */
 struct sppwk_cmd_flush {
-	/* nothing specific */
+	/* Take no params. */
 };
 
 /* `component` command parameters. */
@@ -95,14 +95,15 @@ struct sppwk_cmd_comp {
 };
 
 /* `port` command parameters. */
-struct spp_command_port {
+struct sppwk_cmd_port {
 	enum sppwk_action wk_action;  /**< add or del */
-	struct spp_port_index port;  /**< port type and number */
+	struct sppwk_port_idx port;  /**< port type and number */
 	enum spp_port_rxtx rxtx;  /**< rx or tx identifier */
 	char name[SPPWK_NAME_BUFSZ];  /**<  component name */
 	struct spp_port_ability ability;  /**< port ability */
 };
 
+/* TODO(yasufum) Add usage and desc for members. What's command descriptors? */
 struct spp_command {
 	enum sppwk_cmd_type type; /**< command type */
 
@@ -110,7 +111,7 @@ struct spp_command {
 		struct sppwk_cls_cmd_attr cls_table;
 		struct sppwk_cmd_flush flush;
 		struct sppwk_cmd_comp comp;
-		struct spp_command_port port;
+		struct sppwk_cmd_port port;
 	} spec;
 };
 

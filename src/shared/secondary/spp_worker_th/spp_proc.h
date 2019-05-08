@@ -155,14 +155,6 @@ enum secondary_type {
 	SECONDARY_TYPE_MIRROR,
 };
 
-/**
- * Interface information structure
- */
-struct spp_port_index {
-	enum port_type  iface_type; /**< Interface type (phy/vhost/ring) */
-	int             iface_no;   /**< Interface number */
-};
-
 /** VLAN tag information */
 struct spp_vlantag_info {
 	int vid; /**< VLAN ID */
@@ -193,15 +185,23 @@ struct spp_port_class_identifier {
 	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
 };
 
-/* Port info */
-struct spp_port_info {
-	enum port_type iface_type;      /**< Interface type (phy/vhost/ring) */
-	int            iface_no;        /**< Interface number */
-	int            dpdk_port;       /**< DPDK port number */
+/**
+ * Simply define type and index of resource UID such as phy:0. For detailed
+ * attributions, use `sppwk_port_info` which has additional port params.
+ */
+struct sppwk_port_idx {
+	enum port_type  iface_type; /**< phy, vhost or ring */
+	int             iface_no;
+};
+
+/* Define detailed port params in addition to `sppwk_port_idx`. */
+/* TODO(yasufum) revise name and usage of `dpdk_port`. */
+struct sppwk_port_info {
+	enum port_type iface_type;  /**< phy, vhost or ring */
+	int iface_no;
+	int dpdk_port;  /**< DPDK port number */
 	struct spp_port_class_identifier class_id;
-					/**< Port class identifier */
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
-					/**< Port ability */
 };
 
 /* Component info */
@@ -212,9 +212,9 @@ struct spp_component_info {
 	int component_id;		/**< Component ID */
 	int num_rx_port;		/**< The number of rx ports */
 	int num_tx_port;		/**< The number of tx ports */
-	struct spp_port_info *rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS];
 					/**< Array of pointers to rx ports */
-	struct spp_port_info *tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS];
 					/**< Array of pointers to tx ports */
 };
 
@@ -234,11 +234,11 @@ struct iface_info {
 	int num_nic;		/* The number of phy */
 	int num_vhost;		/* The number of vhost */
 	int num_ring;		/* The number of ring */
-	struct spp_port_info nic[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
 				/* Port information of phy */
-	struct spp_port_info vhost[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info vhost[RTE_MAX_ETHPORTS];
 				/* Port information of vhost */
-	struct spp_port_info ring[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 				/* Port information of ring */
 };
 
@@ -288,9 +288,9 @@ typedef int (*spp_iterate_core_element_proc)(
 		const char *name,
 		const char *type,
 		const int num_rx,
-		const struct spp_port_index *rx_ports,
+		const struct sppwk_port_idx *rx_ports,
 		const int num_tx,
-		const struct spp_port_index *tx_ports);
+		const struct sppwk_port_idx *tx_ports);
 
 /**
  * iterate core table parameters which is
@@ -316,7 +316,7 @@ typedef int (*spp_iterate_classifier_element_proc)(
 		struct spp_iterate_classifier_table_params *params,
 		enum spp_classifier_type type,
 		int vid, const char *mac,
-		const struct spp_port_index *port);
+		const struct sppwk_port_idx *port);
 
 /**
  * iterate classifier table parameters which is
@@ -440,10 +440,10 @@ void stop_process(int signal);
  * @param iface_no
  *  Interface number to be validated.
  *
- * @retval !NULL  spp_port_info.
+ * @retval !NULL  sppwk_port_info.
  * @retval NULL   failed.
  */
-struct spp_port_info *
+struct sppwk_port_info *
 get_iface_info(enum port_type iface_type, int iface_no);
 
 /* Dump of core information */
@@ -487,7 +487,7 @@ void print_ring_latency_stats(void);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 /* Remove sock file if spp is not running */
-void  del_vhost_sockfile(struct spp_port_info *vhost);
+void  del_vhost_sockfile(struct sppwk_port_info *vhost);
 
 /**
  * Get core ID of target component
@@ -537,13 +537,14 @@ int spp_check_used_port(
  * Set component update flag for given port.
  *
  * @param port
- *  spp_port_info address
+ *  sppwk_port_info address
  * @param rxtx
  *  enum spp_port_rxtx
  *
  */
 void
-set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx);
+set_component_change_port(
+		struct sppwk_port_info *port, enum spp_port_rxtx rxtx);
 
 /**
  * Get unused component id
@@ -584,37 +585,37 @@ del_component_info(int component_id, int component_num, int *componet_array);
  * get port element which matches the condition.
  *
  * @param info
- *  spp_port_info address
+ *  sppwk_port_info address
  * @param num
  *  port count
  * @param array[]
- *  spp_port_info array address
+ *  sppwk_port_info array address
  *
  * @retval 0~ match index.
  * @retval -1 failed.
  */
 int check_port_element(
-		struct spp_port_info *info,
+		struct sppwk_port_info *info,
 		int num,
-		struct spp_port_info *array[]);
+		struct sppwk_port_info *array[]);
 
 /**
  *  search matched port_info from array and delete it.
  *
  * @param info
- *  spp_port_info address
+ *  sppwk_port_info address
  * @param num
  *  port count
  * @param array[]
- *  spp_port_info array address
+ *  sppwk_port_info array address
  *
  * @retval 0  succeeded.
  * @retval -1 failed.
  */
 int get_del_port_element(
-		struct spp_port_info *info,
+		struct sppwk_port_info *info,
 		int num,
-		struct spp_port_info *array[]);
+		struct sppwk_port_info *array[]);
 
 /**
  * Flush initial setting of each interface.

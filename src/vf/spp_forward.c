@@ -13,8 +13,8 @@
 
 /* A set of port info of rx and tx */
 struct forward_rxtx {
-	struct spp_port_info rx; /* rx port */
-	struct spp_port_info tx; /* tx port */
+	struct sppwk_port_info rx; /* rx port */
+	struct sppwk_port_info tx; /* tx port */
 };
 
 /* Information on the path used for forward. */
@@ -93,12 +93,12 @@ spp_forward_update(struct spp_component_info *component)
 	path->num_tx = component->num_tx_port;
 	for (cnt = 0; cnt < num_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
-				sizeof(struct spp_port_info));
+				sizeof(struct sppwk_port_info));
 
 	/* Transmit port is set according with larger num_rx / num_tx. */
 	for (cnt = 0; cnt < max; cnt++)
 		memcpy(&path->ports[cnt].tx, component->tx_ports[0],
-				sizeof(struct spp_port_info));
+				sizeof(struct sppwk_port_info));
 
 	info->upd_index = info->ref_index;
 	while (likely(info->ref_index == info->upd_index))
@@ -141,8 +141,8 @@ spp_forward(int id)
 	int nb_tx = 0;
 	struct forward_info *info = &g_forward_info[id];
 	struct forward_path *path = NULL;
-	struct spp_port_info *rx;
-	struct spp_port_info *tx;
+	struct sppwk_port_info *rx;
+	struct sppwk_port_info *tx;
 	struct rte_mbuf *bufs[MAX_PKT_BURST];
 
 	change_forward_index(id);
@@ -194,8 +194,8 @@ spp_forward_get_component_status(
 	const char *component_type = NULL;
 	struct forward_info *info = &g_forward_info[id];
 	struct forward_path *path = &info->path[info->ref_index];
-	struct spp_port_index rx_ports[RTE_MAX_ETHPORTS];
-	struct spp_port_index tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
 	if (unlikely(path->type == SPP_COMPONENT_UNUSE)) {
 		RTE_LOG(ERR, FORWARD,

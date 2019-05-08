@@ -29,8 +29,8 @@
 
 /* A set of port info of rx and tx */
 struct mirror_rxtx {
-	struct spp_port_info rx; /* rx port */
-	struct spp_port_info tx; /* tx port */
+	struct sppwk_port_info rx; /* rx port */
+	struct sppwk_port_info tx; /* tx port */
 };
 
 /* Information on the path used for mirror. */
@@ -319,12 +319,12 @@ spp_mirror_update(struct spp_component_info *component)
 	path->num_tx = component->num_tx_port;
 	for (cnt = 0; cnt < num_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
-				sizeof(struct spp_port_info));
+				sizeof(struct sppwk_port_info));
 
 	/* Transmit port is set according with larger num_rx / num_tx. */
 	for (cnt = 0; cnt < num_tx; cnt++)
 		memcpy(&path->ports[cnt].tx, component->tx_ports[cnt],
-				sizeof(struct spp_port_info));
+				sizeof(struct sppwk_port_info));
 
 	info->upd_index = info->ref_index;
 	while (likely(info->ref_index == info->upd_index))
@@ -368,8 +368,8 @@ mirror_proc(int id)
 	int nb_tx2 = 0;
 	struct mirror_info *info = &g_mirror_info[id];
 	struct mirror_path *path = NULL;
-	struct spp_port_info *rx = NULL;
-	struct spp_port_info *tx = NULL;
+	struct sppwk_port_info *rx = NULL;
+	struct sppwk_port_info *tx = NULL;
 	struct rte_mbuf *bufs[MAX_PKT_BURST];
 	struct rte_mbuf *copybufs[MAX_PKT_BURST];
 	struct rte_mbuf *org_mbuf = NULL;
@@ -478,8 +478,8 @@ spp_mirror_get_component_status(
 	const char *component_type = NULL;
 	struct mirror_info *info = &g_mirror_info[id];
 	struct mirror_path *path = &info->path[info->ref_index];
-	struct spp_port_index rx_ports[RTE_MAX_ETHPORTS];
-	struct spp_port_index tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
 	if (unlikely(path->type == SPP_COMPONENT_UNUSE)) {
 		RTE_LOG(ERR, MIRROR,

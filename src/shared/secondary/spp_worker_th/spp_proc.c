@@ -269,7 +269,7 @@ stop_process(int signal)
  *
  * It returns NULL value if given type is invalid.
  */
-struct spp_port_info *
+struct sppwk_port_info *
 get_iface_info(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
@@ -309,30 +309,30 @@ dump_core_info(const struct core_mng_info *core_info)
 
 /* Dump of component information */
 void
-dump_component_info(const struct spp_component_info *component_info)
+dump_component_info(const struct spp_component_info *comp_info)
 {
 	char str[SPP_NAME_STR_LEN];
-	const struct spp_component_info *component = NULL;
+	const struct spp_component_info *tmp_ci = NULL;
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		component = &component_info[cnt];
-		if (component->type == SPP_COMPONENT_UNUSE)
+		tmp_ci = &comp_info[cnt];
+		if (tmp_ci->type == SPP_COMPONENT_UNUSE)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, "
 				"core=%u, index=%d\n",
-				cnt, component->name, component->type,
-				component->lcore_id, component->component_id);
+				cnt, tmp_ci->name, tmp_ci->type,
+				tmp_ci->lcore_id, tmp_ci->component_id);
 
 		sprintf(str, "component[%d] rx=%d", cnt,
-				component->num_rx_port);
-		dump_buff(str, component->rx_ports,
-			sizeof(struct spp_port_info *)*component->num_rx_port);
+				tmp_ci->num_rx_port);
+		dump_buff(str, tmp_ci->rx_ports,
+			sizeof(struct sppwk_port_info *)*tmp_ci->num_rx_port);
 
 		sprintf(str, "component[%d] tx=%d", cnt,
-				component->num_tx_port);
-		dump_buff(str, component->tx_ports,
-			sizeof(struct spp_port_info *)*component->num_tx_port);
+				tmp_ci->num_tx_port);
+		dump_buff(str, tmp_ci->tx_ports,
+			sizeof(struct sppwk_port_info *)*tmp_ci->num_tx_port);
 	}
 }
 
@@ -340,7 +340,7 @@ dump_component_info(const struct spp_component_info *component_info)
 void
 dump_interface_info(const struct iface_info *iface_info)
 {
-	const struct spp_port_info *port = NULL;
+	const struct sppwk_port_info *port = NULL;
 	int cnt = 0;
 	RTE_LOG(DEBUG, APP, "interface phy=%d, vhost=%d, ring=%d\n",
 			iface_info->num_nic,
@@ -598,7 +598,7 @@ print_ring_latency_stats(void)
 
 /* Remove sock file if spp is not running */
 void
-del_vhost_sockfile(struct spp_port_info *vhost)
+del_vhost_sockfile(struct sppwk_port_info *vhost)
 {
 	int cnt;
 
@@ -662,8 +662,8 @@ spp_check_used_port(
 {
 	int cnt, port_cnt, max = 0;
 	struct spp_component_info *component = NULL;
-	struct spp_port_info **port_array = NULL;
-	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info **port_array = NULL;
+	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
 	struct spp_component_info *component_info =
 					g_mng_data_addr.p_component_info;
 
@@ -693,7 +693,7 @@ spp_check_used_port(
 
 /* Set component update flag for given port */
 void
-set_component_change_port(struct spp_port_info *port, enum spp_port_rxtx rxtx)
+set_component_change_port(struct sppwk_port_info *port, enum spp_port_rxtx rxtx)
 {
 	int ret = 0;
 	if ((rxtx == SPP_PORT_RXTX_RX) || (rxtx == SPP_PORT_RXTX_ALL)) {
@@ -774,9 +774,9 @@ del_component_info(int component_id, int component_num, int *componet_array)
 /* get port element which matches the condition */
 int
 check_port_element(
-		struct spp_port_info *info,
+		struct sppwk_port_info *info,
 		int num,
-		struct spp_port_info *array[])
+		struct sppwk_port_info *array[])
 {
 	int cnt = 0;
 	int match = SPP_RET_NG;
@@ -790,9 +790,9 @@ check_port_element(
 /* search matched port_info from array and delete it */
 int
 get_del_port_element(
-		struct spp_port_info *info,
+		struct sppwk_port_info *info,
 		int num,
-		struct spp_port_info *array[])
+		struct sppwk_port_info *array[])
 {
 	int cnt = 0;
 	int match = SPP_RET_NG;
@@ -819,7 +819,7 @@ flush_port(void)
 {
 	int ret = 0;
 	int cnt = 0;
-	struct spp_port_info *port = NULL;
+	struct sppwk_port_info *port = NULL;
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 
 	/* Initialize added vhost. */

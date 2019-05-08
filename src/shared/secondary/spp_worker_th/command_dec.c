@@ -99,12 +99,10 @@ spp_check_classid_used_port(
 		int vid, uint64_t mac_addr,
 		enum port_type iface_type, int iface_no)
 {
-	struct spp_port_info *port_info = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port_info = get_iface_info(
+			iface_type, iface_no);
 
-	/**
-	 * return true if given mac_addr/vid matches
-	 *  with that of port_info/vid
-	 */
+	/* Return true if given mac_addr matches with port_info, and vid. */
 	return ((mac_addr == port_info->class_id.mac_addr) &&
 		(vid == port_info->class_id.vlantag.vid));
 }
@@ -113,7 +111,7 @@ spp_check_classid_used_port(
 static int
 spp_check_added_port(enum port_type iface_type, int iface_no)
 {
-	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
 	return port->iface_type != UNDEF;
 }
 
@@ -314,7 +312,7 @@ static int
 decode_port_value(void *output, const char *arg_val)
 {
 	int ret = SPP_RET_OK;
-	struct spp_port_index *port = output;
+	struct sppwk_port_idx *port = output;
 	ret = spp_convert_port_to_iface(arg_val, &port->iface_type,
 							&port->iface_no);
 	if (unlikely(ret != 0)) {
@@ -457,8 +455,8 @@ static int
 decode_port_port_value(void *output, const char *arg_val, int allow_override)
 {
 	int ret = SPP_RET_NG;
-	struct spp_port_index tmp_port;
-	struct spp_command_port *port = output;
+	struct sppwk_port_idx tmp_port;
+	struct sppwk_cmd_port *port = output;
 
 	ret = decode_port_value(&tmp_port, arg_val);
 	if (ret < SPP_RET_OK)
@@ -490,7 +488,7 @@ static int
 decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_port *port = output;
+	struct sppwk_cmd_port *port = output;
 
 	ret = get_arrary_index(arg_val, PORT_RXTX_STRINGS);
 	if (unlikely(ret <= 0)) {
@@ -538,7 +536,7 @@ decode_port_vlan_operation(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_port *port = output;
+	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
 	switch (ability->ope) {
@@ -570,7 +568,7 @@ decode_port_vid(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_port *port = output;
+	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
 	switch (ability->ope) {
@@ -598,7 +596,7 @@ decode_port_pcp(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_port *port = output;
+	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
 	switch (ability->ope) {
@@ -706,7 +704,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 {
 	int ret = SPP_RET_OK;
 	struct sppwk_cls_cmd_attr *cls_attr = cls_cmd_attr;
-	struct spp_port_index tmp_port;
+	struct sppwk_port_idx tmp_port;
 	int64_t mac_addr = 0;
 
 	ret = decode_port_value(&tmp_port, arg_val);

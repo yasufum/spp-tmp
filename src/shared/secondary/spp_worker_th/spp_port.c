@@ -247,7 +247,7 @@ spp_port_ability_change_index(
 /* Set ability data of port ability. */
 static void
 port_ability_set_ability(
-		struct spp_port_info *port,
+		struct sppwk_port_info *port,
 		enum spp_port_rxtx rxtx)
 {
 	int in_cnt, out_cnt = 0;
@@ -308,7 +308,7 @@ void
 spp_port_ability_update(const struct spp_component_info *component)
 {
 	int cnt;
-	struct spp_port_info *port = NULL;
+	struct sppwk_port_info *port = NULL;
 	for (cnt = 0; cnt < component->num_rx_port; cnt++) {
 		port = component->rx_ports[cnt];
 		port_ability_set_ability(port, SPP_PORT_RXTX_RX);

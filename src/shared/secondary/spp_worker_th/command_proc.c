@@ -125,7 +125,7 @@ spp_get_process_type(void)
 static int
 spp_check_flush_port(enum port_type iface_type, int iface_no)
 {
-	struct spp_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
 	return port->dpdk_port >= 0;
 }
 
@@ -136,9 +136,9 @@ spp_update_classifier_table(
 		enum spp_classifier_type type __attribute__ ((unused)),
 		int vid,
 		const char *mac_addr_str,
-		const struct spp_port_index *port)
+		const struct sppwk_port_idx *port)
 {
-	struct spp_port_info *port_info = NULL;
+	struct sppwk_port_info *port_info = NULL;
 	int64_t ret_mac = 0;
 	uint64_t mac_addr = 0;
 
@@ -365,7 +365,7 @@ check_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
  */
 static int
 spp_update_port(enum sppwk_action wk_action,
-		const struct spp_port_index *port,
+		const struct sppwk_port_idx *port,
 		enum spp_port_rxtx rxtx,
 		const char *name,
 		const struct spp_port_ability *ability)
@@ -376,9 +376,9 @@ spp_update_port(enum sppwk_action wk_action,
 	int component_id = 0;
 	int cnt = 0;
 	struct spp_component_info *comp_info = NULL;
-	struct spp_port_info *port_info = NULL;
+	struct sppwk_port_info *port_info = NULL;
 	int *num = NULL;
-	struct spp_port_info **ports = NULL;
+	struct sppwk_port_info **ports = NULL;
 	struct spp_component_info *comp_info_base = NULL;
 	int *change_component = NULL;
 
@@ -1078,7 +1078,7 @@ append_vlan_block(const char *name, char **output,
 
 /* append a block of port numbers for JSON format */
 static int
-append_port_block(char **output, const struct spp_port_index *port,
+append_port_block(char **output, const struct sppwk_port_idx *port,
 		const enum spp_port_rxtx rxtx)
 {
 	int ret = SPP_RET_NG;
@@ -1110,7 +1110,7 @@ append_port_block(char **output, const struct spp_port_index *port,
 /* append a list of port numbers for JSON format */
 static int
 append_port_array(const char *name, char **output, const int num,
-		const struct spp_port_index *ports,
+		const struct sppwk_port_idx *ports,
 		const enum spp_port_rxtx rxtx)
 {
 	int ret = SPP_RET_NG;
@@ -1145,8 +1145,8 @@ append_core_element_value(
 		struct spp_iterate_core_params *params,
 		const unsigned int lcore_id,
 		const char *name, const char *type,
-		const int num_rx, const struct spp_port_index *rx_ports,
-		const int num_tx, const struct spp_port_index *tx_ports)
+		const int num_rx, const struct sppwk_port_idx *rx_ports,
+		const int num_tx, const struct sppwk_port_idx *tx_ports)
 {
 	int ret = SPP_RET_NG;
 	int unuse_flg = 0;
@@ -1247,7 +1247,7 @@ append_classifier_element_value(
 		struct spp_iterate_classifier_table_params *params,
 		enum spp_classifier_type type,
 		int vid, const char *mac,
-		const struct spp_port_index *port)
+		const struct sppwk_port_idx *port)
 {
 	int ret = SPP_RET_NG;
 	char *buff, *tmp_buff;
