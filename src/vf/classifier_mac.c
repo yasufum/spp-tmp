@@ -22,8 +22,8 @@
 #include <rte_launch.h>
 #include <rte_hash.h>
 
+#include "shared/secondary/spp_worker_th/spp_port.h"
 #include "spp_vf.h"
-#include "spp_port.h"
 #include "classifier_mac.h"
 
 #define RTE_LOGTYPE_SPP_CLASSIFIER_MAC RTE_LOGTYPE_USER1

@@ -6,13 +6,13 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 
-#include "spp_proc.h"
+#include "shared/secondary/spp_worker_th/spp_proc.h"
 #include "spp_vf.h"
 #include "classifier_mac.h"
 #include "spp_forward.h"
-#include "command_proc.h"
-#include "command_dec.h"
-#include "spp_port.h"
+#include "shared/secondary/spp_worker_th/command_proc.h"
+#include "shared/secondary/spp_worker_th/command_dec.h"
+#include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */
 /* Logical core ID for main process */
