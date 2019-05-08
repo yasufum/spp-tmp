@@ -116,7 +116,7 @@ struct spp_command {
 };
 
 /* Request parameters. */
-struct spp_command_request {
+struct sppwk_cmd_req {
 	int num_command;  /**< Number of accepted commands */
 	int num_valid_command;  /**< Number of executed commands */
 	struct spp_command commands[SPPWK_MAX_CMDS];  /**< list of cmds */
@@ -137,7 +137,7 @@ struct sppwk_parse_err_msg {
  * Parse request of non null terminated string.
  *
  * @param request
- *  The pointer to struct spp_command_request.@n
+ *  The pointer to struct sppwk_cmd_req.@n
  *  The result value of decoding the command message.
  * @param request_str
  *  The pointer to requested command message.
@@ -150,7 +150,7 @@ struct sppwk_parse_err_msg {
  * @retval SPP_RET_OK succeeded.
  * @retval !0 failed.
  */
-int spp_command_decode_request(struct spp_command_request *request,
+int spp_command_decode_request(struct sppwk_cmd_req *request,
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg);
 

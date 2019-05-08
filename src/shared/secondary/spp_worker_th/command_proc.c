@@ -866,7 +866,7 @@ set_command_results(struct command_result *result,
 /* set decode error to command result */
 static void
 set_decode_error_to_results(struct command_result *results,
-		const struct spp_command_request *request,
+		const struct sppwk_cmd_req *request,
 		const struct sppwk_parse_err_msg *err_msg)
 {
 	int i;
@@ -1501,7 +1501,7 @@ append_info_value(const char *name, char **output)
 /* send response for decode error */
 static void
 send_decode_error_response(int *sock,
-		const struct spp_command_request *request,
+		const struct sppwk_cmd_req *request,
 		struct command_result *command_results)
 {
 	int ret = SPP_RET_NG;
@@ -1560,7 +1560,7 @@ send_decode_error_response(int *sock,
 /* send response for command execution result */
 static void
 send_command_result_response(int *sock,
-		const struct spp_command_request *request,
+		const struct sppwk_cmd_req *request,
 		struct command_result *command_results)
 {
 	int ret = SPP_RET_NG;
@@ -1647,11 +1647,11 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	int ret = SPP_RET_NG;
 	int i;
 
-	struct spp_command_request request;
+	struct sppwk_cmd_req request;
 	struct sppwk_parse_err_msg wk_err_msg;
 	struct command_result command_results[SPPWK_MAX_CMDS];
 
-	memset(&request, 0, sizeof(struct spp_command_request));
+	memset(&request, 0, sizeof(struct sppwk_cmd_req));
 	memset(&wk_err_msg, 0, sizeof(struct sppwk_parse_err_msg));
 	memset(command_results, 0, sizeof(command_results));
 

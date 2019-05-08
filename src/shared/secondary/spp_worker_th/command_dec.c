@@ -893,7 +893,7 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 
 /* Validate given command. */
 static int
-decode_command_parameter_component(struct spp_command_request *request,
+decode_command_parameter_component(struct sppwk_cmd_req *request,
 				int argc, char *argv[],
 				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc __attribute__ ((unused)))
@@ -921,7 +921,7 @@ decode_command_parameter_component(struct spp_command_request *request,
 
 /* Validate given command for clssfier_table. */
 static int
-decode_command_parameter_cls_table(struct spp_command_request *request,
+decode_command_parameter_cls_table(struct sppwk_cmd_req *request,
 				int argc, char *argv[],
 				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc)
@@ -934,7 +934,7 @@ decode_command_parameter_cls_table(struct spp_command_request *request,
 }
 /* Validate given command for clssfier_table of vlan. */
 static int
-decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
+decode_command_parameter_cls_table_vlan(struct sppwk_cmd_req *request,
 				int argc, char *argv[],
 				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc __attribute__ ((unused)))
@@ -961,7 +961,7 @@ decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
 
 /* Validate given command for port. */
 static int
-decode_command_parameter_port(struct spp_command_request *request,
+decode_command_parameter_port(struct sppwk_cmd_req *request,
 				int argc, char *argv[],
 				struct sppwk_parse_err_msg *wk_err_msg,
 				int maxargc)
@@ -997,7 +997,7 @@ struct decode_command_list {
 	const char *name;       /* Command name */
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
-	int (*func)(struct spp_command_request *request, int argc,
+	int (*func)(struct sppwk_cmd_req *request, int argc,
 			char *argv[], struct sppwk_parse_err_msg *wk_err_msg,
 			int maxargc);
 				/* Pointer to command handling function */
@@ -1023,7 +1023,7 @@ static struct decode_command_list command_list[] = {
 
 /* Parse command line parameters. */
 static int
-decode_command_in_list(struct spp_command_request *request,
+decode_command_in_list(struct sppwk_cmd_req *request,
 			const char *request_str,
 			struct sppwk_parse_err_msg *wk_err_msg)
 {
@@ -1083,7 +1083,7 @@ decode_command_in_list(struct spp_command_request *request,
 /* decode request from no-null-terminated string */
 int
 spp_command_decode_request(
-		struct spp_command_request *request,
+		struct sppwk_cmd_req *request,
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg)
 {
