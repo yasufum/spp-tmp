@@ -89,6 +89,9 @@ class SppVf(object):
           Basic Information:
             - client-id: 3
             - ports: [phy:0, phy:1]
+            - lcore_ids:
+              - master: 1
+              - slaves: [2, 3]
           Classifier Table:
             - "FA:16:3E:7D:CC:35", ring:0
             - "FA:17:3E:7D:CC:55", ring:1
@@ -103,10 +106,18 @@ class SppVf(object):
 
         """
 
+        # Extract slave lcore IDs first
+        slave_lcore_ids = []
+        for worker in json_obj['components']:
+            slave_lcore_ids.append(str(worker['core']))
+
         # Basic Information
         print('Basic Information:')
-        print('  - client-id: %d' % json_obj['client-id'])
-        print('  - ports: [%s]' % ', '.join(json_obj['ports']))
+        print('  - client-id: {}'.format(json_obj['client-id']))
+        print('  - ports: [{}]'.format(', '.join(json_obj['ports'])))
+        print('  - lcore_ids:')
+        print('    - master: {}'.format(json_obj['master-lcore']))
+        print('    - slaves: [{}]'.format(', '.join(slave_lcore_ids)))
 
         # Classifier Table
         print('Classifier Table:')
