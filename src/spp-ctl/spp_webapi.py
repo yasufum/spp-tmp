@@ -173,6 +173,7 @@ class V1VFCommon(object):
         for key in ["phy", "vhost", "ring"]:
             for idx in info[key]:
                 vf["ports"].append(key + ":" + str(idx))
+        vf["master-lcore"] = info["master-lcore"]
         vf["components"] = info["core"]
         if "classifier_table" in info:
             vf["classifier_table"] = info["classifier_table"]
