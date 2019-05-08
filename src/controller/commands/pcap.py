@@ -115,8 +115,13 @@ class SppPcap(object):
         Print status received from spp_pcap.
 
           spp > pcap 1; status
+          Basic Information:
             - client-id: 3
             - satus: running
+            - lcore_ids:
+              - master: 1
+              - slaves: [2, 3, 3, 4, 5, 6]
+          Components:
             - core:2, receive
               - rx: phy:0
             - core:3, write
@@ -129,11 +134,21 @@ class SppPcap(object):
 
         """
 
-        # client id and status
+        # Extract slave lcore IDs first
+        slave_lcore_ids = []
+        for worker in json_obj['core']:
+            slave_lcore_ids.append(str(worker['core']))
+
+        # Basic Information
+        print('Basic Information:')
         print('  - client-id: {}'.format(json_obj['client-id']))
         print('  - status: {}'.format(json_obj['status']))
+        print('  - lcore_ids:')
+        print('    - master: {}'.format(json_obj['master-lcore']))
+        print('    - slaves: [{}]'.format(', '.join(slave_lcore_ids)))
 
-        # Core
+        # Componennts
+        print('Components:')
         for worker in json_obj['core']:
             if 'role' in worker.keys():
                 print("  - core:{core_id} {role}".format(
