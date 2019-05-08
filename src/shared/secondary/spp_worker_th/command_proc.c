@@ -760,10 +760,10 @@ execute_command(const struct spp_command *command)
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute component command.\n");
 		ret = spp_update_component(
-				command->spec.component.wk_action,
-				command->spec.component.name,
-				command->spec.component.core,
-				command->spec.component.type);
+				command->spec.comp.wk_action,
+				command->spec.comp.name,
+				command->spec.comp.core,
+				command->spec.comp.type);
 		if (ret == 0) {
 			RTE_LOG(INFO, SPP_COMMAND_PROC,
 					"Execute flush.\n");

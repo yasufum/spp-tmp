@@ -372,7 +372,7 @@ decode_component_name_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_component *component = output;
+	struct sppwk_cmd_comp *component = output;
 
 	/* "stop" has no core ID parameter. */
 	if (component->wk_action == SPPWK_ACT_START) {
@@ -393,7 +393,7 @@ static int
 decode_component_core_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
-	struct spp_command_component *component = output;
+	struct sppwk_cmd_comp *component = output;
 
 	/* "stop" has no core ID parameter. */
 	if (component->wk_action != SPPWK_ACT_START)
@@ -408,7 +408,7 @@ decode_component_type_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	enum spp_component_type comp_type;
-	struct spp_command_component *component = output;
+	struct sppwk_cmd_comp *component = output;
 
 	/* "stop" has no type parameter. */
 	if (component->wk_action != SPPWK_ACT_START)
@@ -831,22 +831,22 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.component.wk_action),
+					spec.comp.wk_action),
 			.func = decode_component_action_value
 		},
 		{
 			.name = "component name",
-			.offset = offsetof(struct spp_command, spec.component),
+			.offset = offsetof(struct spp_command, spec.comp),
 			.func = decode_component_name_value
 		},
 		{
 			.name = "core",
-			.offset = offsetof(struct spp_command, spec.component),
+			.offset = offsetof(struct spp_command, spec.comp),
 			.func = decode_component_core_value
 		},
 		{
 			.name = "component type",
-			.offset = offsetof(struct spp_command, spec.component),
+			.offset = offsetof(struct spp_command, spec.comp),
 			.func = decode_component_type_value
 		},
 		DECODE_PARAMETER_LIST_EMPTY,

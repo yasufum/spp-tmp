@@ -87,7 +87,7 @@ struct sppwk_cmd_flush {
 };
 
 /* `component` command parameters. */
-struct spp_command_component {
+struct sppwk_cmd_comp {
 	enum sppwk_action wk_action;  /**< start or stop */
 	char name[SPPWK_NAME_BUFSZ];  /**< component name */
 	unsigned int core;  /**< logical core number */
@@ -109,7 +109,7 @@ struct spp_command {
 	union {  /**< command descriptors */
 		struct sppwk_cls_cmd_attr cls_table;
 		struct sppwk_cmd_flush flush;
-		struct spp_command_component component;
+		struct sppwk_cmd_comp comp;
 		struct spp_command_port port;
 	} spec;
 };
