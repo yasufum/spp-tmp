@@ -1080,9 +1080,9 @@ decode_command_in_list(struct sppwk_cmd_req *request,
 	return set_string_value_decode_error(wk_err_msg, argv[0], "command");
 }
 
-/* decode request from no-null-terminated string */
+/* Parse request of non null terminated string. */
 int
-spp_command_decode_request(
+sppwk_parse_req(
 		struct sppwk_cmd_req *request,
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg)

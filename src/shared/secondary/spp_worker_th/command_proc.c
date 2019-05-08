@@ -1660,7 +1660,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 			(int)request_str_len, request_str);
 
 	/* decode request message */
-	ret = spp_command_decode_request(
+	ret = sppwk_parse_req(
 			&request, request_str, request_str_len, &wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		/* send error response */
