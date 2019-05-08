@@ -171,7 +171,7 @@ struct spp_command_request {
 };
 
 /** decode error information */
-struct spp_command_decode_error {
+struct sppwk_parse_err_msg {
 	int code;                            /**< Error code */
 	char value_name[SPP_CMD_NAME_BUFSZ]; /**< Error value name */
 	char value[SPP_CMD_VALUE_BUFSZ];     /**< Error value */
@@ -188,7 +188,7 @@ struct spp_command_decode_error {
  * @param request_str_len
  *  The length of requested command message.
  * @param error
- *  The pointer to struct spp_command_decode_error.@n
+ *  The pointer to struct sppwk_parse_err_msg.@n
  *  Detailed error information will be stored.
  *
  * @retval SPP_RET_OK succeeded.
@@ -196,6 +196,6 @@ struct spp_command_decode_error {
  */
 int spp_command_decode_request(struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
-		struct spp_command_decode_error *error);
+		struct sppwk_parse_err_msg *err_msg);
 
 #endif /* _COMMAND_DEC_H_ */

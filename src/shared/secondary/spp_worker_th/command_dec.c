@@ -201,26 +201,26 @@ spp_convert_component_type(const char *type_str)
 	return SPP_COMPONENT_UNUSE;
 }
 
-/* set decode error */
+/* Format error message object and return error code for an error case */
 static inline int
-set_decode_error(struct spp_command_decode_error *error,
-		const int error_code, const char *error_name)
+set_parse_error(struct sppwk_parse_err_msg *err_msg,
+		const int err_code, const char *err_name)
 {
-	error->code = error_code;
+	err_msg->code = err_code;
 
-	if (likely(error_name != NULL))
-		strcpy(error->value_name, error_name);
+	if (likely(err_name != NULL))
+		strcpy(err_msg->value_name, err_name);
 
-	return error->code;
+	return err_msg->code;
 }
 
 /* set decode error */
 static inline int
-set_string_value_decode_error(struct spp_command_decode_error *error,
+set_string_value_decode_error(struct sppwk_parse_err_msg *error,
 		const char *value, const char *error_name)
 {
 	strcpy(error->value, value);
-	return set_decode_error(error, SPP_CMD_DERR_BAD_VALUE, error_name);
+	return set_parse_error(error, SPP_CMD_DERR_BAD_VALUE, error_name);
 }
 
 /* Split command line parameter with spaces */
@@ -898,7 +898,7 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 static int
 decode_command_parameter_component(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct spp_command_decode_error *error,
+				struct sppwk_parse_err_msg *error,
 				int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
@@ -926,7 +926,7 @@ decode_command_parameter_component(struct spp_command_request *request,
 static int
 decode_command_parameter_cls_table(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct spp_command_decode_error *error,
+				struct sppwk_parse_err_msg *error,
 				int maxargc)
 {
 	return decode_command_parameter_component(request,
@@ -939,7 +939,7 @@ decode_command_parameter_cls_table(struct spp_command_request *request,
 static int
 decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct spp_command_decode_error *error,
+				struct sppwk_parse_err_msg *error,
 				int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
@@ -966,7 +966,7 @@ decode_command_parameter_cls_table_vlan(struct spp_command_request *request,
 static int
 decode_command_parameter_port(struct spp_command_request *request,
 				int argc, char *argv[],
-				struct spp_command_decode_error *error,
+				struct sppwk_parse_err_msg *error,
 				int maxargc)
 {
 	int ret = SPP_RET_OK;
@@ -1001,7 +1001,7 @@ struct decode_command_list {
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
 	int (*func)(struct spp_command_request *request, int argc,
-			char *argv[], struct spp_command_decode_error *error,
+			char *argv[], struct sppwk_parse_err_msg *error,
 			int maxargc);
 				/* Pointer to command handling function */
 };
@@ -1028,7 +1028,7 @@ static struct decode_command_list command_list[] = {
 static int
 decode_command_in_list(struct spp_command_request *request,
 			const char *request_str,
-			struct spp_command_decode_error *error)
+			struct sppwk_parse_err_msg *error)
 {
 	int ret = SPP_RET_OK;
 	int command_name_check = 0;
@@ -1046,7 +1046,7 @@ decode_command_in_list(struct spp_command_request *request,
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number over limit."
 				"request_str=%s\n", request_str);
-		return set_decode_error(error, SPP_CMD_DERR_BAD_FORMAT, NULL);
+		return set_parse_error(error, SPP_CMD_DERR_BAD_FORMAT, NULL);
 	}
 	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Decode array. num=%d\n", argc);
 
@@ -1072,7 +1072,7 @@ decode_command_in_list(struct spp_command_request *request,
 	if (command_name_check != 0) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number out of range."
 				"request_str=%s\n", request_str);
-		return set_decode_error(error, SPP_CMD_DERR_BAD_FORMAT, NULL);
+		return set_parse_error(error, SPP_CMD_DERR_BAD_FORMAT, NULL);
 	}
 
 	RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -1086,7 +1086,7 @@ int
 spp_command_decode_request(
 		struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
-		struct spp_command_decode_error *error)
+		struct sppwk_parse_err_msg *error)
 {
 	int ret = SPP_RET_NG;
 	int i;

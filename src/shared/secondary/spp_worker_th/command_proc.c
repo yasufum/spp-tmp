@@ -805,30 +805,30 @@ execute_command(const struct spp_command *command)
 /* make decode error message for response */
 static const char *
 make_decode_error_message(
-		const struct spp_command_decode_error *decode_error,
+		const struct sppwk_parse_err_msg *err_msg,
 		char *message)
 {
-	switch (decode_error->code) {
+	switch (err_msg->code) {
 	case SPP_CMD_DERR_BAD_FORMAT:
 		sprintf(message, "bad message format");
 		break;
 
 	case SPP_CMD_DERR_UNKNOWN_COMMAND:
-		sprintf(message, "unknown command(%s)", decode_error->value);
+		sprintf(message, "unknown command(%s)", err_msg->value);
 		break;
 
 	case SPP_CMD_DERR_NO_PARAM:
 		sprintf(message, "not enough parameter(%s)",
-				decode_error->value_name);
+				err_msg->value_name);
 		break;
 
 	case SPP_CMD_DERR_BAD_TYPE:
 		sprintf(message, "bad value type(%s)",
-				decode_error->value_name);
+				err_msg->value_name);
 		break;
 
 	case SPP_CMD_DERR_BAD_VALUE:
-		sprintf(message, "bad value(%s)", decode_error->value_name);
+		sprintf(message, "bad value(%s)", err_msg->value_name);
 		break;
 
 	default:
@@ -866,21 +866,21 @@ set_command_results(struct command_result *result,
 static void
 set_decode_error_to_results(struct command_result *results,
 		const struct spp_command_request *request,
-		const struct spp_command_decode_error *decode_error)
+		const struct sppwk_parse_err_msg *err_msg)
 {
 	int i;
 	const char *tmp_buff;
 	char error_messege[CMD_RES_ERR_MSG_SIZE];
 
 	for (i = 0; i < request->num_command; i++) {
-		if (decode_error->code == 0)
+		if (err_msg->code == 0)
 			set_command_results(&results[i], CRES_SUCCESS, "");
 		else
 			set_command_results(&results[i], CRES_INVALID, "");
 	}
 
-	if (decode_error->code != 0) {
-		tmp_buff = make_decode_error_message(decode_error,
+	if (err_msg->code != 0) {
+		tmp_buff = make_decode_error_message(err_msg,
 				error_messege);
 		set_command_results(&results[request->num_valid_command],
 				CRES_FAILURE, tmp_buff);
@@ -1646,11 +1646,11 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	int i;
 
 	struct spp_command_request request;
-	struct spp_command_decode_error decode_error;
+	struct sppwk_parse_err_msg wk_err_msg;
 	struct command_result command_results[SPP_CMD_MAX_COMMANDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
-	memset(&decode_error, 0, sizeof(struct spp_command_decode_error));
+	memset(&wk_err_msg, 0, sizeof(struct sppwk_parse_err_msg));
 	memset(command_results, 0, sizeof(command_results));
 
 	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Start command request processing. "
@@ -1659,11 +1659,11 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	/* decode request message */
 	ret = spp_command_decode_request(
-			&request, request_str, request_str_len, &decode_error);
+			&request, request_str, request_str_len, &wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		/* send error response */
 		set_decode_error_to_results(command_results, &request,
-				&decode_error);
+				&wk_err_msg);
 		send_decode_error_response(sock, &request, command_results);
 		RTE_LOG(DEBUG, SPP_COMMAND_PROC,
 				"End command request processing.\n");
