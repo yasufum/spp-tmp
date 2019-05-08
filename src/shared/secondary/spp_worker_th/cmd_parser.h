@@ -82,7 +82,7 @@ struct sppwk_cls_cmd_attr {
 };
 
 /* `flush` command specific parameters. */
-struct spp_command_flush {
+struct sppwk_cmd_flush {
 	/* nothing specific */
 };
 
@@ -108,7 +108,7 @@ struct spp_command {
 
 	union {  /**< command descriptors */
 		struct sppwk_cls_cmd_attr cls_table;
-		struct spp_command_flush flush;
+		struct sppwk_cmd_flush flush;
 		struct spp_command_component component;
 		struct spp_command_port port;
 	} spec;
