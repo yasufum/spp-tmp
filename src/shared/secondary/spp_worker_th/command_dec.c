@@ -763,7 +763,7 @@ struct decode_parameter_list {
 
 /* parameter list for each command */
 static struct decode_parameter_list
-parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
+parameter_list[][SPPWK_MAX_PARAMS] = {
 	{                                /* classifier_table(mac) */
 		{
 			.name = "action",
@@ -1034,13 +1034,13 @@ decode_command_in_list(struct spp_command_request *request,
 	struct decode_command_list *list = NULL;
 	int i = 0;
 	int argc = 0;
-	char *argv[SPP_CMD_MAX_PARAMETERS];
-	char tmp_str[SPP_CMD_MAX_PARAMETERS*SPP_CMD_VALUE_BUFSZ];
+	char *argv[SPPWK_MAX_PARAMS];
+	char tmp_str[SPPWK_MAX_PARAMS*SPP_CMD_VALUE_BUFSZ];
 	memset(argv, 0x00, sizeof(argv));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
-	ret = decode_parameter_value(tmp_str, SPP_CMD_MAX_PARAMETERS,
+	ret = decode_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
 			&argc, argv);
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number over limit."

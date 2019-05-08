@@ -1645,7 +1645,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	struct spp_command_request request;
 	struct sppwk_parse_err_msg wk_err_msg;
-	struct command_result command_results[SPP_CMD_MAX_COMMANDS];
+	struct command_result command_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
 	memset(&wk_err_msg, 0, sizeof(struct sppwk_parse_err_msg));
