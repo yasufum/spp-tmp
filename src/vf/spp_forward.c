@@ -4,6 +4,7 @@
 
 #include <rte_cycles.h>
 
+#include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 #include "spp_vf.h"
 #include "spp_forward.h"

@@ -15,8 +15,6 @@
  * and determines which port to be transferred to incoming packets.
  */
 
-/* forward declaration */
-struct spp_component_info;
 struct spp_iterate_classifier_table_params;
 
 /**
@@ -36,17 +34,6 @@ int spp_classifier_mac_init(void);
  */
 void init_classifier_info(int component_id);
 
-/**
- * classifier(mac address) update component info.
- *
- * @param component_info
- *  The pointer to struct spp_component_info.@n
- *  The data for updating the internal data of classifier.
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
- */
-int spp_classifier_mac_update(struct spp_component_info *component_info);
 
 /**
  * classifier(mac address) thread function.
@@ -58,25 +45,6 @@ int spp_classifier_mac_update(struct spp_component_info *component_info);
  * @retval SPP_RET_NG failed.
  */
 int spp_classifier_mac_do(int id);
-
-/**
- * classifier get component status.
- *
- *
- * @param lcore_id
- *  The logical core ID for classifier.
- * @param id
- *  The unique component ID.
- * @param params
- *  The pointer to struct spp_iterate_core_params.@n
- *  Detailed data of classifier status.
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
- */
-int
-spp_classifier_get_component_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
 
 /**
  * classifier(mac address) iterate classifier table.

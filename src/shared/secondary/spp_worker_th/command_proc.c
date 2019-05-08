@@ -8,15 +8,14 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
+#include "vf_deps.h"
 #include "spp_port.h"
 #include "string_buffer.h"
-#ifdef SPP_VF_MODULE
-#include "../classifier_mac.h"
-#include "../spp_forward.h"
-#endif /* SPP_VF_MODULE */
+
 #ifdef SPP_MIRROR_MODULE
 #include "../../mirror/spp_mirror.h"
 #endif /* SPP_MIRROR_MODULE */
+
 #include "command_conn.h"
 #include "command_dec.h"
 #include "command_proc.h"
@@ -102,6 +101,30 @@ const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
 
 	/* termination */ "",
 };
+
+/* uninitialize classifier. */
+static void
+uninit_classifier(struct management_info *mng_info)
+{
+	int i;
+
+	mng_info->is_used = 0;
+
+	for (i = 0; i < NUM_CLASSIFIER_MAC_INFO; ++i)
+		uninit_component_info(mng_info->cmp_infos + (long)i);
+
+	memset(mng_info, 0, sizeof(struct management_info));
+}
+
+/* initialize classifier information. */
+void
+init_classifier_info(int component_id)
+{
+	struct management_info *mng_info = NULL;
+
+	mng_info = g_mng_infos + component_id;
+	uninit_classifier(mng_info);
+}
 
 /* get client id */
 static int
@@ -1403,7 +1426,11 @@ struct command_response_list response_result_list[] = {
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
 
-/* TODO(yasufum) add desc why it is needed and how to be used */
+/**
+ * TODO(yasufum) Add desc why it is needed and how to be used. At least, func
+ * name is not appropriate because not for reponse, but name of funcs returns
+ * response.
+ */
 /* command response status information string list */
 struct command_response_list response_info_list[] = {
 	{ "client-id",        append_client_id_value },
