@@ -375,7 +375,7 @@ class SppTopo(object):
         stat = stat.replace("\x00", "")
         stat = stat.replace("'", "")
 
-        stat_obj = yaml.load(stat)
+        stat_obj = yaml.load(stat, Loader=yaml.FullLoader)
         res = {}
         res['sec_id'] = sec_id
         res['status'] = stat_obj['status']

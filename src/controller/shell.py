@@ -28,7 +28,8 @@ class Shell(cmd.Cmd, object):
     try:
         config_file = "{}/config/default.yml".format(
                 os.path.dirname(__file__))
-        cli_config = yaml.load(open(config_file))
+        cli_config = yaml.load(open(config_file),
+                Loader=yaml.FullLoader)
     except IOError as e:
         print('Error: no config file found!')
         print(e)
