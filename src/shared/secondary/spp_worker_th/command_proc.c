@@ -126,7 +126,7 @@ static int
 spp_check_flush_port(enum port_type iface_type, int iface_no)
 {
 	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
-	return port->dpdk_port >= 0;
+	return port->ethdev_port_id >= 0;
 }
 
 /* Update classifier table with given action, add or del. */
@@ -607,11 +607,11 @@ sppwk_get_ethdev_port_id(enum port_type iface_type, int iface_no)
 				NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:
-		return iface_info->nic[iface_no].dpdk_port;
+		return iface_info->nic[iface_no].ethdev_port_id;
 	case RING:
-		return iface_info->ring[iface_no].dpdk_port;
+		return iface_info->ring[iface_no].ethdev_port_id;
 	case VHOST:
-		return iface_info->vhost[iface_no].dpdk_port;
+		return iface_info->vhost[iface_no].ethdev_port_id;
 	default:
 		return SPP_RET_NG;
 	}

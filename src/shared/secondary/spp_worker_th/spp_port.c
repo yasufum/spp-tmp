@@ -251,7 +251,7 @@ port_ability_set_ability(
 		enum spp_port_rxtx rxtx)
 {
 	int in_cnt, out_cnt = 0;
-	int port_id = port->dpdk_port;
+	int port_id = port->ethdev_port_id;
 	struct port_ability_port_mng_info *port_mng =
 						&g_port_mng_info[port_id];
 	struct port_ability_mng_info *mng         = NULL;

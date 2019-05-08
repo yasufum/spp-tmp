@@ -335,20 +335,20 @@ init_component_info(struct component_info *cmp_info,
 
 	/* set rx */
 	if (component_info->num_rx_port == 0) {
-		clsd_data_rx->iface_type      = UNDEF;
-		clsd_data_rx->iface_no        = 0;
+		clsd_data_rx->iface_type = UNDEF;
+		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global = 0;
-		clsd_data_rx->port            = 0;
-		clsd_data_rx->num_pkt         = 0;
+		clsd_data_rx->port = 0;
+		clsd_data_rx->num_pkt = 0;
 	} else {
-		clsd_data_rx->iface_type      =
-				component_info->rx_ports[0]->iface_type;
-		clsd_data_rx->iface_no        = 0;
+		clsd_data_rx->iface_type =
+			component_info->rx_ports[0]->iface_type;
+		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global =
-				component_info->rx_ports[0]->iface_no;
-		clsd_data_rx->port            =
-				component_info->rx_ports[0]->dpdk_port;
-		clsd_data_rx->num_pkt         = 0;
+			component_info->rx_ports[0]->iface_no;
+		clsd_data_rx->port =
+			component_info->rx_ports[0]->ethdev_port_id;
+		clsd_data_rx->num_pkt = 0;
 	}
 
 	/* set tx */
@@ -362,7 +362,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_tx[i].iface_type      = tx_port->iface_type;
 		clsd_data_tx[i].iface_no        = i;
 		clsd_data_tx[i].iface_no_global = tx_port->iface_no;
-		clsd_data_tx[i].port            = tx_port->dpdk_port;
+		clsd_data_tx[i].port            = tx_port->ethdev_port_id;
 		clsd_data_tx[i].num_pkt         = 0;
 
 		if (tx_port->class_id.mac_addr == 0)
@@ -395,11 +395,11 @@ init_component_info(struct component_info *cmp_info,
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 					"default classified. vid=%hu, "
 					"iface_type=%d, iface_no=%d, "
-					"dpdk_port=%d\n",
+					"ethdev_port_id=%d\n",
 					vid,
 					tx_port->iface_type,
 					tx_port->iface_no,
-					tx_port->dpdk_port);
+					tx_port->ethdev_port_id);
 			continue;
 		}
 
@@ -423,12 +423,12 @@ init_component_info(struct component_info *cmp_info,
 		RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 				"Add entry to classifier mac table. "
 				"vid=%hu, mac_addr=%s, iface_type=%d, "
-				"iface_no=%d, dpdk_port=%d\n",
+				"iface_no=%d, ethdev_port_id=%d\n",
 				vid,
 				mac_addr_str,
 				tx_port->iface_type,
 				tx_port->iface_no,
-				tx_port->dpdk_port);
+				tx_port->ethdev_port_id);
 	}
 
 	return SPP_RET_OK;
@@ -462,7 +462,7 @@ transmit_packet(struct classified_data *clsd_data)
 		for (i = n_tx; i < clsd_data->num_pkt; i++)
 			rte_pktmbuf_free(clsd_data->pkts[i]);
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-				"drop packets(tx). num=%hu, dpdk_port=%hu\n",
+				"drop packets(tx). num=%hu, ethdev_port_id=%hu\n",
 				(uint16_t)(clsd_data->num_pkt - n_tx),
 				clsd_data->port);
 	}

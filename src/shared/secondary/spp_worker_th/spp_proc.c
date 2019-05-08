@@ -354,7 +354,7 @@ dump_interface_info(const struct iface_info *iface_info)
 		RTE_LOG(DEBUG, APP, "phy  [%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
-				port->dpdk_port,
+				port->ethdev_port_id,
 				port->class_id.vlantag.vid,
 				port->class_id.mac_addr,
 				port->class_id.mac_addr_str);
@@ -367,7 +367,7 @@ dump_interface_info(const struct iface_info *iface_info)
 		RTE_LOG(DEBUG, APP, "vhost[%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
-				port->dpdk_port,
+				port->ethdev_port_id,
 				port->class_id.vlantag.vid,
 				port->class_id.mac_addr,
 				port->class_id.mac_addr_str);
@@ -380,7 +380,7 @@ dump_interface_info(const struct iface_info *iface_info)
 		RTE_LOG(DEBUG, APP, "ring [%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
-				port->dpdk_port,
+				port->ethdev_port_id,
 				port->class_id.vlantag.vid,
 				port->class_id.mac_addr,
 				port->class_id.mac_addr_str);
@@ -474,20 +474,20 @@ init_iface_info(void)
 	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
 		p_iface_info->nic[port_cnt].iface_type = UNDEF;
-		p_iface_info->nic[port_cnt].iface_no   = port_cnt;
-		p_iface_info->nic[port_cnt].dpdk_port  = -1;
+		p_iface_info->nic[port_cnt].iface_no = port_cnt;
+		p_iface_info->nic[port_cnt].ethdev_port_id = -1;
 		p_iface_info->nic[port_cnt].class_id.vlantag.vid =
-				ETH_VLAN_ID_MAX;
+			ETH_VLAN_ID_MAX;
 		p_iface_info->vhost[port_cnt].iface_type = UNDEF;
-		p_iface_info->vhost[port_cnt].iface_no   = port_cnt;
-		p_iface_info->vhost[port_cnt].dpdk_port  = -1;
+		p_iface_info->vhost[port_cnt].iface_no = port_cnt;
+		p_iface_info->vhost[port_cnt].ethdev_port_id = -1;
 		p_iface_info->vhost[port_cnt].class_id.vlantag.vid =
-				ETH_VLAN_ID_MAX;
+			ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
-		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
-		p_iface_info->ring[port_cnt].dpdk_port  = -1;
+		p_iface_info->ring[port_cnt].iface_no = port_cnt;
+		p_iface_info->ring[port_cnt].ethdev_port_id = -1;
 		p_iface_info->ring[port_cnt].class_id.vlantag.vid =
-				ETH_VLAN_ID_MAX;
+			ETH_VLAN_ID_MAX;
 	}
 }
 
@@ -534,7 +534,7 @@ set_nic_interface(void)
 
 	for (nic_cnt = 0; nic_cnt < p_iface_info->num_nic; nic_cnt++) {
 		p_iface_info->nic[nic_cnt].iface_type   = PHY;
-		p_iface_info->nic[nic_cnt].dpdk_port = nic_cnt;
+		p_iface_info->nic[nic_cnt].ethdev_port_id = nic_cnt;
 	}
 
 	return SPP_RET_OK;
@@ -825,23 +825,23 @@ flush_port(void)
 	/* Initialize added vhost. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &p_iface_info->vhost[cnt];
-		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
+		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
 			ret = spp_vf_add_vhost_pmd(port->iface_no,
 				g_mng_data_addr.p_startup_param->vhost_client);
 			if (ret < 0)
 				return SPP_RET_NG;
-			port->dpdk_port = ret;
+			port->ethdev_port_id = ret;
 		}
 	}
 
 	/* Initialize added ring. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &p_iface_info->ring[cnt];
-		if ((port->iface_type != UNDEF) && (port->dpdk_port < 0)) {
+		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
 			ret = add_ring_pmd(port->iface_no);
 			if (ret < 0)
 				return SPP_RET_NG;
-			port->dpdk_port = ret;
+			port->ethdev_port_id = ret;
 		}
 	}
 	return SPP_RET_OK;

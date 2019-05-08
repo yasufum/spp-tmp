@@ -164,15 +164,15 @@ spp_forward(int id)
 		tx = &path->ports[cnt].tx;
 
 		/* Receive packets */
-		nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0,
-						bufs, MAX_PKT_BURST);
+		nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0,
+				bufs, MAX_PKT_BURST);
 		if (unlikely(nb_rx == 0))
 			continue;
 
 		/* Send packets */
-		if (tx->dpdk_port >= 0)
-			nb_tx = spp_eth_tx_burst(tx->dpdk_port,
-							0, bufs, nb_rx);
+		if (tx->ethdev_port_id >= 0)
+			nb_tx = spp_eth_tx_burst(tx->ethdev_port_id,
+					0, bufs, nb_rx);
 
 		/* Discard remained packets to release mbuf */
 		if (unlikely(nb_tx < nb_rx)) {

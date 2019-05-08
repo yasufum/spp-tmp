@@ -195,11 +195,10 @@ struct sppwk_port_idx {
 };
 
 /* Define detailed port params in addition to `sppwk_port_idx`. */
-/* TODO(yasufum) revise name and usage of `dpdk_port`. */
 struct sppwk_port_info {
 	enum port_type iface_type;  /**< phy, vhost or ring */
 	int iface_no;
-	int dpdk_port;  /**< DPDK port number */
+	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct spp_port_class_identifier class_id;
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
 };

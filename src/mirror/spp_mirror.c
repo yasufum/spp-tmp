@@ -383,13 +383,13 @@ mirror_proc(int id)
 
 	rx = &path->ports[0].rx;
 	/* Receive packets */
-	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
+	nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
 	/* mirror */
 	tx = &path->ports[1].tx;
-	if (tx->dpdk_port >= 0) {
+	if (tx->ethdev_port_id >= 0) {
 		nb_tx2 = 0;
 		for (cnt = 0; cnt < nb_rx; cnt++) {
 			org_mbuf = bufs[cnt];
@@ -438,14 +438,14 @@ mirror_proc(int id)
 #endif /* SPP_MIRROR_SHALLOWCOPY */
 		}
 		if (cnt != 0)
-			nb_tx2 = spp_eth_tx_burst(tx->dpdk_port, 0,
-							copybufs, cnt);
+			nb_tx2 = spp_eth_tx_burst(
+					tx->ethdev_port_id, 0, copybufs, cnt);
 	}
 
 	/* orginal */
 	tx = &path->ports[0].tx;
-	if (tx->dpdk_port >= 0)
-		nb_tx1 = spp_eth_tx_burst(tx->dpdk_port, 0, bufs, nb_rx);
+	if (tx->ethdev_port_id >= 0)
+		nb_tx1 = spp_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
 	nb_tx = nb_tx1;
 
 	if (nb_tx1 != nb_tx2)
