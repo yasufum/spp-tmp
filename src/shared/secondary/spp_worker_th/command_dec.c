@@ -705,7 +705,7 @@ decode_classifier_port_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct spp_command_classifier_table *classifier_table = output;
+	struct sppwk_cls_cmd_attr *classifier_table = output;
 	struct spp_port_index tmp_port;
 	int64_t mac_addr = 0;
 
@@ -768,25 +768,25 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.wk_action),
+					spec.cls_table.wk_action),
 			.func = decode_classifier_action_value
 		},
 		{
 			.name = "type",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.type),
+					spec.cls_table.type),
 			.func = decode_classifier_type_value
 		},
 		{
 			.name = "mac address",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.mac),
+					spec.cls_table.mac),
 			.func = decode_mac_addr_str_value
 		},
 		{
 			.name = "port",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table),
+					spec.cls_table),
 			.func = decode_classifier_port_value
 		},
 		DECODE_PARAMETER_LIST_EMPTY,
@@ -795,31 +795,31 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.wk_action),
+					spec.cls_table.wk_action),
 			.func = decode_classifier_action_value
 		},
 		{
 			.name = "type",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.type),
+					spec.cls_table.type),
 			.func = decode_classifier_type_value
 		},
 		{
 			.name = "vlan id",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.vid),
+					spec.cls_table.vid),
 			.func = decode_classifier_vid_value
 		},
 		{
 			.name = "mac address",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.mac),
+					spec.cls_table.mac),
 			.func = decode_mac_addr_str_value
 		},
 		{
 			.name = "port",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table),
+					spec.cls_table),
 			.func = decode_classifier_port_value
 		},
 		DECODE_PARAMETER_LIST_EMPTY,

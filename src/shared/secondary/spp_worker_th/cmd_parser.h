@@ -73,7 +73,7 @@ enum sppwk_cmd_type {
 };
 
 /* `classifier_table` command specific parameters. */
-struct spp_command_classifier_table {
+struct sppwk_cls_cmd_attr {
 	enum sppwk_action wk_action;  /**< add or del */
 	enum spp_classifier_type type;  /**< currently only for mac */
 	int vid;  /**< VLAN ID  */
@@ -107,7 +107,7 @@ struct spp_command {
 	enum sppwk_cmd_type type; /**< command type */
 
 	union {  /**< command descriptors */
-		struct spp_command_classifier_table classifier_table;
+		struct sppwk_cls_cmd_attr cls_table;
 		struct spp_command_flush flush;
 		struct spp_command_component component;
 		struct spp_command_port port;
