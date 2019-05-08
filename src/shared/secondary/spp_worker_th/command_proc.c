@@ -594,9 +594,12 @@ spp_iterate_classifier_table(
 }
 #endif /* SPP_VF_MODULE */
 
-/* Get port number assigned by DPDK lib */
+/**
+ * Get consistent port ID of rte ethdev from resource UID such as `phy:0`.
+ * It returns a port ID, or error code if it's failed to.
+ */
 static int
-spp_get_dpdk_port(enum port_type iface_type, int iface_no)
+sppwk_get_ethdev_port_id(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = NULL;
 
@@ -1097,7 +1100,8 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 		return SPP_RET_NG;
 
 	ret = append_vlan_block("vlan", &tmp_buff,
-			spp_get_dpdk_port(port->iface_type, port->iface_no),
+			sppwk_get_ethdev_port_id(
+				port->iface_type, port->iface_no),
 			rxtx);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
