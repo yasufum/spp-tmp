@@ -29,14 +29,16 @@
 /** string that specify unused */
 #define SPP_CMD_UNUSE "unuse"
 
-/** decode error code */
-enum spp_command_decode_error_code {
-	/* not use 0, in general 0 is OK */
-	SPP_CMD_DERR_BAD_FORMAT = 1,  /**< Wrong format */
-	SPP_CMD_DERR_UNKNOWN_COMMAND, /**< Unknown command */
-	SPP_CMD_DERR_NO_PARAM,        /**< No parameters */
-	SPP_CMD_DERR_BAD_TYPE,        /**< Wrong data type */
-	SPP_CMD_DERR_BAD_VALUE,       /**< Wrong value */
+/**
+ * Error code for diagnosis and notifying the reason. It starts from 1 because
+ * 0 is used for succeeded and not appropriate for error in general.
+ */
+enum sppwk_parse_error_code {
+	SPPWK_PARSE_WRONG_FORMAT = 1,  /**< Wrong format */
+	SPPWK_PARSE_UNKNOWN_CMD,  /**< Unknown command */
+	SPPWK_PARSE_NO_PARAM,  /**< No parameters */
+	SPPWK_PARSE_INVALID_TYPE,  /**< Invalid data type */
+	SPPWK_PARSE_INVALID_VALUE,  /**< Invalid value */
 };
 
 /**

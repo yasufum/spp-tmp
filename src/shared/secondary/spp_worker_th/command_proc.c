@@ -809,30 +809,31 @@ make_decode_error_message(
 		char *message)
 {
 	switch (err_msg->code) {
-	case SPP_CMD_DERR_BAD_FORMAT:
-		sprintf(message, "bad message format");
+	case SPPWK_PARSE_WRONG_FORMAT:
+		sprintf(message, "Wrong message format");
 		break;
 
-	case SPP_CMD_DERR_UNKNOWN_COMMAND:
-		sprintf(message, "unknown command(%s)", err_msg->value);
+	case SPPWK_PARSE_UNKNOWN_CMD:
+		/* TODO(yasufum) Fix compile err if space exists before "(" */
+		sprintf(message, "Unknown command(%s)", err_msg->value);
 		break;
 
-	case SPP_CMD_DERR_NO_PARAM:
-		sprintf(message, "not enough parameter(%s)",
+	case SPPWK_PARSE_NO_PARAM:
+		sprintf(message, "No or insufficient number of params (%s)",
 				err_msg->value_name);
 		break;
 
-	case SPP_CMD_DERR_BAD_TYPE:
-		sprintf(message, "bad value type(%s)",
+	case SPPWK_PARSE_INVALID_TYPE:
+		sprintf(message, "Invalid value type (%s)",
 				err_msg->value_name);
 		break;
 
-	case SPP_CMD_DERR_BAD_VALUE:
-		sprintf(message, "bad value(%s)", err_msg->value_name);
+	case SPPWK_PARSE_INVALID_VALUE:
+		sprintf(message, "Invalid value (%s)", err_msg->value_name);
 		break;
 
 	default:
-		sprintf(message, "error occur");
+		sprintf(message, "Failed to parse with unexpected reason");
 		break;
 	}
 
