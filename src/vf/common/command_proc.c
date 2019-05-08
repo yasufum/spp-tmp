@@ -913,6 +913,7 @@ append_error_details_value(const char *name, char **output, void *tmp)
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -983,6 +984,7 @@ append_interface_value(const char *name, char **output,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1039,6 +1041,7 @@ append_vlan_block(const char *name, char **output,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1089,6 +1092,7 @@ append_port_block(char **output, const struct spp_port_index *port,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = port_block)\n");
 		return SPP_RET_NG;
 	}
@@ -1120,6 +1124,7 @@ append_port_array(const char *name, char **output, const int num,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1136,6 +1141,10 @@ append_port_array(const char *name, char **output, const int num,
 	return ret;
 }
 
+/**
+ * TODO(yasufum) add usages called from `append_core_value` or refactor
+ * confusing function names.
+ */
 /* append one element of core information for JSON format */
 static int
 append_core_element_value(
@@ -1151,6 +1160,7 @@ append_core_element_value(
 	buff = params->output;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
+		/* TODO(yasufum) refactor no meaning err msg */
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"allocate error. (name = %s)\n",
 				name);
@@ -1160,6 +1170,10 @@ append_core_element_value(
 	/* there is unnecessary data when "unuse" by type */
 	unuse_flg = strcmp(type, SPP_TYPE_UNUSE_STR);
 
+	/**
+	 * TODO(yasufum) change ambiguous "core" to more specific one such as
+	 * "worker-lcores" or "slave-lcores".
+	 */
 	ret = append_json_uint_value("core", &tmp_buff, lcore_id);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
@@ -1192,6 +1206,16 @@ append_core_element_value(
 	return ret;
 }
 
+/* append master lcore in JSON format */
+static int
+append_master_lcore_value(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	ret = append_json_int_value(name, output, rte_get_master_lcore());
+	return ret;
+}
+
 /* append a list of core information for JSON format */
 static int
 append_core_value(const char *name, char **output,
@@ -1202,6 +1226,7 @@ append_core_value(const char *name, char **output,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1238,6 +1263,7 @@ append_classifier_element_value(
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = classifier_table)\n");
 		return ret;
 	}
@@ -1288,6 +1314,7 @@ append_classifier_table_value(const char *name, char **output,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1319,6 +1346,7 @@ append_response_list_value(char **output,
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = response_list)\n");
 		return SPP_RET_NG;
 	}
@@ -1375,12 +1403,14 @@ struct command_response_list response_result_list[] = {
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
 
+/* TODO(yasufum) add desc why it is needed and how to be used */
 /* command response status information string list */
 struct command_response_list response_info_list[] = {
 	{ "client-id",        append_client_id_value },
 	{ "phy",              append_interface_value },
 	{ "vhost",            append_interface_value },
 	{ "ring",             append_interface_value },
+	{ "master-lcore",     append_master_lcore_value },
 	{ "core",             append_core_value },
 #ifdef SPP_VF_MODULE
 	{ "classifier_table", append_classifier_table_value },
@@ -1399,6 +1429,7 @@ append_command_results_value(const char *name, char **output,
 	tmp_buff1 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff1 == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s, buff=1)\n",
 				name);
 		return SPP_RET_NG;
@@ -1408,6 +1439,7 @@ append_command_results_value(const char *name, char **output,
 	if (unlikely(tmp_buff2 == NULL)) {
 		spp_strbuf_free(tmp_buff1);
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s, buff=2)\n",
 				name);
 		return SPP_RET_NG;
@@ -1446,6 +1478,7 @@ append_info_value(const char *name, char **output)
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -1473,6 +1506,7 @@ send_decode_error_response(int *sock,
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
+		/* TODO(yasufum) refactor no meaning err msg */
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
 				"(name = decode_error_response)\n");
 		return;
@@ -1491,6 +1525,7 @@ send_decode_error_response(int *sock,
 	msg = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(msg == NULL)) {
 		spp_strbuf_free(tmp_buff);
+		/* TODO(yasufum) refactor no meaning err msg */
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
 				"(name = decode_error_response)\n");
 		return;
@@ -1500,6 +1535,7 @@ send_decode_error_response(int *sock,
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = result_response)\n");
 		return;
 	}
@@ -1530,6 +1566,7 @@ send_command_result_response(int *sock,
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = result_response)\n");
 		return;
 	}
@@ -1572,6 +1609,7 @@ send_command_result_response(int *sock,
 	if (unlikely(msg == NULL)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = result_response)\n");
 		return;
 	}
@@ -1580,6 +1618,7 @@ send_command_result_response(int *sock,
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = result_response)\n");
 		return;
 	}
