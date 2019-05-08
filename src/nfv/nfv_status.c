@@ -55,6 +55,8 @@ append_lcore_info_json(char *str,
 		uint8_t lcore_id_used[RTE_MAX_LCORE])
 {
 	int i;
+	sprintf(str + strlen(str), "\"master-lcore\":%d,",
+			rte_get_master_lcore());
 	sprintf(str + strlen(str), "\"lcores\":[");
 	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		if (lcore_id_used[i] == 1)
