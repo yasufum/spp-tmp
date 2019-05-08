@@ -1107,13 +1107,13 @@ spp_command_decode_request(
 	/* check getter command */
 	for (i = 0; i < request->num_valid_command; ++i) {
 		switch (request->commands[i].type) {
-		case SPP_CMDTYPE_CLIENT_ID:
+		case SPPWK_CMDTYPE_CLIENT_ID:
 			request->is_requested_client_id = 1;
 			break;
-		case SPP_CMDTYPE_STATUS:
+		case SPPWK_CMDTYPE_STATUS:
 			request->is_requested_status = 1;
 			break;
-		case SPP_CMDTYPE_EXIT:
+		case SPPWK_CMDTYPE_EXIT:
 			request->is_requested_exit = 1;
 			break;
 		default:

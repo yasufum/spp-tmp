@@ -739,8 +739,8 @@ execute_command(const struct spp_command *command)
 	int ret = SPP_RET_OK;
 
 	switch (command->type) {
-	case SPP_CMDTYPE_CLASSIFIER_TABLE_MAC:
-	case SPP_CMDTYPE_CLASSIFIER_TABLE_VLAN:
+	case SPPWK_CMDTYPE_CLS_MAC:
+	case SPPWK_CMDTYPE_CLS_VLAN:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute classifier_table command.\n");
 		ret = spp_update_classifier_table(
@@ -756,7 +756,7 @@ execute_command(const struct spp_command *command)
 		}
 		break;
 
-	case SPP_CMDTYPE_COMPONENT:
+	case SPPWK_CMDTYPE_WORKER:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute component command.\n");
 		ret = spp_update_component(
@@ -771,7 +771,7 @@ execute_command(const struct spp_command *command)
 		}
 		break;
 
-	case SPP_CMDTYPE_PORT:
+	case SPPWK_CMDTYPE_PORT:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute port command. (act = %d)\n",
 				command->spec.port.wk_action);

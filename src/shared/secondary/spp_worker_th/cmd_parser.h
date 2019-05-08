@@ -57,15 +57,19 @@ enum sppwk_action {
  * @attention This enumerated type must have the same order of command_list
  *            defined in command_dec.c
  */
-/* TODO(yasufum) refactor each name prefix `SPP_`. */
-enum spp_command_type {
-	SPP_CMDTYPE_CLASSIFIER_TABLE_MAC,
-	SPP_CMDTYPE_CLASSIFIER_TABLE_VLAN,
-	SPP_CMDTYPE_CLIENT_ID,  /**< get_client_id */
-	SPP_CMDTYPE_STATUS,  /**< status */
-	SPP_CMDTYPE_EXIT,  /**< exit */
-	SPP_CMDTYPE_COMPONENT,  /**< component */
-	SPP_CMDTYPE_PORT,  /**< port */
+/*
+ * TODO(yasufum) consider to divide because each of target of scope is
+ * different and not so understandable for usage. For example, worker is
+ * including classifier or it status.
+ */
+enum sppwk_cmd_type {
+	SPPWK_CMDTYPE_CLS_MAC,
+	SPPWK_CMDTYPE_CLS_VLAN,
+	SPPWK_CMDTYPE_CLIENT_ID,  /**< get_client_id */
+	SPPWK_CMDTYPE_STATUS,  /**< status */
+	SPPWK_CMDTYPE_EXIT,  /**< exit */
+	SPPWK_CMDTYPE_WORKER,  /**< worker thread */
+	SPPWK_CMDTYPE_PORT,  /**< port */
 };
 
 /* `classifier_table` command specific parameters. */
@@ -100,7 +104,7 @@ struct spp_command_port {
 };
 
 struct spp_command {
-	enum spp_command_type type; /**< command type */
+	enum sppwk_cmd_type type; /**< command type */
 
 	union {  /**< command descriptors */
 		struct spp_command_classifier_table classifier_table;
