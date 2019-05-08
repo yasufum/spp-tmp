@@ -523,6 +523,16 @@ append_pcap_core_element_value(
 	return ret;
 }
 
+/* append master lcore in JSON format */
+static int
+append_master_lcore_value(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	ret = append_json_int_value(name, output, rte_get_master_lcore());
+	return ret;
+}
+
 /* append a list of core information for JSON format */
 static int
 append_core_value(const char *name, char **output,
@@ -625,6 +635,7 @@ struct command_response_list response_result_list[] = {
 struct command_response_list response_info_list[] = {
 	{ "client-id",        append_client_id_value },
 	{ "status",           append_capture_status_value },
+	{ "master-lcore",     append_master_lcore_value },
 	{ "core",             append_core_value },
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
