@@ -24,9 +24,6 @@
 /* Size of string buffer of detailed message including null char. */
 #define SPPWK_VAL_BUFSZ 111
 
-/* Fix value for 'unused' status. */
-#define SPP_CMD_UNUSE "unuse"
-
 /**
  * Error code for diagnosis and notifying the reason. It starts from 1 because
  * 0 is used for succeeded and not appropriate for error in general.
