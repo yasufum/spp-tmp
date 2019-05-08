@@ -46,13 +46,12 @@ enum sppwk_parse_error_code {
  *   - port            : add, del
  *   - classifier_table: add, del
  */
-/* TODO(yasufum) refactor each name prefix `SPP_CMD_ACTION_`. */
-enum spp_command_action {
-	SPP_CMD_ACTION_NONE,  /**< none */
-	SPP_CMD_ACTION_START, /**< start */
-	SPP_CMD_ACTION_STOP,  /**< stop */
-	SPP_CMD_ACTION_ADD,   /**< add */
-	SPP_CMD_ACTION_DEL,   /**< delete */
+enum sppwk_action {
+	SPPWK_ACT_NONE,  /**< none */
+	SPPWK_ACT_START, /**< start */
+	SPPWK_ACT_STOP,  /**< stop */
+	SPPWK_ACT_ADD,   /**< add */
+	SPPWK_ACT_DEL,   /**< delete */
 };
 
 /**
@@ -74,7 +73,7 @@ enum spp_command_type {
 
 /* `classifier_table` command specific parameters. */
 struct spp_command_classifier_table {
-	enum spp_command_action action;  /**< add or del */
+	enum sppwk_action wk_action;  /**< add or del */
 	enum spp_classifier_type type;  /**< currently only for mac */
 	int vid;  /**< VLAN ID  */
 	char mac[SPP_CMD_VALUE_BUFSZ];  /**< MAC address  */
@@ -88,7 +87,7 @@ struct spp_command_flush {
 
 /* `component` command parameters. */
 struct spp_command_component {
-	enum spp_command_action action;  /**< start or stop */
+	enum sppwk_action wk_action;  /**< start or stop */
 	char name[SPP_CMD_NAME_BUFSZ];  /**< component name */
 	unsigned int core;  /**< logical core number */
 	enum spp_component_type type;  /**< component type */
@@ -96,7 +95,7 @@ struct spp_command_component {
 
 /* `port` command parameters. */
 struct spp_command_port {
-	enum spp_command_action action;  /**< add or del */
+	enum sppwk_action wk_action;  /**< add or del */
 	struct spp_port_index port;  /**< port type and number */
 	enum spp_port_rxtx rxtx;  /**< rx or tx identifier */
 	char name[SPP_CMD_NAME_BUFSZ];  /**<  component name */

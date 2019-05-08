@@ -129,10 +129,10 @@ spp_check_flush_port(enum port_type iface_type, int iface_no)
 	return port->dpdk_port >= 0;
 }
 
-/* update classifier table according to the specified action(add or del). */
+/* Update classifier table with given action, add or del. */
 static int
 spp_update_classifier_table(
-		enum spp_command_action action,
+		enum sppwk_action wk_action,
 		enum spp_classifier_type type __attribute__ ((unused)),
 		int vid,
 		const char *mac_addr_str,
@@ -166,7 +166,7 @@ spp_update_classifier_table(
 		return SPP_RET_NG;
 	}
 
-	if (action == SPP_CMD_ACTION_DEL) {
+	if (wk_action == SPPWK_ACT_DEL) {
 		/* Delete */
 		if ((port_info->class_id.vlantag.vid != 0) &&
 				unlikely(port_info->class_id.vlantag.vid !=
@@ -188,7 +188,7 @@ spp_update_classifier_table(
 		memset(port_info->class_id.mac_addr_str, 0x00,
 							SPP_MIN_STR_LEN);
 
-	} else if (action == SPP_CMD_ACTION_ADD) {
+	} else if (wk_action == SPPWK_ACT_ADD) {
 		/* Setting */
 		if (unlikely(port_info->class_id.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
@@ -216,13 +216,10 @@ spp_update_classifier_table(
 	return SPP_RET_OK;
 }
 
-/**
- * Assign or remove component to/from specified lcore depending
- * on component action
- */
+/* Assign worker thread or remove on specified lcore. */
 static int
 spp_update_component(
-		enum spp_command_action action,
+		enum sppwk_action wk_action,
 		const char *name,
 		unsigned int lcore_id,
 		enum spp_component_type type)
@@ -242,8 +239,8 @@ spp_update_component(
 	spp_get_mng_data_addr(NULL, NULL, &comp_info_base, &core_info,
 				&change_core, &change_component, NULL);
 
-	switch (action) {
-	case SPP_CMD_ACTION_START:
+	switch (wk_action) {
+	case SPPWK_ACT_START:
 		info = (core_info + lcore_id);
 		if (info->status == SPP_CORE_UNUSE) {
 			RTE_LOG(ERR, APP, "Core %d is not available because "
@@ -281,7 +278,7 @@ spp_update_component(
 		*(change_component + component_id) = 1;
 		break;
 
-	case SPP_CMD_ACTION_STOP:
+	case SPPWK_ACT_STOP:
 		component_id = spp_get_component_id(name);
 		if (component_id < 0)
 			return SPP_RET_OK;
@@ -367,7 +364,7 @@ check_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
  * appropriate one.
  */
 static int
-spp_update_port(enum spp_command_action action,
+spp_update_port(enum sppwk_action wk_action,
 		const struct spp_port_index *port,
 		enum spp_port_rxtx rxtx,
 		const char *name,
@@ -403,8 +400,8 @@ spp_update_port(enum spp_command_action action,
 		ports = comp_info->tx_ports;
 	}
 
-	switch (action) {
-	case SPP_CMD_ACTION_ADD:
+	switch (wk_action) {
+	case SPPWK_ACT_ADD:
 		/* Check if over the maximum num of ports of component. */
 		if (check_port_count(comp_info->type, rxtx,
 				comp_info->num_rx_port,
@@ -462,7 +459,7 @@ spp_update_port(enum spp_command_action action,
 		ret = SPP_RET_OK;
 		break;
 
-	case SPP_CMD_ACTION_DEL:
+	case SPPWK_ACT_DEL:
 		for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
 			if (port_info->ability[cnt].ope ==
 					SPP_PORT_ABILITY_OPE_NONE)
@@ -747,7 +744,7 @@ execute_command(const struct spp_command *command)
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute classifier_table command.\n");
 		ret = spp_update_classifier_table(
-				command->spec.classifier_table.action,
+				command->spec.classifier_table.wk_action,
 				command->spec.classifier_table.type,
 				command->spec.classifier_table.vid,
 				command->spec.classifier_table.mac,
@@ -763,7 +760,7 @@ execute_command(const struct spp_command *command)
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute component command.\n");
 		ret = spp_update_component(
-				command->spec.component.action,
+				command->spec.component.wk_action,
 				command->spec.component.name,
 				command->spec.component.core,
 				command->spec.component.type);
@@ -777,9 +774,9 @@ execute_command(const struct spp_command *command)
 	case SPP_CMDTYPE_PORT:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute port command. (act = %d)\n",
-				command->spec.port.action);
+				command->spec.port.wk_action);
 		ret = spp_update_port(
-				command->spec.port.action,
+				command->spec.port.wk_action,
 				&command->spec.port.port,
 				command->spec.port.rxtx,
 				command->spec.port.name,

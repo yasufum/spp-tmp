@@ -56,9 +56,9 @@ const char *CLASSIFILER_TYPE_STRINGS[] = {
 	/* termination */ "",
 };
 
-/*
- * command action type string list
- * do it same as the order of enum spp_command_action (cmd_parser.h)
+/**
+ * List of command action. The order of items should be same as the order of
+ * enum `sppwk_action` in cmd_parser.h.
  */
 const char *COMMAND_ACTION_STRINGS[] = {
 	SPP_ACTION_NONE_STR,
@@ -66,8 +66,7 @@ const char *COMMAND_ACTION_STRINGS[] = {
 	SPP_ACTION_STOP_STR,
 	SPP_ACTION_ADD_STR,
 	SPP_ACTION_DEL_STR,
-
-	/* termination */ "",
+	"",  /* termination */
 };
 
 /*
@@ -355,8 +354,8 @@ decode_component_action_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	if (unlikely(ret != SPP_CMD_ACTION_START) &&
-			unlikely(ret != SPP_CMD_ACTION_STOP)) {
+	if (unlikely(ret != SPPWK_ACT_START) &&
+			unlikely(ret != SPPWK_ACT_STOP)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component action. val=%s\n",
 				arg_val);
@@ -376,7 +375,7 @@ decode_component_name_value(void *output, const char *arg_val,
 	struct spp_command_component *component = output;
 
 	/* "stop" has no core ID parameter. */
-	if (component->action == SPP_CMD_ACTION_START) {
+	if (component->wk_action == SPPWK_ACT_START) {
 		ret = spp_get_component_id(arg_val);
 		if (unlikely(ret >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -397,7 +396,7 @@ decode_component_core_value(void *output, const char *arg_val,
 	struct spp_command_component *component = output;
 
 	/* "stop" has no core ID parameter. */
-	if (component->action != SPP_CMD_ACTION_START)
+	if (component->wk_action != SPPWK_ACT_START)
 		return SPP_RET_OK;
 
 	return decode_core_value(&component->core, arg_val);
@@ -412,7 +411,7 @@ decode_component_type_value(void *output, const char *arg_val,
 	struct spp_command_component *component = output;
 
 	/* "stop" has no type parameter. */
-	if (component->action != SPP_CMD_ACTION_START)
+	if (component->wk_action != SPPWK_ACT_START)
 		return SPP_RET_OK;
 
 	comp_type = spp_convert_component_type(arg_val);
@@ -441,8 +440,8 @@ decode_port_action_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	if (unlikely(ret != SPP_CMD_ACTION_ADD) &&
-			unlikely(ret != SPP_CMD_ACTION_DEL)) {
+	if (unlikely(ret != SPPWK_ACT_ADD) &&
+			unlikely(ret != SPPWK_ACT_DEL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown port action. val=%s\n",
 				arg_val);
@@ -467,7 +466,7 @@ decode_port_port_value(void *output, const char *arg_val, int allow_override)
 
 	/* add vlantag command check */
 	if (allow_override == 0) {
-		if ((port->action == SPP_CMD_ACTION_ADD) &&
+		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(spp_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
 						SPP_PORT_RXTX_RX) >= 0) &&
@@ -502,7 +501,7 @@ decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
 
 	/* add vlantag command check */
 	if (allow_override == 0) {
-		if ((port->action == SPP_CMD_ACTION_ADD) &&
+		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(spp_check_used_port(port->port.iface_type,
 					port->port.iface_no, ret) >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -656,8 +655,8 @@ decode_classifier_action_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	if (unlikely(ret != SPP_CMD_ACTION_ADD) &&
-			unlikely(ret != SPP_CMD_ACTION_DEL)) {
+	if (unlikely(ret != SPPWK_ACT_ADD) &&
+			unlikely(ret != SPPWK_ACT_DEL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port action. val=%s\n",
 				arg_val);
 		return SPP_RET_NG;
@@ -724,7 +723,7 @@ decode_classifier_port_value(void *output, const char *arg_val,
 	if (classifier_table->type == SPP_CLASSIFIER_TYPE_MAC)
 		classifier_table->vid = ETH_VLAN_ID_MAX;
 
-	if (unlikely(classifier_table->action == SPP_CMD_ACTION_ADD)) {
+	if (unlikely(classifier_table->wk_action == SPPWK_ACT_ADD)) {
 		if (!spp_check_classid_used_port(ETH_VLAN_ID_MAX, 0,
 				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Port in used. "
@@ -732,7 +731,7 @@ decode_classifier_port_value(void *output, const char *arg_val,
 					arg_val);
 			return SPP_RET_NG;
 		}
-	} else if (unlikely(classifier_table->action == SPP_CMD_ACTION_DEL)) {
+	} else if (unlikely(classifier_table->wk_action == SPPWK_ACT_DEL)) {
 		mac_addr = spp_change_mac_str_to_int64(classifier_table->mac);
 		if (mac_addr < 0)
 			return SPP_RET_NG;
@@ -769,7 +768,7 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.action),
+					spec.classifier_table.wk_action),
 			.func = decode_classifier_action_value
 		},
 		{
@@ -796,7 +795,7 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.classifier_table.action),
+					spec.classifier_table.wk_action),
 			.func = decode_classifier_action_value
 		},
 		{
@@ -832,7 +831,7 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.component.action),
+					spec.component.wk_action),
 			.func = decode_component_action_value
 		},
 		{
@@ -856,7 +855,7 @@ parameter_list[][SPP_CMD_MAX_PARAMETERS] = {
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
-					spec.port.action),
+					spec.port.wk_action),
 			.func = decode_port_action_value
 		},
 		{
