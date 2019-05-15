@@ -14,22 +14,11 @@
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
 
-/*
- * List of classifier type. The order of items should be same as the order of
- * enum `spp_classifier_type` defined in spp_proc.h.
- */
-const char *CLASSIFILER_TYPE_STRINGS[] = {
-	"none",
-	"mac",
-	"vlan",
-	"",  /* termination */
-};
-
 /**
  * List of command action. The order of items should be same as the order of
  * enum `sppwk_action` in cmd_parser.h.
  */
-const char *COMMAND_ACTION_STRINGS[] = {
+const char *CMD_ACT_LIST[] = {
 	"none",
 	"start",
 	"stop",
@@ -38,22 +27,34 @@ const char *COMMAND_ACTION_STRINGS[] = {
 	"",  /* termination */
 };
 
-/*
- * List of port type. The order of items should be same as the order of
+/**
+ * List of classifier type. The order of items should be same as the order of
+ * enum `spp_classifier_type` defined in spp_proc.h.
+ */
+/* TODO(yasufum) fix sinmilar var in command_proc.c */
+const char *CLS_TYPE_LIST[] = {
+	"none",
+	"mac",
+	"vlan",
+	"",  /* termination */
+};
+
+/**
+ * List of port direction. The order of items should be same as the order of
  * enum `spp_port_rxtx` in spp_vf.h.
  */
-const char *PORT_RXTX_STRINGS[] = {
+const char *PORT_DIR_LIST[] = {
 	"none",
 	"rx",
 	"tx",
 	"",  /* termination */
 };
 
-/*
- * port ability string list
- * do it same as the order of enum spp_port_ability_type (spp_vf.h)
+/**
+ * List of port abilities. The order of items should be same as the order of
+ * enum `spp_port_ability_type` in spp_vf.h.
  */
-const char *PORT_ABILITY_STRINGS[] = {
+const char *PORT_ABILITY_LIST[] = {
 	"none",
 	"add_vlantag",
 	"del_vlantag",
@@ -311,7 +312,7 @@ decode_component_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
+	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component action. val=%s\n",
@@ -397,7 +398,7 @@ decode_port_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
+	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown port action. val=%s\n",
@@ -457,7 +458,7 @@ decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
 	int ret = SPP_RET_OK;
 	struct sppwk_cmd_port *port = output;
 
-	ret = get_arrary_index(arg_val, PORT_RXTX_STRINGS);
+	ret = get_arrary_index(arg_val, PORT_DIR_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port rxtx. val=%s\n",
 				arg_val);
@@ -508,7 +509,7 @@ decode_port_vlan_operation(void *output, const char *arg_val,
 
 	switch (ability->ope) {
 	case SPP_PORT_ABILITY_OPE_NONE:
-		ret = get_arrary_index(arg_val, PORT_ABILITY_STRINGS);
+		ret = get_arrary_index(arg_val, PORT_ABILITY_LIST);
 		if (unlikely(ret <= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Unknown port ability. val=%s\n",
@@ -613,7 +614,7 @@ decode_classifier_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, COMMAND_ACTION_STRINGS);
+	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port action. val=%s\n",
 				arg_val);
@@ -637,7 +638,7 @@ decode_classifier_type_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, CLASSIFILER_TYPE_STRINGS);
+	ret = get_arrary_index(arg_val, CLS_TYPE_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown classifier type. val=%s\n",

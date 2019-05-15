@@ -63,40 +63,39 @@ struct command_response_list {
 	int (*func)(const char *name, char **output, void *tmp);
 };
 
-/*
- * seconary type string list
- * do it same the order enum secondary_type (spp_proc.h)
+/**
+ * List of worker process type. The order of items should be same as the order
+ * of enum `secondary_type` in spp_proc.h.
  */
-const char *SECONDARY_PROCESS_TYPE_SRINGS[] = {
+/* TODO(yasufum) rename `secondary_type` to `sppwk_proc_type`. */
+const char *SPPWK_PROC_TYPE_LIST[] = {
 	"none",
 	"vf",
 	"mirror",
-
-	/* termination */ "",
+	"",  /* termination */
 };
 
-/*
- * port ability string list
- * do it same as the order of enum spp_port_ability_type (spp_vf.h)
+/**
+ * List of port abilities. The order of items should be same as the order of
+ * enum `spp_port_ability_type` in spp_vf.h.
  */
-const char *PORT_ABILITY_STATUS_STRINGS[] = {
+const char *PORT_ABILITY_STAT_LIST[] = {
 	"none",
 	"add",
 	"del",
-
-	/* termination */ "",
+	"",  /* termination */
 };
 
-/*
- * classifier type string list
- * do it same as the order of enum spp_classifier_type (spp_vf.h)
+/**
+ * List of classifier type. The order of items should be same as the order of
+ * enum `spp_classifier_type` defined in spp_proc.h.
  */
-const char *CLASSIFILER_TYPE_STATUS_STRINGS[] = {
+/* TODO(yasufum) fix similar var in cmd_parser.c */
+const char *CLS_TYPE_A_LIST[] = {
 	"none",
 	"mac",
 	"vlan",
-
-	/* termination */ "",
+	"",  /* termination */
 };
 
 /* get client id */
@@ -969,7 +968,7 @@ append_process_type_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	return append_json_str_value(name, output,
-			SECONDARY_PROCESS_TYPE_SRINGS[spp_get_process_type()]);
+			SPPWK_PROC_TYPE_LIST[spp_get_process_type()]);
 }
 
 /* append a list of interface numbers for JSON format */
@@ -1012,7 +1011,7 @@ append_vlan_value(char **output, const int ope, const int vid, const int pcp)
 {
 	int ret = SPP_RET_OK;
 	ret = append_json_str_value("operation", output,
-			PORT_ABILITY_STATUS_STRINGS[ope]);
+			PORT_ABILITY_STAT_LIST[ope]);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
 
@@ -1269,7 +1268,7 @@ append_classifier_element_value(
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 
 	ret = append_json_str_value("type", &tmp_buff,
-			CLASSIFILER_TYPE_STATUS_STRINGS[type]);
+			CLS_TYPE_A_LIST[type]);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 

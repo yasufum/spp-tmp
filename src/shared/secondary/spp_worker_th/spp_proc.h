@@ -149,6 +149,7 @@ enum copy_mng_flg {
 };
 
 /* secondary process type used only from spp_vf and spp_mirror */
+/* TODO(yasufum) rename `secondary_type` to `sppwk_proc_type`. */
 enum secondary_type {
 	SECONDARY_TYPE_NONE,
 	SECONDARY_TYPE_VF,
