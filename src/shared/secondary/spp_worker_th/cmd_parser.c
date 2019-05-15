@@ -14,46 +14,15 @@
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
 
-/* command string  */
-#define SPP_COMMAND_CLASSFIER_TABLE_STR "classifier_table"
-#define SPP_COMMAND_GET_CLIENT_ID_STR   "_get_client_id"
-#define SPP_COMMAND_STATUS_STR          "status"
-#define SPP_COMMAND_EXIT_STR            "exit"
-#define SPP_COMMAND_COMPONENT_STR       "component"
-#define SPP_COMMAND_PORT_STR            "port"
-
-/* classifiler_type string */
-#define SPP_CLASSIFLER_NONE_STR         "none"
-#define SPP_CLASSIFLER_MAC_STR          "mac"
-#define SPP_CLASSIFLER_VLAN_STR         "vlan"
-
-/* command action string */
-#define SPP_ACTION_NONE_STR             "none"
-#define SPP_ACTION_START_STR            "start"
-#define SPP_ACTION_STOP_STR             "stop"
-#define SPP_ACTION_ADD_STR              "add"
-#define SPP_ACTION_DEL_STR              "del"
-
-/* port rx/tx string */
-#define SPP_PORT_RXTX_NONE_STR          "none"
-#define SPP_PORT_RXTX_RX_STR            "rx"
-#define SPP_PORT_RXTX_TX_STR            "tx"
-
-/* port ability string */
-#define SPP_ABILITY_NONE_STR            "none"
-#define SPP_ABILITY_ADD_VLANTAG_STR     "add_vlantag"
-#define SPP_ABILITY_DEL_VLANTAG_STR     "del_vlantag"
-
 /*
- * classifier type string list
- * do it same as the order of enum spp_classifier_type (spp_proc.h)
+ * List of classifier type. The order of items should be same as the order of
+ * enum `spp_classifier_type` defined in spp_proc.h.
  */
 const char *CLASSIFILER_TYPE_STRINGS[] = {
-	SPP_CLASSIFLER_NONE_STR,
-	SPP_CLASSIFLER_MAC_STR,
-	SPP_CLASSIFLER_VLAN_STR,
-
-	/* termination */ "",
+	"none",
+	"mac",
+	"vlan",
+	"",  /* termination */
 };
 
 /**
@@ -61,24 +30,23 @@ const char *CLASSIFILER_TYPE_STRINGS[] = {
  * enum `sppwk_action` in cmd_parser.h.
  */
 const char *COMMAND_ACTION_STRINGS[] = {
-	SPP_ACTION_NONE_STR,
-	SPP_ACTION_START_STR,
-	SPP_ACTION_STOP_STR,
-	SPP_ACTION_ADD_STR,
-	SPP_ACTION_DEL_STR,
+	"none",
+	"start",
+	"stop",
+	"add",
+	"del",
 	"",  /* termination */
 };
 
 /*
- * port rxtx string list
- * do it same as the order of enum spp_port_rxtx (spp_vf.h)
+ * List of port type. The order of items should be same as the order of
+ * enum `spp_port_rxtx` in spp_vf.h.
  */
 const char *PORT_RXTX_STRINGS[] = {
-	SPP_PORT_RXTX_NONE_STR,
-	SPP_PORT_RXTX_RX_STR,
-	SPP_PORT_RXTX_TX_STR,
-
-	/* termination */ "",
+	"none",
+	"rx",
+	"tx",
+	"",  /* termination */
 };
 
 /*
@@ -86,11 +54,10 @@ const char *PORT_RXTX_STRINGS[] = {
  * do it same as the order of enum spp_port_ability_type (spp_vf.h)
  */
 const char *PORT_ABILITY_STRINGS[] = {
-	SPP_ABILITY_NONE_STR,
-	SPP_ABILITY_ADD_VLANTAG_STR,
-	SPP_ABILITY_DEL_VLANTAG_STR,
-
-	/* termination */ "",
+	"none",
+	"add_vlantag",
+	"del_vlantag",
+	"",  /* termination */
 };
 
 /* Check mac address used on the port for registering or removing */
@@ -1005,20 +972,14 @@ struct decode_command_list {
 
 /* command list */
 static struct decode_command_list command_list[] = {
-	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 5, 5,
-		decode_command_parameter_cls_table  },
-						/* classifier_table(mac)  */
-	{ SPP_COMMAND_CLASSFIER_TABLE_STR, 6, 6,
-		decode_command_parameter_cls_table_vlan },
-						/* classifier_table(vlan) */
-	{ SPP_COMMAND_GET_CLIENT_ID_STR, 1, 1, NULL }, /* _get_client_id  */
-	{ SPP_COMMAND_STATUS_STR,	 1, 1, NULL }, /* status          */
-	{ SPP_COMMAND_EXIT_STR,		 1, 1, NULL }, /* exit            */
-	{ SPP_COMMAND_COMPONENT_STR,	 3, 5,
-		decode_command_parameter_component  }, /* component       */
-	{ SPP_COMMAND_PORT_STR,		 5, 8,
-		decode_command_parameter_port       }, /* port            */
-	{ "",				 0, 0, NULL }  /* termination     */
+	{ "classifier_table", 5, 5, decode_command_parameter_cls_table },
+	{ "classifier_table", 6, 6, decode_command_parameter_cls_table_vlan },
+	{ "_get_client_id", 1, 1, NULL },
+	{ "status", 1, 1, NULL },
+	{ "exit", 1, 1, NULL },
+	{ "component", 3, 5, decode_command_parameter_component },
+	{ "port", 5, 8, decode_command_parameter_port },
+	{ "", 0, 0, NULL }  /* termination */
 };
 
 /* Parse command line parameters. */
