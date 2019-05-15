@@ -124,7 +124,7 @@ spp_get_process_type(void)
 static int
 spp_check_flush_port(enum port_type iface_type, int iface_no)
 {
-	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
 	return port->ethdev_port_id >= 0;
 }
 
@@ -153,7 +153,7 @@ spp_update_classifier_table(
 	}
 	mac_addr = (uint64_t)ret_mac;
 
-	port_info = get_iface_info(port->iface_type, port->iface_no);
+	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (unlikely(port_info == NULL)) {
 		RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
 				port->iface_type, port->iface_no);
@@ -390,7 +390,7 @@ spp_update_port(enum sppwk_action wk_action,
 	spp_get_mng_data_addr(NULL, NULL,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
 	comp_info = (comp_info_base + component_id);
-	port_info = get_iface_info(port->iface_type, port->iface_no);
+	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
 		num = &comp_info->num_rx_port;
 		ports = comp_info->rx_ports;

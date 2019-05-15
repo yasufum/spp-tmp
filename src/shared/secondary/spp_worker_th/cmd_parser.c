@@ -67,72 +67,67 @@ is_used_with_addr(
 		int vid, uint64_t mac_addr,
 		enum port_type iface_type, int iface_no)
 {
-	struct sppwk_port_info *wk_port = get_iface_info(
+	struct sppwk_port_info *wk_port = get_sppwk_port(
 			iface_type, iface_no);
 
 	return ((mac_addr == wk_port->cls_attrs.mac_addr) &&
 		(vid == wk_port->cls_attrs.vlantag.vid));
 }
 
-/* Check if port has been added. */
+/* Return 1 as true if given port is already used. */
 static int
-spp_check_added_port(enum port_type iface_type, int iface_no)
+is_added_port(enum port_type iface_type, int iface_no)
 {
-	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
 	return port->iface_type != UNDEF;
 }
 
 /**
- * Separate port id of combination of iface type and number and
- * assign to given argument, iface_type and iface_no.
- *
- * For instance, 'ring:0' is separated to 'ring' and '0'.
+ * Separate resource UID of combination of iface type and number and assign to
+ * given argument, iface_type and iface_no. For instance, 'ring:0' is separated
+ * to 'ring' and '0'. The supported types are `phy`, `vhost` and `ring`.
  */
 static int
-spp_convert_port_to_iface(const char *port,
+parse_resource_uid(const char *res_uid,
 		    enum port_type *iface_type,
 		    int *iface_no)
 {
-	enum port_type type = UNDEF;
-	const char *no_str = NULL;
+	enum port_type ptype = UNDEF;
+	const char *iface_no_str = NULL;
 	char *endptr = NULL;
 
-	/* Find out which type of interface from port */
-	if (strncmp(port, SPP_IFTYPE_NIC_STR ":",
+	/**
+	 * TODO(yasufum) consider this checking of zero value is recommended
+	 * way, or should be changed.
+	 */
+	if (strncmp(res_uid, SPP_IFTYPE_NIC_STR ":",
 			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
-		/* NIC */
-		type = PHY;
-		no_str = &port[strlen(SPP_IFTYPE_NIC_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_VHOST_STR ":",
+		ptype = PHY;
+		iface_no_str = &res_uid[strlen(SPP_IFTYPE_NIC_STR)+1];
+	} else if (strncmp(res_uid, SPP_IFTYPE_VHOST_STR ":",
 			strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
-		/* VHOST */
-		type = VHOST;
-		no_str = &port[strlen(SPP_IFTYPE_VHOST_STR)+1];
-	} else if (strncmp(port, SPP_IFTYPE_RING_STR ":",
+		ptype = VHOST;
+		iface_no_str = &res_uid[strlen(SPP_IFTYPE_VHOST_STR)+1];
+	} else if (strncmp(res_uid, SPP_IFTYPE_RING_STR ":",
 			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
-		/* RING */
-		type = RING;
-		no_str = &port[strlen(SPP_IFTYPE_RING_STR)+1];
+		ptype = RING;
+		iface_no_str = &res_uid[strlen(SPP_IFTYPE_RING_STR)+1];
 	} else {
-		/* OTHER */
-		RTE_LOG(ERR, APP, "Unknown interface type. (port = %s)\n",
-				port);
+		RTE_LOG(ERR, APP, "Unexpected port type in '%s'.\n", res_uid);
 		return SPP_RET_NG;
 	}
 
-	/* Change type of number of interface */
-	int ret_no = strtol(no_str, &endptr, 0);
-	if (unlikely(no_str == endptr) || unlikely(*endptr != '\0')) {
-		/* No IF number */
-		RTE_LOG(ERR, APP, "No interface number. (port = %s)\n", port);
+	int port_id = strtol(iface_no_str, &endptr, 0);
+	if (unlikely(iface_no_str == endptr) || unlikely(*endptr != '\0')) {
+		RTE_LOG(ERR, APP, "No interface number in '%s'.\n", res_uid);
 		return SPP_RET_NG;
 	}
 
-	*iface_type = type;
-	*iface_no = ret_no;
+	*iface_type = ptype;
+	*iface_no = port_id;
 
-	RTE_LOG(DEBUG, APP, "Port = %s => Type = %d No = %d\n",
-			port, *iface_type, *iface_no);
+	RTE_LOG(DEBUG, APP, "Parsed '%s' to '%d' and '%d'.\n",
+			res_uid, *iface_type, *iface_no);
 	return SPP_RET_OK;
 }
 
@@ -280,8 +275,7 @@ decode_port_value(void *output, const char *arg_val)
 {
 	int ret = SPP_RET_OK;
 	struct sppwk_port_idx *port = output;
-	ret = spp_convert_port_to_iface(arg_val, &port->iface_type,
-							&port->iface_no);
+	ret = parse_resource_uid(arg_val, &port->iface_type, &port->iface_no);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad port. val=%s\n", arg_val);
 		return SPP_RET_NG;
@@ -678,8 +672,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	if (ret < SPP_RET_OK)
 		return SPP_RET_NG;
 
-	if (spp_check_added_port(tmp_port.iface_type,
-					tmp_port.iface_no) == 0) {
+	if (is_added_port(tmp_port.iface_type, tmp_port.iface_no) == 0) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Port not added. val=%s\n",
 				arg_val);
 		return SPP_RET_NG;

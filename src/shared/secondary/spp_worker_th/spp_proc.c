@@ -265,12 +265,11 @@ stop_process(int signal)
 }
 
 /**
- * Return port info of given type and num of interface
- *
- * It returns NULL value if given type is invalid.
+ * Return sppwk_port_info of given type and num of interface. It returns NULL
+ * if given type is invalid.
  */
 struct sppwk_port_info *
-get_iface_info(enum port_type iface_type, int iface_no)
+get_sppwk_port(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
 
@@ -663,7 +662,7 @@ spp_check_used_port(
 	int cnt, port_cnt, max = 0;
 	struct spp_component_info *component = NULL;
 	struct sppwk_port_info **port_array = NULL;
-	struct sppwk_port_info *port = get_iface_info(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
 	struct spp_component_info *component_info =
 					g_mng_data_addr.p_component_info;
 

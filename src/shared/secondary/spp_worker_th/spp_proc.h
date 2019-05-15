@@ -428,23 +428,12 @@ void set_all_core_status(enum spp_core_status status);
  *
  * @param signl
  *  received signal.
- *
  */
 void stop_process(int signal);
 
-/**
- * Return port info of given type and num of interface
- *
- * @param iface_type
- *  Interface type to be validated.
- * @param iface_no
- *  Interface number to be validated.
- *
- * @retval !NULL  sppwk_port_info.
- * @retval NULL   failed.
- */
+/* Return sppwk_port_info of given type and num of interface. */
 struct sppwk_port_info *
-get_iface_info(enum port_type iface_type, int iface_no);
+get_sppwk_port(enum port_type iface_type, int iface_no);
 
 /* Dump of core information */
 void dump_core_info(const struct core_mng_info *core_info);
