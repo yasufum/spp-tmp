@@ -356,7 +356,7 @@ init_component_info(struct component_info *cmp_info,
 	cmp_info->mac_addr_entry = 0;
 	for (i = 0; i < component_info->num_tx_port; i++) {
 		tx_port = component_info->tx_ports[i];
-		vid = tx_port->class_id.vlantag.vid;
+		vid = tx_port->cls_attrs.vlantag.vid;
 
 		/* store ports information */
 		clsd_data_tx[i].iface_type      = tx_port->iface_type;
@@ -365,7 +365,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_tx[i].port            = tx_port->ethdev_port_id;
 		clsd_data_tx[i].num_pkt         = 0;
 
-		if (tx_port->class_id.mac_addr == 0)
+		if (tx_port->cls_attrs.mac_addr == 0)
 			continue;
 
 		/* if mac classification is NULL, make instance */
@@ -389,7 +389,7 @@ init_component_info(struct component_info *cmp_info,
 		cmp_info->mac_addr_entry = 1;
 
 		/* store default classified */
-		if (unlikely(tx_port->class_id.mac_addr ==
+		if (unlikely(tx_port->cls_attrs.mac_addr ==
 				SPP_DEFAULT_CLASSIFIED_DMY_ADDR)) {
 			mac_cls->default_classified = i;
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
@@ -404,7 +404,7 @@ init_component_info(struct component_info *cmp_info,
 		}
 
 		/* add entry to classifier mac table */
-		rte_memcpy(&eth_addr, &tx_port->class_id.mac_addr,
+		rte_memcpy(&eth_addr, &tx_port->cls_attrs.mac_addr,
 				ETHER_ADDR_LEN);
 		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
 				&eth_addr);

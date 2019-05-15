@@ -167,48 +167,48 @@ spp_update_classifier_table(
 
 	if (wk_action == SPPWK_ACT_DEL) {
 		/* Delete */
-		if ((port_info->class_id.vlantag.vid != 0) &&
-				unlikely(port_info->class_id.vlantag.vid !=
+		if ((port_info->cls_attrs.vlantag.vid != 0) &&
+				unlikely(port_info->cls_attrs.vlantag.vid !=
 				vid)) {
 			RTE_LOG(ERR, APP, "VLAN ID is different. "
 					"( vid = %d )\n", vid);
 			return SPP_RET_NG;
 		}
-		if ((port_info->class_id.mac_addr != 0) &&
-			unlikely(port_info->class_id.mac_addr !=
+		if ((port_info->cls_attrs.mac_addr != 0) &&
+			unlikely(port_info->cls_attrs.mac_addr !=
 					mac_addr)) {
 			RTE_LOG(ERR, APP, "MAC address is different. "
 					"( mac = %s )\n", mac_addr_str);
 			return SPP_RET_NG;
 		}
 
-		port_info->class_id.vlantag.vid = ETH_VLAN_ID_MAX;
-		port_info->class_id.mac_addr    = 0;
-		memset(port_info->class_id.mac_addr_str, 0x00,
+		port_info->cls_attrs.vlantag.vid = ETH_VLAN_ID_MAX;
+		port_info->cls_attrs.mac_addr    = 0;
+		memset(port_info->cls_attrs.mac_addr_str, 0x00,
 							SPP_MIN_STR_LEN);
 
 	} else if (wk_action == SPPWK_ACT_ADD) {
 		/* Setting */
-		if (unlikely(port_info->class_id.vlantag.vid !=
+		if (unlikely(port_info->cls_attrs.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
 			RTE_LOG(ERR, APP, "Port in used. "
 					"( port = %d:%d, vlan = %d != %d )\n",
 					port->iface_type, port->iface_no,
-					port_info->class_id.vlantag.vid, vid);
+					port_info->cls_attrs.vlantag.vid, vid);
 			return SPP_RET_NG;
 		}
-		if (unlikely(port_info->class_id.mac_addr != 0)) {
+		if (unlikely(port_info->cls_attrs.mac_addr != 0)) {
 			RTE_LOG(ERR, APP, "Port in used. "
 					"( port = %d:%d, mac = %s != %s )\n",
 					port->iface_type, port->iface_no,
-					port_info->class_id.mac_addr_str,
+					port_info->cls_attrs.mac_addr_str,
 					mac_addr_str);
 			return SPP_RET_NG;
 		}
 
-		port_info->class_id.vlantag.vid = vid;
-		port_info->class_id.mac_addr    = mac_addr;
-		strcpy(port_info->class_id.mac_addr_str, mac_addr_str);
+		port_info->cls_attrs.vlantag.vid = vid;
+		port_info->cls_attrs.mac_addr    = mac_addr;
+		strcpy(port_info->cls_attrs.mac_addr_str, mac_addr_str);
 	}
 
 	set_component_change_port(port_info, SPP_PORT_RXTX_TX);

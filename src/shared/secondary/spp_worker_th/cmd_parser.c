@@ -61,18 +61,17 @@ const char *PORT_ABILITY_LIST[] = {
 	"",  /* termination */
 };
 
-/* Check mac address used on the port for registering or removing */
+/* Return 1 as true if port is used with given mac_addr and vid. */
 static int
-spp_check_classid_used_port(
+is_used_with_addr(
 		int vid, uint64_t mac_addr,
 		enum port_type iface_type, int iface_no)
 {
-	struct sppwk_port_info *port_info = get_iface_info(
+	struct sppwk_port_info *wk_port = get_iface_info(
 			iface_type, iface_no);
 
-	/* Return true if given mac_addr matches with port_info, and vid. */
-	return ((mac_addr == port_info->class_id.mac_addr) &&
-		(vid == port_info->class_id.vlantag.vid));
+	return ((mac_addr == wk_port->cls_attrs.mac_addr) &&
+		(vid == wk_port->cls_attrs.vlantag.vid));
 }
 
 /* Check if port has been added. */
@@ -671,7 +670,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	struct sppwk_cls_cmd_attr *cls_attr = cls_cmd_attr;
+	struct sppwk_cls_cmd_attrs *cls_attrs = cls_cmd_attr;
 	struct sppwk_port_idx tmp_port;
 	int64_t mac_addr = 0;
 
@@ -686,23 +685,23 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	if (cls_attr->type == SPP_CLASSIFIER_TYPE_MAC)
-		cls_attr->vid = ETH_VLAN_ID_MAX;
+	if (cls_attrs->type == SPP_CLASSIFIER_TYPE_MAC)
+		cls_attrs->vid = ETH_VLAN_ID_MAX;
 
-	if (unlikely(cls_attr->wk_action == SPPWK_ACT_ADD)) {
-		if (!spp_check_classid_used_port(ETH_VLAN_ID_MAX, 0,
+	if (unlikely(cls_attrs->wk_action == SPPWK_ACT_ADD)) {
+		if (!is_used_with_addr(ETH_VLAN_ID_MAX, 0,
 				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Port in used. "
 					"(classifier_table command) val=%s\n",
 					arg_val);
 			return SPP_RET_NG;
 		}
-	} else if (unlikely(cls_attr->wk_action == SPPWK_ACT_DEL)) {
-		mac_addr = spp_change_mac_str_to_int64(cls_attr->mac);
+	} else if (unlikely(cls_attrs->wk_action == SPPWK_ACT_DEL)) {
+		mac_addr = spp_change_mac_str_to_int64(cls_attrs->mac);
 		if (mac_addr < 0)
 			return SPP_RET_NG;
 
-		if (!spp_check_classid_used_port(cls_attr->vid,
+		if (!is_used_with_addr(cls_attrs->vid,
 				(uint64_t)mac_addr,
 				tmp_port.iface_type, tmp_port.iface_no)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Port in used. "
@@ -712,8 +711,8 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		}
 	}
 
-	cls_attr->port.iface_type = tmp_port.iface_type;
-	cls_attr->port.iface_no   = tmp_port.iface_no;
+	cls_attrs->port.iface_type = tmp_port.iface_type;
+	cls_attrs->port.iface_no   = tmp_port.iface_no;
 	return SPP_RET_OK;
 }
 

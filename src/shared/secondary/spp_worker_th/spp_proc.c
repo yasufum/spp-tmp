@@ -355,9 +355,9 @@ dump_interface_info(const struct iface_info *iface_info)
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
-				port->class_id.vlantag.vid,
-				port->class_id.mac_addr,
-				port->class_id.mac_addr_str);
+				port->cls_attrs.vlantag.vid,
+				port->cls_attrs.mac_addr,
+				port->cls_attrs.mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->vhost[cnt];
@@ -368,9 +368,9 @@ dump_interface_info(const struct iface_info *iface_info)
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
-				port->class_id.vlantag.vid,
-				port->class_id.mac_addr,
-				port->class_id.mac_addr_str);
+				port->cls_attrs.vlantag.vid,
+				port->cls_attrs.mac_addr,
+				port->cls_attrs.mac_addr_str);
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->ring[cnt];
@@ -381,9 +381,9 @@ dump_interface_info(const struct iface_info *iface_info)
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
-				port->class_id.vlantag.vid,
-				port->class_id.mac_addr,
-				port->class_id.mac_addr_str);
+				port->cls_attrs.vlantag.vid,
+				port->cls_attrs.mac_addr,
+				port->cls_attrs.mac_addr_str);
 	}
 }
 
@@ -476,17 +476,17 @@ init_iface_info(void)
 		p_iface_info->nic[port_cnt].iface_type = UNDEF;
 		p_iface_info->nic[port_cnt].iface_no = port_cnt;
 		p_iface_info->nic[port_cnt].ethdev_port_id = -1;
-		p_iface_info->nic[port_cnt].class_id.vlantag.vid =
+		p_iface_info->nic[port_cnt].cls_attrs.vlantag.vid =
 			ETH_VLAN_ID_MAX;
 		p_iface_info->vhost[port_cnt].iface_type = UNDEF;
 		p_iface_info->vhost[port_cnt].iface_no = port_cnt;
 		p_iface_info->vhost[port_cnt].ethdev_port_id = -1;
-		p_iface_info->vhost[port_cnt].class_id.vlantag.vid =
+		p_iface_info->vhost[port_cnt].cls_attrs.vlantag.vid =
 			ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no = port_cnt;
 		p_iface_info->ring[port_cnt].ethdev_port_id = -1;
-		p_iface_info->ring[port_cnt].class_id.vlantag.vid =
+		p_iface_info->ring[port_cnt].cls_attrs.vlantag.vid =
 			ETH_VLAN_ID_MAX;
 	}
 }

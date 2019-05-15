@@ -179,11 +179,11 @@ struct spp_port_ability {
 	union spp_ability_data data;   /**< Port ability data */
 };
 
-/** Port class identifier for classifying */
-struct spp_port_class_identifier {
-	uint64_t mac_addr;                      /**< Mac address (binary) */
-	char     mac_addr_str[SPP_MIN_STR_LEN]; /**< Mac address (text) */
-	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
+/* Attributes for classifying . */
+struct sppwk_cls_attrs {
+	uint64_t mac_addr;  /**< Mac address (binary) */
+	char mac_addr_str[SPP_MIN_STR_LEN];  /**< Mac address (text) */
+	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
 };
 
 /**
@@ -200,7 +200,7 @@ struct sppwk_port_info {
 	enum port_type iface_type;  /**< phy, vhost or ring */
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
-	struct spp_port_class_identifier class_id;
+	struct sppwk_cls_attrs cls_attrs;
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
 };
 
