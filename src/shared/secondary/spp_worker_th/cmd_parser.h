@@ -55,7 +55,7 @@ enum sppwk_action {
  * SPP command type.
  *
  * @attention This enumerated type must have the same order of command_list
- *            defined in command_dec.c
+ *            defined in cmd_parser.c
  */
 /*
  * TODO(yasufum) consider to divide because each of target of scope is
