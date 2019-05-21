@@ -258,17 +258,6 @@ get_vlan_uint_val(unsigned int *output, const char *arg_val, unsigned int min,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of string */
-static int
-decode_str_value(char *output, const char *arg_val)
-{
-	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
-		return SPP_RET_NG;
-
-	strcpy(output, arg_val);
-	return SPP_RET_OK;
-}
-
 /* decoding procedure of port */
 static int
 decode_port_value(void *output, const char *arg_val)
@@ -344,7 +333,11 @@ decode_component_name_value(void *output, const char *arg_val,
 		}
 	}
 
-	return decode_str_value(component->name, arg_val);
+	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
+		return SPP_RET_NG;
+
+	strcpy(component->name, arg_val);
+	return SPP_RET_OK;
 }
 
 /* decoding procedure of core id for component command */
@@ -488,7 +481,11 @@ decode_port_name_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	return decode_str_value(output, arg_val);
+	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
+		return SPP_RET_NG;
+
+	strcpy(output, arg_val);
+	return SPP_RET_OK;
 }
 
 /* decoding procedure of vlan operation for port command */
