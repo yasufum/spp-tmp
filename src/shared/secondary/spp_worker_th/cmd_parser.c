@@ -207,13 +207,13 @@ split_cmd_params(char *string, int max, int *argc, char *argv[])
 	return SPP_RET_OK;
 }
 
-/* Get index of array */
+/* Get index of given str from list. */
 static int
-get_arrary_index(const char *match, const char *list[])
+get_list_idx(const char *str, const char *list[])
 {
 	int i;
 	for (i = 0; list[i][0] != '\0'; i++) {
-		if (strcmp(list[i], match) == 0)
+		if (strcmp(list[i], str) == 0)
 			return i;
 	}
 	return SPP_RET_NG;
@@ -305,7 +305,7 @@ decode_component_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
+	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component action. val=%s\n",
@@ -391,7 +391,7 @@ decode_port_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
+	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown port action. val=%s\n",
@@ -451,7 +451,7 @@ decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
 	int ret = SPP_RET_OK;
 	struct sppwk_cmd_port *port = output;
 
-	ret = get_arrary_index(arg_val, PORT_DIR_LIST);
+	ret = get_list_idx(arg_val, PORT_DIR_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port rxtx. val=%s\n",
 				arg_val);
@@ -502,7 +502,7 @@ decode_port_vlan_operation(void *output, const char *arg_val,
 
 	switch (ability->ope) {
 	case SPP_PORT_ABILITY_OPE_NONE:
-		ret = get_arrary_index(arg_val, PORT_ABILITY_LIST);
+		ret = get_list_idx(arg_val, PORT_ABILITY_LIST);
 		if (unlikely(ret <= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Unknown port ability. val=%s\n",
@@ -607,7 +607,7 @@ decode_classifier_action_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, CMD_ACT_LIST);
+	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port action. val=%s\n",
 				arg_val);
@@ -631,7 +631,7 @@ decode_classifier_type_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
-	ret = get_arrary_index(arg_val, CLS_TYPE_LIST);
+	ret = get_list_idx(arg_val, CLS_TYPE_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown classifier type. val=%s\n",
