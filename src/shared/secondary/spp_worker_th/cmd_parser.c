@@ -453,9 +453,9 @@ parse_port(void *output, const char *arg_val, int allow_override)
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of rxtx type for port command */
+/* Parse port rx and tx value. */
 static int
-decode_port_rxtx_value(void *output, const char *arg_val, int allow_override)
+parse_port_rxtx(void *output, const char *arg_val, int allow_override)
 {
 	int ret = SPP_RET_OK;
 	struct sppwk_cmd_port *port = output;
@@ -838,7 +838,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "port rxtx",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_rxtx_value
+			.func = parse_port_rxtx
 		},
 		{
 			.name = "component name",
