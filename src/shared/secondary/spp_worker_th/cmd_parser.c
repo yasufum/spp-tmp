@@ -350,14 +350,14 @@ parse_comp_name(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of core id for component command */
+/* Parse given lcore ID of `arg_val` of component. */
 static int
-decode_component_core_value(void *output, const char *arg_val,
+parse_comp_lcore_id(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	struct sppwk_cmd_comp *component = output;
 
-	/* "stop" has no core ID parameter. */
+	/* Parsing lcore is required only for action `start`. */
 	if (component->wk_action != SPPWK_ACT_START)
 		return SPP_RET_OK;
 
@@ -808,7 +808,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "core",
 			.offset = offsetof(struct spp_command, spec.comp),
-			.func = decode_component_core_value
+			.func = parse_comp_lcore_id
 		},
 		{
 			.name = "component type",
