@@ -710,8 +710,6 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-#define DECODE_PARAMETER_LIST_EMPTY { NULL, 0, NULL }
-
 /* parameter list for decoding */
 struct decode_parameter_list {
 	const char *name;       /* Parameter name */
@@ -720,10 +718,13 @@ struct decode_parameter_list {
 				/* Pointer to parameter handling function */
 };
 
+/* Used for command which takes no params, such as `status`. */
+#define SPPWK_CMD_NO_PARAMS { NULL, 0, NULL }
+
 /* parameter list for each command */
 static struct decode_parameter_list
 parameter_list[][SPPWK_MAX_PARAMS] = {
-	{                                /* classifier_table(mac) */
+	{  /* classifier_table(mac) */
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
@@ -748,9 +749,9 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 					spec.cls_table),
 			.func = parse_cls_port
 		},
-		DECODE_PARAMETER_LIST_EMPTY,
+		SPPWK_CMD_NO_PARAMS,
 	},
-	{                                /* classifier_table(VLAN) */
+	{  /* classifier_table(VLAN) */
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
@@ -781,12 +782,12 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 					spec.cls_table),
 			.func = parse_cls_port
 		},
-		DECODE_PARAMETER_LIST_EMPTY,
+		SPPWK_CMD_NO_PARAMS,
 	},
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* _get_client_id   */
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* status           */
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* exit             */
-	{                                /* component        */
+	{ SPPWK_CMD_NO_PARAMS },  /* _get_client_id */
+	{ SPPWK_CMD_NO_PARAMS },  /* status */
+	{ SPPWK_CMD_NO_PARAMS },  /* exit */
+	{  /* component */
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
@@ -808,9 +809,9 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 			.offset = offsetof(struct spp_command, spec.comp),
 			.func = decode_component_type_value
 		},
-		DECODE_PARAMETER_LIST_EMPTY,
+		SPPWK_CMD_NO_PARAMS,
 	},
-	{                                /* port             */
+	{  /* port */
 		{
 			.name = "action",
 			.offset = offsetof(struct spp_command,
@@ -847,9 +848,9 @@ parameter_list[][SPPWK_MAX_PARAMS] = {
 			.offset = offsetof(struct spp_command, spec.port),
 			.func = decode_port_pcp
 		},
-		DECODE_PARAMETER_LIST_EMPTY,
+		SPPWK_CMD_NO_PARAMS,
 	},
-	{ DECODE_PARAMETER_LIST_EMPTY }, /* termination      */
+	{ SPPWK_CMD_NO_PARAMS }, /* termination */
 };
 
 /* Validate given command. */
