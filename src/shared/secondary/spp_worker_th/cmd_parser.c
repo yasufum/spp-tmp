@@ -621,27 +621,32 @@ parse_mac_addr(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of action for classifier_table command */
+/**
+ * Parse given action for getting index of actions for `classifier_table`
+ * command.
+ */
 static int
-decode_classifier_action_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_cls_action(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
-	ret = get_list_idx(arg_val, CMD_ACT_LIST);
-	if (unlikely(ret <= 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port action. val=%s\n",
+	int idx;
+	idx = get_list_idx(arg_val, CMD_ACT_LIST);
+	if (unlikely(idx <= 0)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Failed to get index for action `%s`.\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
 
-	if (unlikely(ret != SPPWK_ACT_ADD) &&
-			unlikely(ret != SPPWK_ACT_DEL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Unknown port action. val=%s\n",
+	if (unlikely(idx != SPPWK_ACT_ADD) &&
+			unlikely(idx != SPPWK_ACT_DEL)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Unknown action `%s` for port.\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
 
-	*(int *)output = ret;
+	*(int *)output = idx;
 	return SPP_RET_OK;
 }
 
@@ -748,7 +753,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "action",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.wk_action),
-			.func = decode_classifier_action_value
+			.func = parse_cls_action
 		},
 		{
 			.name = "type",
@@ -775,7 +780,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "action",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.wk_action),
-			.func = decode_classifier_action_value
+			.func = parse_cls_action
 		},
 		{
 			.name = "type",
