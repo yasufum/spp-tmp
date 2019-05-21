@@ -650,21 +650,21 @@ parse_cls_action(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of type for classifier_table command */
+/* Parse cls type and get index for classifier_table command. */
 static int
-decode_classifier_type_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_cls_type(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
-	ret = get_list_idx(arg_val, CLS_TYPE_LIST);
-	if (unlikely(ret <= 0)) {
+	int idx;
+	idx = get_list_idx(arg_val, CLS_TYPE_LIST);
+	if (unlikely(idx <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown classifier type. val=%s\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
 
-	*(int *)output = ret;
+	*(int *)output = idx;
 	return SPP_RET_OK;
 }
 
@@ -759,7 +759,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "type",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.type),
-			.func = decode_classifier_type_value
+			.func = parse_cls_type
 		},
 		{
 			.name = "mac address",
@@ -786,7 +786,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "type",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.type),
-			.func = decode_classifier_type_value
+			.func = parse_cls_type
 		},
 		{
 			.name = "vlan id",
