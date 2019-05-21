@@ -668,15 +668,15 @@ parse_cls_type(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of vlan id for classifier_table command */
+/* Parse VLAN ID for classifier_table command. */
 static int
-decode_classifier_vid_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_cls_vid(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
-	ret = get_int_in_range(output, arg_val, 0, ETH_VLAN_ID_MAX);
-	if (unlikely(ret < SPP_RET_OK)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad VLAN ID. val=%s\n",
+	int idx;
+	idx = get_int_in_range(output, arg_val, 0, ETH_VLAN_ID_MAX);
+	if (unlikely(idx < SPP_RET_OK)) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC, "Invalid VLAN ID `%s`.\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
@@ -792,7 +792,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "vlan id",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.vid),
-			.func = decode_classifier_vid_value
+			.func = parse_cls_vid
 		},
 		{
 			.name = "mac address",
