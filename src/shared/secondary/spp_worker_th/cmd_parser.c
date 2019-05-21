@@ -303,10 +303,11 @@ parse_comp_action(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
 {
 	int ret;
+	/* Get index of registered commands. */
 	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"Unknown component action. val=%s\n",
+				"Given invalid cmd `%s`.\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
@@ -391,12 +392,13 @@ parse_comp_type(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of action for port command */
+/* Parse given action for port of `arg_val`. */
 static int
-decode_port_action_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_port_action(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret;
+	/* Get index of registered commands. */
 	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -405,6 +407,7 @@ decode_port_action_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
+	/* TODO(yasufum) fix not explicit checking this condition. */
 	if (unlikely(ret != SPPWK_ACT_ADD) &&
 			unlikely(ret != SPPWK_ACT_DEL)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -413,7 +416,7 @@ decode_port_action_value(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	*(int *)output = ret;
+	*(int *)output = ret;  /* TODO(yasufum) confirm the statement is OK. */
 	return SPP_RET_OK;
 }
 
@@ -825,7 +828,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "action",
 			.offset = offsetof(struct spp_command,
 					spec.port.wk_action),
-			.func = decode_port_action_value
+			.func = parse_port_action
 		},
 		{
 			.name = "port",
