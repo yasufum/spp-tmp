@@ -569,22 +569,23 @@ parse_port_vid(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of pcp for port command */
+/* Parse PCP for port command */
 static int
-decode_port_pcp(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_port_pcp(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int pcp;
 	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
 	switch (ability->ops) {
 	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
-		ret = get_int_in_range(&ability->data.vlantag.pcp,
+		pcp = get_int_in_range(&ability->data.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(pcp < SPP_RET_OK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Bad VLAN PCP. val=%s\n", arg_val);
+					"Invalid `%s`for parsing PCP.\n",
+					arg_val);
 			return SPP_RET_NG;
 		}
 		break;
@@ -863,7 +864,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "port pcp",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_pcp
+			.func = parse_port_pcp
 		},
 		SPPWK_CMD_NO_PARAMS,
 	},
