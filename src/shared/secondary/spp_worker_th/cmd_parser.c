@@ -323,7 +323,7 @@ parse_comp_action(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of action for component command */
+/* Parse given name `arg_val` of component. */
 static int
 parse_comp_name(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -331,12 +331,13 @@ parse_comp_name(void *output, const char *arg_val,
 	int ret;
 	struct sppwk_cmd_comp *component = output;
 
-	/* "stop" has no core ID parameter. */
+	/* Parsing the name is required only for action `start`. */
 	if (component->wk_action == SPPWK_ACT_START) {
+		/* Get lcore ID as comp name, or NG code. */
 		ret = spp_get_component_id(arg_val);
 		if (unlikely(ret >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-					"Component name in used. val=%s\n",
+					"Comp name '%s' is already used.\n",
 					arg_val);
 			return SPP_RET_NG;
 		}
