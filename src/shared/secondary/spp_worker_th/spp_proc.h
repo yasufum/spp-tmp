@@ -652,7 +652,7 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @retval 0< int64 that store mac address
  * @retval SPP_RET_NG
  */
-int64_t spp_change_mac_str_to_int64(const char *mac);
+int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 
 /**
  * Set mange data address

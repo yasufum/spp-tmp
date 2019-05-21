@@ -145,7 +145,7 @@ spp_update_classifier_table(
 			"( type = mac, mac addr = %s, port = %d:%d )\n",
 			mac_addr_str, port->iface_type, port->iface_no);
 
-	ret_mac = spp_change_mac_str_to_int64(mac_addr_str);
+	ret_mac = sppwk_convert_mac_str_to_int64(mac_addr_str);
 	if (unlikely(ret_mac == -1)) {
 		RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
 			mac_addr_str);

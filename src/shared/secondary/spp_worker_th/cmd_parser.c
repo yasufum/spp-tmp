@@ -610,7 +610,7 @@ parse_mac_addr(void *output, const char *arg_val,
 		str_val = SPP_DEFAULT_CLASSIFIED_DMY_ADDR_STR;
 
 	/* Check if the given value is valid. */
-	res = spp_change_mac_str_to_int64(str_val);
+	res = sppwk_convert_mac_str_to_int64(str_val);
 	if (unlikely(res < SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Invalid MAC address `%s`.\n", str_val);
@@ -710,7 +710,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 			return SPP_RET_NG;
 		}
 	} else if (unlikely(cls_attrs->wk_action == SPPWK_ACT_DEL)) {
-		mac_addr = spp_change_mac_str_to_int64(cls_attrs->mac);
+		mac_addr = sppwk_convert_mac_str_to_int64(cls_attrs->mac);
 		if (mac_addr < 0)
 			return SPP_RET_NG;
 

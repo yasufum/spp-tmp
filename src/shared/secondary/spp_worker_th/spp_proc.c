@@ -943,9 +943,9 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 	return SPP_RET_OK;
 }
 
-/* Change mac address of 'aa:bb:cc:dd:ee:ff' to int64 and return it */
+/* Convert MAC address of 'aa:bb:cc:dd:ee:ff' to value of int64_t. */
 int64_t
-spp_change_mac_str_to_int64(const char *mac)
+sppwk_convert_mac_str_to_int64(const char *macaddr)
 {
 	int64_t ret_mac = 0;
 	int64_t token_val = 0;
@@ -955,19 +955,20 @@ spp_change_mac_str_to_int64(const char *mac)
 	char *saveptr = NULL;
 	char *endptr = NULL;
 
-	RTE_LOG(DEBUG, APP, "MAC address change. (mac = %s)\n", mac);
+	RTE_LOG(DEBUG, APP, "Try to convert MAC addr `%s`.\n", macaddr);
 
-	strcpy(tmp_mac, mac);
+	strcpy(tmp_mac, macaddr);
 	while (1) {
-		/* Split by colon(':') */
+		/* Split by colon ':'. */
 		char *ret_tok = strtok_r(str, ":", &saveptr);
 		if (unlikely(ret_tok == NULL))
 			break;
 
 		/* Check for mal-formatted address */
 		if (unlikely(token_cnt >= ETHER_ADDR_LEN)) {
-			RTE_LOG(ERR, APP, "MAC address format error. "
-					"(mac = %s)\n", mac);
+			RTE_LOG(ERR, APP,
+					"Invalid MAC address `%s`.\n",
+					macaddr);
 			return SPP_RET_NG;
 		}
 
@@ -983,8 +984,9 @@ spp_change_mac_str_to_int64(const char *mac)
 		str = NULL;
 	}
 
-	RTE_LOG(DEBUG, APP, "MAC address change. (mac = %s => 0x%08lx)\n",
-			 mac, ret_mac);
+	RTE_LOG(DEBUG, APP,
+			"Succeeded to convert MAC addr `%s` to `0x%08lx`.\n",
+			macaddr, ret_mac);
 	return ret_mac;
 }
 
