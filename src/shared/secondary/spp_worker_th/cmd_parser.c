@@ -220,11 +220,11 @@ get_list_idx(const char *str, const char *list[])
 }
 
 /**
- * Get VLAN ID or PCP as int from given val. It validates if the val is in the
- * range from min to max given as third and fourth args.
+ * Get int from given val. It validates if the val is in the range from min to
+ * max given as third and fourth args. It is intended to get VLAN ID or PCP.
  */
 static int
-get_vlan_int_val(int *output, const char *arg_val, int min, int max)
+get_int_in_range(int *output, const char *arg_val, int min, int max)
 {
 	int ret;
 	char *endptr = NULL;
@@ -238,11 +238,11 @@ get_vlan_int_val(int *output, const char *arg_val, int min, int max)
 }
 
 /**
- * Get VLAN ID or PCP as uint from given val. It validates if the val is in the
- * range from min to max given as third and fourth args.
+ * Get uint from given val. It validates if the val is in the range from min to
+ * max given as third and fourth args. It is intended to get lcore ID.
  */
 static int
-get_vlan_uint_val(unsigned int *output, const char *arg_val, unsigned int min,
+get_uint_in_range(unsigned int *output, const char *arg_val, unsigned int min,
 		unsigned int max)
 {
 	unsigned int ret;
@@ -283,7 +283,7 @@ static int
 decode_core_value(void *output, const char *arg_val)
 {
 	int ret = SPP_RET_OK;
-	ret = get_vlan_uint_val(output, arg_val, 0, RTE_MAX_LCORE-1);
+	ret = get_uint_in_range(output, arg_val, 0, RTE_MAX_LCORE-1);
 	if (unlikely(ret < 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad core id. val=%s\n",
 				arg_val);
@@ -536,7 +536,7 @@ decode_port_vid(void *output, const char *arg_val,
 
 	switch (ability->ope) {
 	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
-		ret = get_vlan_int_val(&ability->data.vlantag.vid,
+		ret = get_int_in_range(&ability->data.vlantag.vid,
 			arg_val, 0, ETH_VLAN_ID_MAX);
 		if (unlikely(ret < SPP_RET_OK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -564,7 +564,7 @@ decode_port_pcp(void *output, const char *arg_val,
 
 	switch (ability->ope) {
 	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
-		ret = get_vlan_int_val(&ability->data.vlantag.pcp,
+		ret = get_int_in_range(&ability->data.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
 		if (unlikely(ret < SPP_RET_OK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -651,7 +651,7 @@ decode_classifier_vid_value(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
-	ret = get_vlan_int_val(output, arg_val, 0, ETH_VLAN_ID_MAX);
+	ret = get_int_in_range(output, arg_val, 0, ETH_VLAN_ID_MAX);
 	if (unlikely(ret < SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad VLAN ID. val=%s\n",
 				arg_val);
