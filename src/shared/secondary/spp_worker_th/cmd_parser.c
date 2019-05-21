@@ -31,7 +31,7 @@ const char *CMD_ACT_LIST[] = {
  * List of classifier type. The order of items should be same as the order of
  * enum `spp_classifier_type` defined in spp_proc.h.
  */
-/* TODO(yasufum) fix sinmilar var in command_proc.c */
+/* TODO(yasufum) fix similar vars in command_proc.c */
 const char *CLS_TYPE_LIST[] = {
 	"none",
 	"mac",
@@ -297,7 +297,7 @@ parse_lcore_id(void *output, const char *arg_val)
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of action for component command */
+/* Parse given action in `component` command. */
 static int
 parse_comp_action(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -324,7 +324,7 @@ parse_comp_action(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* Parse given name `arg_val` of component. */
+/* Parse given name of `arg_val` in `component` command. */
 static int
 parse_comp_name(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -351,7 +351,7 @@ parse_comp_name(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* Parse given lcore ID of `arg_val` of component. */
+/* Parse given lcore ID of `arg_val` in `component` command. */
 static int
 parse_comp_lcore_id(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
@@ -366,8 +366,8 @@ parse_comp_lcore_id(void *output, const char *arg_val,
 }
 
 /**
- * Parse given type of component of `arg_val`. Return OK code if succeeded, or
- * NG code.
+ * Parse given type of component of `arg_val` in `component` command.
+ * Return OK code if succeeded, or  NG code.
  */
 static int
 parse_comp_type(void *output, const char *arg_val,
@@ -392,7 +392,7 @@ parse_comp_type(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* Parse given action for port of `arg_val`. */
+/* Parse given action for port of `arg_val` in `port` command. */
 static int
 parse_port_action(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -420,11 +420,11 @@ parse_port_action(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of port for port command. */
+/* Parse given port uid in port command. */
 static int
-decode_port_port_value(void *output, const char *arg_val, int allow_override)
+parse_port(void *output, const char *arg_val, int allow_override)
 {
-	int ret = SPP_RET_NG;
+	int ret;
 	struct sppwk_port_idx tmp_port;
 	struct sppwk_cmd_port *port = output;
 
@@ -432,7 +432,7 @@ decode_port_port_value(void *output, const char *arg_val, int allow_override)
 	if (ret < SPP_RET_OK)
 		return SPP_RET_NG;
 
-	/* add vlantag command check */
+	/* If action is `add`, check the port is already used for rx and tx. */
 	if (allow_override == 0) {
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(spp_check_used_port(tmp_port.iface_type,
@@ -442,7 +442,7 @@ decode_port_port_value(void *output, const char *arg_val, int allow_override)
 						tmp_port.iface_no,
 						SPP_PORT_RXTX_TX) >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"Port in used. (port command) val=%s\n",
+				"Port `%s` is already used.\n",
 				arg_val);
 			return SPP_RET_NG;
 		}
@@ -833,7 +833,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "port",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_port_value
+			.func = parse_port
 		},
 		{
 			.name = "port rxtx",
