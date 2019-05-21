@@ -278,18 +278,17 @@ parse_port_uid(void *output, const char *arg_val)
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of core */
+/* Parse given lcore ID. */
 static int
-decode_core_value(void *output, const char *arg_val)
+parse_lcore_id(void *output, const char *arg_val)
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	ret = get_uint_in_range(output, arg_val, 0, RTE_MAX_LCORE-1);
 	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad core id. val=%s\n",
-				arg_val);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Invalid lcore id '%s'.\n", arg_val);
 		return SPP_RET_NG;
 	}
-
 	return SPP_RET_OK;
 }
 
@@ -356,7 +355,7 @@ decode_component_core_value(void *output, const char *arg_val,
 	if (component->wk_action != SPPWK_ACT_START)
 		return SPP_RET_OK;
 
-	return decode_core_value(&component->core, arg_val);
+	return parse_lcore_id(&component->core, arg_val);
 }
 
 /* decoding procedure of type for component command */
