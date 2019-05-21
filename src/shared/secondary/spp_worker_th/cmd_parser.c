@@ -334,8 +334,8 @@ parse_comp_name(void *output, const char *arg_val,
 
 	/* Parsing the name is required only for action `start`. */
 	if (component->wk_action == SPPWK_ACT_START) {
-		/* Get lcore ID as comp name, or NG code. */
-		ret = spp_get_component_id(arg_val);
+		/* Check if lcore is already used. */
+		ret = spp_get_component_id(arg_val);  /* Get lcore ID. */
 		if (unlikely(ret >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Comp name '%s' is already used.\n",
@@ -483,14 +483,16 @@ parse_port_rxtx(void *output, const char *arg_val, int allow_override)
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of component name for port command */
+/* Parse comp name for `port` command. */
+/* TODO(yasufum) confirm why parsing comp name "for port cmd" is required. */
 static int
-decode_port_name_value(void *output, const char *arg_val,
+parse_comp_name_portcmd(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 
-	ret = spp_get_component_id(arg_val);
+	/* Check if lcore is already used. */
+	ret = spp_get_component_id(arg_val);  /* Get lcore ID. */
 	if (unlikely(ret < SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component name. val=%s\n", arg_val);
@@ -843,7 +845,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "component name",
 			.offset = offsetof(struct spp_command, spec.port.name),
-			.func = decode_port_name_value
+			.func = parse_comp_name_portcmd
 		},
 		{
 			.name = "port vlan operation",

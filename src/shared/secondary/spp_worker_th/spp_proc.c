@@ -725,7 +725,8 @@ get_free_component(void)
 	return SPP_RET_NG;
 }
 
-/* Get component id for specified component name */
+/* Get lcore id for as component name. */
+/* TODO(yasufum) change the name because it's not comp ID. */
 int
 spp_get_component_id(const char *name)
 {
