@@ -730,7 +730,7 @@ int
 spp_get_component_id(const char *name)
 {
 	struct spp_component_info *component_info =
-					g_mng_data_addr.p_component_info;
+		g_mng_data_addr.p_component_info;
 
 	int cnt = 0;
 	if (name[0] == '\0')

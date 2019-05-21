@@ -325,10 +325,10 @@ parse_comp_action(void *output, const char *arg_val,
 
 /* decoding procedure of action for component command */
 static int
-decode_component_name_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_comp_name(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	struct sppwk_cmd_comp *component = output;
 
 	/* "stop" has no core ID parameter. */
@@ -802,7 +802,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "component name",
 			.offset = offsetof(struct spp_command, spec.comp),
-			.func = decode_component_name_value
+			.func = parse_comp_name
 		},
 		{
 			.name = "core",
