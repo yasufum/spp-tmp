@@ -131,36 +131,39 @@ parse_resource_uid(const char *res_uid,
 	return SPP_RET_OK;
 }
 
-/* Convert component name to component type */
+/* Get component type from string of its name. */
+/* TODO(yasufum) should be worker local, separated for vf and mirror. */
 static enum spp_component_type
-spp_convert_component_type(const char *type_str)
+get_comp_type_from_str(const char *type_str)
 {
 	RTE_LOG(DEBUG, APP, "type_str is %s\n", type_str);
+
 #ifdef SPP_VF_MODULE
 	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
 			strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
-		/* Classifier */
 		return SPP_COMPONENT_CLASSIFIER_MAC;
 	} else if (strncmp(type_str, CORE_TYPE_MERGE_STR,
 			strlen(CORE_TYPE_MERGE_STR)+1) == 0) {
-		/* Merger */
 		return SPP_COMPONENT_MERGE;
 	} else if (strncmp(type_str, CORE_TYPE_FORWARD_STR,
 			strlen(CORE_TYPE_FORWARD_STR)+1) == 0) {
-		/* Forwarder */
 		return SPP_COMPONENT_FORWARD;
 	}
 #endif /* SPP_VF_MODULE */
+
 #ifdef SPP_MIRROR_MODULE
 	if (strncmp(type_str, SPP_TYPE_MIRROR_STR,
 			strlen(SPP_TYPE_MIRROR_STR)+1) == 0)
-		/* Mirror */
 		return SPP_COMPONENT_MIRROR;
 #endif /* SPP_MIRROR_MODULE */
+
 	return SPP_COMPONENT_UNUSE;
 }
 
 /* Format error message object and return error code for an error case. */
+/* TODO(yasufum) confirm usage of `set_parse_error` and
+ * `set_detailed_parse_error`, which should be used ?
+ */
 static inline int
 set_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 		const int err_code, const char *err_msg)
@@ -175,16 +178,16 @@ set_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 
 /* Set parse error message. */
 static inline int
-set_string_value_decode_error(struct sppwk_parse_err_msg *wk_err_msg,
-		const char *err_details, const char *err_msg)
+set_detailed_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
+		const char *err_msg, const char *err_details)
 {
 	strcpy(wk_err_msg->details, err_details);
 	return set_parse_error(wk_err_msg, SPPWK_PARSE_INVALID_VALUE, err_msg);
 }
 
-/* Split command line parameter with spaces. */
+/* Split command line paramis with spaces. */
 static int
-decode_parameter_value(char *string, int max, int *argc, char *argv[])
+split_cmd_params(char *string, int max, int *argc, char *argv[])
 {
 	int cnt = 0;
 	const char *delim = " ";
@@ -373,7 +376,7 @@ decode_component_type_value(void *output, const char *arg_val,
 	if (component->wk_action != SPPWK_ACT_START)
 		return SPP_RET_OK;
 
-	comp_type = spp_convert_component_type(arg_val);
+	comp_type = get_comp_type_from_str(arg_val);
 	if (unlikely(comp_type <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component type. val=%s\n",
@@ -872,8 +875,8 @@ decode_command_parameter_component(struct sppwk_cmd_req *request,
 					"Invalid value. command=%s, name=%s, "
 					"index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(wk_err_msg,
-					argv[pi], list->name);
+			return set_detailed_parse_error(wk_err_msg,
+					list->name, argv[pi]);
 		}
 	}
 	return SPP_RET_OK;
@@ -912,8 +915,8 @@ decode_command_parameter_cls_table_vlan(struct sppwk_cmd_req *request,
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(wk_err_msg,
-					argv[pi], list->name);
+			return set_detailed_parse_error(wk_err_msg,
+					list->name, argv[pi]);
 		}
 	}
 	return SPP_RET_OK;
@@ -945,8 +948,8 @@ decode_command_parameter_port(struct sppwk_cmd_req *request,
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
-			return set_string_value_decode_error(wk_err_msg,
-					argv[pi], list->name);
+			return set_detailed_parse_error(wk_err_msg,
+					list->name, argv[pi]);
 		}
 	}
 	return SPP_RET_OK;
@@ -992,8 +995,7 @@ decode_command_in_list(struct sppwk_cmd_req *request,
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
-	ret = decode_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
-			&argc, argv);
+	ret = split_cmd_params(tmp_str, SPPWK_MAX_PARAMS, &argc, argv);
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number over limit."
 				"request_str=%s\n", request_str);
@@ -1031,7 +1033,7 @@ decode_command_in_list(struct sppwk_cmd_req *request,
 	RTE_LOG(ERR, SPP_COMMAND_PROC,
 			"Unknown command. command=%s, request_str=%s\n",
 			argv[0], request_str);
-	return set_string_value_decode_error(wk_err_msg, argv[0], "command");
+	return set_detailed_parse_error(wk_err_msg, "command", argv[0]);
 }
 
 /* Parse request of non null terminated string. */
