@@ -186,6 +186,11 @@ set_detailed_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 }
 
 /* Split command line paramis with spaces. */
+/**
+ * TODO(yasufum) It should be renamed because this function checks if the num
+ * of params is over given max num, but this behaviour is not explicit in the
+ * name of function. Or remove this checking for simplicity.
+ */
 static int
 split_cmd_params(char *string, int max, int *argc, char *argv[])
 {
@@ -954,19 +959,24 @@ decode_command_parameter_port(struct sppwk_cmd_req *request,
 	return SPP_RET_OK;
 }
 
-/* command list for decoding */
-struct decode_command_list {
-	const char *name;       /* Command name */
-	int   param_min;        /* Min number of parameters */
-	int   param_max;        /* Max number of parameters */
+/**
+ * Attributes of commands for parsing. The last member of function pointer
+ * is the operator function for the command.
+ */
+struct cmd_parse_attrs {
+	const char *cmd_name;
+	int nof_params_min;
+	int nof_params_max;
 	int (*func)(struct sppwk_cmd_req *request, int argc,
 			char *argv[], struct sppwk_parse_err_msg *wk_err_msg,
 			int maxargc);
-				/* Pointer to command handling function */
 };
 
-/* command list */
-static struct decode_command_list command_list[] = {
+/**
+ * List of command attributes defines the name of command, number of params
+ * and operator functions.
+ */
+static struct cmd_parse_attrs cmd_attr_list[] = {
 	{ "classifier_table", 5, 5, decode_command_parameter_cls_table },
 	{ "classifier_table", 6, 6, decode_command_parameter_cls_table_vlan },
 	{ "_get_client_id", 1, 1, NULL },
@@ -977,16 +987,21 @@ static struct decode_command_list command_list[] = {
 	{ "", 0, 0, NULL }  /* termination */
 };
 
-/* Parse command line parameters. */
+/* Parse command for SPP worker. */
 static int
-decode_command_in_list(struct sppwk_cmd_req *request,
-			const char *request_str,
-			struct sppwk_parse_err_msg *wk_err_msg)
+parse_wk_cmd(struct sppwk_cmd_req *request,
+		const char *request_str,
+		struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int ret = SPP_RET_OK;
-	int command_name_check = 0;
-	struct decode_command_list *list = NULL;
+	int is_valid_nof_params = 1;  /* for checking nof params in range. */
+	struct cmd_parse_attrs *list = NULL;
 	int i = 0;
+	/**
+	 * TODO(yasufum) The name of `argc` and `argv` should be renamed because
+	 * it is used for the num of params and param itself, not for arguments.
+	 * It is so misunderstandable for maintainance.
+	 */
 	int argc = 0;
 	char *argv[SPPWK_MAX_PARAMS];
 	char tmp_str[SPPWK_MAX_PARAMS*SPPWK_VAL_BUFSZ];
@@ -994,43 +1009,57 @@ decode_command_in_list(struct sppwk_cmd_req *request,
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
+	/**
+	 * TODO(yasufum) As described in the definition of
+	 * `split_cmd_params()`, the name and usage of this function should
+	 * be refactored because it is no meaning to check the num of params
+	 * here. The checking is not explicit in the name of func, and checking
+	 * itself is done in the next step as following. No need to do here.
+	 */
 	ret = split_cmd_params(tmp_str, SPPWK_MAX_PARAMS, &argc, argv);
 	if (ret < SPP_RET_OK) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number over limit."
-				"request_str=%s\n", request_str);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Num of params should be less than %d. "
+				"request_str=%s\n",
+				SPPWK_MAX_PARAMS, request_str);
 		return set_parse_error(wk_err_msg, SPPWK_PARSE_WRONG_FORMAT,
 				NULL);
 	}
 	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Decode array. num=%d\n", argc);
 
-	for (i = 0; command_list[i].name[0] != '\0'; i++) {
-		list = &command_list[i];
-		if (strcmp(argv[0], list->name) != 0)
+	for (i = 0; cmd_attr_list[i].cmd_name[0] != '\0'; i++) {
+		list = &cmd_attr_list[i];
+		if (strcmp(argv[0], list->cmd_name) != 0)
 			continue;
 
-		if (unlikely(argc < list->param_min) ||
-				unlikely(list->param_max < argc)) {
-			command_name_check = 1;
+		if (unlikely(argc < list->nof_params_min) ||
+				unlikely(list->nof_params_max < argc)) {
+			is_valid_nof_params = 0;
 			continue;
 		}
 
 		request->commands[0].type = i;
 		if (list->func != NULL)
 			return (*list->func)(request, argc, argv, wk_err_msg,
-							list->param_max);
+							list->nof_params_max);
 
 		return SPP_RET_OK;
 	}
 
-	if (command_name_check != 0) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Parameter number out of range."
+	/**
+	 * Failed to parse command because of invalid nof params or
+	 * unknown command.
+	 */
+	if (is_valid_nof_params == 0) {
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Number of parmas is out of range. "
 				"request_str=%s\n", request_str);
 		return set_parse_error(wk_err_msg, SPPWK_PARSE_WRONG_FORMAT,
 				NULL);
 	}
 
 	RTE_LOG(ERR, SPP_COMMAND_PROC,
-			"Unknown command. command=%s, request_str=%s\n",
+			"Unknown command '%s' and request_str=%s\n",
 			argv[0], request_str);
 	return set_detailed_parse_error(wk_err_msg, "command", argv[0]);
 }
@@ -1047,7 +1076,7 @@ sppwk_parse_req(
 
 	/* decode request */
 	request->num_command = 1;
-	ret = decode_command_in_list(request, request_str, wk_err_msg);
+	ret = parse_wk_cmd(request, request_str, wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Cannot decode command request. "
