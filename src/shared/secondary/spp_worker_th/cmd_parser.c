@@ -860,10 +860,9 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 
 /* Validate given command. */
 static int
-decode_command_parameter_component(struct sppwk_cmd_req *request,
-				int argc, char *argv[],
-				struct sppwk_parse_err_msg *wk_err_msg,
-				int maxargc __attribute__ ((unused)))
+parse_cmd_comp(struct sppwk_cmd_req *request, int argc, char *argv[],
+		struct sppwk_parse_err_msg *wk_err_msg,
+		int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
@@ -888,23 +887,17 @@ decode_command_parameter_component(struct sppwk_cmd_req *request,
 
 /* Validate given command for clssfier_table. */
 static int
-decode_command_parameter_cls_table(struct sppwk_cmd_req *request,
-				int argc, char *argv[],
-				struct sppwk_parse_err_msg *wk_err_msg,
-				int maxargc)
+parse_cmd_cls_table(struct sppwk_cmd_req *request, int argc, char *argv[],
+		struct sppwk_parse_err_msg *wk_err_msg, int maxargc)
 {
-	return decode_command_parameter_component(request,
-						argc,
-						argv,
-						wk_err_msg,
-						maxargc);
+	return parse_cmd_comp(request, argc, argv, wk_err_msg, maxargc);
 }
+
 /* Validate given command for clssfier_table of vlan. */
 static int
-decode_command_parameter_cls_table_vlan(struct sppwk_cmd_req *request,
-				int argc, char *argv[],
-				struct sppwk_parse_err_msg *wk_err_msg,
-				int maxargc __attribute__ ((unused)))
+parse_cmd_cls_table_vlan(struct sppwk_cmd_req *request, int argc, char *argv[],
+		struct sppwk_parse_err_msg *wk_err_msg,
+		int maxargc __attribute__ ((unused)))
 {
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
@@ -928,10 +921,8 @@ decode_command_parameter_cls_table_vlan(struct sppwk_cmd_req *request,
 
 /* Validate given command for port. */
 static int
-decode_command_parameter_port(struct sppwk_cmd_req *request,
-				int argc, char *argv[],
-				struct sppwk_parse_err_msg *wk_err_msg,
-				int maxargc)
+parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
+		struct sppwk_parse_err_msg *wk_err_msg, int maxargc)
 {
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
@@ -977,13 +968,13 @@ struct cmd_parse_attrs {
  * and operator functions.
  */
 static struct cmd_parse_attrs cmd_attr_list[] = {
-	{ "classifier_table", 5, 5, decode_command_parameter_cls_table },
-	{ "classifier_table", 6, 6, decode_command_parameter_cls_table_vlan },
+	{ "classifier_table", 5, 5, parse_cmd_cls_table },
+	{ "classifier_table", 6, 6, parse_cmd_cls_table_vlan },
 	{ "_get_client_id", 1, 1, NULL },
 	{ "status", 1, 1, NULL },
 	{ "exit", 1, 1, NULL },
-	{ "component", 3, 5, decode_command_parameter_component },
-	{ "port", 5, 8, decode_command_parameter_port },
+	{ "component", 3, 5, parse_cmd_comp },
+	{ "port", 5, 8, parse_cmd_port },
 	{ "", 0, 0, NULL }  /* termination */
 };
 
