@@ -506,17 +506,19 @@ parse_comp_name_portcmd(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of vlan operation for port command */
+/* Parse vlan operation for port command. */
+/* TODO(yasufum) add desc for how to be used. */
+/* TODO(yasufum) add desc for what is port ability. */
 static int
-decode_port_vlan_operation(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_port_vlan_ops(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
-	switch (ability->ope) {
-	case SPP_PORT_ABILITY_OPE_NONE:
+	switch (ability->ops) {
+	case SPPWK_PORT_ABL_OPS_NONE:
 		ret = get_list_idx(arg_val, PORT_ABILITY_LIST);
 		if (unlikely(ret <= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -524,10 +526,10 @@ decode_port_vlan_operation(void *output, const char *arg_val,
 					arg_val);
 			return SPP_RET_NG;
 		}
-		ability->ope  = ret;
+		ability->ops  = ret;
 		ability->rxtx = port->rxtx;
 		break;
-	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		/* Nothing to do. */
 		break;
 	default:
@@ -547,8 +549,8 @@ decode_port_vid(void *output, const char *arg_val,
 	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
-	switch (ability->ope) {
-	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+	switch (ability->ops) {
+	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		ret = get_int_in_range(&ability->data.vlantag.vid,
 			arg_val, 0, ETH_VLAN_ID_MAX);
 		if (unlikely(ret < SPP_RET_OK)) {
@@ -575,8 +577,8 @@ decode_port_pcp(void *output, const char *arg_val,
 	struct sppwk_cmd_port *port = output;
 	struct spp_port_ability *ability = &port->ability;
 
-	switch (ability->ope) {
-	case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+	switch (ability->ops) {
+	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		ret = get_int_in_range(&ability->data.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
 		if (unlikely(ret < SPP_RET_OK)) {
@@ -850,7 +852,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "port vlan operation",
 			.offset = offsetof(struct spp_command, spec.port),
-			.func = decode_port_vlan_operation
+			.func = parse_port_vlan_ops
 		},
 		{
 			.name = "port vid",

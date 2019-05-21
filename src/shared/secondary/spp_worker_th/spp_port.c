@@ -284,13 +284,13 @@ port_ability_set_ability(
 		memcpy(&out_ability[out_cnt], &in_ability[in_cnt],
 				sizeof(struct spp_port_ability));
 
-		switch (out_ability[out_cnt].ope) {
-		case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
+		switch (out_ability[out_cnt].ops) {
+		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 			tag = &out_ability[out_cnt].data.vlantag;
 			tag->tci = rte_cpu_to_be_16(SPP_VLANTAG_CALC_TCI(
 					tag->vid, tag->pcp));
 			break;
-		case SPP_PORT_ABILITY_OPE_DEL_VLANTAG:
+		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
 		default:
 			/* Nothing to do. */
 			break;
@@ -344,14 +344,14 @@ port_ability_each_operation(uint16_t port_id,
 	struct spp_port_ability *info = NULL;
 
 	spp_port_ability_get_info(port_id, rxtx, &info);
-	if (unlikely(info[0].ope == SPP_PORT_ABILITY_OPE_NONE))
+	if (unlikely(info[0].ops == SPPWK_PORT_ABL_OPS_NONE))
 		return nb_pkts;
 
 	for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
-		if (info[cnt].ope == SPP_PORT_ABILITY_OPE_NONE)
+		if (info[cnt].ops == SPPWK_PORT_ABL_OPS_NONE)
 			break;
 
-		ok_pkts = port_ability_function_list[info[cnt].ope](
+		ok_pkts = port_ability_function_list[info[cnt].ops](
 				pkts, ok_pkts, &info->data);
 	}
 

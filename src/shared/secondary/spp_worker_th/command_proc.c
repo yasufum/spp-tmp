@@ -411,10 +411,10 @@ spp_update_port(enum sppwk_action wk_action,
 		/* Check whether a port has been already registered. */
 		if (ret_check >= SPP_RET_OK) {
 			/* registered */
-			if (ability->ope == SPP_PORT_ABILITY_OPE_ADD_VLANTAG) {
+			if (ability->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
 				while ((cnt < SPP_PORT_ABILITY_MAX) &&
-					    (port_info->ability[cnt].ope !=
-					    SPP_PORT_ABILITY_OPE_ADD_VLANTAG))
+					    (port_info->ability[cnt].ops !=
+					    SPPWK_PORT_ABL_OPS_ADD_VLANTAG))
 					cnt++;
 				if (cnt >= SPP_PORT_ABILITY_MAX) {
 					RTE_LOG(ERR, APP, "update VLAN tag "
@@ -436,10 +436,10 @@ spp_update_port(enum sppwk_action wk_action,
 			return SPP_RET_NG;
 		}
 
-		if (ability->ope != SPP_PORT_ABILITY_OPE_NONE) {
+		if (ability->ops != SPPWK_PORT_ABL_OPS_NONE) {
 			while ((cnt < SPP_PORT_ABILITY_MAX) &&
-					(port_info->ability[cnt].ope !=
-					SPP_PORT_ABILITY_OPE_NONE)) {
+					(port_info->ability[cnt].ops !=
+					SPPWK_PORT_ABL_OPS_NONE)) {
 				cnt++;
 			}
 			if (cnt >= SPP_PORT_ABILITY_MAX) {
@@ -460,8 +460,8 @@ spp_update_port(enum sppwk_action wk_action,
 
 	case SPPWK_ACT_DEL:
 		for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
-			if (port_info->ability[cnt].ope ==
-					SPP_PORT_ABILITY_OPE_NONE)
+			if (port_info->ability[cnt].ops ==
+					SPPWK_PORT_ABL_OPS_NONE)
 				continue;
 
 			if (port_info->ability[cnt].rxtx == rxtx)
@@ -1045,10 +1045,10 @@ append_vlan_block(const char *name, char **output,
 
 	spp_port_ability_get_info(port_id, rxtx, &info);
 	for (i = 0; i < SPP_PORT_ABILITY_MAX; i++) {
-		switch (info[i].ope) {
-		case SPP_PORT_ABILITY_OPE_ADD_VLANTAG:
-		case SPP_PORT_ABILITY_OPE_DEL_VLANTAG:
-			ret = append_vlan_value(&tmp_buff, info[i].ope,
+		switch (info[i].ops) {
+		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
+		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
+			ret = append_vlan_value(&tmp_buff, info[i].ops,
 					info[i].data.vlantag.vid,
 					info[i].data.vlantag.pcp);
 			if (unlikely(ret < SPP_RET_OK))
@@ -1067,7 +1067,7 @@ append_vlan_block(const char *name, char **output,
 		}
 	}
 	if (i == SPP_PORT_ABILITY_MAX) {
-		ret = append_vlan_value(&tmp_buff, SPP_PORT_ABILITY_OPE_NONE,
+		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_ABL_OPS_NONE,
 				0, 0);
 		if (unlikely(ret < SPP_RET_OK))
 			return SPP_RET_NG;

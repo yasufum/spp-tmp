@@ -123,10 +123,10 @@ enum spp_port_rxtx {
  * Port ability operation which indicates vlan tag operation on the port
  * (e.g. add vlan tag or delete vlan tag)
  */
-enum spp_port_ability_ope {
-	SPP_PORT_ABILITY_OPE_NONE,	  /**< none */
-	SPP_PORT_ABILITY_OPE_ADD_VLANTAG, /**< add VLAN tag */
-	SPP_PORT_ABILITY_OPE_DEL_VLANTAG, /**< delete VLAN tag */
+enum sppwk_port_abl_ops {
+	SPPWK_PORT_ABL_OPS_NONE,
+	SPPWK_PORT_ABL_OPS_ADD_VLANTAG,
+	SPPWK_PORT_ABL_OPS_DEL_VLANTAG,
 };
 
 /* getopt_long return value for long option */
@@ -174,9 +174,9 @@ union spp_ability_data {
 
 /** Port ability information */
 struct spp_port_ability {
-	enum spp_port_ability_ope ope; /**< Operation */
-	enum spp_port_rxtx rxtx;       /**< rx/tx identifier */
-	union spp_ability_data data;   /**< Port ability data */
+	enum sppwk_port_abl_ops ops;  /**< Port ability Operations */
+	enum spp_port_rxtx rxtx;      /**< rx/tx identifier */
+	union spp_ability_data data;  /**< Port ability data */
 };
 
 /* Attributes for classifying . */
