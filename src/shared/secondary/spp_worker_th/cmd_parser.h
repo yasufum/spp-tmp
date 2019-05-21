@@ -112,7 +112,7 @@ struct spp_command {
 		struct sppwk_cmd_flush flush;
 		struct sppwk_cmd_comp comp;
 		struct sppwk_cmd_port port;
-	} spec;
+	} spec;  /* TODO(yasufum) rename no reasonable name */
 };
 
 /* Request parameters. */

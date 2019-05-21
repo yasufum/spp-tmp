@@ -659,7 +659,7 @@ decode_classifier_vid_value(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of port for classifier_table command */
+/* Parse port for classifier_table command */
 static int
 parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -710,20 +710,20 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* parameter list for decoding */
-struct decode_parameter_list {
-	const char *name;       /* Parameter name */
-	size_t offset;          /* Offset value of struct spp_command */
+/* Attributes operator functions of command for parsing. */
+struct sppwk_cmd_ops {
+	const char *name;
+	size_t offset;  /* Offset of struct spp_command */
+	/* Pointer to operator function */
 	int (*func)(void *output, const char *arg_val, int allow_override);
-				/* Pointer to parameter handling function */
 };
 
 /* Used for command which takes no params, such as `status`. */
 #define SPPWK_CMD_NO_PARAMS { NULL, 0, NULL }
 
-/* parameter list for each command */
-static struct decode_parameter_list
-parameter_list[][SPPWK_MAX_PARAMS] = {
+/* A set of operator functions for parsing command. */
+static struct sppwk_cmd_ops
+cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* classifier_table(mac) */
 		{
 			.name = "action",
@@ -863,11 +863,11 @@ decode_command_parameter_component(struct sppwk_cmd_req *request,
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
-	struct decode_parameter_list *list = NULL;
+	struct sppwk_cmd_ops *list = NULL;
 	for (pi = 1; pi < argc; pi++) {
-		list = &parameter_list[ci][pi-1];
+		list = &cmd_ops_list[ci][pi-1];
 		ret = (*list->func)((void *)
-				((char *)&request->commands[0]+list->offset),
+				((char *)&request->commands[0] + list->offset),
 				argv[pi], 0);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -904,11 +904,11 @@ decode_command_parameter_cls_table_vlan(struct sppwk_cmd_req *request,
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
-	struct decode_parameter_list *list = NULL;
+	struct sppwk_cmd_ops *list = NULL;
 	for (pi = 1; pi < argc; pi++) {
-		list = &parameter_list[ci][pi-1];
+		list = &cmd_ops_list[ci][pi-1];
 		ret = (*list->func)((void *)
-				((char *)&request->commands[0]+list->offset),
+				((char *)&request->commands[0] + list->offset),
 				argv[pi], 0);
 		if (unlikely(ret < SPP_RET_OK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
@@ -931,7 +931,7 @@ decode_command_parameter_port(struct sppwk_cmd_req *request,
 	int ret = SPP_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
-	struct decode_parameter_list *list = NULL;
+	struct sppwk_cmd_ops *list = NULL;
 	int flag = 0;
 
 	/* check add vlatag */
@@ -939,9 +939,9 @@ decode_command_parameter_port(struct sppwk_cmd_req *request,
 		flag = 1;
 
 	for (pi = 1; pi < argc; pi++) {
-		list = &parameter_list[ci][pi-1];
+		list = &cmd_ops_list[ci][pi-1];
 		ret = (*list->func)((void *)
-				((char *)&request->commands[0]+list->offset),
+				((char *)&request->commands[0] + list->offset),
 				argv[pi], flag);
 		if (unlikely(ret < SPP_RET_OK)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad value. "
