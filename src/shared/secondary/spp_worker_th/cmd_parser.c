@@ -258,18 +258,23 @@ get_vlan_uint_val(unsigned int *output, const char *arg_val, unsigned int min,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of port */
+/* Parse given res UID of port and init object of struct sppwk_port_idx. */
+/* TODO(yasufum) Confirm why 1st arg is not sppwk_port_idx, but void. */
+/**
+ * TODO(yasufum) Confirm why this func is required. Is it not enough to use
+ * parse_resource_uid() ?
+ */
 static int
-decode_port_value(void *output, const char *arg_val)
+parse_port_uid(void *output, const char *arg_val)
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	struct sppwk_port_idx *port = output;
 	ret = parse_resource_uid(arg_val, &port->iface_type, &port->iface_no);
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "Bad port. val=%s\n", arg_val);
+		RTE_LOG(ERR, SPP_COMMAND_PROC,
+				"Invalid resource UID '%s'.\n", arg_val);
 		return SPP_RET_NG;
 	}
-
 	return SPP_RET_OK;
 }
 
@@ -412,7 +417,7 @@ decode_port_port_value(void *output, const char *arg_val, int allow_override)
 	struct sppwk_port_idx tmp_port;
 	struct sppwk_cmd_port *port = output;
 
-	ret = decode_port_value(&tmp_port, arg_val);
+	ret = parse_port_uid(&tmp_port, arg_val);
 	if (ret < SPP_RET_OK)
 		return SPP_RET_NG;
 
@@ -665,7 +670,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	struct sppwk_port_idx tmp_port;
 	int64_t mac_addr = 0;
 
-	ret = decode_port_value(&tmp_port, arg_val);
+	ret = parse_port_uid(&tmp_port, arg_val);
 	if (ret < SPP_RET_OK)
 		return SPP_RET_NG;
 

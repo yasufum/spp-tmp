@@ -191,8 +191,8 @@ struct sppwk_cls_attrs {
  * attributions, use `sppwk_port_info` which has additional port params.
  */
 struct sppwk_port_idx {
-	enum port_type  iface_type; /**< phy, vhost or ring */
-	int             iface_no;
+	enum port_type iface_type;  /**< phy, vhost or ring. */
+	int iface_no;
 };
 
 /* Define detailed port params in addition to `sppwk_port_idx`. */
