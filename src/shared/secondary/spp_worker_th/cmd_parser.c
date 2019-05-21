@@ -597,22 +597,23 @@ parse_port_pcp(void *output, const char *arg_val,
 	return SPP_RET_OK;
 }
 
-/* decoding procedure of mac address string */
+/* Parse mac address string. */
 static int
-decode_mac_addr_str_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_mac_addr(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int64_t ret = SPP_RET_OK;
+	int64_t res;
 	const char *str_val = arg_val;
 
-	/* if default specification, convert to internal dummy address */
+	/* If given value is the default, use dummy address instead. */
 	if (unlikely(strcmp(str_val, SPP_DEFAULT_CLASSIFIED_SPEC_STR) == 0))
 		str_val = SPP_DEFAULT_CLASSIFIED_DMY_ADDR_STR;
 
-	ret = spp_change_mac_str_to_int64(str_val);
-	if (unlikely(ret < SPP_RET_OK)) {
+	/* Check if the given value is valid. */
+	res = spp_change_mac_str_to_int64(str_val);
+	if (unlikely(res < SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
-				"Bad mac address string. val=%s\n", str_val);
+				"Invalid MAC address `%s`.\n", str_val);
 		return SPP_RET_NG;
 	}
 
@@ -759,7 +760,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "mac address",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.mac),
-			.func = decode_mac_addr_str_value
+			.func = parse_mac_addr
 		},
 		{
 			.name = "port",
@@ -792,7 +793,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "mac address",
 			.offset = offsetof(struct spp_command,
 					spec.cls_table.mac),
-			.func = decode_mac_addr_str_value
+			.func = parse_mac_addr
 		},
 		{
 			.name = "port",
