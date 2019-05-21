@@ -299,10 +299,10 @@ parse_lcore_id(void *output, const char *arg_val)
 
 /* decoding procedure of action for component command */
 static int
-decode_component_action_value(void *output, const char *arg_val,
-				int allow_override __attribute__ ((unused)))
+parse_comp_action(void *output, const char *arg_val,
+		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	ret = get_list_idx(arg_val, CMD_ACT_LIST);
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
@@ -797,7 +797,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 			.name = "action",
 			.offset = offsetof(struct spp_command,
 					spec.comp.wk_action),
-			.func = decode_component_action_value
+			.func = parse_comp_action
 		},
 		{
 			.name = "component name",
