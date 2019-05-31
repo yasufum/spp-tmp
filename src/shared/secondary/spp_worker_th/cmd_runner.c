@@ -345,7 +345,7 @@ check_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
 
 /* Port add or del to execute it */
 static int
-spp_update_port(enum sppwk_action wk_action,
+update_port(enum sppwk_action wk_action,
 		const struct sppwk_port_idx *port,
 		enum spp_port_rxtx rxtx,
 		const char *name,
@@ -754,12 +754,9 @@ exec_cmd(const struct spp_command *cmd)
 	case SPPWK_CMDTYPE_PORT:
 		RTE_LOG(INFO, SPP_COMMAND_PROC, "with action `%s`.\n",
 				sppwk_action_str(cmd->spec.port.wk_action));
-		ret = spp_update_port(
-				cmd->spec.port.wk_action,
-				&cmd->spec.port.port,
-				cmd->spec.port.rxtx,
-				cmd->spec.port.name,
-				&cmd->spec.port.ability);
+		ret = update_port(cmd->spec.port.wk_action,
+				&cmd->spec.port.port, cmd->spec.port.rxtx,
+				cmd->spec.port.name, &cmd->spec.port.ability);
 		if (ret == 0) {
 			RTE_LOG(INFO, SPP_COMMAND_PROC, "Exec flush.\n");
 			ret = spp_flush();
