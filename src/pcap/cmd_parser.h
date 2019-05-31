@@ -93,7 +93,7 @@ struct sppwk_parse_err_msg {
  * @retval SPPWK_RET_OK succeeded.
  * @retval !0 failed.
  */
-int spp_command_parse_request(struct spp_command_request *request,
+int sppwk_parse_req(struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *error);
 

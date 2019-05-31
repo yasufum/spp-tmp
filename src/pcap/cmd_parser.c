@@ -38,41 +38,47 @@ set_string_value_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 
 /* Split command line parameter with spaces */
 static int
-parse_parameter_value(char *string, int max, int *argc, char *argv[])
+parse_parameter_value(char *string, int max, int *nof_tokens, char *tokens[])
 {
 	int cnt = 0;
 	const char *delim = " ";
-	char *argv_tok = NULL;
+	char *token = NULL;
 	char *saveptr = NULL;
 
-	argv_tok = strtok_r(string, delim, &saveptr);
-	while (argv_tok != NULL) {
+	token = strtok_r(string, delim, &saveptr);
+	while (token != NULL) {
 		if (cnt >= max)
 			return SPPWK_RET_NG;
-		argv[cnt] = argv_tok;
+		tokens[cnt] = token;
 		cnt++;
-		argv_tok = strtok_r(NULL, delim, &saveptr);
+		token = strtok_r(NULL, delim, &saveptr);
 	}
-	*argc = cnt;
+	*nof_tokens = cnt;
 
 	return SPPWK_RET_OK;
 }
 
-/* command list for parse */
-struct parse_command_list {
-	const char *name;       /* Command name */
-	int   param_min;        /* Min number of parameters */
-	int   param_max;        /* Max number of parameters */
-	int (*func)(struct spp_command_request *request, int argc,
-			char *argv[], struct sppwk_parse_err_msg *error,
-			int maxargc);
+/**
+ * A set of attributes of commands for parsing. The fourth member of function
+ * pointer is the operator function for the command.
+ */
+struct pcap_cmd_parse_attr {
+	const char *cmd_name;
+	int nof_params_min;
+	int nof_params_max;
+	int (*func)(struct spp_command_request *request, int nof_tokens,
+			char *tokens[], struct sppwk_parse_err_msg *error,
+			int nof_max_tokens);
 				/* Pointer to command handling function */
 	enum pcap_cmd_type type;
 				/* Command type */
 };
 
-/* command list */
-static struct parse_command_list command_list_pcap[] = {
+/**
+ * List of command attributes defines the name of command, number of params
+ * and operator functions.
+ */
+static struct pcap_cmd_parse_attr pcap_cmd_attrs[] = {
 	{ "_get_client_id", 1, 1, NULL, PCAP_CMDTYPE_CLIENT_ID },
 	{ "status", 1, 1, NULL, PCAP_CMDTYPE_STATUS },
 	{ "exit",  1, 1, NULL, PCAP_CMDTYPE_EXIT },
@@ -81,53 +87,54 @@ static struct parse_command_list command_list_pcap[] = {
 	{ "", 0, 0, NULL, 0 }  /* termination */
 };
 
-/* Parse command line parameters */
+/* Parse command requested from spp-ctl. */
 static int
-parse_command_in_list(struct spp_command_request *request,
-			const char *request_str,
-			struct sppwk_parse_err_msg *wk_err_msg)
+parse_pcap_cmd(struct spp_command_request *request,
+		const char *request_str,
+		struct sppwk_parse_err_msg *wk_err_msg)
 {
-	int ret = SPPWK_RET_OK;
-	int command_name_check = 0;
-	struct parse_command_list *list = NULL;
-	int i = 0;
-	int argc = 0;
-	char *argv[SPPWK_MAX_PARAMS];
+	int is_invalid_cmd = 0;
+	struct pcap_cmd_parse_attr *cmd_attr = NULL;
+	int ret;
+	int i;
+	char *tokens[SPPWK_MAX_PARAMS];
+	int nof_tokens = 0;
 	char tmp_str[SPPWK_MAX_PARAMS * SPPWK_VAL_BUFSZ];
-	memset(argv, 0x00, sizeof(argv));
+	memset(tokens, 0x00, sizeof(tokens));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
 	ret = parse_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
-			&argc, argv);
+			&nof_tokens, tokens);
 	if (ret < SPPWK_RET_OK) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
 				"request_str=%s\n", request_str);
 		return set_parse_error(wk_err_msg,
 				SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
-	RTE_LOG(DEBUG, PCAP_PARSER, "Decode array. num=%d\n", argc);
+	RTE_LOG(DEBUG, PCAP_PARSER, "Decode array. num=%d\n", nof_tokens);
 
-	for (i = 0; command_list_pcap[i].name[0] != '\0'; i++) {
-		list = &command_list_pcap[i];
-		if (strcmp(argv[0], list->name) != 0)
+	for (i = 0; pcap_cmd_attrs[i].cmd_name[0] != '\0'; i++) {
+		cmd_attr = &pcap_cmd_attrs[i];
+		if (strcmp(tokens[0], cmd_attr->cmd_name) != 0)
 			continue;
 
-		if (unlikely(argc < list->param_min) ||
-				unlikely(list->param_max < argc)) {
-			command_name_check = 1;
+		if (unlikely(nof_tokens < cmd_attr->nof_params_min) ||
+			unlikely(cmd_attr->nof_params_max < nof_tokens)) {
+			is_invalid_cmd = 1;
 			continue;
 		}
 
-		request->cmd_attrs[0].type = command_list_pcap[i].type;
-		if (list->func != NULL)
-			return (*list->func)(request, argc, argv, wk_err_msg,
-							list->param_max);
+		request->cmd_attrs[0].type = pcap_cmd_attrs[i].type;
+		if (cmd_attr->func != NULL)
+			return (*cmd_attr->func)(
+					request, nof_tokens, tokens, wk_err_msg,
+					cmd_attr->nof_params_max);
 
 		return SPPWK_RET_OK;
 	}
 
-	if (command_name_check != 0) {
+	if (is_invalid_cmd != 0) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number out of range."
 				"request_str=%s\n", request_str);
 		return set_parse_error(wk_err_msg,
@@ -136,13 +143,13 @@ parse_command_in_list(struct spp_command_request *request,
 
 	RTE_LOG(ERR, PCAP_PARSER,
 			"Unknown command. command=%s, request_str=%s\n",
-			argv[0], request_str);
-	return set_string_value_parse_error(wk_err_msg, argv[0], "command");
+			tokens[0], request_str);
+	return set_string_value_parse_error(wk_err_msg, tokens[0], "command");
 }
 
-/* parse request from no-null-terminated string */
+/* Parse request of non null terminated string. */
 int
-spp_command_parse_request(
+sppwk_parse_req(
 		struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg)
@@ -152,7 +159,7 @@ spp_command_parse_request(
 
 	/* parse request */
 	request->num_command = 1;
-	ret = parse_command_in_list(request, request_str, wk_err_msg);
+	ret = parse_pcap_cmd(request, request_str, wk_err_msg);
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_PARSER,
 				"Cannot parse command request. "

@@ -868,8 +868,8 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 			(int)request_str_len, request_str);
 
 	/* parse request message */
-	ret = spp_command_parse_request(
-			&request, request_str, request_str_len, &parse_error);
+	ret = sppwk_parse_req(&request, request_str, request_str_len,
+			&parse_error);
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		/* send error response */
 		set_parse_error_to_results(command_results, &request,

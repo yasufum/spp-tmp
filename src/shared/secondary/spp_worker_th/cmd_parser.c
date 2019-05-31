@@ -1016,8 +1016,8 @@ parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
 }
 
 /**
- * Attributes of commands for parsing. The last member of function pointer
- * is the operator function for the command.
+ * A set of attributes of commands for parsing. The last member of function
+ * pointer is the operator function for the command.
  */
 struct cmd_parse_attrs {
 	const char *cmd_name;
