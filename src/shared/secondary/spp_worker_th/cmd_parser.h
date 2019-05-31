@@ -95,7 +95,7 @@ struct sppwk_cmd_comp {
 	enum sppwk_action wk_action;  /**< start or stop */
 	char name[SPPWK_NAME_BUFSZ];  /**< component name */
 	unsigned int core;  /**< logical core number */
-	enum spp_component_type type;  /**< component type */
+	enum sppwk_worker_type wk_type;  /**< worker thread type */
 };
 
 /* `port` command parameters. */

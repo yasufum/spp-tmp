@@ -824,7 +824,7 @@ spp_classifier_get_component_status(
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Component[%d] Not used. "
 				"(status)(core = %d, type = %d)\n",
-				id, lcore_id, SPP_COMPONENT_CLASSIFIER_MAC);
+				id, lcore_id, SPPWK_TYPE_CLS);
 		return SPP_RET_NG;
 	}
 

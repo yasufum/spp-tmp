@@ -315,12 +315,12 @@ dump_component_info(const struct spp_component_info *comp_info)
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		tmp_ci = &comp_info[cnt];
-		if (tmp_ci->type == SPP_COMPONENT_UNUSE)
+		if (tmp_ci->wk_type == SPPWK_TYPE_NONE)
 			continue;
 
 		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, "
 				"core=%u, index=%d\n",
-				cnt, tmp_ci->name, tmp_ci->type,
+				cnt, tmp_ci->name, tmp_ci->wk_type,
 				tmp_ci->lcore_id, tmp_ci->component_id);
 
 		sprintf(str, "component[%d] rx=%d", cnt,
@@ -616,12 +616,12 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 }
 
 /* Get component type of target component_info */
-enum spp_component_type
+enum sppwk_worker_type
 spp_get_component_type(int id)
 {
 	struct spp_component_info *component_info =
 				(g_mng_data.p_component_info + id);
-	return component_info->type;
+	return component_info->wk_type;
 }
 
 /* Get core ID of target component */
@@ -671,7 +671,7 @@ spp_check_used_port(
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		component = (component_info + cnt);
-		if (component->type == SPP_COMPONENT_UNUSE)
+		if (component->wk_type == SPPWK_TYPE_NONE)
 			continue;
 
 		if (rxtx == SPP_PORT_RXTX_RX) {
@@ -718,7 +718,7 @@ get_free_lcore_id(void)
 
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if ((comp_info + cnt)->type == SPP_COMPONENT_UNUSE)
+		if ((comp_info + cnt)->wk_type == SPPWK_TYPE_NONE)
 			return cnt;
 	}
 	return SPP_RET_NG;
@@ -749,7 +749,7 @@ sppwk_get_lcore_id(const char *comp_name)
 int
 del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
 {
-	int idx;  /* The index of comp_ary to be deleted. */
+	int idx = 0;  /* The index of comp_ary to be deleted. */
 	int cnt;
 
 	/* Find the index. */
@@ -896,7 +896,7 @@ flush_component(void)
 		spp_port_ability_update(component_info);
 
 #ifdef SPP_VF_MODULE
-		if (component_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
+		if (component_info->wk_type == SPPWK_TYPE_CLS)
 			ret = spp_classifier_mac_update(component_info);
 		else
 			ret = spp_forward_update(component_info);
@@ -908,7 +908,7 @@ flush_component(void)
 			RTE_LOG(ERR, APP, "Flush error. "
 					"( component = %s, type = %d)\n",
 					component_info->name,
-					component_info->type);
+					component_info->wk_type);
 			return SPP_RET_NG;
 		}
 	}

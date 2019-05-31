@@ -178,7 +178,7 @@ parse_resource_uid(const char *res_uid,
 
 /* Get component type from string of its name. */
 /* TODO(yasufum) should be worker local, separated for vf and mirror. */
-static enum spp_component_type
+static enum sppwk_worker_type
 get_comp_type_from_str(const char *type_str)
 {
 	RTE_LOG(DEBUG, WK_CMD_PARSER, "type_str is %s\n", type_str);
@@ -186,23 +186,23 @@ get_comp_type_from_str(const char *type_str)
 #ifdef SPP_VF_MODULE
 	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
 			strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
-		return SPP_COMPONENT_CLASSIFIER_MAC;
+		return SPPWK_TYPE_CLS;
 	} else if (strncmp(type_str, CORE_TYPE_MERGE_STR,
 			strlen(CORE_TYPE_MERGE_STR)+1) == 0) {
-		return SPP_COMPONENT_MERGE;
+		return SPPWK_TYPE_MRG;
 	} else if (strncmp(type_str, CORE_TYPE_FORWARD_STR,
 			strlen(CORE_TYPE_FORWARD_STR)+1) == 0) {
-		return SPP_COMPONENT_FORWARD;
+		return SPPWK_TYPE_FWD;
 	}
 #endif /* SPP_VF_MODULE */
 
 #ifdef SPP_MIRROR_MODULE
 	if (strncmp(type_str, SPP_TYPE_MIRROR_STR,
 			strlen(SPP_TYPE_MIRROR_STR)+1) == 0)
-		return SPP_COMPONENT_MIRROR;
+		return SPPWK_TYPE_MIR;
 #endif /* SPP_MIRROR_MODULE */
 
-	return SPP_COMPONENT_UNUSE;
+	return SPPWK_TYPE_NONE;
 }
 
 /* Format error message object and return error code for an error case. */
@@ -418,7 +418,7 @@ static int
 parse_comp_type(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
 {
-	enum spp_component_type comp_type;
+	enum sppwk_worker_type comp_type;
 	struct sppwk_cmd_comp *component = output;
 
 	/* Parsing comp type is required only for action `start`. */
@@ -433,7 +433,7 @@ parse_comp_type(void *output, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	component->type = comp_type;
+	component->wk_type = comp_type;
 	return SPP_RET_OK;
 }
 

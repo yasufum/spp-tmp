@@ -24,8 +24,8 @@
 #define SPP_MIRROR_POOL_NAME_MAX 32
 #define MAX_PKT_MIRROR 4096
 #define MEMPOOL_CACHE_SIZE 256
-#define RTE_TEST_RX_DESC_DEFAULT 1024
-#define RTE_TEST_TX_DESC_DEFAULT 1024
+#define MIR_RX_DESC_DEFAULT 1024
+#define MIR_TX_DESC_DEFAULT 1024
 
 /* A set of port info of rx and tx */
 struct mirror_rxtx {
@@ -35,13 +35,11 @@ struct mirror_rxtx {
 
 /* Information on the path used for mirror. */
 struct mirror_path {
-	char name[SPP_NAME_STR_LEN];	/* component name	   */
-	volatile enum spp_component_type type;
-					/* component type	   */
-	int num_rx;			/* number of receive ports */
-	int num_tx;			/* number of mirror ports  */
-	struct mirror_rxtx ports[RTE_MAX_ETHPORTS];
-					/* port used for mirror	   */
+	char name[SPP_NAME_STR_LEN];  /* component name */
+	volatile enum sppwk_worker_type wk_type;
+	int nof_rx;  /* number of receive ports */
+	int nof_tx;  /* number of mirror ports */
+	struct mirror_rxtx ports[RTE_MAX_ETHPORTS];  /* used for mirror */
 };
 
 /* Information for mirror. */
@@ -52,9 +50,8 @@ struct mirror_info {
 				/* Information of data path */
 };
 
-/*  */
-static uint16_t nb_rxd = RTE_TEST_RX_DESC_DEFAULT;
-static uint16_t nb_txd = RTE_TEST_TX_DESC_DEFAULT;
+static uint16_t nb_rxd = MIR_RX_DESC_DEFAULT;
+static uint16_t nb_txd = MIR_TX_DESC_DEFAULT;
 
 /* Logical core ID for main process */
 static unsigned int g_main_lcore_id = 0xffffffff;
@@ -292,7 +289,7 @@ spp_mirror_update(struct spp_component_info *component)
 	if (unlikely(num_rx > 1)) {
 		RTE_LOG(ERR, MIRROR,
 			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->component_id, component->type, num_rx);
+			component->component_id, component->wk_type, num_rx);
 		return SPP_RET_NG;
 	}
 
@@ -300,7 +297,7 @@ spp_mirror_update(struct spp_component_info *component)
 	if (unlikely(num_tx > 2)) {
 		RTE_LOG(ERR, MIRROR,
 			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->component_id, component->type, num_tx);
+			component->component_id, component->wk_type, num_tx);
 		return SPP_RET_NG;
 	}
 
@@ -311,12 +308,12 @@ spp_mirror_update(struct spp_component_info *component)
 			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
-			component->type);
+			component->wk_type);
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
-	path->type = component->type;
-	path->num_rx = component->num_rx_port;
-	path->num_tx = component->num_tx_port;
+	path->wk_type = component->wk_type;
+	path->nof_rx = component->num_rx_port;
+	path->nof_tx = component->num_tx_port;
 	for (cnt = 0; cnt < num_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
@@ -335,7 +332,7 @@ spp_mirror_update(struct spp_component_info *component)
 			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
-			component->type);
+			component->wk_type);
 
 	return SPP_RET_OK;
 }
@@ -378,7 +375,7 @@ mirror_proc(int id)
 	path = &info->path[info->ref_index];
 
 	/* Practice condition check */
-	if (!(path->num_tx == 2 && path->num_rx == 1))
+	if (!(path->nof_tx == 2 && path->nof_rx == 1))
 		return SPP_RET_OK;
 
 	rx = &path->ports[0].rx;
@@ -481,24 +478,24 @@ spp_mirror_get_component_status(
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
-	if (unlikely(path->type == SPP_COMPONENT_UNUSE)) {
+	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
 		RTE_LOG(ERR, MIRROR,
 				"Component[%d] Not used. "
 				"(status)(core = %d, type = %d)\n",
-				id, lcore_id, path->type);
+				id, lcore_id, path->wk_type);
 		return SPP_RET_NG;
 	}
 
 	component_type = SPP_TYPE_MIRROR_STR;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < path->num_rx; cnt++) {
+	for (cnt = 0; cnt < path->nof_rx; cnt++) {
 		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
 		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	for (cnt = 0; cnt < path->num_tx; cnt++) {
+	for (cnt = 0; cnt < path->nof_tx; cnt++) {
 		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
 		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
 	}
@@ -507,7 +504,7 @@ spp_mirror_get_component_status(
 	ret = (*params->element_proc)(
 		params, lcore_id,
 		path->name, component_type,
-		path->num_rx, rx_ports, path->num_tx, tx_ports);
+		path->nof_rx, rx_ports, path->nof_tx, tx_ports);
 	if (unlikely(ret != 0))
 		return SPP_RET_NG;
 

@@ -87,13 +87,13 @@ enum spp_core_status {
 	SPP_CORE_IDLE_REQUEST /**< Request idling */
 };
 
-/* Process type for each component */
-enum spp_component_type {
-	SPP_COMPONENT_UNUSE,          /**< Not used */
-	SPP_COMPONENT_CLASSIFIER_MAC, /**< Classifier_mac */
-	SPP_COMPONENT_MERGE,	      /**< Merger */
-	SPP_COMPONENT_FORWARD,	      /**< Forwarder */
-	SPP_COMPONENT_MIRROR,	      /**< Mirror */
+/* Type of SPP worker thread. */
+enum sppwk_worker_type {
+	SPPWK_TYPE_NONE,  /**< Not used */
+	SPPWK_TYPE_CLS,  /**< Classifier_mac */
+	SPPWK_TYPE_MRG,  /**< Merger */
+	SPPWK_TYPE_FWD,  /**< Forwarder */
+	SPPWK_TYPE_MIR,  /**< Mirror */
 };
 
 /* Classifier Type */
@@ -207,7 +207,7 @@ struct sppwk_port_info {
 /* Component info */
 struct spp_component_info {
 	char name[SPP_NAME_STR_LEN];	/**< Component name */
-	enum spp_component_type type;	/**< Component type */
+	enum sppwk_worker_type wk_type;	/**< Component type */
 	unsigned int lcore_id;		/**< Logical core ID for component */
 	int component_id;		/**< Component ID */
 	int num_rx_port;		/**< The number of rx ports */
@@ -388,7 +388,7 @@ enum spp_core_status spp_get_core_status(unsigned int lcore_id);
  * @return
  *  Type of component executed
  */
-enum spp_component_type spp_get_component_type(int id);
+enum sppwk_worker_type spp_get_component_type(int id);
 
 /**
  * Run check_core_status() for SPP_CORE_STATUS_CHECK_MAX times with

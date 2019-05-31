@@ -210,7 +210,7 @@ update_cls_table(enum sppwk_action wk_action,
 /* TODO(yasufum) revise func name for removing the term `component`. */
 static int
 update_comp(enum sppwk_action wk_action, const char *name,
-		unsigned int lcore_id, enum spp_component_type type)
+		unsigned int lcore_id, enum sppwk_worker_type wk_type)
 {
 	int ret;
 	int ret_del;
@@ -257,7 +257,7 @@ update_comp(enum sppwk_action wk_action, const char *name,
 		comp_info = (comp_info_base + comp_lcore_id);
 		memset(comp_info, 0x00, sizeof(struct spp_component_info));
 		strcpy(comp_info->name, name);
-		comp_info->type		= type;
+		comp_info->wk_type = wk_type;
 		comp_info->lcore_id	= lcore_id;
 		comp_info->component_id	= comp_lcore_id;
 
@@ -286,7 +286,7 @@ update_comp(enum sppwk_action wk_action, const char *name,
 		 */
 #ifdef SPP_VF_MODULE
 		/* initialize classifier information */
-		if (comp_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
+		if (comp_info->wk_type == SPPWK_TYPE_CLS)
 			init_classifier_info(comp_lcore_id);
 #endif /* SPP_VF_MODULE */
 
@@ -324,22 +324,22 @@ check_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
 				" port_type=%d, rx=%d, tx=%d\n",
 				rxtx, num_rx, num_tx);
 	switch (component_type) {
-	case SPP_COMPONENT_FORWARD:
+	case SPPWK_TYPE_FWD:
 		if (num_rx > 1 || num_tx > 1)
 			return SPP_RET_NG;
 		break;
 
-	case SPP_COMPONENT_MERGE:
+	case SPPWK_TYPE_MRG:
 		if (num_tx > 1)
 			return SPP_RET_NG;
 		break;
 
-	case SPP_COMPONENT_CLASSIFIER_MAC:
+	case SPPWK_TYPE_CLS:
 		if (num_rx > 1)
 			return SPP_RET_NG;
 		break;
 
-	case SPP_COMPONENT_MIRROR:
+	case SPPWK_TYPE_MIR:
 		if (num_rx > 1 || num_tx > 2)
 			return SPP_RET_NG;
 		break;
@@ -393,7 +393,7 @@ update_port(enum sppwk_action wk_action,
 	switch (wk_action) {
 	case SPPWK_ACT_ADD:
 		/* Check if over the maximum num of ports of component. */
-		if (check_port_count(comp_info->type, rxtx,
+		if (check_port_count(comp_info->wk_type, rxtx,
 				comp_info->num_rx_port,
 				comp_info->num_tx_port) != SPP_RET_OK)
 			return SPP_RET_NG;
@@ -524,7 +524,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 				RTE_LOG(ERR, WK_CMD_RUNNER, "Cannot iterate core "
 						"information. "
 						"(core = %d, type = %d)\n",
-						lcore_id, SPP_COMPONENT_UNUSE);
+						lcore_id, SPPWK_TYPE_NONE);
 				return SPP_RET_NG;
 			}
 			continue;
@@ -535,7 +535,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 							NULL, NULL, NULL, NULL);
 			comp_info = (comp_info_base + core->id[cnt]);
 #ifdef SPP_VF_MODULE
-			if (comp_info->type == SPP_COMPONENT_CLASSIFIER_MAC) {
+			if (comp_info->wk_type == SPPWK_TYPE_CLS) {
 				ret = spp_classifier_get_component_status(
 						lcore_id,
 						core->id[cnt],
@@ -557,7 +557,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 				RTE_LOG(ERR, WK_CMD_RUNNER, "Cannot iterate core "
 						"information. "
 						"(core = %d, type = %d)\n",
-						lcore_id, comp_info->type);
+						lcore_id, comp_info->wk_type);
 				return SPP_RET_NG;
 			}
 		}
@@ -753,7 +753,7 @@ exec_cmd(const struct spp_command *cmd)
 				cmd->spec.comp.wk_action,
 				cmd->spec.comp.name,
 				cmd->spec.comp.core,
-				cmd->spec.comp.type);
+				cmd->spec.comp.wk_type);
 		if (ret == 0) {
 			RTE_LOG(INFO, WK_CMD_RUNNER, "Exec flush.\n");
 			ret = spp_flush();

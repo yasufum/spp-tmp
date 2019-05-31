@@ -20,8 +20,7 @@ struct forward_rxtx {
 /* Information on the path used for forward. */
 struct forward_path {
 	char name[SPP_NAME_STR_LEN];    /* component name          */
-	volatile enum spp_component_type type;
-					/* component type          */
+	volatile enum sppwk_worker_type wk_type;
 	int num_rx;                     /* number of receive ports */
 	int num_tx;                     /* number of trans ports   */
 	struct forward_rxtx ports[RTE_MAX_ETHPORTS];
@@ -62,11 +61,11 @@ spp_forward_update(struct spp_component_info *component)
 	struct forward_path *path = &info->path[info->upd_index];
 
 	/* Forward component allows only one receiving port. */
-	if ((component->type == SPP_COMPONENT_FORWARD) &&
+	if ((component->wk_type == SPPWK_TYPE_FWD) &&
 			unlikely(num_rx > 1)) {
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->component_id, component->type, num_rx);
+			component->component_id, component->wk_type, num_rx);
 		return SPP_RET_NG;
 	}
 
@@ -74,7 +73,7 @@ spp_forward_update(struct spp_component_info *component)
 	if (unlikely(num_tx != 0) && unlikely(num_tx != 1)) {
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->component_id, component->type, num_tx);
+			component->component_id, component->wk_type, num_tx);
 		return SPP_RET_NG;
 	}
 
@@ -85,10 +84,10 @@ spp_forward_update(struct spp_component_info *component)
 			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
-			component->type);
+			component->wk_type);
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
-	path->type = component->type;
+	path->wk_type = component->wk_type;
 	path->num_rx = component->num_rx_port;
 	path->num_tx = component->num_tx_port;
 	for (cnt = 0; cnt < num_rx; cnt++)
@@ -109,7 +108,7 @@ spp_forward_update(struct spp_component_info *component)
 			"(name = %s, type = %d)\n",
 			component->component_id,
 			component->name,
-			component->type);
+			component->wk_type);
 
 	return SPP_RET_OK;
 }
@@ -149,7 +148,7 @@ spp_forward(int id)
 	path = &info->path[info->ref_index];
 
 	/* Practice condition check */
-	if (path->type == SPP_COMPONENT_MERGE) {
+	if (path->wk_type == SPPWK_TYPE_MRG) {
 		/* merger */
 		if (!(path->num_tx == 1 && path->num_rx >= 1))
 			return SPP_RET_OK;
@@ -197,15 +196,15 @@ spp_forward_get_component_status(
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
-	if (unlikely(path->type == SPP_COMPONENT_UNUSE)) {
+	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
 		RTE_LOG(ERR, FORWARD,
 				"Component[%d] Not used. "
 				"(status)(core = %d, type = %d)\n",
-				id, lcore_id, path->type);
+				id, lcore_id, path->wk_type);
 		return SPP_RET_NG;
 	}
 
-	if (path->type == SPP_COMPONENT_MERGE)
+	if (path->wk_type == SPPWK_TYPE_MRG)
 		component_type = SPP_TYPE_MERGE_STR;
 	else
 		component_type = SPP_TYPE_FORWARD_STR;
