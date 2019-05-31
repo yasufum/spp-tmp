@@ -27,13 +27,13 @@
 #define SPP_CMD_VALUE_BUFSZ 111
 
 /** parse error code */
-enum spp_command_parse_error_code {
+enum sppwk_parse_error_code {
 	/* not use 0, in general 0 is OK */
-	BAD_FORMAT = 1,  /**< Wrong format */
-	UNKNOWN_COMMAND, /**< Unknown command */
-	NO_PARAM,        /**< No parameters */
-	BAD_TYPE,        /**< Wrong data type */
-	BAD_VALUE,       /**< Wrong value */
+	SPPWK_PARSE_WRONG_FORMAT = 1,  /**< Wrong format */
+	SPPWK_PARSE_UNKNOWN_CMD,  /**< Unknown command */
+	SPPWK_PARSE_NO_PARAM,  /**< No parameters */
+	SPPWK_PARSE_INVALID_TYPE,  /**< Wrong data type */
+	SPPWK_PARSE_INVALID_VALUE,  /**< Wrong value */
 };
 
 /**

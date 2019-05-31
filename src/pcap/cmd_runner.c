@@ -276,26 +276,27 @@ parse_error_message(
 		char *message)
 {
 	switch (parse_error->code) {
-	case BAD_FORMAT:
-		sprintf(message, "bad message format");
+	case SPPWK_PARSE_WRONG_FORMAT:
+		sprintf(message, "Wrong message format");
 		break;
 
-	case UNKNOWN_COMMAND:
-		sprintf(message, "unknown command(%s)", parse_error->value);
+	case SPPWK_PARSE_UNKNOWN_CMD:
+		/* TODO(yasufum) Fix compile err if space exists before "(" */
+		sprintf(message, "Unknown command(%s)", parse_error->value);
 		break;
 
-	case NO_PARAM:
-		sprintf(message, "not enough parameter(%s)",
+	case SPPWK_PARSE_NO_PARAM:
+		sprintf(message, "No or insufficient number of params (%s)",
 				parse_error->value_name);
 		break;
 
-	case BAD_TYPE:
-		sprintf(message, "bad value type(%s)",
+	case SPPWK_PARSE_INVALID_TYPE:
+		sprintf(message, "Invalid value type (%s)",
 				parse_error->value_name);
 		break;
 
-	case BAD_VALUE:
-		sprintf(message, "bad value(%s)", parse_error->value_name);
+	case SPPWK_PARSE_INVALID_VALUE:
+		sprintf(message, "Invalid value (%s)", parse_error->value_name);
 		break;
 
 	default:

@@ -32,7 +32,7 @@ set_string_value_parse_error(struct spp_command_parse_error *error,
 		const char *value, const char *error_name)
 {
 	strcpy(error->value, value);
-	return set_parse_error(error, BAD_VALUE, error_name);
+	return set_parse_error(error, SPPWK_PARSE_INVALID_VALUE, error_name);
 }
 
 /* Split command line parameter with spaces */
@@ -102,7 +102,7 @@ parse_command_in_list(struct spp_command_request *request,
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, SPP_COMMAND_DEC, "Parameter number over limit."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, BAD_FORMAT, NULL);
+		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 	RTE_LOG(DEBUG, SPP_COMMAND_DEC, "Decode array. num=%d\n", argc);
 
@@ -128,7 +128,7 @@ parse_command_in_list(struct spp_command_request *request,
 	if (command_name_check != 0) {
 		RTE_LOG(ERR, SPP_COMMAND_DEC, "Parameter number out of range."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, BAD_FORMAT, NULL);
+		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 
 	RTE_LOG(ERR, SPP_COMMAND_DEC,
