@@ -29,31 +29,25 @@
 #define JSON_APPEND_BLOCK         "%s\"%s\": { %s }"
 #define JSON_APPEND_BLOCK_NONAME  "%s%s{ %s }"
 
-/* command execution result type */
-enum command_result_type {
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_runner.c */
+enum cmd_res_code {
 	CMD_SUCCESS = 0,
 	CMD_FAILURE,
 	CMD_INVALID,
 };
 
 /* command execution result information */
-struct command_result {
-	/* Response code */
-	int code;
-
-	/* Response message */
-	char msg[SPPWK_NAME_BUFSZ];
-
-	/* Detailed response message */
-	char error_message[CMD_RES_ERR_MSG_SIZE];
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_runner.c */
+struct cmd_result {
+	int code;  /* Response code */
+	char msg[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
+	char err_msg[CMD_RES_ERR_MSG_SIZE];  /* Used only if cmd is failed. */
 };
 
 /* command response list control structure */
-struct command_response_list {
-	/* JSON Tag name */
-	char tag_name[SPPWK_NAME_BUFSZ];
-
-	/* Pointer to handling function */
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_runner.c */
+struct cmd_response {
+	char tag_name[SPPWK_NAME_BUFSZ];  /* JSON Tag name */
 	int (*func)(const char *name, char **output, void *tmp);
 };
 
@@ -296,30 +290,30 @@ parse_error_message(
 
 /* set the command result */
 static inline void
-set_command_results(struct command_result *result,
+set_command_results(struct cmd_result *result,
 		int code, const char *error_messege)
 {
 	result->code = code;
 	switch (code) {
 	case CMD_SUCCESS:
 		strcpy(result->msg, "success");
-		memset(result->error_message, 0x00, CMD_RES_ERR_MSG_SIZE);
+		memset(result->err_msg, 0x00, CMD_RES_ERR_MSG_SIZE);
 		break;
 	case CMD_FAILURE:
 		strcpy(result->msg, "error");
-		strcpy(result->error_message, error_messege);
+		strcpy(result->err_msg, error_messege);
 		break;
 	case CMD_INVALID: /* FALLTHROUGH */
 	default:
 		strcpy(result->msg, "invalid");
-		memset(result->error_message, 0x00, CMD_RES_ERR_MSG_SIZE);
+		memset(result->err_msg, 0x00, CMD_RES_ERR_MSG_SIZE);
 		break;
 	}
 }
 
 /* set parse error to command result */
 static void
-set_parse_error_to_results(struct command_result *results,
+set_parse_error_to_results(struct cmd_result *results,
 		const struct spp_command_request *request,
 		const struct sppwk_parse_err_msg *wk_err_msg)
 {
@@ -345,7 +339,7 @@ set_parse_error_to_results(struct command_result *results,
 static int
 append_result_value(const char *name, char **output, void *tmp)
 {
-	const struct command_result *result = tmp;
+	const struct cmd_result *result = tmp;
 	return append_json_str_value(name, output, result->msg);
 }
 
@@ -354,10 +348,10 @@ static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
 	int ret = SPPWK_RET_NG;
-	const struct command_result *result = tmp;
+	const struct cmd_result *result = tmp;
 	char *tmp_buff;
 	/* string is empty, except for errors */
-	if (result->error_message[0] == '\0')
+	if (result->err_msg[0] == '\0')
 		return SPPWK_RET_OK;
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -369,7 +363,7 @@ append_error_details_value(const char *name, char **output, void *tmp)
 	}
 
 	ret = append_json_str_value("message", &tmp_buff,
-			result->error_message);
+			result->err_msg);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
 		return SPPWK_RET_NG;
@@ -553,7 +547,7 @@ append_core_value(const char *name, char **output,
 /* append string of command response list for JSON format */
 static int
 append_response_list_value(char **output,
-		struct command_response_list *list,
+		struct cmd_response *list,
 		void *tmp)
 {
 	int ret = SPPWK_RET_NG;
@@ -612,14 +606,14 @@ append_response_list_value(char **output,
 #define COMMAND_RESP_TAG_LIST_EMPTY { "", NULL }
 
 /* command response result string list */
-struct command_response_list response_result_list[] = {
+struct cmd_response response_result_list[] = {
 	{ "result",        append_result_value },
 	{ "error_details", append_error_details_value },
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
 
 /* command response status information string list */
-struct command_response_list response_info_list[] = {
+struct cmd_response response_info_list[] = {
 	{ "client-id",        append_client_id_value },
 	{ "status",           append_capture_status_value },
 	{ "master-lcore",     append_master_lcore_value },
@@ -630,7 +624,7 @@ struct command_response_list response_info_list[] = {
 /* append a list of command results for JSON format. */
 static int
 append_command_results_value(const char *name, char **output,
-		int num, struct command_result *results)
+		int num, struct cmd_result *results)
 {
 	int ret = SPPWK_RET_NG;
 	int i;
@@ -706,7 +700,7 @@ append_info_value(const char *name, char **output)
 static void
 send_parse_error_response(int *sock,
 		const struct spp_command_request *request,
-		struct command_result *command_results)
+		struct cmd_result *command_results)
 {
 	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
@@ -762,7 +756,7 @@ send_parse_error_response(int *sock,
 static void
 send_command_result_response(int *sock,
 		const struct spp_command_request *request,
-		struct command_result *command_results)
+		struct cmd_result *command_results)
 {
 	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
@@ -863,7 +857,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	struct spp_command_request request;
 	struct sppwk_parse_err_msg parse_error;
-	struct command_result command_results[SPPWK_MAX_CMDS];
+	struct cmd_result command_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
 	memset(&parse_error, 0, sizeof(struct sppwk_parse_err_msg));

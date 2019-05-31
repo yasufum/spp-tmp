@@ -34,7 +34,7 @@
 #define JSON_APPEND_BLOCK         "%s\"%s\": { %s }"
 #define JSON_APPEND_BLOCK_NONAME  "%s%s{ %s }"
 
-enum cmd_res_codes {
+enum cmd_res_code {
 	CMD_SUCCESS = 0,
 	CMD_FAILED,
 	CMD_INVALID,
