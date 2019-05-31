@@ -44,10 +44,10 @@ enum cmd_res_codes {
 };
 
 /* command execution result information */
-struct command_result {
+struct cmd_result {
 	int code;  /* Response code. */
 	char result[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
-	char error_message[CMD_ERR_MSG_LEN];  /* Detailed response msg. */
+	char err_msg[CMD_ERR_MSG_LEN];  /* Used only if cmd is failed. */
 };
 
 /* command response list control structure */
@@ -835,32 +835,37 @@ get_parse_err_msg(
 	return message;
 }
 
-/* set the command result */
+/* Setup cmd_result with given code and message. */
 static inline void
-set_command_results(struct command_result *result,
+set_cmd_result(struct cmd_result *cmd_res,
 		int code, const char *error_messege)
 {
-	result->code = code;
+	cmd_res->code = code;
+	/**
+	 * TODO(yasufum) confirm these string "success", "error" or "invalid"
+	 * should be fixed or not because this no meaning short message is
+	 * obvious from code and nouse actually.
+	 */
 	switch (code) {
 	case CMD_SUCCESS:
-		strcpy(result->result, "success");
-		memset(result->error_message, 0x00, CMD_ERR_MSG_LEN);
+		strcpy(cmd_res->result, "success");
+		memset(cmd_res->err_msg, 0x00, CMD_ERR_MSG_LEN);
 		break;
 	case CMD_FAILED:
-		strcpy(result->result, "error");
-		strcpy(result->error_message, error_messege);
+		strcpy(cmd_res->result, "error");
+		strcpy(cmd_res->err_msg, error_messege);
 		break;
 	case CMD_INVALID:
 	default:
-		strcpy(result->result, "invalid");
-		memset(result->error_message, 0x00, CMD_ERR_MSG_LEN);
+		strcpy(cmd_res->result, "invalid");
+		memset(cmd_res->err_msg, 0x00, CMD_ERR_MSG_LEN);
 		break;
 	}
 }
 
 /* Setup error message of parsing for requested command. */
 static void
-prepare_parse_err_msg(struct command_result *results,
+prepare_parse_err_msg(struct cmd_result *results,
 		const struct sppwk_cmd_req *request,
 		const struct sppwk_parse_err_msg *wk_err_msg)
 {
@@ -870,14 +875,14 @@ prepare_parse_err_msg(struct command_result *results,
 
 	for (i = 0; i < request->num_command; i++) {
 		if (wk_err_msg->code == 0)
-			set_command_results(&results[i], CMD_SUCCESS, "");
+			set_cmd_result(&results[i], CMD_SUCCESS, "");
 		else
-			set_command_results(&results[i], CMD_INVALID, "");
+			set_cmd_result(&results[i], CMD_INVALID, "");
 	}
 
 	if (wk_err_msg->code != 0) {
 		tmp_buff = get_parse_err_msg(wk_err_msg, error_messege);
-		set_command_results(&results[request->num_valid_command],
+		set_cmd_result(&results[request->num_valid_command],
 				CMD_FAILED, tmp_buff);
 	}
 }
@@ -886,7 +891,7 @@ prepare_parse_err_msg(struct command_result *results,
 static int
 append_result_value(const char *name, char **output, void *tmp)
 {
-	const struct command_result *result = tmp;
+	const struct cmd_result *result = tmp;
 	return append_json_str_value(name, output, result->result);
 }
 
@@ -895,10 +900,10 @@ static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
 	int ret = SPP_RET_NG;
-	const struct command_result *result = tmp;
+	const struct cmd_result *result = tmp;
 	char *tmp_buff;
 	/* string is empty, except for errors */
-	if (result->error_message[0] == '\0')
+	if (result->err_msg[0] == '\0')
 		return SPP_RET_OK;
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -911,7 +916,7 @@ append_error_details_value(const char *name, char **output, void *tmp)
 	}
 
 	ret = append_json_str_value("message", &tmp_buff,
-			result->error_message);
+			result->err_msg);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
 		return SPP_RET_NG;
@@ -1417,7 +1422,7 @@ struct command_response_list response_info_list[] = {
 /* append a list of command results for JSON format. */
 static int
 append_command_results_value(const char *name, char **output,
-		int num, struct command_result *results)
+		int num, struct cmd_result *results)
 {
 	int ret = SPP_RET_NG;
 	int i;
@@ -1496,7 +1501,7 @@ append_info_value(const char *name, char **output)
 static void
 send_decode_error_response(int *sock,
 		const struct sppwk_cmd_req *request,
-		struct command_result *command_results)
+		struct cmd_result *command_results)
 {
 	int ret = SPP_RET_NG;
 	char *msg, *tmp_buff;
@@ -1555,7 +1560,7 @@ send_decode_error_response(int *sock,
 static void
 send_command_result_response(int *sock,
 		const struct sppwk_cmd_req *request,
-		struct command_result *command_results)
+		struct cmd_result *command_results)
 {
 	int ret = SPP_RET_NG;
 	char *msg, *tmp_buff;
@@ -1643,7 +1648,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	struct sppwk_cmd_req request;
 	struct sppwk_parse_err_msg wk_err_msg;
-	struct command_result command_results[SPPWK_MAX_CMDS];
+	struct cmd_result command_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct sppwk_cmd_req));
 	memset(&wk_err_msg, 0, sizeof(struct sppwk_parse_err_msg));
@@ -1674,24 +1679,24 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	for (i = 0; i < request.num_command ; ++i) {
 		ret = execute_command(request.commands + i);
 		if (unlikely(ret != SPP_RET_OK)) {
-			set_command_results(&command_results[i], CMD_FAILED,
+			set_cmd_result(&command_results[i], CMD_FAILED,
 					"error occur");
 
 			/* not execute remaining commands */
 			for (++i; i < request.num_command ; ++i)
-				set_command_results(&command_results[i],
+				set_cmd_result(&command_results[i],
 					CMD_INVALID, "");
 
 			break;
 		}
 
-		set_command_results(&command_results[i], CMD_SUCCESS, "");
+		set_cmd_result(&command_results[i], CMD_SUCCESS, "");
 	}
 
 	if (request.is_requested_exit) {
 		/* Terminated by process exit command.                       */
 		/* Other route is normal end because it responds to command. */
-		set_command_results(&command_results[0], CMD_SUCCESS, "");
+		set_cmd_result(&command_results[0], CMD_SUCCESS, "");
 		send_command_result_response(sock, &request, command_results);
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Terminate process for exit.\n");
