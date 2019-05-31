@@ -77,7 +77,7 @@
 #define CORE_TYPE_MIRROR_STR	     "mirror"
 
 /* State on component */
-enum spp_core_status {
+enum sppwk_lcore_status {
 	SPP_CORE_UNUSE,        /**< Not used */
 	SPP_CORE_STOP,         /**< Stopped */
 	SPP_CORE_IDLE,         /**< Idling */
@@ -248,7 +248,7 @@ struct core_info {
 /* Manage core status and component information as global variable */
 struct core_mng_info {
 	/* Status of cpu core */
-	volatile enum spp_core_status status;
+	volatile enum sppwk_lcore_status status;
 
 	/* Index number of core information for reference */
 	volatile int ref_index;
@@ -374,7 +374,7 @@ int spp_vf_add_vhost_pmd(int index, int client);
  * @return
  *  Status of specified logical core.
  */
-enum spp_core_status spp_get_core_status(unsigned int lcore_id);
+enum sppwk_lcore_status spp_get_core_status(unsigned int lcore_id);
 
 /**
  * Get component type of target component_info
@@ -397,7 +397,7 @@ enum sppwk_worker_type spp_get_component_type(int id);
  * @retval 0  succeeded.
  * @retval -1 failed.
  */
-int check_core_status_wait(enum spp_core_status status);
+int check_core_status_wait(enum sppwk_lcore_status status);
 
 /**
  * Set core status
@@ -408,7 +408,7 @@ int check_core_status_wait(enum spp_core_status status);
  *  set status.
  *
  */
-void set_core_status(unsigned int lcore_id, enum spp_core_status status);
+void set_core_status(unsigned int lcore_id, enum sppwk_lcore_status status);
 
 /**
  * Set all core status to given
@@ -417,7 +417,7 @@ void set_core_status(unsigned int lcore_id, enum spp_core_status status);
  *  set status.
  *
  */
-void set_all_core_status(enum spp_core_status status);
+void set_all_core_status(enum sppwk_lcore_status status);
 
 /**
  * Set all of component status to SPP_CORE_STOP_REQUEST if received signal

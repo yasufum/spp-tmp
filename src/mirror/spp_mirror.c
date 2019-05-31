@@ -517,7 +517,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	int ret = SPP_RET_OK;
 	int cnt = 0;
 	unsigned int lcore_id = rte_lcore_id();
-	enum spp_core_status status = SPP_CORE_STOP;
+	enum sppwk_lcore_status status = SPP_CORE_STOP;
 	struct core_mng_info *info = &g_core_info[lcore_id];
 	struct core_info *core = get_core_info(lcore_id);
 
