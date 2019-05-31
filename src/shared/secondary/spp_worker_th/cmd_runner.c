@@ -207,18 +207,21 @@ update_cls_table(enum sppwk_action wk_action,
 }
 
 /* Assign worker thread or remove on specified lcore. */
+/* TODO(yasufum) revise func name for removing the term `component`. */
 static int
 update_comp(enum sppwk_action wk_action, const char *name,
 		unsigned int lcore_id, enum spp_component_type type)
 {
-	int ret = SPP_RET_NG;
-	int ret_del = -1;
+	int ret;
+	int ret_del;
 	int comp_lcore_id = 0;
 	unsigned int tmp_lcore_id = 0;
 	struct spp_component_info *comp_info = NULL;
+	/* TODO(yasufum) revise `core` to be more specific. */
 	struct core_info *core = NULL;
 	struct core_mng_info *info = NULL;
 	struct spp_component_info *comp_info_base = NULL;
+	/* TODO(yasufum) revise `core_info` which is same as struct name. */
 	struct core_mng_info *core_info = NULL;
 	int *change_core = NULL;
 	int *change_component = NULL;
@@ -277,23 +280,27 @@ update_comp(enum sppwk_action wk_action, const char *name,
 		info = (core_info + tmp_lcore_id);
 		core = &info->core[info->upd_index];
 
+		/**
+		 * TODO(yasufum) check if this ifdef is simply removed by
+		 * running other than spp_vf.
+		 */
 #ifdef SPP_VF_MODULE
 		/* initialize classifier information */
 		if (comp_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
 			init_classifier_info(comp_lcore_id);
 #endif /* SPP_VF_MODULE */
 
-		ret_del = del_component_info(comp_lcore_id,
-				core->num, core->id);
+		/* The latest lcore is released if worker thread is stopped. */
+		ret_del = del_comp_info(comp_lcore_id, core->num, core->id);
 		if (ret_del >= 0)
-			/* If deleted, decrement number. */
 			core->num--;
 
 		ret = SPP_RET_OK;
 		*(change_component + comp_lcore_id) = 0;
 		break;
 
-	default:
+	default:  /* Unexpected case. */
+		ret = SPP_RET_NG;
 		break;
 	}
 

@@ -742,30 +742,33 @@ sppwk_get_lcore_id(const char *comp_name)
 }
 
 /* Delete component information */
+/**
+ * TODO(yasufum) consider to move to cmd_runner because this func is only
+ * used in.
+ */
 int
-del_component_info(int component_id, int component_num, int *componet_array)
+del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
 {
+	int idx;  /* The index of comp_ary to be deleted. */
 	int cnt;
-	int match = -1;
-	int max = component_num;
 
-	for (cnt = 0; cnt < max; cnt++) {
-		if (component_id == componet_array[cnt])
-			match = cnt;
+	/* Find the index. */
+	for (cnt = 0; cnt < nof_comps; cnt++) {
+		if (lcore_id == comp_ary[cnt])
+			idx = cnt;
 	}
-
-	if (match < 0)
+	if (idx < 0)
 		return SPP_RET_NG;
 
-	/* Last element is excluded from movement. */
-	max--;
+	/* Overwrite the deleted entry, and shift the remained. */
+	nof_comps--;
+	for (cnt = idx; cnt < nof_comps; cnt++)
+		comp_ary[cnt] = comp_ary[cnt + 1];
 
-	for (cnt = match; cnt < max; cnt++)
-		componet_array[cnt] = componet_array[cnt+1];
+	/* Clean the unused last entry. */
+	comp_ary[cnt] = 0;
 
-	/* Last element is cleared. */
-	componet_array[cnt] = 0;
-	return 0;
+	return SPP_RET_OK;
 }
 
 /**
