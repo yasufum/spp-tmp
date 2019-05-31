@@ -571,40 +571,29 @@ int
 del_component_info(int component_id, int component_num, int *componet_array);
 
 /**
- * get port element which matches the condition.
+ * Get index of given entry in given port info array. It returns the index,
+ * or NG code if the entry is not found.
  *
- * @param info
- *  sppwk_port_info address
- * @param num
- *  port count
- * @param array[]
- *  sppwk_port_info array address
- *
- * @retval 0~ match index.
- * @retval -1 failed.
+ * @param[in] p_info Target port_info for getting index.
+ * @param[in] nof_ports Num of ports for iterating given array.
+ * @param[in] p_info_ary The array of port_info.
+ * @return Index of given array, or NG code if not found.
  */
-int check_port_element(
-		struct sppwk_port_info *info,
-		int num,
-		struct sppwk_port_info *array[]);
+int get_idx_port_info(struct sppwk_port_info *p_info, int nof_ports,
+		struct sppwk_port_info *p_info_ary[]);
 
 /**
  *  search matched port_info from array and delete it.
  *
- * @param info
- *  sppwk_port_info address
- * @param num
- *  port count
- * @param array[]
- *  sppwk_port_info array address
+ * @param[in] p_info Target port to be deleted.
+ * @param[in] nof_ports Number of ports of given p_info_ary.
+ * @param[in] array[] Array of p_info.
  *
  * @retval 0  succeeded.
  * @retval -1 failed.
  */
-int get_del_port_element(
-		struct sppwk_port_info *info,
-		int num,
-		struct sppwk_port_info *array[]);
+int delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
+		struct sppwk_port_info *p_info_ary[]);
 
 /**
  * Flush initial setting of each interface.

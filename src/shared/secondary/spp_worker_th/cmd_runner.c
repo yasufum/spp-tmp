@@ -352,10 +352,6 @@ check_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
 }
 
 /* Port add or del to execute it */
-/**
- * TODO(Ogasawara) The name `action` should be revised to be more
- * appropriate one.
- */
 static int
 spp_update_port(enum sppwk_action wk_action,
 		const struct sppwk_port_idx *port,
@@ -364,13 +360,13 @@ spp_update_port(enum sppwk_action wk_action,
 		const struct spp_port_ability *ability)
 {
 	int ret = SPP_RET_NG;
-	int ret_check = -1;
+	int port_idx;
 	int ret_del = -1;
 	int component_id = 0;
 	int cnt = 0;
 	struct spp_component_info *comp_info = NULL;
 	struct sppwk_port_info *port_info = NULL;
-	int *num = NULL;
+	int *nof_ports = NULL;
 	struct sppwk_port_info **ports = NULL;
 	struct spp_component_info *comp_info_base = NULL;
 	int *change_component = NULL;
@@ -386,10 +382,10 @@ spp_update_port(enum sppwk_action wk_action,
 	comp_info = (comp_info_base + component_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
-		num = &comp_info->num_rx_port;
+		nof_ports = &comp_info->num_rx_port;
 		ports = comp_info->rx_ports;
 	} else {
-		num = &comp_info->num_tx_port;
+		nof_ports = &comp_info->num_tx_port;
 		ports = comp_info->tx_ports;
 	}
 
@@ -401,9 +397,9 @@ spp_update_port(enum sppwk_action wk_action,
 				comp_info->num_tx_port) != SPP_RET_OK)
 			return SPP_RET_NG;
 
-		ret_check = check_port_element(port_info, *num, ports);
-		/* Check whether a port has been already registered. */
-		if (ret_check >= SPP_RET_OK) {
+		/* Check if the port_info is included in array `ports`. */
+		port_idx = get_idx_port_info(port_info, *nof_ports, ports);
+		if (port_idx >= SPP_RET_OK) {
 			/* registered */
 			if (ability->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
 				while ((cnt < SPP_PORT_ABILITY_MAX) &&
@@ -424,7 +420,7 @@ spp_update_port(enum sppwk_action wk_action,
 			return SPP_RET_OK;
 		}
 
-		if (*num >= RTE_MAX_ETHPORTS) {
+		if (*nof_ports >= RTE_MAX_ETHPORTS) {
 			RTE_LOG(ERR, APP, "Cannot assign port over the "
 				"maximum number.\n");
 			return SPP_RET_NG;
@@ -446,8 +442,8 @@ spp_update_port(enum sppwk_action wk_action,
 		}
 
 		port_info->iface_type = port->iface_type;
-		ports[*num] = port_info;
-		(*num)++;
+		ports[*nof_ports] = port_info;
+		(*nof_ports)++;
 
 		ret = SPP_RET_OK;
 		break;
@@ -463,14 +459,14 @@ spp_update_port(enum sppwk_action wk_action,
 					sizeof(struct spp_port_ability));
 		}
 
-		ret_del = get_del_port_element(port_info, *num, ports);
+		ret_del = delete_port_info(port_info, *nof_ports, ports);
 		if (ret_del == 0)
-			(*num)--; /* If deleted, decrement number. */
+			(*nof_ports)--; /* If deleted, decrement number. */
 
 		ret = SPP_RET_OK;
 		break;
 
-	default:
+	default:  /* This case cannot be happend without invlid wk_action. */
 		return SPP_RET_NG;
 	}
 

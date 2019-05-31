@@ -771,45 +771,44 @@ del_component_info(int component_id, int component_num, int *componet_array)
 	return 0;
 }
 
-/* get port element which matches the condition */
+/**
+ * Get index of given entry in given port info array. It returns the index,
+ * or NG code if the entry is not found.
+ */
 int
-check_port_element(
-		struct sppwk_port_info *info,
-		int num,
-		struct sppwk_port_info *array[])
+get_idx_port_info(struct sppwk_port_info *p_info, int nof_ports,
+		struct sppwk_port_info *p_info_ary[])
 {
 	int cnt = 0;
-	int match = SPP_RET_NG;
-	for (cnt = 0; cnt < num; cnt++) {
-		if (info == array[cnt])
-			match = cnt;
+	int ret = SPP_RET_NG;
+	for (cnt = 0; cnt < nof_ports; cnt++) {
+		if (p_info == p_info_ary[cnt])
+			ret = cnt;
 	}
-	return match;
+	return ret;
 }
 
-/* search matched port_info from array and delete it */
+/* Delete given port info from the port info array. */
 int
-get_del_port_element(
-		struct sppwk_port_info *info,
-		int num,
-		struct sppwk_port_info *array[])
+delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
+		struct sppwk_port_info *p_info_ary[])
 {
-	int cnt = 0;
-	int match = SPP_RET_NG;
-	int max = num;
+	int target_idx;  /* The index of deleted port */
+	int cnt;
 
-	match = check_port_element(info, num, array);
-	if (match < 0)
+	/* Find index of target port to be deleted. */
+	target_idx = get_idx_port_info(p_info, nof_ports, p_info_ary);
+	if (target_idx < 0)
 		return SPP_RET_NG;
 
-	/* Last element is excluded from movement. */
-	max--;
-
-	for (cnt = match; cnt < max; cnt++)
-		array[cnt] = array[cnt+1];
-
-	/* Last element is cleared. */
-	array[cnt] = NULL;
+	/**
+	 * Overwrite the deleted port by the next one, and shift all of
+	 * remained ports.
+	 */
+	nof_ports--;
+	for (cnt = target_idx; cnt < nof_ports; cnt++)
+		p_info_ary[cnt] = p_info_ary[cnt+1];
+	p_info_ary[cnt] = NULL;  /* Remove old last port. */
 	return SPP_RET_OK;
 }
 
