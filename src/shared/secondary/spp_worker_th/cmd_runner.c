@@ -206,11 +206,8 @@ update_cls_table(enum sppwk_action wk_action,
 
 /* Assign worker thread or remove on specified lcore. */
 static int
-spp_update_component(
-		enum sppwk_action wk_action,
-		const char *name,
-		unsigned int lcore_id,
-		enum spp_component_type type)
+update_comp(enum sppwk_action wk_action, const char *name,
+		unsigned int lcore_id, enum spp_component_type type)
 {
 	int ret = SPP_RET_NG;
 	int ret_del = -1;
@@ -719,67 +716,64 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 	return SPP_RET_OK;
 }
 
-/* execute one command */
+/* Execute one command. */
 static int
-execute_command(const struct spp_command *command)
+exec_cmd(const struct spp_command *cmd)
 {
-	int ret = SPP_RET_OK;
+	int ret;
 
-	switch (command->type) {
+	switch (cmd->type) {
 	case SPPWK_CMDTYPE_CLS_MAC:
 	case SPPWK_CMDTYPE_CLS_VLAN:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Execute classifier_table command.\n");
-		ret = update_cls_table(
-				command->spec.cls_table.wk_action,
-				command->spec.cls_table.type,
-				command->spec.cls_table.vid,
-				command->spec.cls_table.mac,
-				&command->spec.cls_table.port);
+				"Exec classifier_table cmd.\n");
+		ret = update_cls_table(cmd->spec.cls_table.wk_action,
+				cmd->spec.cls_table.type,
+				cmd->spec.cls_table.vid,
+				cmd->spec.cls_table.mac,
+				&cmd->spec.cls_table.port);
 		if (ret == 0) {
-			RTE_LOG(INFO, SPP_COMMAND_PROC,
-					"Execute flush.\n");
+			RTE_LOG(INFO, SPP_COMMAND_PROC, "Exec flush.\n");
 			ret = spp_flush();
 		}
 		break;
 
 	case SPPWK_CMDTYPE_WORKER:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Execute component command.\n");
-		ret = spp_update_component(
-				command->spec.comp.wk_action,
-				command->spec.comp.name,
-				command->spec.comp.core,
-				command->spec.comp.type);
+				"Exec component cmd.\n");
+		ret = update_comp(
+				cmd->spec.comp.wk_action,
+				cmd->spec.comp.name,
+				cmd->spec.comp.core,
+				cmd->spec.comp.type);
 		if (ret == 0) {
-			RTE_LOG(INFO, SPP_COMMAND_PROC,
-					"Execute flush.\n");
+			RTE_LOG(INFO, SPP_COMMAND_PROC, "Exec flush.\n");
 			ret = spp_flush();
 		}
 		break;
 
 	case SPPWK_CMDTYPE_PORT:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Execute port command. (act = %d)\n",
-				command->spec.port.wk_action);
+				"Exec port command, act=%d.\n",
+				cmd->spec.port.wk_action);
 		ret = spp_update_port(
-				command->spec.port.wk_action,
-				&command->spec.port.port,
-				command->spec.port.rxtx,
-				command->spec.port.name,
-				&command->spec.port.ability);
+				cmd->spec.port.wk_action,
+				&cmd->spec.port.port,
+				cmd->spec.port.rxtx,
+				cmd->spec.port.name,
+				&cmd->spec.port.ability);
 		if (ret == 0) {
-			RTE_LOG(INFO, SPP_COMMAND_PROC,
-					"Execute flush.\n");
+			RTE_LOG(INFO, SPP_COMMAND_PROC, "Exec flush.\n");
 			ret = spp_flush();
 		}
 		break;
 
 	default:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Execute other command. type=%d\n",
-				command->type);
+				"Exec other command, type=%d.\n",
+				cmd->type);
 		/* nothing to do here */
+		ret = SPP_RET_OK;
 		break;
 	}
 
@@ -1664,7 +1658,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	/* execute commands */
 	for (i = 0; i < request.num_command ; ++i) {
-		ret = execute_command(request.commands + i);
+		ret = exec_cmd(request.commands + i);
 		if (unlikely(ret != SPP_RET_OK)) {
 			set_cmd_result(&command_results[i], CMD_FAILED,
 					"error occur");
