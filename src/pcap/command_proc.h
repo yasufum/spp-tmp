@@ -13,7 +13,7 @@
  * result JSON formatted data.
  */
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /**
  * initialize command processor.

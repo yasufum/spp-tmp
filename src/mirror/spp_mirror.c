@@ -14,7 +14,7 @@
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
-#include "shared/secondary/spp_worker_th/spp_proc.h"
+#include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */

@@ -10,7 +10,7 @@
  * @brief Define a set of vars and functions for parsing SPP worker commands.
  */
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /* Maximum number of commands per request. */
 #define SPPWK_MAX_CMDS 32

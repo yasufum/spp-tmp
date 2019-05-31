@@ -2,8 +2,8 @@
  * Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _SPP_PROC_H_
-#define _SPP_PROC_H_
+#ifndef _SPPWK_CMD_UTILS_H_
+#define _SPPWK_CMD_UTILS_H_
 
 /**
  * @file
@@ -386,4 +386,4 @@ void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
 			   int **capture_request_addr,
 			   int **capture_status_addr);
 
-#endif /* _SPP_PROC_H_ */
+#endif /* _SPPWK_CMD_UTILS_H_ */

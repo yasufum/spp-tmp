@@ -2,12 +2,12 @@
  * Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef __SPP_WORKER_TH_VF_DEPS_H__
-#define __SPP_WORKER_TH_VF_DEPS_H__
+#ifndef _SPPWK_TH_VF_DEPS_H_
+#define _SPPWK_TH_VF_DEPS_H_
 
 #include <rte_malloc.h>
 #include <rte_hash.h>
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /* number of classifier information (reference/update) */
 #define NUM_CLASSIFIER_MAC_INFO 2
@@ -149,4 +149,4 @@ int spp_forward_get_component_status(
 		unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
-#endif  /* __SPP_WORKER_TH_VF_DEPS_H__ */
+#endif  /* _SPPWK_TH_VF_DEPS_H_ */

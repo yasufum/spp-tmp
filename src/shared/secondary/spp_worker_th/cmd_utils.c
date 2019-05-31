@@ -13,7 +13,7 @@
 
 #include "vf_deps.h"
 #include "mirror_deps.h"
-#include "spp_proc.h"
+#include "cmd_utils.h"
 #include "spp_port.h"
 
 #include "shared/secondary/add_port.h"

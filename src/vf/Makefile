@@ -21,7 +21,7 @@ SRCS-y += $(SPP_WKT_DIR)/spp_port.c
 SRCS-y += $(SPP_WKT_DIR)/command_conn.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
-SRCS-y += $(SPP_WKT_DIR)/spp_proc.c
+SRCS-y += $(SPP_WKT_DIR)/cmd_utils.c
 SRCS-y += ../shared/common.c
 SRCS-y += ../shared/secondary/utils.c ../shared/secondary/add_port.c
 

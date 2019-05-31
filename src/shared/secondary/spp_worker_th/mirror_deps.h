@@ -5,7 +5,7 @@
 #ifndef __SPP_WORKER_TH_MIRROR_DEPS_H__
 #define __SPP_WORKER_TH_MIRROR_DEPS_H__
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /**
  * Update Mirror info

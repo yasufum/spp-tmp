@@ -2,8 +2,8 @@
  * Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef __SPP_PORT_H__
-#define __SPP_PORT_H__
+#ifndef _SPP_PORT_H_
+#define _SPP_PORT_H_
 
 /**
  * @file
@@ -12,7 +12,7 @@
  * Provide about the ability per port.
  */
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /** Calculate TCI of VLAN tag. */
 #define SPP_VLANTAG_CALC_TCI(id, pcp) (((pcp & 0x07) << 13) | (id & 0x0fff))
@@ -110,4 +110,4 @@ uint16_t spp_eth_rx_burst(uint16_t port_id, uint16_t queue_id,
 uint16_t spp_eth_tx_burst(uint16_t port_id, uint16_t queue_id,
 		struct rte_mbuf **tx_pkts, uint16_t nb_pkts);
 
-#endif /*  __SPP_PORT_H__ */
+#endif /*  _SPP_PORT_H_ */

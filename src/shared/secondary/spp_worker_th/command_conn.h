@@ -12,7 +12,7 @@
  * Command connection management.
  */
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /** result code - temporary error. please retry */
 #define SPP_CONNERR_TEMPORARY -1

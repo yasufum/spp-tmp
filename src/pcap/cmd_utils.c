@@ -8,7 +8,7 @@
 #include <rte_eth_ring.h>
 #include <rte_log.h>
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 #define RTE_LOGTYPE_SPP_PROC RTE_LOGTYPE_USER2
 

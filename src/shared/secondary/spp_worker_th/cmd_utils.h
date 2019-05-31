@@ -2,14 +2,13 @@
  * Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _SPP_PROC_H_
-#define _SPP_PROC_H_
+#ifndef _SPPWK_CMD_UTILS_H_
+#define _SPPWK_CMD_UTILS_H_
 
 /**
- * @file
- * SPP process
+ * @file cmd_utils.h
  *
- * SPP component common function.
+ * Command utility functions for SPP worker thread.
  */
 
 #include <netinet/in.h>
@@ -698,4 +697,4 @@ void sppwk_get_mng_data(struct startup_param **startup_param_p,
 		int **change_component_p,
 		struct cancel_backup_info **backup_info_p);
 
-#endif /* _SPP_PROC_H_ */
+#endif /* _SPPWK_CMD_UTILS_H_ */

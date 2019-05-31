@@ -13,7 +13,7 @@
 #include <lz4frame.h>
 
 #include "shared/common.h"
-#include "spp_proc.h"
+#include "cmd_utils.h"
 #include "spp_pcap.h"
 #include "command_proc.h"
 #include "command_dec.h"

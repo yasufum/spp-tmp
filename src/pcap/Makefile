@@ -15,7 +15,7 @@ SPP_WKT_DIR = ../shared/secondary/spp_worker_th
 
 # all source are stored in SRCS-y
 SRCS-y := spp_pcap.c
-SRCS-y += spp_proc.c
+SRCS-y += cmd_utils.c
 SRCS-y += command_proc.c command_dec.c
 SRCS-y += ../shared/common.c
 SRCS-y += $(SPP_WKT_DIR)/command_conn.c

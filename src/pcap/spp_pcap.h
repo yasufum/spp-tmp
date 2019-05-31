@@ -5,7 +5,7 @@
 #ifndef __SPP_PCAP_H__
 #define __SPP_PCAP_H__
 
-#include "spp_proc.h"
+#include "cmd_utils.h"
 
 /**
  * @file
