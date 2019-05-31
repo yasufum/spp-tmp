@@ -64,7 +64,7 @@ add_ring_pmd(int ring_id)
 }
 
 /* Get core status */
-enum spp_core_status
+enum sppwk_lcore_status
 spp_get_core_status(unsigned int lcore_id)
 {
 	return (g_mng_data_addr.p_core_info + lcore_id)->status;
@@ -77,7 +77,7 @@ spp_get_core_status(unsigned int lcore_id)
  * If core is in use, status will be checked.
  */
 static int
-check_core_status(enum spp_core_status status)
+check_core_status(enum sppwk_lcore_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
@@ -91,7 +91,7 @@ check_core_status(enum spp_core_status status)
 }
 
 int
-check_core_status_wait(enum spp_core_status status)
+check_core_status_wait(enum sppwk_lcore_status status)
 {
 	int cnt = 0;
 	for (cnt = 0; cnt < SPP_CORE_STATUS_CHECK_MAX; cnt++) {
@@ -109,14 +109,14 @@ check_core_status_wait(enum spp_core_status status)
 /* Set core status */
 void
 set_core_status(unsigned int lcore_id,
-		enum spp_core_status status)
+		enum sppwk_lcore_status status)
 {
 	(g_mng_data_addr.p_core_info + lcore_id)->status = status;
 }
 
 /* Set all core to given status */
 void
-set_all_core_status(enum spp_core_status status)
+set_all_core_status(enum sppwk_lcore_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
