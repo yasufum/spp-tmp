@@ -722,11 +722,12 @@ exec_cmd(const struct spp_command *cmd)
 {
 	int ret;
 
+	RTE_LOG(INFO, SPP_COMMAND_PROC, "Exec `%s` cmd.\n",
+			sppwk_cmd_type_str(cmd->type));
+
 	switch (cmd->type) {
 	case SPPWK_CMDTYPE_CLS_MAC:
 	case SPPWK_CMDTYPE_CLS_VLAN:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Exec classifier_table cmd.\n");
 		ret = update_cls_table(cmd->spec.cls_table.wk_action,
 				cmd->spec.cls_table.type,
 				cmd->spec.cls_table.vid,
@@ -739,8 +740,6 @@ exec_cmd(const struct spp_command *cmd)
 		break;
 
 	case SPPWK_CMDTYPE_WORKER:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Exec component cmd.\n");
 		ret = update_comp(
 				cmd->spec.comp.wk_action,
 				cmd->spec.comp.name,
@@ -753,9 +752,8 @@ exec_cmd(const struct spp_command *cmd)
 		break;
 
 	case SPPWK_CMDTYPE_PORT:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Exec port command, act=%d.\n",
-				cmd->spec.port.wk_action);
+		RTE_LOG(INFO, SPP_COMMAND_PROC, "with action `%s`.\n",
+				sppwk_action_str(cmd->spec.port.wk_action));
 		ret = spp_update_port(
 				cmd->spec.port.wk_action,
 				&cmd->spec.port.port,
@@ -769,10 +767,7 @@ exec_cmd(const struct spp_command *cmd)
 		break;
 
 	default:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
-				"Exec other command, type=%d.\n",
-				cmd->type);
-		/* nothing to do here */
+		/* Do nothing. */
 		ret = SPP_RET_OK;
 		break;
 	}

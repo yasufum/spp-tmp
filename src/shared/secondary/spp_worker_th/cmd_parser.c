@@ -15,8 +15,9 @@
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
 
 /**
- * List of command action. The order of items should be same as the order of
- * enum `sppwk_action` in cmd_parser.h.
+ * List of command action for getting the index of enum enum `sppwk_action`.
+ * The order of items should be same as the order of enum `sppwk_action` in
+ * cmd_parser.h.
  */
 const char *CMD_ACT_LIST[] = {
 	"none",
@@ -26,6 +27,49 @@ const char *CMD_ACT_LIST[] = {
 	"del",
 	"",  /* termination */
 };
+
+/* Get string of action. It is mainly used for logging. */
+const char*
+sppwk_action_str(enum sppwk_action wk_action)
+{
+	switch (wk_action) {
+	case SPPWK_ACT_NONE:
+		return "none";
+	case SPPWK_ACT_START:
+		return "start";
+	case SPPWK_ACT_STOP:
+		return "stop";
+	case SPPWK_ACT_ADD:
+		return "add";
+	case SPPWK_ACT_DEL:
+		return "del";
+	default:
+		return "unknown";
+	}
+}
+
+/* Get string of cmd type. It is mainly used for logging. */
+const char*
+sppwk_cmd_type_str(enum sppwk_cmd_type ctype)
+{
+	switch (ctype) {
+	case SPPWK_CMDTYPE_CLS_MAC:
+	case SPPWK_CMDTYPE_CLS_VLAN:
+		return "classifier_mac";
+	case SPPWK_CMDTYPE_CLIENT_ID:
+		return "_get_client_id";
+	case SPPWK_CMDTYPE_STATUS:
+		return "status";
+	case SPPWK_CMDTYPE_EXIT:
+		return "exit";
+	case SPPWK_CMDTYPE_WORKER:
+		return "component";
+	case SPPWK_CMDTYPE_PORT:
+		return "port";
+	default:
+		return "unknown";
+	}
+}
 
 /**
  * List of classifier type. The order of items should be same as the order of

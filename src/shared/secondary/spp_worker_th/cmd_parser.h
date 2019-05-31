@@ -51,6 +51,8 @@ enum sppwk_action {
 	SPPWK_ACT_DEL,   /**< delete */
 };
 
+const char *sppwk_action_str(enum sppwk_action wk_action);
+
 /**
  * SPP command type.
  *
@@ -71,6 +73,8 @@ enum sppwk_cmd_type {
 	SPPWK_CMDTYPE_WORKER,  /**< worker thread */
 	SPPWK_CMDTYPE_PORT,  /**< port */
 };
+
+const char *sppwk_cmd_type_str(enum sppwk_cmd_type ctype);
 
 /* `classifier_table` command specific parameters. */
 struct sppwk_cls_cmd_attrs {
