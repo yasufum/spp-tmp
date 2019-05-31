@@ -92,31 +92,27 @@ const char *CLS_TYPE_A_LIST[] = {
 	"",  /* termination */
 };
 
-/* get client id */
+/* Get client ID from global command params. */
 static int
-spp_get_client_id(void)
+sppwk_get_client_id(void)
 {
-	struct startup_param *startup_param;
-
-	sppwk_get_mng_data(&startup_param,
-			NULL, NULL, NULL, NULL, NULL, NULL);
-	return startup_param->client_id;
+	struct startup_param *params;
+	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
+	return params->client_id;
 }
 
-/* get process type */
+/* Get proc type from global command params. */
 static int
-spp_get_process_type(void)
+sppwk_get_proc_type(void)
 {
-	struct startup_param *startup_param;
-
-	sppwk_get_mng_data(&startup_param,
-			NULL, NULL, NULL, NULL, NULL, NULL);
-	return startup_param->secondary_type;
+	struct startup_param *params;
+	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
+	return params->secondary_type;
 }
 
-/* Check if port has been flushed. */
+/* Check if port is already flushed. */
 static int
-spp_check_flush_port(enum port_type iface_type, int iface_no)
+is_port_flushed(enum port_type iface_type, int iface_no)
 {
 	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
 	return port->ethdev_port_id >= 0;
@@ -926,7 +922,7 @@ static int
 append_client_id_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_int_value(name, output, spp_get_client_id());
+	return append_json_int_value(name, output, sppwk_get_client_id());
 }
 
 /* append a list of interface numbers */
@@ -937,7 +933,7 @@ append_interface_array(char **output, const enum port_type type)
 	char tmp_str[CMD_TAG_APPEND_SIZE];
 
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
-		if (!spp_check_flush_port(type, i))
+		if (!is_port_flushed(type, i))
 			continue;
 
 		sprintf(tmp_str, "%s%d", JSON_APPEND_COMMA(port_cnt), i);
@@ -962,7 +958,7 @@ append_process_type_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	return append_json_str_value(name, output,
-			SPPWK_PROC_TYPE_LIST[spp_get_process_type()]);
+			SPPWK_PROC_TYPE_LIST[sppwk_get_proc_type()]);
 }
 
 /* append a list of interface numbers for JSON format */
