@@ -15,24 +15,24 @@
 
 /* set parse error */
 static inline int
-set_parse_error(struct spp_command_parse_error *error,
-		const int error_code, const char *error_name)
+set_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
+		const int err_code, const char *err_msg)
 {
-	error->code = error_code;
+	wk_err_msg->code = err_code;
 
-	if (likely(error_name != NULL))
-		strcpy(error->value_name, error_name);
+	if (likely(err_msg != NULL))
+		strcpy(wk_err_msg->msg, err_msg);
 
-	return error->code;
+	return wk_err_msg->code;
 }
 
 /* set parse error */
 static inline int
-set_string_value_parse_error(struct spp_command_parse_error *error,
-		const char *value, const char *error_name)
+set_string_value_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
+		const char *err_details, const char *err_msg)
 {
-	strcpy(error->value, value);
-	return set_parse_error(error, SPPWK_PARSE_INVALID_VALUE, error_name);
+	strcpy(wk_err_msg->details, err_details);
+	return set_parse_error(wk_err_msg, SPPWK_PARSE_INVALID_VALUE, err_msg);
 }
 
 /* Split command line parameter with spaces */
@@ -63,7 +63,7 @@ struct parse_command_list {
 	int   param_min;        /* Min number of parameters */
 	int   param_max;        /* Max number of parameters */
 	int (*func)(struct spp_command_request *request, int argc,
-			char *argv[], struct spp_command_parse_error *error,
+			char *argv[], struct sppwk_parse_err_msg *error,
 			int maxargc);
 				/* Pointer to command handling function */
 	enum spp_command_type type;
@@ -84,7 +84,7 @@ static struct parse_command_list command_list_pcap[] = {
 static int
 parse_command_in_list(struct spp_command_request *request,
 			const char *request_str,
-			struct spp_command_parse_error *error)
+			struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int ret = SPP_RET_OK;
 	int command_name_check = 0;
@@ -102,7 +102,8 @@ parse_command_in_list(struct spp_command_request *request,
 	if (ret < SPP_RET_OK) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
+		return set_parse_error(wk_err_msg,
+				SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 	RTE_LOG(DEBUG, PCAP_PARSER, "Decode array. num=%d\n", argc);
 
@@ -119,7 +120,7 @@ parse_command_in_list(struct spp_command_request *request,
 
 		request->commands[0].type = command_list_pcap[i].type;
 		if (list->func != NULL)
-			return (*list->func)(request, argc, argv, error,
+			return (*list->func)(request, argc, argv, wk_err_msg,
 							list->param_max);
 
 		return SPP_RET_OK;
@@ -128,13 +129,14 @@ parse_command_in_list(struct spp_command_request *request,
 	if (command_name_check != 0) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number out of range."
 				"request_str=%s\n", request_str);
-		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
+		return set_parse_error(wk_err_msg,
+				SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 
 	RTE_LOG(ERR, PCAP_PARSER,
 			"Unknown command. command=%s, request_str=%s\n",
 			argv[0], request_str);
-	return set_string_value_parse_error(error, argv[0], "command");
+	return set_string_value_parse_error(wk_err_msg, argv[0], "command");
 }
 
 /* parse request from no-null-terminated string */
@@ -142,14 +144,14 @@ int
 spp_command_parse_request(
 		struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
-		struct spp_command_parse_error *error)
+		struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int ret = SPP_RET_NG;
 	int i;
 
 	/* parse request */
 	request->num_command = 1;
-	ret = parse_command_in_list(request, request_str, error);
+	ret = parse_command_in_list(request, request_str, wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, PCAP_PARSER,
 				"Cannot parse command request. "

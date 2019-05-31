@@ -272,31 +272,31 @@ execute_command(const struct spp_command *command)
 /* parse error message for response */
 static const char *
 parse_error_message(
-		const struct spp_command_parse_error *parse_error,
+		const struct sppwk_parse_err_msg *wk_err_msg,
 		char *message)
 {
-	switch (parse_error->code) {
+	switch (wk_err_msg->code) {
 	case SPPWK_PARSE_WRONG_FORMAT:
 		sprintf(message, "Wrong message format");
 		break;
 
 	case SPPWK_PARSE_UNKNOWN_CMD:
 		/* TODO(yasufum) Fix compile err if space exists before "(" */
-		sprintf(message, "Unknown command(%s)", parse_error->value);
+		sprintf(message, "Unknown command(%s)", wk_err_msg->details);
 		break;
 
 	case SPPWK_PARSE_NO_PARAM:
 		sprintf(message, "No or insufficient number of params (%s)",
-				parse_error->value_name);
+				wk_err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_TYPE:
 		sprintf(message, "Invalid value type (%s)",
-				parse_error->value_name);
+				wk_err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_VALUE:
-		sprintf(message, "Invalid value (%s)", parse_error->value_name);
+		sprintf(message, "Invalid value (%s)", wk_err_msg->msg);
 		break;
 
 	default:
@@ -334,22 +334,21 @@ set_command_results(struct command_result *result,
 static void
 set_parse_error_to_results(struct command_result *results,
 		const struct spp_command_request *request,
-		const struct spp_command_parse_error *parse_error)
+		const struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int i;
 	const char *tmp_buff;
-	char error_messege[CMD_RES_ERR_MSG_SIZE];
+	char err_msg[CMD_RES_ERR_MSG_SIZE];
 
 	for (i = 0; i < request->num_command; i++) {
-		if (parse_error->code == 0)
+		if (wk_err_msg->code == 0)
 			set_command_results(&results[i], CMD_SUCCESS, "");
 		else
 			set_command_results(&results[i], CMD_INVALID, "");
 	}
 
-	if (parse_error->code != 0) {
-		tmp_buff = parse_error_message(parse_error,
-				error_messege);
+	if (wk_err_msg->code != 0) {
+		tmp_buff = parse_error_message(wk_err_msg, err_msg);
 		set_command_results(&results[request->num_valid_command],
 				CMD_FAILURE, tmp_buff);
 	}
@@ -876,11 +875,11 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	int i;
 
 	struct spp_command_request request;
-	struct spp_command_parse_error parse_error;
+	struct sppwk_parse_err_msg parse_error;
 	struct command_result command_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
-	memset(&parse_error, 0, sizeof(struct spp_command_parse_error));
+	memset(&parse_error, 0, sizeof(struct sppwk_parse_err_msg));
 	memset(command_results, 0, sizeof(command_results));
 
 	RTE_LOG(DEBUG, PCAP_RUNNER, "Start command request processing. "

@@ -79,11 +79,11 @@ struct spp_command_request {
 	int is_requested_stop;          /**< Id for stop command */
 };
 
-/** parse error information */
-struct spp_command_parse_error {
-	int code;                            /**< Error code */
-	char value_name[SPPWK_NAME_BUFSZ]; /**< Error value name */
-	char value[SPPWK_VAL_BUFSZ];     /**< Error value */
+/* Error message if parse failed. */
+struct sppwk_parse_err_msg {
+	int code;  /**< Code in enu sppwk_parse_error_code */
+	char msg[SPPWK_NAME_BUFSZ];   /**< Message in short */
+	char details[SPPWK_VAL_BUFSZ];  /**< Detailed message */
 };
 
 /**
@@ -97,7 +97,7 @@ struct spp_command_parse_error {
  * @param request_str_len
  *  The length of requested command message.
  * @param error
- *  The pointer to struct spp_command_parse_error.@n
+ *  The pointer to struct sppwk_parse_err_msg.@n
  *  Detailed error information will be stored.
  *
  * @retval SPP_RET_OK succeeded.
@@ -105,6 +105,6 @@ struct spp_command_parse_error {
  */
 int spp_command_parse_request(struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
-		struct spp_command_parse_error *error);
+		struct sppwk_parse_err_msg *error);
 
 #endif /* _SPP_PCAP_CMD_PARSER_H_ */
