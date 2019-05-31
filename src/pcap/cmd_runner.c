@@ -416,7 +416,7 @@ append_client_id_value(const char *name, char **output,
 
 /* append a block of port entry for JSON format */
 static int
-append_port_entry(char **output, const struct spp_port_index *port,
+append_port_entry(char **output, const struct sppwk_port_idx *port,
 		const enum spp_port_rxtx rxtx __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
@@ -441,7 +441,7 @@ append_port_entry(char **output, const struct spp_port_index *port,
 /* append a list of port numbers for JSON format */
 static int
 append_port_array(const char *name, char **output, const int num,
-		const struct spp_port_index *ports,
+		const struct sppwk_port_idx *ports,
 		const enum spp_port_rxtx rxtx)
 {
 	int ret = SPPWK_RET_NG;
@@ -479,9 +479,9 @@ append_pcap_core_element_value(
 		const unsigned int lcore_id,
 		const char *name, const char *type,
 		const int num_rx,
-		const struct spp_port_index *rx_ports,
+		const struct sppwk_port_idx *rx_ports,
 		const int num_tx __attribute__ ((unused)),
-		const struct spp_port_index *tx_ports __attribute__ ((unused)))
+		const struct sppwk_port_idx *tx_ports __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
 	int unuse_flg = 0;

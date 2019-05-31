@@ -103,12 +103,6 @@ enum SPP_LONGOPT_RETVAL {
 	SPP_LONGOPT_RETVAL_FILE_SIZE   /* --fsize */
 };
 
-/* Interface information structure */
-struct spp_port_index {
-	enum port_type  iface_type; /**< Interface type (phy/ring) */
-	int             iface_no;   /**< Interface number */
-};
-
 /** VLAN tag information */
 struct spp_vlantag_info {
 	int vid; /**< VLAN ID */
@@ -132,11 +126,18 @@ struct spp_port_ability {
 	union spp_ability_data data;   /**< Port ability data */
 };
 
-/** Port class identifier for classifying */
-struct spp_port_class_identifier {
-	uint64_t mac_addr;                      /**< Mac address (binary) */
-	char     mac_addr_str[SPP_MIN_STR_LEN]; /**< Mac address (text) */
-	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
+/* TODO(yasufum) confirm why vlantag is required for spp_pcap. */
+/* Attributes for classifying . */
+struct sppwk_cls_attrs {
+	uint64_t mac_addr;  /**< Mac address (binary) */
+	char mac_addr_str[SPP_MIN_STR_LEN];  /**< Mac address (text) */
+	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
+};
+
+/* Interface information structure */
+struct sppwk_port_idx {
+	enum port_type iface_type;  /**< phy, vhost or ring. */
+	int iface_no;
 };
 
 /* Define detailed port params in addition to `sppwk_port_idx`. */
@@ -144,10 +145,8 @@ struct sppwk_port_info {
 	enum port_type iface_type;  /**< phy, vhost or ring */
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
-	struct spp_port_class_identifier class_id;
-					/**< Port class identifier */
+	struct sppwk_cls_attrs cls_attrs;
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
-					/**< Port ability */
 };
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
@@ -200,9 +199,9 @@ typedef int (*spp_iterate_core_element_proc)(
 		const char *name,
 		const char *type,
 		const int num_rx,
-		const struct spp_port_index *rx_ports,
+		const struct sppwk_port_idx *rx_ports,
 		const int num_tx,
-		const struct spp_port_index *tx_ports);
+		const struct sppwk_port_idx *tx_ports);
 
 /**
  * iterate core table parameters which is

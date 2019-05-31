@@ -420,7 +420,7 @@ spp_pcap_get_core_status(
 	char role_type[8];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	char name[PCAP_FPATH_STRLEN + PCAP_FDATE_STRLEN];
-	struct spp_port_index rx_ports[1];
+	struct sppwk_port_idx rx_ports[1];
 	int rx_num = 0;
 
 	RTE_LOG(DEBUG, SPP_PCAP, "status core[%d]\n", lcore_id);

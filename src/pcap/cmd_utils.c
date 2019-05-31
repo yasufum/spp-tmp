@@ -176,12 +176,12 @@ init_iface_info(void)
 		p_iface_info->nic[port_cnt].iface_type = UNDEF;
 		p_iface_info->nic[port_cnt].iface_no   = port_cnt;
 		p_iface_info->nic[port_cnt].ethdev_port_id  = -1;
-		p_iface_info->nic[port_cnt].class_id.vlantag.vid =
+		p_iface_info->nic[port_cnt].cls_attrs.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
 		p_iface_info->ring[port_cnt].ethdev_port_id  = -1;
-		p_iface_info->ring[port_cnt].class_id.vlantag.vid =
+		p_iface_info->ring[port_cnt].cls_attrs.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 	}
 }
