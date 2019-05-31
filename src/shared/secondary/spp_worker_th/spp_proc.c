@@ -21,21 +21,21 @@
 
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
-/* Manage data to addoress */
-struct manage_data_addr_info {
-	struct startup_param	  *p_startup_param;
-	struct iface_info	  *p_iface_info;
+/* A set of pointers of management data */
+struct mng_data_info {
+	struct startup_param *p_startup_param;
+	struct iface_info *p_iface_info;
 	struct spp_component_info *p_component_info;
-	struct core_mng_info	  *p_core_info;
-	int			  *p_change_core;
-	int			  *p_change_component;
+	struct core_mng_info *p_core_info;
+	int *p_change_core;
+	int *p_change_component;
 	struct cancel_backup_info *p_backup_info;
-	unsigned int		  main_lcore_id;
+	unsigned int main_lcore_id;
 };
 
 /* Declare global variables */
 /* Logical core ID for main process */
-static struct manage_data_addr_info g_mng_data_addr;
+static struct mng_data_info g_mng_data;
 
 /**
  * Make a hexdump of an array data in every 4 byte.
@@ -191,7 +191,7 @@ spp_vf_add_vhost_pmd(int index, int client)
 enum spp_core_status
 spp_get_core_status(unsigned int lcore_id)
 {
-	return (g_mng_data_addr.p_core_info + lcore_id)->status;
+	return (g_mng_data.p_core_info + lcore_id)->status;
 }
 
 /**
@@ -205,7 +205,7 @@ check_core_status(enum spp_core_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		if ((g_mng_data_addr.p_core_info + lcore_id)->status !=
+		if ((g_mng_data.p_core_info + lcore_id)->status !=
 								status) {
 			/* Status is mismatched */
 			return SPP_RET_NG;
@@ -234,7 +234,7 @@ void
 set_core_status(unsigned int lcore_id,
 		enum spp_core_status status)
 {
-	(g_mng_data_addr.p_core_info + lcore_id)->status = status;
+	(g_mng_data.p_core_info + lcore_id)->status = status;
 }
 
 /* Set all core to given status */
@@ -243,7 +243,7 @@ set_all_core_status(enum spp_core_status status)
 {
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		(g_mng_data_addr.p_core_info + lcore_id)->status = status;
+		(g_mng_data.p_core_info + lcore_id)->status = status;
 	}
 }
 
@@ -259,7 +259,7 @@ stop_process(int signal)
 		return;
 	}
 
-	(g_mng_data_addr.p_core_info + g_mng_data_addr.main_lcore_id)->status =
+	(g_mng_data.p_core_info + g_mng_data.main_lcore_id)->status =
 							SPP_CORE_STOP_REQUEST;
 	set_all_core_status(SPP_CORE_STOP_REQUEST);
 }
@@ -271,7 +271,7 @@ stop_process(int signal)
 struct sppwk_port_info *
 get_sppwk_port(enum port_type iface_type, int iface_no)
 {
-	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
+	struct iface_info *iface_info = g_mng_data.p_iface_info;
 
 	switch (iface_type) {
 	case PHY:
@@ -445,18 +445,18 @@ copy_mng_info(
 void
 backup_mng_info(struct cancel_backup_info *backup)
 {
-	dump_all_mng_info(g_mng_data_addr.p_core_info,
-			g_mng_data_addr.p_component_info,
-			g_mng_data_addr.p_iface_info);
+	dump_all_mng_info(g_mng_data.p_core_info,
+			g_mng_data.p_component_info,
+			g_mng_data.p_iface_info);
 	copy_mng_info(backup->core, backup->component, &backup->interface,
-			g_mng_data_addr.p_core_info,
-			g_mng_data_addr.p_component_info,
-			g_mng_data_addr.p_iface_info,
+			g_mng_data.p_core_info,
+			g_mng_data.p_component_info,
+			g_mng_data.p_iface_info,
 			COPY_MNG_FLG_ALLCOPY);
 	dump_all_mng_info(backup->core, backup->component, &backup->interface);
-	memset(g_mng_data_addr.p_change_core, 0x00,
+	memset(g_mng_data.p_change_core, 0x00,
 				sizeof(int)*RTE_MAX_LCORE);
-	memset(g_mng_data_addr.p_change_component, 0x00,
+	memset(g_mng_data.p_change_component, 0x00,
 				sizeof(int)*RTE_MAX_LCORE);
 }
 
@@ -469,7 +469,7 @@ static void
 init_iface_info(void)
 {
 	int port_cnt;  /* increment ether ports */
-	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
+	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
 	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
 		p_iface_info->nic[port_cnt].iface_type = UNDEF;
@@ -495,11 +495,11 @@ static void
 init_component_info(void)
 {
 	int cnt;
-	memset(g_mng_data_addr.p_component_info, 0x00,
+	memset(g_mng_data.p_component_info, 0x00,
 			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++)
-		(g_mng_data_addr.p_component_info + cnt)->component_id = cnt;
-	memset(g_mng_data_addr.p_change_component, 0x00,
+		(g_mng_data.p_component_info + cnt)->component_id = cnt;
+	memset(g_mng_data.p_change_component, 0x00,
 			sizeof(int)*RTE_MAX_LCORE);
 }
 
@@ -508,7 +508,7 @@ static void
 init_core_info(void)
 {
 	int cnt = 0;
-	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
+	struct core_mng_info *p_core_info = g_mng_data.p_core_info;
 	memset(p_core_info, 0x00,
 			sizeof(struct core_mng_info)*RTE_MAX_LCORE);
 	set_all_core_status(SPP_CORE_STOP);
@@ -516,7 +516,7 @@ init_core_info(void)
 		(p_core_info + cnt)->ref_index = 0;
 		(p_core_info + cnt)->upd_index = 1;
 	}
-	memset(g_mng_data_addr.p_change_core, 0x00, sizeof(int)*RTE_MAX_LCORE);
+	memset(g_mng_data.p_change_core, 0x00, sizeof(int)*RTE_MAX_LCORE);
 }
 
 /* Setup port info of port on host */
@@ -524,7 +524,7 @@ static int
 set_nic_interface(void)
 {
 	int nic_cnt = 0;
-	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
+	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
 
 	/* NIC Setting */
 	p_iface_info->num_nic = rte_eth_dev_count_avail();
@@ -602,7 +602,7 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 	int cnt;
 
 	/* Do not remove for if it is running in vhost-client mode. */
-	if (g_mng_data_addr.p_startup_param->vhost_client != 0)
+	if (g_mng_data.p_startup_param->vhost_client != 0)
 		return;
 
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
@@ -620,7 +620,7 @@ enum spp_component_type
 spp_get_component_type(int id)
 {
 	struct spp_component_info *component_info =
-				(g_mng_data_addr.p_component_info + id);
+				(g_mng_data.p_component_info + id);
 	return component_info->type;
 }
 
@@ -629,7 +629,7 @@ unsigned int
 spp_get_component_core(int component_id)
 {
 	struct spp_component_info *info =
-			(g_mng_data_addr.p_component_info + component_id);
+			(g_mng_data.p_component_info + component_id);
 	return info->lcore_id;
 }
 
@@ -637,7 +637,7 @@ spp_get_component_core(int component_id)
 struct core_info *
 get_core_info(unsigned int lcore_id)
 {
-	struct core_mng_info *info = (g_mng_data_addr.p_core_info + lcore_id);
+	struct core_mng_info *info = (g_mng_data.p_core_info + lcore_id);
 	return &(info->core[info->ref_index]);
 }
 
@@ -645,7 +645,7 @@ get_core_info(unsigned int lcore_id)
 int
 spp_check_core_update(unsigned int lcore_id)
 {
-	struct core_mng_info *info = (g_mng_data_addr.p_core_info + lcore_id);
+	struct core_mng_info *info = (g_mng_data.p_core_info + lcore_id);
 	if (info->ref_index == info->upd_index)
 		return SPP_RET_OK;
 	else
@@ -664,7 +664,7 @@ spp_check_used_port(
 	struct sppwk_port_info **port_array = NULL;
 	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
 	struct spp_component_info *component_info =
-					g_mng_data_addr.p_component_info;
+					g_mng_data.p_component_info;
 
 	if (port == NULL)
 		return SPP_RET_NG;
@@ -699,14 +699,14 @@ set_component_change_port(struct sppwk_port_info *port, enum spp_port_rxtx rxtx)
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_RX);
 		if (ret >= 0)
-			*(g_mng_data_addr.p_change_component + ret) = 1;
+			*(g_mng_data.p_change_component + ret) = 1;
 	}
 
 	if ((rxtx == SPP_PORT_RXTX_TX) || (rxtx == SPP_PORT_RXTX_ALL)) {
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_TX);
 		if (ret >= 0)
-			*(g_mng_data_addr.p_change_component + ret) = 1;
+			*(g_mng_data.p_change_component + ret) = 1;
 	}
 }
 
@@ -715,7 +715,7 @@ int
 get_free_component(void)
 {
 	struct spp_component_info *component_info =
-					g_mng_data_addr.p_component_info;
+					g_mng_data.p_component_info;
 
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
@@ -731,7 +731,7 @@ int
 spp_get_component_id(const char *name)
 {
 	struct spp_component_info *component_info =
-		g_mng_data_addr.p_component_info;
+		g_mng_data.p_component_info;
 
 	int cnt = 0;
 	if (name[0] == '\0')
@@ -820,14 +820,14 @@ flush_port(void)
 	int ret = 0;
 	int cnt = 0;
 	struct sppwk_port_info *port = NULL;
-	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
+	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
 
 	/* Initialize added vhost. */
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &p_iface_info->vhost[cnt];
 		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
 			ret = spp_vf_add_vhost_pmd(port->iface_no,
-				g_mng_data_addr.p_startup_param->vhost_client);
+				g_mng_data.p_startup_param->vhost_client);
 			if (ret < 0)
 				return SPP_RET_NG;
 			port->ethdev_port_id = ret;
@@ -853,8 +853,8 @@ flush_core(void)
 {
 	int cnt = 0;
 	struct core_mng_info *info = NULL;
-	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
-	int *p_change_core = g_mng_data_addr.p_change_core;
+	struct core_mng_info *p_core_info = g_mng_data.p_core_info;
+	int *p_change_core = g_mng_data.p_change_core;
 
 	/* Changed core has changed index. */
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
@@ -885,9 +885,9 @@ flush_component(void)
 	int ret = 0;
 	int cnt = 0;
 	struct spp_component_info *component_info = NULL;
-	int *p_change_component = g_mng_data_addr.p_change_component;
+	int *p_change_component = g_mng_data.p_change_component;
 	struct spp_component_info *p_component_info =
-					g_mng_data_addr.p_component_info;
+					g_mng_data.p_component_info;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		if (*(p_change_component + cnt) == 0)
@@ -1011,14 +1011,14 @@ int sppwk_set_mng_data(
 			backup_info_p == NULL || main_lcore_id == 0xffffffff)
 		return SPP_RET_NG;
 
-	g_mng_data_addr.p_startup_param = startup_param_p;
-	g_mng_data_addr.p_iface_info = iface_p;
-	g_mng_data_addr.p_component_info = component_p;
-	g_mng_data_addr.p_core_info = core_mng_p;
-	g_mng_data_addr.p_change_core = change_core_p;
-	g_mng_data_addr.p_change_component = change_component_p;
-	g_mng_data_addr.p_backup_info = backup_info_p;
-	g_mng_data_addr.main_lcore_id = main_lcore_id;
+	g_mng_data.p_startup_param = startup_param_p;
+	g_mng_data.p_iface_info = iface_p;
+	g_mng_data.p_component_info = component_p;
+	g_mng_data.p_core_info = core_mng_p;
+	g_mng_data.p_change_core = change_core_p;
+	g_mng_data.p_change_component = change_component_p;
+	g_mng_data.p_backup_info = backup_info_p;
+	g_mng_data.main_lcore_id = main_lcore_id;
 
 	return SPP_RET_OK;
 }
@@ -1035,18 +1035,18 @@ void sppwk_get_mng_data(
 {
 
 	if (startup_param_p != NULL)
-		*startup_param_p = g_mng_data_addr.p_startup_param;
+		*startup_param_p = g_mng_data.p_startup_param;
 	if (iface_p != NULL)
-		*iface_p = g_mng_data_addr.p_iface_info;
+		*iface_p = g_mng_data.p_iface_info;
 	if (component_p != NULL)
-		*component_p = g_mng_data_addr.p_component_info;
+		*component_p = g_mng_data.p_component_info;
 	if (core_mng_p != NULL)
-		*core_mng_p = g_mng_data_addr.p_core_info;
+		*core_mng_p = g_mng_data.p_core_info;
 	if (change_core_p != NULL)
-		*change_core_p = g_mng_data_addr.p_change_core;
+		*change_core_p = g_mng_data.p_change_core;
 	if (change_component_p != NULL)
-		*change_component_p = g_mng_data_addr.p_change_component;
+		*change_component_p = g_mng_data.p_change_component;
 	if (backup_info_p != NULL)
-		*backup_info_p = g_mng_data_addr.p_backup_info;
+		*backup_info_p = g_mng_data.p_backup_info;
 
 }
