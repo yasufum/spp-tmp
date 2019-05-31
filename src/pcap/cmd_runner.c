@@ -236,7 +236,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 /* TODO(yasufum) confirm why this function does nothing is needed. */
 /* execute one command */
 static int
-execute_command(const struct spp_command *command)
+execute_command(const struct pcap_cmd_attr *command)
 {
 	int ret = SPPWK_RET_OK;
 
@@ -892,7 +892,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	/* execute commands */
 	for (i = 0; i < request.num_command ; ++i) {
-		ret = execute_command(request.commands + i);
+		ret = execute_command(request.cmd_attrs + i);
 		if (unlikely(ret != SPPWK_RET_OK)) {
 			set_command_results(&command_results[i], CMD_FAILURE,
 					"error occur");

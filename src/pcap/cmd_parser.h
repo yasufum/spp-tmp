@@ -51,16 +51,15 @@ enum pcap_cmd_type {
 	PCAP_CMDTYPE_STOP,  /**< port */
 };
 
-/** command parameters */
-struct spp_command {
-	enum pcap_cmd_type type; /**< Command type */
+struct pcap_cmd_attr {
+	enum pcap_cmd_type type;
 };
 
 /** request parameters */
 struct spp_command_request {
 	int num_command;                /**< Number of accepted commands */
 	int num_valid_command;          /**< Number of executed commands */
-	struct spp_command commands[SPPWK_MAX_CMDS];
+	struct pcap_cmd_attr cmd_attrs[SPPWK_MAX_CMDS];
 					/**<Information of executed commands */
 
 	int is_requested_client_id;     /**< Id for get_client_id command */

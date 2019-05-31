@@ -13,7 +13,8 @@
 
 #define RTE_LOGTYPE_PCAP_PARSER RTE_LOGTYPE_USER2
 
-/* set parse error */
+/* Format error message object and return error code for an error case. */
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_parser.c */
 static inline int
 set_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 		const int err_code, const char *err_msg)
@@ -118,7 +119,7 @@ parse_command_in_list(struct spp_command_request *request,
 			continue;
 		}
 
-		request->commands[0].type = command_list_pcap[i].type;
+		request->cmd_attrs[0].type = command_list_pcap[i].type;
 		if (list->func != NULL)
 			return (*list->func)(request, argc, argv, wk_err_msg,
 							list->param_max);
@@ -163,7 +164,7 @@ spp_command_parse_request(
 
 	/* check getter command */
 	for (i = 0; i < request->num_valid_command; ++i) {
-		switch (request->commands[i].type) {
+		switch (request->cmd_attrs[i].type) {
 		case PCAP_CMDTYPE_CLIENT_ID:
 			request->is_requested_client_id = 1;
 			break;
