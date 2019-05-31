@@ -67,14 +67,6 @@ enum comp_file_generate_mode {
 	CLOSE_MODE   /* close mode which is used when capture is stopped */
 };
 
-/* capture thread name string  */
-const char *CAPTURE_THREAD_TYPE_STRINGS[] = {
-	"unuse",
-	"receive",
-	"write",
-	/* termination */ "",
-};
-
 /* lz4 preferences */
 static const LZ4F_preferences_t g_kprefs = {
 	{
