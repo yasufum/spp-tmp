@@ -122,85 +122,82 @@ is_port_flushed(enum port_type iface_type, int iface_no)
 
 /* Update classifier table with given action, add or del. */
 static int
-spp_update_classifier_table(
-		enum sppwk_action wk_action,
+update_cls_table(enum sppwk_action wk_action,
 		enum spp_classifier_type type __attribute__ ((unused)),
-		int vid,
-		const char *mac_addr_str,
+		int vid, const char *mac_str,
 		const struct sppwk_port_idx *port)
 {
-	struct sppwk_port_info *port_info = NULL;
-	int64_t ret_mac = 0;
-	uint64_t mac_addr = 0;
+	/**
+	 * Use two types of mac addr in int64_t and uint64_t because first
+	 * one is checked if converted value from string  is negative for error.
+	 * If it is invalid, convert it to uint64_t.
+	 */
+	int64_t mac_int64;
+	uint64_t mac_uint64;
+	struct sppwk_port_info *port_info;
 
-	RTE_LOG(DEBUG, APP, "update_classifier_table "
-			"( type = mac, mac addr = %s, port = %d:%d )\n",
-			mac_addr_str, port->iface_type, port->iface_no);
+	RTE_LOG(DEBUG, APP, "Called update_cls_table with "
+			"type `mac`, mac_addr `%s`, and port `%d:%d`.\n",
+			mac_str, port->iface_type, port->iface_no);
 
-	ret_mac = sppwk_convert_mac_str_to_int64(mac_addr_str);
-	if (unlikely(ret_mac == -1)) {
-		RTE_LOG(ERR, APP, "MAC address format error. ( mac = %s )\n",
-			mac_addr_str);
+	mac_int64 = sppwk_convert_mac_str_to_int64(mac_str);
+	if (unlikely(mac_int64 == -1)) {
+		RTE_LOG(ERR, APP, "Invalid MAC address `%s`.\n", mac_str);
 		return SPP_RET_NG;
 	}
-	mac_addr = (uint64_t)ret_mac;
+	mac_uint64 = (uint64_t)mac_int64;
 
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (unlikely(port_info == NULL)) {
-		RTE_LOG(ERR, APP, "No port. ( port = %d:%d )\n",
+		RTE_LOG(ERR, APP, "Failed to get port %d:%d.\n",
 				port->iface_type, port->iface_no);
 		return SPP_RET_NG;
 	}
 	if (unlikely(port_info->iface_type == UNDEF)) {
-		RTE_LOG(ERR, APP, "Port not added. ( port = %d:%d )\n",
+		RTE_LOG(ERR, APP, "Port %d:%d doesn't exist.\n",
 				port->iface_type, port->iface_no);
 		return SPP_RET_NG;
 	}
 
 	if (wk_action == SPPWK_ACT_DEL) {
-		/* Delete */
 		if ((port_info->cls_attrs.vlantag.vid != 0) &&
-				unlikely(port_info->cls_attrs.vlantag.vid !=
-				vid)) {
-			RTE_LOG(ERR, APP, "VLAN ID is different. "
-					"( vid = %d )\n", vid);
+				port_info->cls_attrs.vlantag.vid != vid) {
+			RTE_LOG(ERR, APP, "Unexpected VLAN ID `%d`.\n", vid);
 			return SPP_RET_NG;
 		}
 		if ((port_info->cls_attrs.mac_addr != 0) &&
-			unlikely(port_info->cls_attrs.mac_addr !=
-					mac_addr)) {
-			RTE_LOG(ERR, APP, "MAC address is different. "
-					"( mac = %s )\n", mac_addr_str);
+				port_info->cls_attrs.mac_addr != mac_uint64) {
+			RTE_LOG(ERR, APP, "Unexpected MAC %s.\n", mac_str);
 			return SPP_RET_NG;
 		}
 
+		/* Initialize deleted attributes again. */
 		port_info->cls_attrs.vlantag.vid = ETH_VLAN_ID_MAX;
-		port_info->cls_attrs.mac_addr    = 0;
+		port_info->cls_attrs.mac_addr = 0;
 		memset(port_info->cls_attrs.mac_addr_str, 0x00,
 							SPP_MIN_STR_LEN);
-
 	} else if (wk_action == SPPWK_ACT_ADD) {
-		/* Setting */
 		if (unlikely(port_info->cls_attrs.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
-			RTE_LOG(ERR, APP, "Port in used. "
-					"( port = %d:%d, vlan = %d != %d )\n",
+			/* TODO(yasufum) why two vids are required in msg ? */
+			RTE_LOG(ERR, APP, "Used port %d:%d, vid %d != %d.\n",
 					port->iface_type, port->iface_no,
 					port_info->cls_attrs.vlantag.vid, vid);
 			return SPP_RET_NG;
 		}
 		if (unlikely(port_info->cls_attrs.mac_addr != 0)) {
-			RTE_LOG(ERR, APP, "Port in used. "
-					"( port = %d:%d, mac = %s != %s )\n",
+			/* TODO(yasufum) why two macs are required in msg ? */
+			RTE_LOG(ERR, APP, "Used port %d:%d, mac %s != %s.\n",
 					port->iface_type, port->iface_no,
 					port_info->cls_attrs.mac_addr_str,
-					mac_addr_str);
+					mac_str);
 			return SPP_RET_NG;
 		}
 
+		/* Update attrs with validated params. */
 		port_info->cls_attrs.vlantag.vid = vid;
-		port_info->cls_attrs.mac_addr    = mac_addr;
-		strcpy(port_info->cls_attrs.mac_addr_str, mac_addr_str);
+		port_info->cls_attrs.mac_addr = mac_uint64;
+		strcpy(port_info->cls_attrs.mac_addr_str, mac_str);
 	}
 
 	set_component_change_port(port_info, SPP_PORT_RXTX_TX);
@@ -733,7 +730,7 @@ execute_command(const struct spp_command *command)
 	case SPPWK_CMDTYPE_CLS_VLAN:
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Execute classifier_table command.\n");
-		ret = spp_update_classifier_table(
+		ret = update_cls_table(
 				command->spec.cls_table.wk_action,
 				command->spec.cls_table.type,
 				command->spec.cls_table.vid,
