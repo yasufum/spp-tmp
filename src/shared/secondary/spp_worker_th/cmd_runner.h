@@ -2,8 +2,8 @@
  * Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _COMMAND_PROC_H_
-#define _COMMAND_PROC_H_
+#ifndef _SPPWK_CMD_RUNNER_H_
+#define _SPPWK_CMD_RUNNER_H_
 
 /**
  * @file
@@ -39,4 +39,4 @@ spp_command_proc_init(const char *controller_ip, int controller_port);
 int
 spp_command_proc_do(void);
 
-#endif /* _COMMAND_PROC_H_ */
+#endif  /* _SPPWK_CMD_RUNNER_H_ */

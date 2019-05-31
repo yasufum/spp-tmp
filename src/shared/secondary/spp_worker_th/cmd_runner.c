@@ -15,7 +15,7 @@
 
 #include "command_conn.h"
 #include "cmd_parser.h"
-#include "command_proc.h"
+#include "cmd_runner.h"
 
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
