@@ -92,7 +92,7 @@ parse_command_in_list(struct spp_command_request *request,
 	int i = 0;
 	int argc = 0;
 	char *argv[SPPWK_MAX_PARAMS];
-	char tmp_str[SPPWK_MAX_PARAMS * SPP_CMD_VALUE_BUFSZ];
+	char tmp_str[SPPWK_MAX_PARAMS * SPPWK_VAL_BUFSZ];
 	memset(argv, 0x00, sizeof(argv));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 

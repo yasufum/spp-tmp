@@ -21,10 +21,10 @@
 #define SPPWK_MAX_PARAMS 8
 
 /** command name string buffer size (include null char) */
-#define SPP_CMD_NAME_BUFSZ  32
+#define SPPWK_NAME_BUFSZ  32
 
 /** command value string buffer size (include null char) */
-#define SPP_CMD_VALUE_BUFSZ 111
+#define SPPWK_VAL_BUFSZ 111
 
 /** parse error code */
 enum sppwk_parse_error_code {
@@ -82,8 +82,8 @@ struct spp_command_request {
 /** parse error information */
 struct spp_command_parse_error {
 	int code;                            /**< Error code */
-	char value_name[SPP_CMD_NAME_BUFSZ]; /**< Error value name */
-	char value[SPP_CMD_VALUE_BUFSZ];     /**< Error value */
+	char value_name[SPPWK_NAME_BUFSZ]; /**< Error value name */
+	char value[SPPWK_VAL_BUFSZ];     /**< Error value */
 };
 
 /**
