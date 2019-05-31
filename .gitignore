@@ -1,6 +1,7 @@
 *.swp
 *.pyc
 *.log
+bin/config.sh
 docs/guides/_build/*
 docs/guides/images/**/*.pdf
 src/controller/3rd_party/*

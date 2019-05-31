@@ -8,10 +8,21 @@
 # Activate for debugging
 #set -x
 
-SPP_DIR=$(cd $(dirname $0); pwd)/..
+WORK_DIR=$(cd $(dirname $0); pwd)
+SPP_DIR=${WORK_DIR}/..
+
+DEFAULT_CONFIG=${WORK_DIR}/sample/config.sh
+CONFIG=${WORK_DIR}/config.sh
+
+if [ ! -f ${CONFIG} ]; then
+    echo "Creating config file ..."
+    cp ${DEFAULT_CONFIG} ${CONFIG}
+    echo "Edit '${CONFIG}' and run this script again!"
+    exit
+fi
 
 # import vars and functions
-. ${SPP_DIR}/bin/env.sh
+. ${CONFIG}
 
 echo "Start spp-ctl"
 python3 ${SPP_DIR}/src/spp-ctl/spp-ctl -b ${SPP_HOST_IP} \
