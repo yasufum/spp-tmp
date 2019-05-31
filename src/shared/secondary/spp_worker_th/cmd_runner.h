@@ -7,36 +7,36 @@
 
 /**
  * @file
- * SPP Command processing
+ * Run command for SPP worker thread.
  *
- * Receive and process the command message, then send back the
- * result JSON formatted data.
+ * Receive command message from SPP controller and run. The result is returned
+ * to SPP controller as a JSON formatted message.
  */
 
 #include "spp_proc.h"
 
 /**
- * initialize command processor.
+ * Setup connection for accepting commands from spp-ctl.
  *
- * @param controller_ip
- *  The controller's ip address.
- * @param controller_port
- *  The controller's port number.
+ * @param ctl_ipaddr
+ * IP address of spp-ctl.
+ * @param ctl_port
+ * Port number of spp-ctl.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPP_RET_OK if succeeded.
+ * @retval SPP_RET_NG if failed.
  */
 int
-spp_command_proc_init(const char *controller_ip, int controller_port);
+sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port);
 
 /**
- * process command from controller.
+ * Run command from spp-ctl.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG process termination is required.
- *            (occurred connection failure, or received exit command)
+ * @retval SPP_RET_OK if succeeded.
+ * TODO(yasufum) change exclude case of exit cmd because it is not NG.
+ * @retval SPP_RET_NG if connection failure or received exit command.
  */
 int
-spp_command_proc_do(void);
+sppwk_cmd_run(void);
 
 #endif  /* _SPPWK_CMD_RUNNER_H_ */

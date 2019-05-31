@@ -299,7 +299,7 @@ main(int argc, char *argv[])
 		spp_port_ability_init();
 
 		/* Setup connection for accepting commands from controller */
-		int ret_command_init = spp_command_proc_init(
+		int ret_command_init = sppwk_cmd_runner_conn(
 				g_startup_param.server_ip,
 				g_startup_param.server_port);
 		if (unlikely(ret_command_init != SPP_RET_OK))
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 		{
 #endif
 			/* Receive command */
-			ret_do = spp_command_proc_do();
+			ret_do = sppwk_cmd_run();
 			if (unlikely(ret_do != SPP_RET_OK))
 				break;
 

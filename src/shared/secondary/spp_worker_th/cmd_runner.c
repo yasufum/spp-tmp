@@ -1710,16 +1710,16 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	return SPP_RET_OK;
 }
 
-/* initialize command processor. */
+/* Setup connection for accepting commands from spp-ctl. */
 int
-spp_command_proc_init(const char *controller_ip, int controller_port)
+sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port)
 {
-	return spp_command_conn_init(controller_ip, controller_port);
+	return spp_command_conn_init(ctl_ipaddr, ctl_port);
 }
 
-/* process command from controller. */
+/* Run command from spp-ctl. */
 int
-spp_command_proc_do(void)
+sppwk_cmd_run(void)
 {
 	int ret = SPP_RET_NG;
 	int msg_ret = -1;
