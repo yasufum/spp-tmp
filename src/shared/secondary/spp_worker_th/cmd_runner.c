@@ -21,37 +21,33 @@
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER2
 
 /* request message initial size */
-#define CMD_RES_ERR_MSG_SIZE  128
-#define CMD_TAG_APPEND_SIZE   16
+#define CMD_ERR_MSG_LEN 128
+#define CMD_TAG_APPEND_SIZE 16
 #define CMD_REQ_BUF_INIT_SIZE 2048
 #define CMD_RES_BUF_INIT_SIZE 2048
 
 #define COMMAND_RESP_LIST_EMPTY { "", NULL }
 
+/* TODO(yasufum) revise later `JSON_*`. */
 #define JSON_COMMA                ", "
+/* TODO(yasufum) confirm why using "" for the alternative of comma? */
 #define JSON_APPEND_COMMA(flg)    ((flg)?JSON_COMMA:"")
 #define JSON_APPEND_VALUE(format) "%s\"%s\": "format
 #define JSON_APPEND_ARRAY         "%s\"%s\": [ %s ]"
 #define JSON_APPEND_BLOCK         "%s\"%s\": { %s }"
 #define JSON_APPEND_BLOCK_NONAME  "%s%s{ %s }"
 
-/* command execution result code */
-enum command_result_code {
-	CRES_SUCCESS = 0,
-	CRES_FAILURE,
-	CRES_INVALID,
+enum cmd_res_codes {
+	CMD_SUCCESS = 0,
+	CMD_FAILED,
+	CMD_INVALID,
 };
 
 /* command execution result information */
 struct command_result {
-	/* Response code */
-	int code;
-
-	/* Response message */
-	char result[SPPWK_NAME_BUFSZ];
-
-	/* Detailed response message */
-	char error_message[CMD_RES_ERR_MSG_SIZE];
+	int code;  /* Response code. */
+	char result[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
+	char error_message[CMD_ERR_MSG_LEN];  /* Detailed response msg. */
 };
 
 /* command response list control structure */
@@ -846,18 +842,18 @@ set_command_results(struct command_result *result,
 {
 	result->code = code;
 	switch (code) {
-	case CRES_SUCCESS:
+	case CMD_SUCCESS:
 		strcpy(result->result, "success");
-		memset(result->error_message, 0x00, CMD_RES_ERR_MSG_SIZE);
+		memset(result->error_message, 0x00, CMD_ERR_MSG_LEN);
 		break;
-	case CRES_FAILURE:
+	case CMD_FAILED:
 		strcpy(result->result, "error");
 		strcpy(result->error_message, error_messege);
 		break;
-	case CRES_INVALID: /* FALLTHROUGH */
+	case CMD_INVALID:
 	default:
 		strcpy(result->result, "invalid");
-		memset(result->error_message, 0x00, CMD_RES_ERR_MSG_SIZE);
+		memset(result->error_message, 0x00, CMD_ERR_MSG_LEN);
 		break;
 	}
 }
@@ -870,19 +866,19 @@ prepare_parse_err_msg(struct command_result *results,
 {
 	int i;
 	const char *tmp_buff;
-	char error_messege[CMD_RES_ERR_MSG_SIZE];
+	char error_messege[CMD_ERR_MSG_LEN];
 
 	for (i = 0; i < request->num_command; i++) {
 		if (wk_err_msg->code == 0)
-			set_command_results(&results[i], CRES_SUCCESS, "");
+			set_command_results(&results[i], CMD_SUCCESS, "");
 		else
-			set_command_results(&results[i], CRES_INVALID, "");
+			set_command_results(&results[i], CMD_INVALID, "");
 	}
 
 	if (wk_err_msg->code != 0) {
 		tmp_buff = get_parse_err_msg(wk_err_msg, error_messege);
 		set_command_results(&results[request->num_valid_command],
-				CRES_FAILURE, tmp_buff);
+				CMD_FAILED, tmp_buff);
 	}
 }
 
@@ -1678,24 +1674,24 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	for (i = 0; i < request.num_command ; ++i) {
 		ret = execute_command(request.commands + i);
 		if (unlikely(ret != SPP_RET_OK)) {
-			set_command_results(&command_results[i], CRES_FAILURE,
+			set_command_results(&command_results[i], CMD_FAILED,
 					"error occur");
 
 			/* not execute remaining commands */
 			for (++i; i < request.num_command ; ++i)
 				set_command_results(&command_results[i],
-					CRES_INVALID, "");
+					CMD_INVALID, "");
 
 			break;
 		}
 
-		set_command_results(&command_results[i], CRES_SUCCESS, "");
+		set_command_results(&command_results[i], CMD_SUCCESS, "");
 	}
 
 	if (request.is_requested_exit) {
 		/* Terminated by process exit command.                       */
 		/* Other route is normal end because it responds to command. */
-		set_command_results(&command_results[0], CRES_SUCCESS, "");
+		set_command_results(&command_results[0], CMD_SUCCESS, "");
 		send_command_result_response(sock, &request, command_results);
 		RTE_LOG(INFO, SPP_COMMAND_PROC,
 				"Terminate process for exit.\n");
