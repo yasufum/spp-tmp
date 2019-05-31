@@ -801,34 +801,34 @@ execute_command(const struct spp_command *command)
 	return ret;
 }
 
-/* Fill err_msg obj with given error message. */
+/* Get error message of parsing from given wk_err_msg object. */
 static const char *
-make_decode_error_message(
-		const struct sppwk_parse_err_msg *err_msg,
+get_parse_err_msg(
+		const struct sppwk_parse_err_msg *wk_err_msg,
 		char *message)
 {
-	switch (err_msg->code) {
+	switch (wk_err_msg->code) {
 	case SPPWK_PARSE_WRONG_FORMAT:
 		sprintf(message, "Wrong message format");
 		break;
 
 	case SPPWK_PARSE_UNKNOWN_CMD:
 		/* TODO(yasufum) Fix compile err if space exists before "(" */
-		sprintf(message, "Unknown command(%s)", err_msg->details);
+		sprintf(message, "Unknown command(%s)", wk_err_msg->details);
 		break;
 
 	case SPPWK_PARSE_NO_PARAM:
 		sprintf(message, "No or insufficient number of params (%s)",
-				err_msg->msg);
+				wk_err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_TYPE:
 		sprintf(message, "Invalid value type (%s)",
-				err_msg->msg);
+				wk_err_msg->msg);
 		break;
 
 	case SPPWK_PARSE_INVALID_VALUE:
-		sprintf(message, "Invalid value (%s)", err_msg->msg);
+		sprintf(message, "Invalid value (%s)", wk_err_msg->msg);
 		break;
 
 	default:
@@ -866,22 +866,21 @@ set_command_results(struct command_result *result,
 static void
 set_decode_error_to_results(struct command_result *results,
 		const struct sppwk_cmd_req *request,
-		const struct sppwk_parse_err_msg *err_msg)
+		const struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int i;
 	const char *tmp_buff;
 	char error_messege[CMD_RES_ERR_MSG_SIZE];
 
 	for (i = 0; i < request->num_command; i++) {
-		if (err_msg->code == 0)
+		if (wk_err_msg->code == 0)
 			set_command_results(&results[i], CRES_SUCCESS, "");
 		else
 			set_command_results(&results[i], CRES_INVALID, "");
 	}
 
-	if (err_msg->code != 0) {
-		tmp_buff = make_decode_error_message(err_msg,
-				error_messege);
+	if (wk_err_msg->code != 0) {
+		tmp_buff = get_parse_err_msg(wk_err_msg, error_messege);
 		set_command_results(&results[request->num_valid_command],
 				CRES_FAILURE, tmp_buff);
 	}
