@@ -322,8 +322,6 @@ parse_args(int argc, char *argv[])
 	g_pcap_option.fsize_limit = DEFAULT_FILE_LIMIT;
 
 	/* Check options of application */
-	optind = 0;
-	opterr = 0;
 	while ((opt = getopt_long(argc, argvopt, "c:s:", lgopts,
 			&option_index)) != EOF) {
 		switch (opt) {
@@ -396,18 +394,22 @@ parse_args(int argc, char *argv[])
 	return SPPWK_RET_OK;
 }
 
-/* Pcap get core status */
+/* TODO(yasufum) refactor name of func and vars, and comments. */
+/**
+ * Get each of attrs such as name, type or nof ports of a thread on a lcore.
+ * MEMO: This func is not for getting core status, but thread info actually.
+ */
 int
 spp_pcap_get_core_status(
 		unsigned int lcore_id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = SPPWK_RET_NG;
 	char role_type[8];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	char name[PCAP_FPATH_STRLEN + PCAP_FDATE_STRLEN];
 	struct sppwk_port_idx rx_ports[1];
 	int rx_num = 0;
+	int res;
 
 	RTE_LOG(DEBUG, SPP_PCAP, "status core[%d]\n", lcore_id);
 	if (info->type == PCAP_RECEIVE) {
@@ -426,13 +428,10 @@ spp_pcap_get_core_status(
 		strcpy(role_type, "write");
 	}
 
-
-	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(
-		params, lcore_id,
-		name, role_type,
+	/* Set information with specified by the command. */
+	res = (*params->element_proc)(params, lcore_id, name, role_type,
 		rx_num, rx_ports, 0, NULL);
-	if (unlikely(ret != 0))
+	if (unlikely(res != 0))
 		return SPPWK_RET_NG;
 
 	return SPPWK_RET_OK;
@@ -915,7 +914,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	set_core_status(lcore_id, SPP_CORE_IDLE);
 
 	while (1) {
-		if (spp_get_core_status(lcore_id) == SPP_CORE_STOP_REQUEST) {
+		if (sppwk_get_lcore_status(lcore_id) == SPP_CORE_STOP_REQUEST) {
 			if (pcap_info->status == SPP_CAPTURE_IDLE)
 				break;
 			if (pcap_info->type == PCAP_RECEIVE)

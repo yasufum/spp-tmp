@@ -186,6 +186,7 @@ struct core_mng_info {
 	volatile enum sppwk_lcore_status status;
 };
 
+/* TODO(yasufum) refactor name of func and vars, and comments. */
 struct spp_iterate_core_params;
 /**
  * definition of iterated core element procedure function
@@ -203,6 +204,7 @@ typedef int (*spp_iterate_core_element_proc)(
 		const int num_tx,
 		const struct sppwk_port_idx *tx_ports);
 
+/* TODO(yasufum) refactor name of func and vars, and comments. */
 /**
  * iterate core table parameters which is
  * used when listing core table content
@@ -228,36 +230,28 @@ struct spp_iterate_core_params {
 int add_ring_pmd(int ring_id);
 
 /**
- * Get core status
+ * Get status of lcore of given ID from global management info.
  *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  Status of specified logical core.
+ * @param[in] lcore_id Logical core ID.
+ * @return Status of specified logical core.
  */
-enum sppwk_lcore_status spp_get_core_status(unsigned int lcore_id);
+enum sppwk_lcore_status sppwk_get_lcore_status(unsigned int lcore_id);
 
 /**
  * Run check_core_status() for SPP_CORE_STATUS_CHECK_MAX times with
  * interval time (1sec)
  *
- * @param status
- *  wait check status.
- *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @param status Wait check status.
+ * @retval 0  If succeeded.
+ * @retval -1 If failed.
  */
 int check_core_status_wait(enum sppwk_lcore_status status);
 
 /**
  * Set core status
  *
- * @param lcore_id
- *  Logical core ID.
- * @param status
- *  set status.
- *
+ * @param lcore_id Logical core ID.
+ * @param status Set status.
  */
 void set_core_status(unsigned int lcore_id, enum sppwk_lcore_status status);
 

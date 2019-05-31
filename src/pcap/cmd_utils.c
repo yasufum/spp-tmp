@@ -63,9 +63,9 @@ add_ring_pmd(int ring_id)
 	return ring_port_id;
 }
 
-/* Get core status */
+/* Get status of lcore of given ID from global management info. */
 enum sppwk_lcore_status
-spp_get_core_status(unsigned int lcore_id)
+sppwk_get_lcore_status(unsigned int lcore_id)
 {
 	return (g_mng_data_addr.p_core_info + lcore_id)->status;
 }
