@@ -26,8 +26,6 @@
 #define CMD_REQ_BUF_INIT_SIZE 2048
 #define CMD_RES_BUF_INIT_SIZE 2048
 
-#define COMMAND_RESP_LIST_EMPTY { "", NULL }
-
 /* TODO(yasufum) revise later `JSON_*`. */
 #define JSON_COMMA                ", "
 /* TODO(yasufum) confirm why using "" for the alternative of comma? */
@@ -43,19 +41,19 @@ enum cmd_res_codes {
 	CMD_INVALID,
 };
 
-/* command execution result information */
 struct cmd_result {
 	int code;  /* Response code. */
 	char result[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
 	char err_msg[CMD_ERR_MSG_LEN];  /* Used only if cmd is failed. */
 };
 
-/* command response list control structure */
-struct command_response_list {
-	/* Tag name */
+/**
+ * Contains command response nad operator func for. It is used as an array of
+ * this struct.
+ */
+/* TODO(yasufum) add comment describes the purpose of this struct is used. */
+struct cmd_response {
 	char tag_name[SPPWK_NAME_BUFSZ];
-
-	/* Pointer to handling function */
 	int (*func)(const char *name, char **output, void *tmp);
 };
 
@@ -1331,10 +1329,11 @@ append_classifier_table_value(const char *name, char **output,
 	return ret;
 }
 #endif /* SPP_VF_MODULE */
+
 /* append string of command response list for JSON format */
 static int
 append_response_list_value(char **output,
-		struct command_response_list *list,
+		struct cmd_response *responses,
 		void *tmp)
 {
 	int ret = SPP_RET_NG;
@@ -1348,14 +1347,14 @@ append_response_list_value(char **output,
 		return SPP_RET_NG;
 	}
 
-	for (i = 0; list[i].tag_name[0] != '\0'; i++) {
+	for (i = 0; responses[i].tag_name[0] != '\0'; i++) {
 		tmp_buff[0] = '\0';
-		ret = list[i].func(list[i].tag_name, &tmp_buff, tmp);
+		ret = responses[i].func(responses[i].tag_name, &tmp_buff, tmp);
 		if (unlikely(ret < SPP_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Failed to get reply string. "
-					"(tag = %s)\n", list[i].tag_name);
+					"(tag = %s)\n", responses[i].tag_name);
 			return SPP_RET_NG;
 		}
 
@@ -1369,7 +1368,7 @@ append_response_list_value(char **output,
 				RTE_LOG(ERR, SPP_COMMAND_PROC,
 						"Failed to add commas. "
 						"(tag = %s)\n",
-						list[i].tag_name);
+						responses[i].tag_name);
 				return SPP_RET_NG;
 			}
 		}
@@ -1381,7 +1380,7 @@ append_response_list_value(char **output,
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Failed to add reply string. "
 					"(tag = %s)\n",
-					list[i].tag_name);
+					responses[i].tag_name);
 			return SPP_RET_NG;
 		}
 	}
@@ -1390,14 +1389,11 @@ append_response_list_value(char **output,
 	return SPP_RET_OK;
 }
 
-/* termination constant of command response list */
-#define COMMAND_RESP_TAG_LIST_EMPTY { "", NULL }
-
 /* command response result string list */
-struct command_response_list response_result_list[] = {
-	{ "result",        append_result_value },
+struct cmd_response response_result_list[] = {
+	{ "result", append_result_value },
 	{ "error_details", append_error_details_value },
-	COMMAND_RESP_TAG_LIST_EMPTY
+	{ "", NULL }
 };
 
 /**
@@ -1406,17 +1402,17 @@ struct command_response_list response_result_list[] = {
  * response.
  */
 /* command response status information string list */
-struct command_response_list response_info_list[] = {
-	{ "client-id",        append_client_id_value },
-	{ "phy",              append_interface_value },
-	{ "vhost",            append_interface_value },
-	{ "ring",             append_interface_value },
-	{ "master-lcore",     append_master_lcore_value },
-	{ "core",             append_core_value },
+struct cmd_response response_info_list[] = {
+	{ "client-id", append_client_id_value },
+	{ "phy", append_interface_value },
+	{ "vhost", append_interface_value },
+	{ "ring", append_interface_value },
+	{ "master-lcore", append_master_lcore_value },
+	{ "core", append_core_value },
 #ifdef SPP_VF_MODULE
 	{ "classifier_table", append_classifier_table_value },
 #endif /* SPP_VF_MODULE */
-	COMMAND_RESP_TAG_LIST_EMPTY
+	{ "", NULL }
 };
 
 /* append a list of command results for JSON format. */
