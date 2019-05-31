@@ -8,19 +8,9 @@
 #include "cmd_utils.h"
 
 /**
- * @file
- * SPP_PCAP main
- *
- * Main function of spp_pcap.
- * This provides the function for initializing and starting the threads.
- *
- */
-
-/**
  * Pcap get core status
  *
- * @param lcore_id
- *  The logical core ID for forwarder and merger.
+ * @param lcore_id The logical core ID for forwarder and merger.
  * @param params
  *  The pointer to struct spp_iterate_core_params.@n
  *  Detailed data of pcap status.

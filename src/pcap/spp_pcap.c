@@ -56,15 +56,9 @@ enum worker_thread_type {
 
 /* compress file generate mode */
 enum comp_file_generate_mode {
-	INIT_MODE,   /**
-		       * initial generation mode which is used
-		       * when capture is started
-		       */
-	UPDATE_MODE, /**
-		       * update generation mode which is used
-		       * when capture file reached max size
-		       */
-	CLOSE_MODE   /* close mode which is used when capture is stopped */
+	INIT_MODE,  /** Initial gen mode while capture is starting. */
+	UPDATE_MODE,  /** Update gen mode when cap file size reached max. */
+	CLOSE_MODE   /* Close mode used when capture is stopped. */
 };
 
 /* lz4 preferences */
@@ -74,45 +68,45 @@ static const LZ4F_preferences_t g_kprefs = {
 		LZ4F_blockLinked,
 		LZ4F_noContentChecksum,
 		LZ4F_frame,
-		0,                   /* unknown content size */
-		{ 0, 0},             /* reserved, must be set to 0 */
+		0,  /* unknown content size */
+		{ 0, 0},  /* reserved, must be set to 0 */
 	},
-	0,                           /* compression level; 0 == default */
-	0,                           /* autoflush */
-	{ 0, 0, 0, 0},               /* reserved, must be set to 0 */
+	0,  /* compression level; 0 == default */
+	0,  /* autoflush */
+	{ 0, 0, 0, 0},   /* reserved, must be set to 0 */
 };
 
 /* pcap file header */
 struct __attribute__((__packed__)) pcap_header {
 	uint32_t magic_number;  /* magic number */
-	uint16_t version_major; /* major version number */
-	uint16_t version_minor; /* minor version number */
-	int32_t  thiszone;      /* GMT to local correction */
-	uint32_t sigfigs;       /* accuracy of timestamps */
-	uint32_t snaplen;       /* max length of captured packets, in octets */
-	uint32_t network;       /* data link type */
+	uint16_t major_ver;  /* major version */
+	uint16_t minor_ver;  /* minor version */
+	int32_t thiszone;  /* GMT to local correction */
+	uint32_t sigfigs;  /* accuracy of timestamps */
+	uint32_t snaplen;  /* max length of captured packets, in octets */
+	uint32_t network;  /* data link type */
 };
 
 /* pcap packet header */
 struct pcap_packet_header {
-	uint32_t ts_sec;        /* time stamp seconds */
-	uint32_t ts_usec;       /* time stamp micro seconds */
-	uint32_t write_len;     /* write length */
-	uint32_t packet_len;    /* packet length */
+	uint32_t ts_sec;   /* time stamp seconds */
+	uint32_t ts_usec;  /* time stamp micro seconds */
+	uint32_t write_len;   /* write length */
+	uint32_t packet_len;  /* packet length */
 };
 
 /* Option for pcap. */
 struct pcap_option {
-	struct timespec start_time; /* start time */
-	uint64_t fsize_limit;        /* file size limit */
-	char compress_file_path[PCAP_FPATH_STRLEN]; /* file path */
-	char compress_file_date[PCAP_FDATE_STRLEN]; /* file name date */
+	struct timespec start_time;  /* start time */
+	uint64_t fsize_limit;  /* file size limit */
+	char compress_file_path[PCAP_FPATH_STRLEN];  /* file path */
+	char compress_file_date[PCAP_FDATE_STRLEN];  /* file name date */
 	struct sppwk_port_info port_cap;  /* capture port */
-	struct rte_ring *cap_ring;      /* RTE ring structure */
+	struct rte_ring *cap_ring;  /* RTE ring structure */
 };
 
 /**
- * pcap management info which stores attributes
+ * pcap management info which stores attributes.
  * (e.g. worker thread type, file number, pointer to writing file etc) per core
  */
 struct pcap_mng_info {
@@ -130,14 +124,14 @@ struct pcap_mng_info {
 
 /* Pcap status info. */
 struct pcap_status_info {
-	int thread_cnt;		/* thread count */
-	int start_up_cnt;	/* thread start up count */
+	int thread_cnt;  /* thread count */
+	int start_up_cnt;  /* thread start up count */
 };
 
-/* Logical core ID for main thread */
+/* Lcore ID of main thread. */
 static unsigned int g_main_lcore_id = 0xffffffff;
 
-/* Execution parameter of spp_pcap */
+/* Arguments for spp_pcap process. */
 static struct startup_param g_startup_param;
 
 /* Interface management information */
@@ -662,8 +656,8 @@ static int file_compression_operation(struct pcap_mng_info *info,
 
 	/* init the common pcap header */
 	pcap_h.magic_number = TCPDUMP_MAGIC;
-	pcap_h.version_major = PCAP_VERSION_MAJOR;
-	pcap_h.version_minor = PCAP_VERSION_MINOR;
+	pcap_h.major_ver = PCAP_VERSION_MAJOR;
+	pcap_h.minor_ver = PCAP_VERSION_MINOR;
 	pcap_h.thiszone = 0;
 	pcap_h.sigfigs = 0;
 	pcap_h.snaplen = PCAP_SNAPLEN_MAX;
