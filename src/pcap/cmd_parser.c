@@ -36,22 +36,29 @@ set_string_value_parse_error(struct sppwk_parse_err_msg *wk_err_msg,
 	return set_parse_error(wk_err_msg, SPPWK_PARSE_INVALID_VALUE, err_msg);
 }
 
-/* Split command line parameter with spaces */
+/* Split tokens of pcap command with delimiter. */
+/* TODO(yasufum) consider this func can be moved to shared. */
 static int
-parse_parameter_value(char *string, int max, int *nof_tokens, char *tokens[])
+split_cmd_tokens(char *tokens_str, int max_tokens, int *nof_tokens,
+		char *tokens[])
 {
-	int cnt = 0;
 	const char *delim = " ";
 	char *token = NULL;
-	char *saveptr = NULL;
+	char *t_ptr = NULL;
+	int cnt = 0;
 
-	token = strtok_r(string, delim, &saveptr);
+	token = strtok_r(tokens_str, delim, &t_ptr);
 	while (token != NULL) {
-		if (cnt >= max)
+		if (cnt >= max_tokens) {
+			RTE_LOG(ERR, PCAP_PARSER,
+					"Invalid num of tokens in %s."
+					"It should be less than %d.\n",
+					tokens_str, max_tokens);
 			return SPPWK_RET_NG;
+		}
 		tokens[cnt] = token;
 		cnt++;
-		token = strtok_r(NULL, delim, &saveptr);
+		token = strtok_r(NULL, delim, &t_ptr);
 	}
 	*nof_tokens = cnt;
 
@@ -104,7 +111,7 @@ parse_pcap_cmd(struct spp_command_request *request,
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
-	ret = parse_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
+	ret = split_cmd_tokens(tmp_str, SPPWK_MAX_PARAMS,
 			&nof_tokens, tokens);
 	if (ret < SPPWK_RET_OK) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
