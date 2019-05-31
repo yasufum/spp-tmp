@@ -16,13 +16,14 @@
 #define RTE_LOGTYPE_PCAP_RUNNER RTE_LOGTYPE_USER2
 
 /* request message initial size */
-#define CMD_RES_ERR_MSG_SIZE  128
+#define CMD_ERR_MSG_SIZE  128
 #define CMD_TAG_APPEND_SIZE   16
 #define CMD_REQ_BUF_INIT_SIZE 2048
 #define CMD_RES_BUF_INIT_SIZE 2048
 
 #define COMMAND_RESP_LIST_EMPTY { "", NULL }
 
+/* TODO(yasufum) confirm why using "" for the alternative of comma? */
 #define JSON_APPEND_COMMA(flg)    ((flg)?", ":"")
 #define JSON_APPEND_VALUE(format) "%s\"%s\": "format
 #define JSON_APPEND_ARRAY         "%s\"%s\": [ %s ]"
@@ -40,8 +41,8 @@ enum cmd_res_code {
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_runner.c */
 struct cmd_result {
 	int code;  /* Response code */
-	char msg[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
-	char err_msg[CMD_RES_ERR_MSG_SIZE];  /* Used only if cmd is failed. */
+	char result[SPPWK_NAME_BUFSZ];  /* Response msg in short. */
+	char err_msg[CMD_ERR_MSG_SIZE];  /* Used only if cmd is failed. */
 };
 
 /* command response list control structure */
@@ -290,47 +291,47 @@ parse_error_message(
 
 /* set the command result */
 static inline void
-set_command_results(struct cmd_result *result,
+set_command_results(struct cmd_result *cmd_res,
 		int code, const char *error_messege)
 {
-	result->code = code;
+	cmd_res->code = code;
 	switch (code) {
 	case CMD_SUCCESS:
-		strcpy(result->msg, "success");
-		memset(result->err_msg, 0x00, CMD_RES_ERR_MSG_SIZE);
+		strcpy(cmd_res->result, "success");
+		memset(cmd_res->err_msg, 0x00, CMD_ERR_MSG_SIZE);
 		break;
 	case CMD_FAILURE:
-		strcpy(result->msg, "error");
-		strcpy(result->err_msg, error_messege);
+		strcpy(cmd_res->result, "error");
+		strcpy(cmd_res->err_msg, error_messege);
 		break;
 	case CMD_INVALID: /* FALLTHROUGH */
 	default:
-		strcpy(result->msg, "invalid");
-		memset(result->err_msg, 0x00, CMD_RES_ERR_MSG_SIZE);
+		strcpy(cmd_res->result, "invalid");
+		memset(cmd_res->err_msg, 0x00, CMD_ERR_MSG_SIZE);
 		break;
 	}
 }
 
 /* set parse error to command result */
 static void
-set_parse_error_to_results(struct cmd_result *results,
+set_parse_error_to_results(struct cmd_result *cmd_results,
 		const struct spp_command_request *request,
 		const struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int i;
 	const char *tmp_buff;
-	char err_msg[CMD_RES_ERR_MSG_SIZE];
+	char err_msg[CMD_ERR_MSG_SIZE];
 
 	for (i = 0; i < request->num_command; i++) {
 		if (wk_err_msg->code == 0)
-			set_command_results(&results[i], CMD_SUCCESS, "");
+			set_command_results(&cmd_results[i], CMD_SUCCESS, "");
 		else
-			set_command_results(&results[i], CMD_INVALID, "");
+			set_command_results(&cmd_results[i], CMD_INVALID, "");
 	}
 
 	if (wk_err_msg->code != 0) {
 		tmp_buff = parse_error_message(wk_err_msg, err_msg);
-		set_command_results(&results[request->num_valid_command],
+		set_command_results(&cmd_results[request->num_valid_command],
 				CMD_FAILURE, tmp_buff);
 	}
 }
@@ -339,8 +340,8 @@ set_parse_error_to_results(struct cmd_result *results,
 static int
 append_result_value(const char *name, char **output, void *tmp)
 {
-	const struct cmd_result *result = tmp;
-	return append_json_str_value(name, output, result->msg);
+	const struct cmd_result *res = tmp;
+	return append_json_str_value(name, output, res->result);
 }
 
 /* append error details for JSON format */
@@ -857,11 +858,11 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	struct spp_command_request request;
 	struct sppwk_parse_err_msg parse_error;
-	struct cmd_result command_results[SPPWK_MAX_CMDS];
+	struct cmd_result cmd_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
 	memset(&parse_error, 0, sizeof(struct sppwk_parse_err_msg));
-	memset(command_results, 0, sizeof(command_results));
+	memset(cmd_results, 0, sizeof(cmd_results));
 
 	RTE_LOG(DEBUG, PCAP_RUNNER, "Start command request processing. "
 			"request_str=\n%.*s\n",
@@ -872,9 +873,9 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 			&parse_error);
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		/* send error response */
-		set_parse_error_to_results(command_results, &request,
+		set_parse_error_to_results(cmd_results, &request,
 				&parse_error);
-		send_parse_error_response(sock, &request, command_results);
+		send_parse_error_response(sock, &request, cmd_results);
 		RTE_LOG(DEBUG, PCAP_RUNNER,
 				"End command request processing.\n");
 		return SPPWK_RET_OK;
@@ -888,32 +889,32 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	for (i = 0; i < request.num_command ; ++i) {
 		ret = execute_command(request.cmd_attrs + i);
 		if (unlikely(ret != SPPWK_RET_OK)) {
-			set_command_results(&command_results[i], CMD_FAILURE,
+			set_command_results(&cmd_results[i], CMD_FAILURE,
 					"error occur");
 
 			/* not execute remaining commands */
 			for (++i; i < request.num_command ; ++i)
-				set_command_results(&command_results[i],
+				set_command_results(&cmd_results[i],
 					CMD_INVALID, "");
 
 			break;
 		}
 
-		set_command_results(&command_results[i], CMD_SUCCESS, "");
+		set_command_results(&cmd_results[i], CMD_SUCCESS, "");
 	}
 
 	if (request.is_requested_exit) {
 		/* Terminated by process exit command.                       */
 		/* Other route is normal end because it responds to command. */
-		set_command_results(&command_results[0], CMD_SUCCESS, "");
-		send_command_result_response(sock, &request, command_results);
+		set_command_results(&cmd_results[0], CMD_SUCCESS, "");
+		send_command_result_response(sock, &request, cmd_results);
 		RTE_LOG(INFO, PCAP_RUNNER,
 				"Terminate process for exit.\n");
 		return SPPWK_RET_NG;
 	}
 
 	/* send response */
-	send_command_result_response(sock, &request, command_results);
+	send_command_result_response(sock, &request, cmd_results);
 
 	RTE_LOG(DEBUG, PCAP_RUNNER, "End command request processing.\n");
 
