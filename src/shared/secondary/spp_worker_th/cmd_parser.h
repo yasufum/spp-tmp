@@ -59,7 +59,8 @@ const char *sppwk_action_str(enum sppwk_action wk_action);
  * @attention This enumerated type must have the same order of command_list
  *            defined in cmd_parser.c
  */
-/*
+/* TODO(yasufum) consider to remove restriction above. */
+/**
  * TODO(yasufum) consider to divide because each of target of scope is
  * different and not so understandable for usage. For example, worker is
  * including classifier or it status.

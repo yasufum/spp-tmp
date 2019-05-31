@@ -233,6 +233,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 	return SPPWK_RET_OK;
 }
 
+/* TODO(yasufum) confirm why this function does nothing is needed. */
 /* execute one command */
 static int
 execute_command(const struct spp_command *command)
@@ -240,29 +241,20 @@ execute_command(const struct spp_command *command)
 	int ret = SPPWK_RET_OK;
 
 	switch (command->type) {
-	case CMD_CLIENT_ID:
-		RTE_LOG(INFO, PCAP_RUNNER,
-				"Execute get_client_id command.\n");
+	case PCAP_CMDTYPE_CLIENT_ID:
+		RTE_LOG(INFO, PCAP_RUNNER, "Exec get_client_id cmd.\n");
 		break;
-
-	case CMD_STATUS:
-		RTE_LOG(INFO, PCAP_RUNNER,
-				"Execute status command.\n");
+	case PCAP_CMDTYPE_STATUS:
+		RTE_LOG(INFO, PCAP_RUNNER, "Exec status cmd.\n");
 		break;
-
-	case CMD_EXIT:
-		RTE_LOG(INFO, PCAP_RUNNER,
-				"Execute exit command.\n");
+	case PCAP_CMDTYPE_EXIT:
+		RTE_LOG(INFO, PCAP_RUNNER, "Exec exit cmd.\n");
 		break;
-
-	case CMD_START:
-		RTE_LOG(INFO, PCAP_RUNNER,
-				"Execute start command.\n");
+	case PCAP_CMDTYPE_START:
+		RTE_LOG(INFO, PCAP_RUNNER, "Exec start cmd.\n");
 		break;
-
-	case CMD_STOP:
-		RTE_LOG(INFO, PCAP_RUNNER,
-				"Execute stop command.\n");
+	case PCAP_CMDTYPE_STOP:
+		RTE_LOG(INFO, PCAP_RUNNER, "Exec stop cmd.\n");
 		break;
 	}
 
@@ -279,26 +271,21 @@ parse_error_message(
 	case SPPWK_PARSE_WRONG_FORMAT:
 		sprintf(message, "Wrong message format");
 		break;
-
 	case SPPWK_PARSE_UNKNOWN_CMD:
 		/* TODO(yasufum) Fix compile err if space exists before "(" */
 		sprintf(message, "Unknown command(%s)", wk_err_msg->details);
 		break;
-
 	case SPPWK_PARSE_NO_PARAM:
 		sprintf(message, "No or insufficient number of params (%s)",
 				wk_err_msg->msg);
 		break;
-
 	case SPPWK_PARSE_INVALID_TYPE:
 		sprintf(message, "Invalid value type (%s)",
 				wk_err_msg->msg);
 		break;
-
 	case SPPWK_PARSE_INVALID_VALUE:
 		sprintf(message, "Invalid value (%s)", wk_err_msg->msg);
 		break;
-
 	default:
 		sprintf(message, "error occur");
 		break;

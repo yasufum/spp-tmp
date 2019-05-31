@@ -66,18 +66,18 @@ struct parse_command_list {
 			char *argv[], struct sppwk_parse_err_msg *error,
 			int maxargc);
 				/* Pointer to command handling function */
-	enum spp_command_type type;
+	enum pcap_cmd_type type;
 				/* Command type */
 };
 
 /* command list */
 static struct parse_command_list command_list_pcap[] = {
-	{ "_get_client_id", 1, 1, NULL, CMD_CLIENT_ID },
-	{ "status",	    1, 1, NULL, CMD_STATUS    },
-	{ "exit",           1, 1, NULL, CMD_EXIT      },
-	{ "start",          1, 1, NULL, CMD_START     },
-	{ "stop",           1, 1, NULL, CMD_STOP      },
-	{ "",               0, 0, NULL, 0 }  /* termination */
+	{ "_get_client_id", 1, 1, NULL, PCAP_CMDTYPE_CLIENT_ID },
+	{ "status", 1, 1, NULL, PCAP_CMDTYPE_STATUS },
+	{ "exit",  1, 1, NULL, PCAP_CMDTYPE_EXIT },
+	{ "start", 1, 1, NULL, PCAP_CMDTYPE_START },
+	{ "stop",  1, 1, NULL, PCAP_CMDTYPE_STOP },
+	{ "", 0, 0, NULL, 0 }  /* termination */
 };
 
 /* Parse command line parameters */
@@ -164,19 +164,19 @@ spp_command_parse_request(
 	/* check getter command */
 	for (i = 0; i < request->num_valid_command; ++i) {
 		switch (request->commands[i].type) {
-		case CMD_CLIENT_ID:
+		case PCAP_CMDTYPE_CLIENT_ID:
 			request->is_requested_client_id = 1;
 			break;
-		case CMD_STATUS:
+		case PCAP_CMDTYPE_STATUS:
 			request->is_requested_status = 1;
 			break;
-		case CMD_EXIT:
+		case PCAP_CMDTYPE_EXIT:
 			request->is_requested_exit = 1;
 			break;
-		case CMD_START:
+		case PCAP_CMDTYPE_START:
 			request->is_requested_start = 1;
 			break;
-		case CMD_STOP:
+		case PCAP_CMDTYPE_STOP:
 			request->is_requested_stop = 1;
 			break;
 		default:

@@ -42,27 +42,18 @@ enum sppwk_parse_error_code {
  * @attention This enumerated type must have the same order of command_list
  *            defined in command_dec_pcap.c
  */
-enum spp_command_type {
-	/** get_client_id command */
-	CMD_CLIENT_ID,
-
-	/** status command */
-	CMD_STATUS,
-
-	/** exit command */
-	CMD_EXIT,
-
-	/** start command */
-	CMD_START,
-
-	/** stop command */
-	CMD_STOP,
-
+/* TODO(yasufum) consider to remove restriction above. */
+enum pcap_cmd_type {
+	PCAP_CMDTYPE_CLIENT_ID,  /**< get_client_id */
+	PCAP_CMDTYPE_STATUS,  /**< status */
+	PCAP_CMDTYPE_EXIT,  /**< exit */
+	PCAP_CMDTYPE_START,  /**< worker thread */
+	PCAP_CMDTYPE_STOP,  /**< port */
 };
 
 /** command parameters */
 struct spp_command {
-	enum spp_command_type type; /**< Command type */
+	enum pcap_cmd_type type; /**< Command type */
 };
 
 /** request parameters */
