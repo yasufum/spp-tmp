@@ -97,7 +97,7 @@ static struct pcap_cmd_parse_attr pcap_cmd_attrs[] = {
 /* Parse command requested from spp-ctl. */
 static int
 parse_pcap_cmd(struct spp_command_request *request,
-		const char *request_str,
+		const char *cmd_str,
 		struct sppwk_parse_err_msg *wk_err_msg)
 {
 	int is_invalid_cmd = 0;
@@ -110,16 +110,18 @@ parse_pcap_cmd(struct spp_command_request *request,
 	memset(tokens, 0x00, sizeof(tokens));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
-	strcpy(tmp_str, request_str);
+	strcpy(tmp_str, cmd_str);
 	ret = split_cmd_tokens(tmp_str, SPPWK_MAX_PARAMS,
 			&nof_tokens, tokens);
 	if (ret < SPPWK_RET_OK) {
-		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
-				"request_str=%s\n", request_str);
+		RTE_LOG(ERR, PCAP_PARSER, "Invalid cmd '%s', "
+				"num of tokens is over SPPWK_MAX_PARAMS.\n",
+				cmd_str);
 		return set_parse_error(wk_err_msg,
 				SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
-	RTE_LOG(DEBUG, PCAP_PARSER, "Decode array. num=%d\n", nof_tokens);
+	RTE_LOG(DEBUG, PCAP_PARSER, "Parsed cmd '%s', nof token is %d\n",
+			cmd_str, nof_tokens);
 
 	for (i = 0; pcap_cmd_attrs[i].cmd_name[0] != '\0'; i++) {
 		cmd_attr = &pcap_cmd_attrs[i];
@@ -142,15 +144,14 @@ parse_pcap_cmd(struct spp_command_request *request,
 	}
 
 	if (is_invalid_cmd != 0) {
-		RTE_LOG(ERR, PCAP_PARSER, "Parameter number out of range."
-				"request_str=%s\n", request_str);
+		RTE_LOG(ERR, PCAP_PARSER, "Invalid cmd '%s', "
+				"num of params is out of range.\n", cmd_str);
 		return set_parse_error(wk_err_msg,
 				SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 
 	RTE_LOG(ERR, PCAP_PARSER,
-			"Unknown command. command=%s, request_str=%s\n",
-			tokens[0], request_str);
+			"Unknown cmd '%s' in '%s'.\n", tokens[0], cmd_str);
 	return set_string_value_parse_error(wk_err_msg, tokens[0], "command");
 }
 
