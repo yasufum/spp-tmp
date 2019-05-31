@@ -726,7 +726,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 
 /* Execute one command. */
 static int
-exec_one_cmd(const struct spp_command *cmd)
+exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 {
 	int ret;
 
@@ -856,7 +856,7 @@ prepare_parse_err_msg(struct cmd_result *results,
 	const char *tmp_buff;
 	char error_messege[CMD_ERR_MSG_LEN];
 
-	for (i = 0; i < request->num_command; i++) {
+	for (i = 0; i < request->nof_cmds; i++) {
 		if (wk_err_msg->code == 0)
 			set_cmd_result(&results[i], CMD_SUCCESS, "");
 		else
@@ -865,7 +865,7 @@ prepare_parse_err_msg(struct cmd_result *results,
 
 	if (wk_err_msg->code != 0) {
 		tmp_buff = get_parse_err_msg(wk_err_msg, error_messege);
-		set_cmd_result(&results[request->num_valid_command],
+		set_cmd_result(&results[request->nof_valid_cmds],
 				CMD_FAILED, tmp_buff);
 	}
 }
@@ -1482,7 +1482,7 @@ append_info_value(const char *name, char **output)
 static void
 send_decode_error_response(int *sock,
 		const struct sppwk_cmd_req *request,
-		struct cmd_result *command_results)
+		struct cmd_result *cmd_results)
 {
 	int ret = SPP_RET_NG;
 	char *msg, *tmp_buff;
@@ -1496,7 +1496,7 @@ send_decode_error_response(int *sock,
 
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
-			request->num_command, command_results);
+			request->nof_cmds, cmd_results);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
@@ -1541,7 +1541,7 @@ send_decode_error_response(int *sock,
 static void
 send_command_result_response(int *sock,
 		const struct sppwk_cmd_req *request,
-		struct cmd_result *command_results)
+		struct cmd_result *cmd_results)
 {
 	int ret = SPP_RET_NG;
 	char *msg, *tmp_buff;
@@ -1555,7 +1555,7 @@ send_command_result_response(int *sock,
 
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
-			request->num_command, command_results);
+			request->nof_cmds, cmd_results);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
@@ -1650,16 +1650,16 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 
 	RTE_LOG(DEBUG, WK_CMD_RUNNER,
 			"Num of cmds is %d, and valid cmds is %d\n",
-			cmd_req.num_command, cmd_req.num_valid_command);
+			cmd_req.nof_cmds, cmd_req.nof_valid_cmds);
 
 	/* execute commands */
-	for (i = 0; i < cmd_req.num_command ; ++i) {
+	for (i = 0; i < cmd_req.nof_cmds; ++i) {
 		ret = exec_one_cmd(cmd_req.commands + i);
 		if (unlikely(ret != SPP_RET_OK)) {
 			set_cmd_result(&cmd_results[i], CMD_FAILED,
 					"error occur");
 			/* Does not execute remaining commands */
-			for (++i; i < cmd_req.num_command ; ++i)
+			for (++i; i < cmd_req.nof_cmds; ++i)
 				set_cmd_result(&cmd_results[i],
 					CMD_INVALID, "");
 			break;

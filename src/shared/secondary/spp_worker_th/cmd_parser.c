@@ -796,25 +796,25 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* classifier_table(mac) */
 		{
 			.name = "action",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.wk_action),
 			.func = parse_cls_action
 		},
 		{
 			.name = "type",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.type),
 			.func = parse_cls_type
 		},
 		{
 			.name = "mac address",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.mac),
 			.func = parse_mac_addr
 		},
 		{
 			.name = "port",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table),
 			.func = parse_cls_port
 		},
@@ -823,31 +823,31 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* classifier_table(VLAN) */
 		{
 			.name = "action",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.wk_action),
 			.func = parse_cls_action
 		},
 		{
 			.name = "type",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.type),
 			.func = parse_cls_type
 		},
 		{
 			.name = "vlan id",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.vid),
 			.func = parse_cls_vid
 		},
 		{
 			.name = "mac address",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table.mac),
 			.func = parse_mac_addr
 		},
 		{
 			.name = "port",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.cls_table),
 			.func = parse_cls_port
 		},
@@ -859,23 +859,23 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* component */
 		{
 			.name = "action",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.comp.wk_action),
 			.func = parse_comp_action
 		},
 		{
 			.name = "component name",
-			.offset = offsetof(struct spp_command, spec.comp),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.comp),
 			.func = parse_comp_name
 		},
 		{
 			.name = "core",
-			.offset = offsetof(struct spp_command, spec.comp),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.comp),
 			.func = parse_comp_lcore_id
 		},
 		{
 			.name = "component type",
-			.offset = offsetof(struct spp_command, spec.comp),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.comp),
 			.func = parse_comp_type
 		},
 		SPPWK_CMD_NO_PARAMS,
@@ -883,38 +883,39 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* port */
 		{
 			.name = "action",
-			.offset = offsetof(struct spp_command,
+			.offset = offsetof(struct sppwk_cmd_attrs,
 					spec.port.wk_action),
 			.func = parse_port_action
 		},
 		{
 			.name = "port",
-			.offset = offsetof(struct spp_command, spec.port),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
 			.func = parse_port
 		},
 		{
 			.name = "port rxtx",
-			.offset = offsetof(struct spp_command, spec.port),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
 			.func = parse_port_rxtx
 		},
 		{
 			.name = "component name",
-			.offset = offsetof(struct spp_command, spec.port.name),
+			.offset = offsetof(struct sppwk_cmd_attrs,
+					spec.port.name),
 			.func = parse_comp_name_portcmd
 		},
 		{
 			.name = "port vlan operation",
-			.offset = offsetof(struct spp_command, spec.port),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
 			.func = parse_port_vlan_ops
 		},
 		{
 			.name = "port vid",
-			.offset = offsetof(struct spp_command, spec.port),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
 			.func = parse_port_vid
 		},
 		{
 			.name = "port pcp",
-			.offset = offsetof(struct spp_command, spec.port),
+			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
 			.func = parse_port_pcp
 		},
 		SPPWK_CMD_NO_PARAMS,
@@ -1130,7 +1131,7 @@ sppwk_parse_req(
 	int i;
 
 	/* decode request */
-	request->num_command = 1;
+	request->nof_cmds = 1;
 	ret = parse_wk_cmd(request, request_str, wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
@@ -1139,10 +1140,10 @@ sppwk_parse_req(
 				ret, (int)request_str_len, request_str);
 		return ret;
 	}
-	request->num_valid_command = 1;
+	request->nof_valid_cmds = 1;
 
 	/* check getter command */
-	for (i = 0; i < request->num_valid_command; ++i) {
+	for (i = 0; i < request->nof_valid_cmds; ++i) {
 		switch (request->commands[i].type) {
 		case SPPWK_CMDTYPE_CLIENT_ID:
 			request->is_requested_client_id = 1;

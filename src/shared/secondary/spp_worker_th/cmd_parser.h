@@ -108,7 +108,7 @@ struct sppwk_cmd_port {
 };
 
 /* TODO(yasufum) Add usage and desc for members. What's command descriptors? */
-struct spp_command {
+struct sppwk_cmd_attrs {
 	enum sppwk_cmd_type type; /**< command type */
 
 	union {  /**< command descriptors */
@@ -121,9 +121,9 @@ struct spp_command {
 
 /* Request parameters. */
 struct sppwk_cmd_req {
-	int num_command;  /**< Number of accepted commands */
-	int num_valid_command;  /**< Number of executed commands */
-	struct spp_command commands[SPPWK_MAX_CMDS];  /**< list of cmds */
+	int nof_cmds;  /**< Number of accepted commands */
+	int nof_valid_cmds;  /**< Number of executed commands */
+	struct sppwk_cmd_attrs commands[SPPWK_MAX_CMDS];  /**< list of cmds */
 
 	int is_requested_client_id;
 	int is_requested_status;
