@@ -13,7 +13,7 @@
 #include "cmd_parser.h"
 #include "cmd_runner.h"
 
-#define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER2
+#define RTE_LOGTYPE_PCAP_RUNNER RTE_LOGTYPE_USER2
 
 /* request message initial size */
 #define CMD_RES_ERR_MSG_SIZE  128
@@ -90,7 +90,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 
 		ret = spp_pcap_get_core_status(lcore_id, params);
 		if (unlikely(ret != 0)) {
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, PCAP_RUNNER,
 					"Cannot iterate core information. "
 						"(core = %d)\n", lcore_id);
 			return SPP_RET_NG;
@@ -106,7 +106,7 @@ append_json_comma(char **output)
 {
 	*output = spp_strbuf_append(*output, ", ", strlen(", "));
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's comma failed to add.\n");
 		return SPP_RET_NG;
 	}
@@ -126,7 +126,7 @@ append_json_uint_value(const char *name, char **output, unsigned int value)
 	*output = spp_strbuf_append(*output, "",
 			strlen(name) + CMD_TAG_APPEND_SIZE*2);
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, uint = %u)\n", name, value);
 		return SPP_RET_NG;
@@ -150,7 +150,7 @@ append_json_int_value(const char *name, char **output, int value)
 	*output = spp_strbuf_append(*output, "",
 			strlen(name) + CMD_TAG_APPEND_SIZE*2);
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, int = %d)\n", name, value);
 		return SPP_RET_NG;
@@ -174,7 +174,7 @@ append_json_str_value(const char *name, char **output, const char *str)
 	*output = spp_strbuf_append(*output, "",
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's string format failed to add. "
 				"(name = %s, str = %s)\n", name, str);
 		return SPP_RET_NG;
@@ -198,7 +198,7 @@ append_json_array_brackets(const char *name, char **output, const char *str)
 	*output = spp_strbuf_append(*output, "",
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's square bracket failed to add. "
 				"(name = %s, str = %s)\n", name, str);
 		return SPP_RET_NG;
@@ -218,7 +218,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 	*output = spp_strbuf_append(*output, "",
 			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's curly bracket failed to add. "
 				"(name = %s, str = %s)\n", name, str);
 		return SPP_RET_NG;
@@ -241,27 +241,27 @@ execute_command(const struct spp_command *command)
 
 	switch (command->type) {
 	case CMD_CLIENT_ID:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Execute get_client_id command.\n");
 		break;
 
 	case CMD_STATUS:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Execute status command.\n");
 		break;
 
 	case CMD_EXIT:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Execute exit command.\n");
 		break;
 
 	case CMD_START:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Execute start command.\n");
 		break;
 
 	case CMD_STOP:
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Execute stop command.\n");
 		break;
 	}
@@ -376,7 +376,7 @@ append_error_details_value(const char *name, char **output, void *tmp)
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -424,7 +424,7 @@ append_port_entry(char **output, const struct spp_port_index *port,
 	char port_str[CMD_TAG_APPEND_SIZE];
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = port_block)\n");
 		return SPP_RET_NG;
 	}
@@ -449,7 +449,7 @@ append_port_array(const char *name, char **output, const int num,
 	int i = 0;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -496,7 +496,7 @@ append_pcap_core_element_value(
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (lcore_id = %d, type = %s)\n",
 				lcore_id, type);
 		return ret;
@@ -544,7 +544,7 @@ append_core_value(const char *name, char **output,
 
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -575,7 +575,7 @@ append_response_list_value(char **output,
 	char *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = response_list)\n");
 		return SPP_RET_NG;
 	}
@@ -585,7 +585,7 @@ append_response_list_value(char **output,
 		ret = list[i].func(list[i].tag_name, &tmp_buff, tmp);
 		if (unlikely(ret < SPP_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, PCAP_RUNNER,
 					"Failed to get reply string. "
 					"(tag = %s)\n", list[i].tag_name);
 			return SPP_RET_NG;
@@ -598,7 +598,7 @@ append_response_list_value(char **output,
 			ret = append_json_comma(output);
 			if (unlikely(ret < SPP_RET_OK)) {
 				spp_strbuf_free(tmp_buff);
-				RTE_LOG(ERR, SPP_COMMAND_PROC,
+				RTE_LOG(ERR, PCAP_RUNNER,
 						"Failed to add commas. "
 						"(tag = %s)\n",
 						list[i].tag_name);
@@ -610,7 +610,7 @@ append_response_list_value(char **output,
 				strlen(tmp_buff));
 		if (unlikely(*output == NULL)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, PCAP_RUNNER,
 					"Failed to add reply string. "
 					"(tag = %s)\n",
 					list[i].tag_name);
@@ -651,7 +651,7 @@ append_command_results_value(const char *name, char **output,
 	char *tmp_buff1, *tmp_buff2;
 	tmp_buff1 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff1 == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s, buff=1)\n",
 				name);
 		return SPP_RET_NG;
@@ -660,7 +660,7 @@ append_command_results_value(const char *name, char **output,
 	tmp_buff2 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff2 == NULL)) {
 		spp_strbuf_free(tmp_buff1);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s, buff=2)\n",
 				name);
 		return SPP_RET_NG;
@@ -698,7 +698,7 @@ append_info_value(const char *name, char **output)
 	int ret = SPP_RET_NG;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
 		return SPP_RET_NG;
@@ -726,7 +726,7 @@ send_parse_error_response(int *sock,
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
+		RTE_LOG(ERR, PCAP_RUNNER, "allocate error. "
 				"(name = parse_error_response)\n");
 		return;
 	}
@@ -736,7 +736,7 @@ send_parse_error_response(int *sock,
 			request->num_command, command_results);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to make command result response.\n");
 		return;
 	}
@@ -744,7 +744,7 @@ send_parse_error_response(int *sock,
 	msg = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(msg == NULL)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC, "allocate error. "
+		RTE_LOG(ERR, PCAP_RUNNER, "allocate error. "
 				"(name = parse_error_response)\n");
 		return;
 	}
@@ -752,19 +752,19 @@ send_parse_error_response(int *sock,
 	spp_strbuf_free(tmp_buff);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
 		return;
 	}
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+	RTE_LOG(DEBUG, PCAP_RUNNER,
 			"Make command response (parse error). "
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
 	if (unlikely(ret != SPP_RET_OK)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to send parse error response.\n");
 		/* not return */
 	}
@@ -784,7 +784,7 @@ send_command_result_response(int *sock,
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
 		return;
 	}
@@ -794,7 +794,7 @@ send_command_result_response(int *sock,
 			request->num_command, command_results);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to make command result response.\n");
 		return;
 	}
@@ -804,7 +804,7 @@ send_command_result_response(int *sock,
 		ret = append_client_id_value("client_id", &tmp_buff, NULL);
 		if (unlikely(ret < SPP_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC, "Failed to make "
+			RTE_LOG(ERR, PCAP_RUNNER, "Failed to make "
 					"client id response.\n");
 			return;
 		}
@@ -817,7 +817,7 @@ send_command_result_response(int *sock,
 		ret = append_info_value("info", &tmp_buff);
 		if (unlikely(ret < SPP_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, PCAP_RUNNER,
 					"Failed to make status response.\n");
 			return;
 		}
@@ -840,7 +840,7 @@ send_command_result_response(int *sock,
 	msg = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(msg == NULL)) {
 		spp_strbuf_free(tmp_buff);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
 		return;
 	}
@@ -848,19 +848,19 @@ send_command_result_response(int *sock,
 	spp_strbuf_free(tmp_buff);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
 		return;
 	}
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+	RTE_LOG(DEBUG, PCAP_RUNNER,
 			"Make command response (command result). "
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
 	if (unlikely(ret != SPP_RET_OK)) {
-		RTE_LOG(ERR, SPP_COMMAND_PROC,
+		RTE_LOG(ERR, PCAP_RUNNER,
 			"Failed to send command result response.\n");
 		/* not return */
 	}
@@ -877,13 +877,13 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	struct spp_command_request request;
 	struct spp_command_parse_error parse_error;
-	struct command_result command_results[SPP_CMD_MAX_COMMANDS];
+	struct command_result command_results[SPPWK_MAX_CMDS];
 
 	memset(&request, 0, sizeof(struct spp_command_request));
 	memset(&parse_error, 0, sizeof(struct spp_command_parse_error));
 	memset(command_results, 0, sizeof(command_results));
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Start command request processing. "
+	RTE_LOG(DEBUG, PCAP_RUNNER, "Start command request processing. "
 			"request_str=\n%.*s\n",
 			(int)request_str_len, request_str);
 
@@ -895,12 +895,12 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 		set_parse_error_to_results(command_results, &request,
 				&parse_error);
 		send_parse_error_response(sock, &request, command_results);
-		RTE_LOG(DEBUG, SPP_COMMAND_PROC,
+		RTE_LOG(DEBUG, PCAP_RUNNER,
 				"End command request processing.\n");
 		return SPP_RET_OK;
 	}
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "Command request is valid. "
+	RTE_LOG(DEBUG, PCAP_RUNNER, "Command request is valid. "
 			"num_command=%d, num_valid_command=%d\n",
 			request.num_command, request.num_valid_command);
 
@@ -927,7 +927,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 		/* Other route is normal end because it responds to command. */
 		set_command_results(&command_results[0], CMD_SUCCESS, "");
 		send_command_result_response(sock, &request, command_results);
-		RTE_LOG(INFO, SPP_COMMAND_PROC,
+		RTE_LOG(INFO, PCAP_RUNNER,
 				"Terminate process for exit.\n");
 		return SPP_RET_NG;
 	}
@@ -935,7 +935,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	/* send response */
 	send_command_result_response(sock, &request, command_results);
 
-	RTE_LOG(DEBUG, SPP_COMMAND_PROC, "End command request processing.\n");
+	RTE_LOG(DEBUG, PCAP_RUNNER, "End command request processing.\n");
 
 	return SPP_RET_OK;
 }
@@ -960,7 +960,7 @@ spp_command_proc_do(void)
 	if (unlikely(msgbuf == NULL)) {
 		msgbuf = spp_strbuf_allocate(CMD_REQ_BUF_INIT_SIZE);
 		if (unlikely(msgbuf == NULL)) {
-			RTE_LOG(ERR, SPP_COMMAND_PROC,
+			RTE_LOG(ERR, PCAP_RUNNER,
 					"Cannot allocate memory "
 					"for receive data(init).\n");
 			return SPP_RET_NG;

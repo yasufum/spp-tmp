@@ -2,6 +2,12 @@
  * Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
  */
 
+/**
+ * TODO(yasufum) change this define tag because it is the same as
+ * shared/.../cmd_utils.h. However, it should be the same to avoid both of
+ * this and shared headers are included which are incompabtible and causes
+ * an compile error. After fixing the incompatibility, change the tag name.
+ */
 #ifndef _SPPWK_CMD_UTILS_H_
 #define _SPPWK_CMD_UTILS_H_
 
@@ -387,4 +393,4 @@ void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
 			   int **capture_request_addr,
 			   int **capture_status_addr);
 
-#endif /* _SPPWK_CMD_UTILS_H_ */
+#endif

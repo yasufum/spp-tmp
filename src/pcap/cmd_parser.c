@@ -11,7 +11,7 @@
 
 #include "cmd_parser.h"
 
-#define RTE_LOGTYPE_SPP_COMMAND_DEC RTE_LOGTYPE_USER2
+#define RTE_LOGTYPE_PCAP_PARSER RTE_LOGTYPE_USER2
 
 /* set parse error */
 static inline int
@@ -91,20 +91,20 @@ parse_command_in_list(struct spp_command_request *request,
 	struct parse_command_list *list = NULL;
 	int i = 0;
 	int argc = 0;
-	char *argv[SPP_CMD_MAX_PARAMETERS];
-	char tmp_str[SPP_CMD_MAX_PARAMETERS*SPP_CMD_VALUE_BUFSZ];
+	char *argv[SPPWK_MAX_PARAMS];
+	char tmp_str[SPPWK_MAX_PARAMS * SPP_CMD_VALUE_BUFSZ];
 	memset(argv, 0x00, sizeof(argv));
 	memset(tmp_str, 0x00, sizeof(tmp_str));
 
 	strcpy(tmp_str, request_str);
-	ret = parse_parameter_value(tmp_str, SPP_CMD_MAX_PARAMETERS,
+	ret = parse_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
 			&argc, argv);
 	if (ret < SPP_RET_OK) {
-		RTE_LOG(ERR, SPP_COMMAND_DEC, "Parameter number over limit."
+		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
 				"request_str=%s\n", request_str);
 		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
-	RTE_LOG(DEBUG, SPP_COMMAND_DEC, "Decode array. num=%d\n", argc);
+	RTE_LOG(DEBUG, PCAP_PARSER, "Decode array. num=%d\n", argc);
 
 	for (i = 0; command_list_pcap[i].name[0] != '\0'; i++) {
 		list = &command_list_pcap[i];
@@ -126,12 +126,12 @@ parse_command_in_list(struct spp_command_request *request,
 	}
 
 	if (command_name_check != 0) {
-		RTE_LOG(ERR, SPP_COMMAND_DEC, "Parameter number out of range."
+		RTE_LOG(ERR, PCAP_PARSER, "Parameter number out of range."
 				"request_str=%s\n", request_str);
 		return set_parse_error(error, SPPWK_PARSE_WRONG_FORMAT, NULL);
 	}
 
-	RTE_LOG(ERR, SPP_COMMAND_DEC,
+	RTE_LOG(ERR, PCAP_PARSER,
 			"Unknown command. command=%s, request_str=%s\n",
 			argv[0], request_str);
 	return set_string_value_parse_error(error, argv[0], "command");
@@ -151,7 +151,7 @@ spp_command_parse_request(
 	request->num_command = 1;
 	ret = parse_command_in_list(request, request_str, error);
 	if (unlikely(ret != SPP_RET_OK)) {
-		RTE_LOG(ERR, SPP_COMMAND_DEC,
+		RTE_LOG(ERR, PCAP_PARSER,
 				"Cannot parse command request. "
 				"ret=%d, request_str=%.*s\n",
 				ret, (int)request_str_len, request_str);

@@ -10,7 +10,7 @@
 
 #include "cmd_utils.h"
 
-#define RTE_LOGTYPE_SPP_PROC RTE_LOGTYPE_USER2
+#define RTE_LOGTYPE_PCAP_UTILS RTE_LOGTYPE_USER2
 
 /* Manage data to addoress */
 struct manage_data_addr_info {
@@ -38,7 +38,7 @@ add_ring_pmd(int ring_id)
 	/* Lookup ring of given id */
 	ring = rte_ring_lookup(get_rx_queue_name(ring_id));
 	if (unlikely(ring == NULL)) {
-		RTE_LOG(ERR, SPP_PROC,
+		RTE_LOG(ERR, PCAP_UTILS,
 			"Cannot get RX ring - is server process running?\n");
 		return SPP_RET_NG;
 	}
@@ -50,7 +50,7 @@ add_ring_pmd(int ring_id)
 	if (port_id == PORT_RESET) {
 		ring_port_id = rte_eth_from_ring(ring);
 		if (ring_port_id < 0) {
-			RTE_LOG(ERR, SPP_PROC, "Cannot create eth dev with "
+			RTE_LOG(ERR, PCAP_UTILS, "Cannot create eth dev with "
 						"rte_eth_from_ring()\n");
 			return SPP_RET_NG;
 		}
@@ -58,7 +58,7 @@ add_ring_pmd(int ring_id)
 		ring_port_id = port_id;
 		rte_eth_dev_start(ring_port_id);
 	}
-	RTE_LOG(INFO, SPP_PROC, "ring port add. (no = %d / port = %d)\n",
+	RTE_LOG(INFO, PCAP_UTILS, "ring port add. (no = %d / port = %d)\n",
 			ring_id, ring_port_id);
 	return ring_port_id;
 }
@@ -101,7 +101,7 @@ check_core_status_wait(enum sppwk_lcore_status status)
 			return SPP_RET_OK;
 	}
 
-	RTE_LOG(ERR, SPP_PROC,
+	RTE_LOG(ERR, PCAP_UTILS,
 			"Status check time out. (status = %d)\n", status);
 	return SPP_RET_NG;
 }

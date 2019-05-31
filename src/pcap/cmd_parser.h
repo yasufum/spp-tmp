@@ -2,8 +2,8 @@
  * Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _SPP_PCAP_COMMAND_DEC_H_
-#define _SPP_PCAP_COMMAND_DEC_H_
+#ifndef _SPP_PCAP_CMD_PARSER_H_
+#define _SPP_PCAP_CMD_PARSER_H_
 
 /**
  * @file
@@ -15,10 +15,10 @@
 #include "cmd_utils.h"
 
 /** max number of command per request */
-#define SPP_CMD_MAX_COMMANDS 32
+#define SPPWK_MAX_CMDS 32
 
 /** maximum number of parameters per command */
-#define SPP_CMD_MAX_PARAMETERS 8
+#define SPPWK_MAX_PARAMS 8
 
 /** command name string buffer size (include null char) */
 #define SPP_CMD_NAME_BUFSZ  32
@@ -69,7 +69,7 @@ struct spp_command {
 struct spp_command_request {
 	int num_command;                /**< Number of accepted commands */
 	int num_valid_command;          /**< Number of executed commands */
-	struct spp_command commands[SPP_CMD_MAX_COMMANDS];
+	struct spp_command commands[SPPWK_MAX_CMDS];
 					/**<Information of executed commands */
 
 	int is_requested_client_id;     /**< Id for get_client_id command */
@@ -107,4 +107,4 @@ int spp_command_parse_request(struct spp_command_request *request,
 		const char *request_str, size_t request_str_len,
 		struct spp_command_parse_error *error);
 
-#endif /* _COMMAND_DEC_H_ */
+#endif /* _SPP_PCAP_CMD_PARSER_H_ */
