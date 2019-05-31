@@ -657,19 +657,19 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 /**
  * Set mange data address
  *
- * @param startup_param_addr
+ * @param startup_param_p
  *  g_startup_param address
- * @param iface_addr
+ * @param iface_p
  *  g_iface_info address
- * @param component_addr
+ * @param component_p
  *  g_component_info address
- * @param core_mng_addr
+ * @param core_mng_p
  *  g_core_info address
- * @param change_core_addr
+ * @param change_core_p
  *  g_change_core address
- * @param change_component_addr
+ * @param change_component_p
  *  g_change_component address
- * @param backup_info_addr
+ * @param backup_info_p
  *  g_backup_info address
  * @param main_lcore_id
  *  main_lcore_id mask
@@ -677,14 +677,14 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
  * @retval SPP_RET_OK succeeded.
  * @retval SPP_RET_NG failed.
  */
-int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
-			  struct iface_info *iface_addr,
-			  struct spp_component_info *component_addr,
-			  struct core_mng_info *core_mng_addr,
-			  int *change_core_addr,
-			  int *change_component_addr,
-			  struct cancel_backup_info *backup_info_addr,
-			  unsigned int main_lcore_id);
+int sppwk_set_mng_data(struct startup_param *startup_param_p,
+		struct iface_info *iface_p,
+		struct spp_component_info *component_p,
+		struct core_mng_info *core_mng_p,
+		int *change_core_p,
+		int *change_component_p,
+		struct cancel_backup_info *backup_info_p,
+		unsigned int main_lcore_id);
 
 /**
  * Get mange data address

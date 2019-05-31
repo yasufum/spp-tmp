@@ -990,37 +990,40 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 	return ret_mac;
 }
 
-/* Set mange data address */
-int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
-			  struct iface_info *iface_addr,
-			  struct spp_component_info *component_addr,
-			  struct core_mng_info *core_mng_addr,
-			  int *change_core_addr,
-			  int *change_component_addr,
-			  struct cancel_backup_info *backup_info_addr,
-			  unsigned int main_lcore_id)
+/* Set management data of global var for given non-NULL args. */
+int sppwk_set_mng_data(
+		struct startup_param *startup_param_p,
+		struct iface_info *iface_p,
+		struct spp_component_info *component_p,
+		struct core_mng_info *core_mng_p,
+		int *change_core_p,
+		int *change_component_p,
+		struct cancel_backup_info *backup_info_p,
+		unsigned int main_lcore_id)
 {
-	if (startup_param_addr == NULL || iface_addr == NULL ||
-			component_addr == NULL || core_mng_addr == NULL ||
-			change_core_addr == NULL ||
-			change_component_addr == NULL ||
-			backup_info_addr == NULL ||
-			main_lcore_id == 0xffffffff)
+	/**
+	 * TODO(yasufum) confirm why the last `0xffffffff` is same as NULL,
+	 * although it is reserved for meaning as invalid.
+	 */
+	if (startup_param_p == NULL || iface_p == NULL ||
+			component_p == NULL || core_mng_p == NULL ||
+			change_core_p == NULL || change_component_p == NULL ||
+			backup_info_p == NULL || main_lcore_id == 0xffffffff)
 		return SPP_RET_NG;
 
-	g_mng_data_addr.p_startup_param = startup_param_addr;
-	g_mng_data_addr.p_iface_info = iface_addr;
-	g_mng_data_addr.p_component_info = component_addr;
-	g_mng_data_addr.p_core_info = core_mng_addr;
-	g_mng_data_addr.p_change_core = change_core_addr;
-	g_mng_data_addr.p_change_component = change_component_addr;
-	g_mng_data_addr.p_backup_info = backup_info_addr;
+	g_mng_data_addr.p_startup_param = startup_param_p;
+	g_mng_data_addr.p_iface_info = iface_p;
+	g_mng_data_addr.p_component_info = component_p;
+	g_mng_data_addr.p_core_info = core_mng_p;
+	g_mng_data_addr.p_change_core = change_core_p;
+	g_mng_data_addr.p_change_component = change_component_p;
+	g_mng_data_addr.p_backup_info = backup_info_p;
 	g_mng_data_addr.main_lcore_id = main_lcore_id;
 
 	return SPP_RET_OK;
 }
 
-/* Get manage data from global var for given non-NULL args. */
+/* Get management data from global var for given non-NULL args. */
 void sppwk_get_mng_data(
 		struct startup_param **startup_param_p,
 		struct iface_info **iface_p,
