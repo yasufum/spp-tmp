@@ -15,8 +15,8 @@
 #include "shared/common.h"
 #include "cmd_utils.h"
 #include "spp_pcap.h"
-#include "command_proc.h"
-#include "command_dec.h"
+#include "cmd_runner.h"
+#include "cmd_parser.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */

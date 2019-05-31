@@ -9,7 +9,7 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
-#include "command_dec.h"
+#include "cmd_parser.h"
 
 #define RTE_LOGTYPE_SPP_COMMAND_DEC RTE_LOGTYPE_USER2
 
