@@ -710,35 +710,32 @@ set_component_change_port(struct sppwk_port_info *port, enum spp_port_rxtx rxtx)
 	}
 }
 
-/* Get unused component id */
+/* Get ID of unused lcore. */
 int
-get_free_component(void)
+get_free_lcore_id(void)
 {
-	struct spp_component_info *component_info =
-					g_mng_data.p_component_info;
+	struct spp_component_info *comp_info = g_mng_data.p_component_info;
 
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if ((component_info + cnt)->type == SPP_COMPONENT_UNUSE)
+		if ((comp_info + cnt)->type == SPP_COMPONENT_UNUSE)
 			return cnt;
 	}
 	return SPP_RET_NG;
 }
 
-/* Get lcore id for as component name. */
-/* TODO(yasufum) change the name because it's not comp ID. */
+/* Get lcore ID as user-defined component name. */
 int
-spp_get_component_id(const char *name)
+sppwk_get_lcore_id(const char *comp_name)
 {
-	struct spp_component_info *component_info =
-		g_mng_data.p_component_info;
+	struct spp_component_info *comp_info = g_mng_data.p_component_info;
 
 	int cnt = 0;
-	if (name[0] == '\0')
+	if (comp_name[0] == '\0')
 		return SPP_RET_NG;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (strcmp(name, (component_info + cnt)->name) == 0)
+		if (strcmp(comp_name, (comp_info + cnt)->name) == 0)
 			return cnt;
 	}
 	return SPP_RET_NG;

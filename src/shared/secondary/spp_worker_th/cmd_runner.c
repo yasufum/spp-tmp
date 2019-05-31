@@ -92,6 +92,7 @@ const char *CLS_TYPE_A_LIST[] = {
 	"",  /* termination */
 };
 
+/* TODO(yasufum) move to another file for util funcs. */
 /* Get client ID from global command params. */
 static int
 sppwk_get_client_id(void)
@@ -101,6 +102,7 @@ sppwk_get_client_id(void)
 	return params->client_id;
 }
 
+/* TODO(yasufum) move to another file for util funcs. */
 /* Get proc type from global command params. */
 static int
 sppwk_get_proc_type(void)
@@ -215,7 +217,7 @@ spp_update_component(
 {
 	int ret = SPP_RET_NG;
 	int ret_del = -1;
-	int component_id = 0;
+	int comp_lcore_id = 0;
 	unsigned int tmp_lcore_id = 0;
 	struct spp_component_info *comp_info = NULL;
 	struct core_info *core = NULL;
@@ -237,15 +239,15 @@ spp_update_component(
 			return SPP_RET_NG;
 		}
 
-		component_id = spp_get_component_id(name);
-		if (component_id >= 0) {
+		comp_lcore_id = sppwk_get_lcore_id(name);
+		if (comp_lcore_id >= 0) {
 			RTE_LOG(ERR, APP, "Component name '%s' is already "
 				"used.\n", name);
 			return SPP_RET_NG;
 		}
 
-		component_id = get_free_component();
-		if (component_id < 0) {
+		comp_lcore_id = get_free_lcore_id();
+		if (comp_lcore_id < 0) {
 			RTE_LOG(ERR, APP, "Cannot assign component over the "
 				"maximum number.\n");
 			return SPP_RET_NG;
@@ -253,26 +255,26 @@ spp_update_component(
 
 		core = &info->core[info->upd_index];
 
-		comp_info = (comp_info_base + component_id);
+		comp_info = (comp_info_base + comp_lcore_id);
 		memset(comp_info, 0x00, sizeof(struct spp_component_info));
 		strcpy(comp_info->name, name);
 		comp_info->type		= type;
 		comp_info->lcore_id	= lcore_id;
-		comp_info->component_id	= component_id;
+		comp_info->component_id	= comp_lcore_id;
 
-		core->id[core->num] = component_id;
+		core->id[core->num] = comp_lcore_id;
 		core->num++;
 		ret = SPP_RET_OK;
 		tmp_lcore_id = lcore_id;
-		*(change_component + component_id) = 1;
+		*(change_component + comp_lcore_id) = 1;
 		break;
 
 	case SPPWK_ACT_STOP:
-		component_id = spp_get_component_id(name);
-		if (component_id < 0)
+		comp_lcore_id = sppwk_get_lcore_id(name);
+		if (comp_lcore_id < 0)
 			return SPP_RET_OK;
 
-		comp_info = (comp_info_base + component_id);
+		comp_info = (comp_info_base + comp_lcore_id);
 		tmp_lcore_id = comp_info->lcore_id;
 		memset(comp_info, 0x00, sizeof(struct spp_component_info));
 
@@ -282,17 +284,17 @@ spp_update_component(
 #ifdef SPP_VF_MODULE
 		/* initialize classifier information */
 		if (comp_info->type == SPP_COMPONENT_CLASSIFIER_MAC)
-			init_classifier_info(component_id);
+			init_classifier_info(comp_lcore_id);
 #endif /* SPP_VF_MODULE */
 
-		ret_del = del_component_info(component_id,
+		ret_del = del_component_info(comp_lcore_id,
 				core->num, core->id);
 		if (ret_del >= 0)
 			/* If deleted, decrement number. */
 			core->num--;
 
 		ret = SPP_RET_OK;
-		*(change_component + component_id) = 0;
+		*(change_component + comp_lcore_id) = 0;
 		break;
 
 	default:
@@ -358,7 +360,7 @@ spp_update_port(enum sppwk_action wk_action,
 	int ret = SPP_RET_NG;
 	int port_idx;
 	int ret_del = -1;
-	int component_id = 0;
+	int comp_lcore_id = 0;
 	int cnt = 0;
 	struct spp_component_info *comp_info = NULL;
 	struct sppwk_port_info *port_info = NULL;
@@ -367,15 +369,15 @@ spp_update_port(enum sppwk_action wk_action,
 	struct spp_component_info *comp_info_base = NULL;
 	int *change_component = NULL;
 
-	component_id = spp_get_component_id(name);
-	if (component_id < 0) {
+	comp_lcore_id = sppwk_get_lcore_id(name);
+	if (comp_lcore_id < 0) {
 		RTE_LOG(ERR, APP, "Unknown component by port command. "
 				"(component = %s)\n", name);
 		return SPP_RET_NG;
 	}
 	sppwk_get_mng_data(NULL, NULL,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
-	comp_info = (comp_info_base + component_id);
+	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
 		nof_ports = &comp_info->num_rx_port;
@@ -466,7 +468,7 @@ spp_update_port(enum sppwk_action wk_action,
 		return SPP_RET_NG;
 	}
 
-	*(change_component + component_id) = 1;
+	*(change_component + comp_lcore_id) = 1;
 	return ret;
 }
 

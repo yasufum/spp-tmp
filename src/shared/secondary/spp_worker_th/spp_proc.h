@@ -536,23 +536,21 @@ set_component_change_port(
 		struct sppwk_port_info *port, enum spp_port_rxtx rxtx);
 
 /**
- * Get unused component id
+ * Get ID of unused lcore.
  *
  * @retval 0~127 Component ID.
  * @retval -1    failed.
  */
-int get_free_component(void);
+int get_free_lcore_id(void);
 
 /**
- * Get component id for specified component name
+ * Get component ID from given name.
  *
- * @param name
- *  Component name.
- *
- * @retval 0~127      Component ID.
- * @retval SPP_RET_NG failed.
+ * @param[in] name Component name.
+ * @retval 0~127 Component ID.
+ * @retval SPP_RET_NG if failed.
  */
-int spp_get_component_id(const char *name);
+int sppwk_get_lcore_id(const char *comp_name);
 
 /**
  *  Delete component information.

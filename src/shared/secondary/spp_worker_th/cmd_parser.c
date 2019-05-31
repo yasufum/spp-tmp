@@ -335,7 +335,7 @@ parse_comp_name(void *output, const char *arg_val,
 	/* Parsing the name is required only for action `start`. */
 	if (component->wk_action == SPPWK_ACT_START) {
 		/* Check if lcore is already used. */
-		ret = spp_get_component_id(arg_val);  /* Get lcore ID. */
+		ret = sppwk_get_lcore_id(arg_val);  /* Get lcore ID. */
 		if (unlikely(ret >= 0)) {
 			RTE_LOG(ERR, SPP_COMMAND_PROC,
 					"Comp name '%s' is already used.\n",
@@ -492,7 +492,7 @@ parse_comp_name_portcmd(void *output, const char *arg_val,
 	int ret = SPP_RET_OK;
 
 	/* Check if lcore is already used. */
-	ret = spp_get_component_id(arg_val);  /* Get lcore ID. */
+	ret = sppwk_get_lcore_id(arg_val);  /* Get lcore ID. */
 	if (unlikely(ret < SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC,
 				"Unknown component name. val=%s\n", arg_val);
