@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 		{
 #endif
 			/* Receive command */
-			ret_do = sppwk_cmd_run();
+			ret_do = sppwk_run_cmd();
 			if (unlikely(ret_do != SPP_RET_OK))
 				break;
 

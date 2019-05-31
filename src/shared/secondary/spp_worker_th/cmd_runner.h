@@ -30,13 +30,13 @@ int
 sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port);
 
 /**
- * Run command from spp-ctl.
+ * Run command sent from spp-ctl.
  *
  * @retval SPP_RET_OK if succeeded.
  * TODO(yasufum) change exclude case of exit cmd because it is not NG.
  * @retval SPP_RET_NG if connection failure or received exit command.
  */
 int
-sppwk_cmd_run(void);
+sppwk_run_cmd(void);
 
 #endif  /* _SPPWK_CMD_RUNNER_H_ */

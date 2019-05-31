@@ -58,7 +58,7 @@ struct cmd_response {
 
 /**
  * List of worker process type. The order of items should be same as the order
- * of enum `secondary_type` in spp_proc.h.
+ * of enum `secondary_type` in cmd_utils.h.
  */
 /* TODO(yasufum) rename `secondary_type` to `sppwk_proc_type`. */
 const char *SPPWK_PROC_TYPE_LIST[] = {
@@ -81,7 +81,7 @@ const char *PORT_ABILITY_STAT_LIST[] = {
 
 /**
  * List of classifier type. The order of items should be same as the order of
- * enum `spp_classifier_type` defined in spp_proc.h.
+ * enum `spp_classifier_type` defined in cmd_utils.h.
  */
 /* TODO(yasufum) fix similar var in cmd_parser.c */
 const char *CLS_TYPE_A_LIST[] = {
@@ -726,7 +726,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 
 /* Execute one command. */
 static int
-exec_cmd(const struct spp_command *cmd)
+exec_one_cmd(const struct spp_command *cmd)
 {
 	int ret;
 
@@ -1620,72 +1620,65 @@ send_command_result_response(int *sock,
 	spp_strbuf_free(msg);
 }
 
-/* process command request from no-null-terminated string */
+/* Execute series of commands. */
 static int
-process_request(int *sock, const char *request_str, size_t request_str_len)
+exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 {
 	int ret = SPP_RET_NG;
 	int i;
 
-	struct sppwk_cmd_req request;
+	struct sppwk_cmd_req cmd_req;
 	struct sppwk_parse_err_msg wk_err_msg;
-	struct cmd_result command_results[SPPWK_MAX_CMDS];
+	struct cmd_result cmd_results[SPPWK_MAX_CMDS];
 
-	memset(&request, 0, sizeof(struct sppwk_cmd_req));
+	memset(&cmd_req, 0, sizeof(struct sppwk_cmd_req));
 	memset(&wk_err_msg, 0, sizeof(struct sppwk_parse_err_msg));
-	memset(command_results, 0, sizeof(command_results));
-
-	RTE_LOG(DEBUG, WK_CMD_RUNNER, "Start command request processing. "
-			"request_str=\n%.*s\n",
-			(int)request_str_len, request_str);
+	memset(cmd_results, 0, sizeof(cmd_results));
 
 	/* Parse request message. */
-	ret = sppwk_parse_req(
-			&request, request_str, request_str_len, &wk_err_msg);
+	RTE_LOG(DEBUG, WK_CMD_RUNNER, "Parse cmds, %.*s\n",
+			(int)req_str_len, req_str);
+	ret = sppwk_parse_req(&cmd_req, req_str, req_str_len, &wk_err_msg);
+
 	if (unlikely(ret != SPP_RET_OK)) {
 		/* Setup and send error response. */
-		prepare_parse_err_msg(command_results, &request,
-				&wk_err_msg);
-		send_decode_error_response(sock, &request, command_results);
-		RTE_LOG(DEBUG, WK_CMD_RUNNER,
-				"End command request processing.\n");
+		prepare_parse_err_msg(cmd_results, &cmd_req, &wk_err_msg);
+		send_decode_error_response(sock, &cmd_req, cmd_results);
+		RTE_LOG(DEBUG, WK_CMD_RUNNER, "Failed to parse cmds.\n");
 		return SPP_RET_OK;
 	}
 
-	RTE_LOG(DEBUG, WK_CMD_RUNNER, "Command request is valid. "
-			"num_command=%d, num_valid_command=%d\n",
-			request.num_command, request.num_valid_command);
+	RTE_LOG(DEBUG, WK_CMD_RUNNER,
+			"Num of cmds is %d, and valid cmds is %d\n",
+			cmd_req.num_command, cmd_req.num_valid_command);
 
 	/* execute commands */
-	for (i = 0; i < request.num_command ; ++i) {
-		ret = exec_cmd(request.commands + i);
+	for (i = 0; i < cmd_req.num_command ; ++i) {
+		ret = exec_one_cmd(cmd_req.commands + i);
 		if (unlikely(ret != SPP_RET_OK)) {
-			set_cmd_result(&command_results[i], CMD_FAILED,
+			set_cmd_result(&cmd_results[i], CMD_FAILED,
 					"error occur");
-
-			/* not execute remaining commands */
-			for (++i; i < request.num_command ; ++i)
-				set_cmd_result(&command_results[i],
+			/* Does not execute remaining commands */
+			for (++i; i < cmd_req.num_command ; ++i)
+				set_cmd_result(&cmd_results[i],
 					CMD_INVALID, "");
-
 			break;
 		}
 
-		set_cmd_result(&command_results[i], CMD_SUCCESS, "");
+		set_cmd_result(&cmd_results[i], CMD_SUCCESS, "");
 	}
 
-	if (request.is_requested_exit) {
-		/* Terminated by process exit command.                       */
-		/* Other route is normal end because it responds to command. */
-		set_cmd_result(&command_results[0], CMD_SUCCESS, "");
-		send_command_result_response(sock, &request, command_results);
+	/* Exec exit command. */
+	if (cmd_req.is_requested_exit) {
+		set_cmd_result(&cmd_results[0], CMD_SUCCESS, "");
+		send_command_result_response(sock, &cmd_req, cmd_results);
 		RTE_LOG(INFO, WK_CMD_RUNNER,
-				"Terminate process for exit.\n");
+				"Process is terminated with exit cmd.\n");
 		return SPP_RET_NG;
 	}
 
 	/* send response */
-	send_command_result_response(sock, &request, command_results);
+	send_command_result_response(sock, &cmd_req, cmd_results);
 
 	RTE_LOG(DEBUG, WK_CMD_RUNNER, "End command request processing.\n");
 
@@ -1699,12 +1692,12 @@ sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port)
 	return spp_command_conn_init(ctl_ipaddr, ctl_port);
 }
 
-/* Run command from spp-ctl. */
+/* Run command sent from spp-ctl. */
 int
-sppwk_cmd_run(void)
+sppwk_run_cmd(void)
 {
-	int ret = SPP_RET_NG;
-	int msg_ret = -1;
+	int ret;
+	int msg_ret;
 
 	static int sock = -1;
 	static char *msgbuf;
@@ -1734,7 +1727,7 @@ sppwk_cmd_run(void)
 			return SPP_RET_NG;
 	}
 
-	ret = process_request(&sock, msgbuf, msg_ret);
+	ret = exec_cmds(&sock, msgbuf, msg_ret);
 	spp_strbuf_remove_front(msgbuf, msg_ret);
 
 	return ret;
