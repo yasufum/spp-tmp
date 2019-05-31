@@ -47,14 +47,14 @@ parse_parameter_value(char *string, int max, int *argc, char *argv[])
 	argv_tok = strtok_r(string, delim, &saveptr);
 	while (argv_tok != NULL) {
 		if (cnt >= max)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		argv[cnt] = argv_tok;
 		cnt++;
 		argv_tok = strtok_r(NULL, delim, &saveptr);
 	}
 	*argc = cnt;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* command list for parse */
@@ -86,7 +86,7 @@ parse_command_in_list(struct spp_command_request *request,
 			const char *request_str,
 			struct sppwk_parse_err_msg *wk_err_msg)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int command_name_check = 0;
 	struct parse_command_list *list = NULL;
 	int i = 0;
@@ -99,7 +99,7 @@ parse_command_in_list(struct spp_command_request *request,
 	strcpy(tmp_str, request_str);
 	ret = parse_parameter_value(tmp_str, SPPWK_MAX_PARAMS,
 			&argc, argv);
-	if (ret < SPP_RET_OK) {
+	if (ret < SPPWK_RET_OK) {
 		RTE_LOG(ERR, PCAP_PARSER, "Parameter number over limit."
 				"request_str=%s\n", request_str);
 		return set_parse_error(wk_err_msg,
@@ -123,7 +123,7 @@ parse_command_in_list(struct spp_command_request *request,
 			return (*list->func)(request, argc, argv, wk_err_msg,
 							list->param_max);
 
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	if (command_name_check != 0) {
@@ -146,13 +146,13 @@ spp_command_parse_request(
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 
 	/* parse request */
 	request->num_command = 1;
 	ret = parse_command_in_list(request, request_str, wk_err_msg);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_PARSER,
 				"Cannot parse command request. "
 				"ret=%d, request_str=%.*s\n",

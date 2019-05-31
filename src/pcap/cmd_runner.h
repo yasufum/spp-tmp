@@ -23,8 +23,8 @@
  * @param controller_port
  *  The controller's port number.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int
 spp_command_proc_init(const char *controller_ip, int controller_port);
@@ -32,8 +32,8 @@ spp_command_proc_init(const char *controller_ip, int controller_port);
 /**
  * process command from controller.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG process termination is required.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG process termination is required.
  *            (occurred connection failure, or received exit command)
  */
 int

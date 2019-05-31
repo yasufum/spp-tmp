@@ -93,11 +93,11 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 			RTE_LOG(ERR, PCAP_RUNNER,
 					"Cannot iterate core information. "
 						"(core = %d)\n", lcore_id);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* append a comma for JSON format */
@@ -108,10 +108,10 @@ append_json_comma(char **output)
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's comma failed to add.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -129,12 +129,12 @@ append_json_uint_value(const char *name, char **output, unsigned int value)
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, uint = %u)\n", name, value);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("%u"),
 			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -153,12 +153,12 @@ append_json_int_value(const char *name, char **output, int value)
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, int = %d)\n", name, value);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("%d"),
 			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -177,12 +177,12 @@ append_json_str_value(const char *name, char **output, const char *str)
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's string format failed to add. "
 				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("\"%s\""),
 			JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -201,12 +201,12 @@ append_json_array_brackets(const char *name, char **output, const char *str)
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's square bracket failed to add. "
 				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_ARRAY,
 			JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* append brackets of the blocks for JSON format */
@@ -221,7 +221,7 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"JSON's curly bracket failed to add. "
 				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (name[0] == '\0')
@@ -230,14 +230,14 @@ append_json_block_brackets(const char *name, char **output, const char *str)
 	else
 		sprintf(&(*output)[len], JSON_APPEND_BLOCK,
 				JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* execute one command */
 static int
 execute_command(const struct spp_command *command)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 
 	switch (command->type) {
 	case CMD_CLIENT_ID:
@@ -366,26 +366,26 @@ append_result_value(const char *name, char **output, void *tmp)
 static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	const struct command_result *result = tmp;
 	char *tmp_buff;
 	/* string is empty, except for errors */
 	if (result->error_message[0] == '\0')
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_str_value("message", &tmp_buff,
 			result->error_message);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_block_brackets(name, output, tmp_buff);
@@ -419,19 +419,19 @@ static int
 append_port_entry(char **output, const struct spp_port_index *port,
 		const enum spp_port_rxtx rxtx __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char port_str[CMD_TAG_APPEND_SIZE];
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = port_block)\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 	ret = append_json_str_value("port", &tmp_buff, port_str);
-	if (unlikely(ret < SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret < SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
 	ret = append_json_block_brackets("", output, tmp_buff);
 	spp_strbuf_free(tmp_buff);
@@ -444,20 +444,20 @@ append_port_array(const char *name, char **output, const int num,
 		const struct spp_port_index *ports,
 		const enum spp_port_rxtx rxtx)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i = 0;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; i < num; i++) {
 		ret = append_port_entry(&tmp_buff, &ports[i], rxtx);
-		if (unlikely(ret < SPP_RET_OK))
-			return SPP_RET_NG;
+		if (unlikely(ret < SPPWK_RET_OK))
+			return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(name, output, tmp_buff);
@@ -483,7 +483,7 @@ append_pcap_core_element_value(
 		const int num_tx __attribute__ ((unused)),
 		const struct spp_port_index *tx_ports __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int unuse_flg = 0;
 	char *buff, *tmp_buff;
 	buff = params->output;
@@ -491,7 +491,7 @@ append_pcap_core_element_value(
 	/* there is not necessary data when "unuse" by type */
 	unuse_flg = strcmp(type, "unuse");
 	if (!unuse_flg)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -502,11 +502,11 @@ append_pcap_core_element_value(
 	}
 
 	ret = append_json_uint_value("core", &tmp_buff, lcore_id);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	ret = append_json_str_value("role", &tmp_buff, type);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	if (num_rx != 0)
@@ -528,7 +528,7 @@ static int
 append_master_lcore_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	ret = append_json_int_value(name, output, rte_get_master_lcore());
 	return ret;
 }
@@ -538,7 +538,7 @@ static int
 append_core_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	struct spp_iterate_core_params itr_params;
 
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -546,16 +546,16 @@ append_core_value(const char *name, char **output,
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	itr_params.output = tmp_buff;
 	itr_params.element_proc = append_pcap_core_element_value;
 
 	ret = spp_iterate_core_info(&itr_params);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		spp_strbuf_free(itr_params.output);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(name, output, itr_params.output);
@@ -569,25 +569,25 @@ append_response_list_value(char **output,
 		struct command_response_list *list,
 		void *tmp)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	char *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = response_list)\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; list[i].tag_name[0] != '\0'; i++) {
 		tmp_buff[0] = '\0';
 		ret = list[i].func(list[i].tag_name, &tmp_buff, tmp);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, PCAP_RUNNER,
 					"Failed to get reply string. "
 					"(tag = %s)\n", list[i].tag_name);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		if (tmp_buff[0] == '\0')
@@ -595,13 +595,13 @@ append_response_list_value(char **output,
 
 		if ((*output)[0] != '\0') {
 			ret = append_json_comma(output);
-			if (unlikely(ret < SPP_RET_OK)) {
+			if (unlikely(ret < SPPWK_RET_OK)) {
 				spp_strbuf_free(tmp_buff);
 				RTE_LOG(ERR, PCAP_RUNNER,
 						"Failed to add commas. "
 						"(tag = %s)\n",
 						list[i].tag_name);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 		}
 
@@ -613,12 +613,12 @@ append_response_list_value(char **output,
 					"Failed to add reply string. "
 					"(tag = %s)\n",
 					list[i].tag_name);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	spp_strbuf_free(tmp_buff);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* termination constant of command response list */
@@ -645,7 +645,7 @@ static int
 append_command_results_value(const char *name, char **output,
 		int num, struct command_result *results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	char *tmp_buff1, *tmp_buff2;
 	tmp_buff1 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -653,7 +653,7 @@ append_command_results_value(const char *name, char **output,
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s, buff=1)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	tmp_buff2 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -662,7 +662,7 @@ append_command_results_value(const char *name, char **output,
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s, buff=2)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -672,14 +672,14 @@ append_command_results_value(const char *name, char **output,
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		ret = append_json_block_brackets("", &tmp_buff2, tmp_buff1);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 	}
@@ -694,20 +694,20 @@ append_command_results_value(const char *name, char **output,
 static int
 append_info_value(const char *name, char **output)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_response_list_value(&tmp_buff,
 			response_info_list, NULL);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_block_brackets(name, output, tmp_buff);
@@ -721,7 +721,7 @@ send_parse_error_response(int *sock,
 		const struct spp_command_request *request,
 		struct command_result *command_results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -733,7 +733,7 @@ send_parse_error_response(int *sock,
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
 			request->num_command, command_results);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to make command result response.\n");
@@ -749,7 +749,7 @@ send_parse_error_response(int *sock,
 	}
 	ret = append_json_block_brackets("", &msg, tmp_buff);
 	spp_strbuf_free(tmp_buff);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
@@ -762,7 +762,7 @@ send_parse_error_response(int *sock,
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to send parse error response.\n");
 		/* not return */
@@ -777,7 +777,7 @@ send_command_result_response(int *sock,
 		const struct spp_command_request *request,
 		struct command_result *command_results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
 	int *capture_request = NULL;
 
@@ -791,7 +791,7 @@ send_command_result_response(int *sock,
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
 			request->num_command, command_results);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to make command result response.\n");
@@ -801,7 +801,7 @@ send_command_result_response(int *sock,
 	/* append client id information value */
 	if (request->is_requested_client_id) {
 		ret = append_client_id_value("client_id", &tmp_buff, NULL);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, PCAP_RUNNER, "Failed to make "
 					"client id response.\n");
@@ -814,7 +814,7 @@ send_command_result_response(int *sock,
 	/* append info value */
 	if (request->is_requested_status) {
 		ret = append_info_value("info", &tmp_buff);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, PCAP_RUNNER,
 					"Failed to make status response.\n");
@@ -845,7 +845,7 @@ send_command_result_response(int *sock,
 	}
 	ret = append_json_block_brackets("", &msg, tmp_buff);
 	spp_strbuf_free(tmp_buff);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"allocate error. (name = result_response)\n");
@@ -858,7 +858,7 @@ send_command_result_response(int *sock,
 
 	/* send response to requester */
 	ret = spp_send_message(sock, msg, strlen(msg));
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 			"Failed to send command result response.\n");
 		/* not return */
@@ -871,7 +871,7 @@ send_command_result_response(int *sock,
 static int
 process_request(int *sock, const char *request_str, size_t request_str_len)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 
 	struct spp_command_request request;
@@ -889,14 +889,14 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	/* parse request message */
 	ret = spp_command_parse_request(
 			&request, request_str, request_str_len, &parse_error);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		/* send error response */
 		set_parse_error_to_results(command_results, &request,
 				&parse_error);
 		send_parse_error_response(sock, &request, command_results);
 		RTE_LOG(DEBUG, PCAP_RUNNER,
 				"End command request processing.\n");
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	RTE_LOG(DEBUG, PCAP_RUNNER, "Command request is valid. "
@@ -906,7 +906,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 	/* execute commands */
 	for (i = 0; i < request.num_command ; ++i) {
 		ret = execute_command(request.commands + i);
-		if (unlikely(ret != SPP_RET_OK)) {
+		if (unlikely(ret != SPPWK_RET_OK)) {
 			set_command_results(&command_results[i], CMD_FAILURE,
 					"error occur");
 
@@ -928,7 +928,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 		send_command_result_response(sock, &request, command_results);
 		RTE_LOG(INFO, PCAP_RUNNER,
 				"Terminate process for exit.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* send response */
@@ -936,7 +936,7 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 	RTE_LOG(DEBUG, PCAP_RUNNER, "End command request processing.\n");
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* initialize command processor. */
@@ -950,7 +950,7 @@ spp_command_proc_init(const char *controller_ip, int controller_port)
 int
 spp_command_proc_do(void)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int msg_ret = -1;
 
 	static int sock = -1;
@@ -962,22 +962,22 @@ spp_command_proc_do(void)
 			RTE_LOG(ERR, PCAP_RUNNER,
 					"Cannot allocate memory "
 					"for receive data(init).\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	ret = spp_connect_to_controller(&sock);
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_OK;
+	if (unlikely(ret != SPPWK_RET_OK))
+		return SPPWK_RET_OK;
 
 	msg_ret = spp_receive_message(&sock, &msgbuf);
 	if (unlikely(msg_ret <= 0)) {
 		if (likely(msg_ret == 0))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		else if (unlikely(msg_ret == SPP_CONNERR_TEMPORARY))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		else
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 	}
 
 	ret = process_request(&sock, msgbuf, msg_ret);

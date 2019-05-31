@@ -25,8 +25,8 @@
  *  The pointer to struct spp_iterate_core_params.@n
  *  Detailed data of pcap status.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int spp_pcap_get_core_status(
 		unsigned int lcore_id,

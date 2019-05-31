@@ -124,16 +124,16 @@ struct pcap_option {
  * (e.g. worker thread type, file number, pointer to writing file etc) per core
  */
 struct pcap_mng_info {
-	volatile enum worker_thread_type type; /* thread type */
-	enum spp_capture_status status; /* thread status */
-	int thread_no;                 /* thread no */
-	int file_no;                   /* file no */
-	char compress_file_name[PCAP_FNAME_STRLEN]; /* lz4 file name */
-	LZ4F_compressionContext_t ctx; /* lz4 file Ccontext */
-	FILE *compress_fp;             /* lzf file pointer */
-	size_t outbuf_capacity;        /* compress date buffer size */
-	void *outbuff;                 /* compress date buffer */
-	uint64_t file_size;            /* file write size */
+	volatile enum worker_thread_type type;  /* thread type */
+	enum sppwk_capture_status status;  /* ideling or running */
+	int thread_no;  /* thread no */
+	int file_no;    /* file no */
+	char compress_file_name[PCAP_FNAME_STRLEN];  /* lz4 file name */
+	LZ4F_compressionContext_t ctx;  /* lz4 file Ccontext */
+	FILE *compress_fp;  /* lzf file pointer */
+	size_t outbuf_capacity;  /* compress date buffer size */
+	void *outbuff;  /* compress date buffer */
+	uint64_t file_size;  /* file write size */
 };
 
 /* Pcap status info. */
@@ -191,8 +191,8 @@ usage(const char *progname)
 }
 
 /**
- * Convert string type of client ID to integer and return SPP_RET_OK, or
- * SPP_RET_NG if failed.
+ * Convert string type of client ID to integer and return SPPWK_RET_OK, or
+ * SPPWK_RET_NG if failed.
  */
 static int
 client_id_toi(const char *client_id_str, int *client_id)
@@ -202,14 +202,14 @@ client_id_toi(const char *client_id_str, int *client_id)
 
 	id = strtol(client_id_str, &endptr, 0);
 	if (unlikely(client_id_str == endptr) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	if (id >= RTE_MAX_LCORE)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	*client_id = id;
 	RTE_LOG(DEBUG, SPP_PCAP, "Set client id = %d\n", *client_id);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse options for server IP and port */
@@ -223,18 +223,18 @@ parse_server_ip(const char *server_str, char *server_ip, int *server_port)
 
 	pos = strcspn(server_str, delim);
 	if (pos >= strlen(server_str))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	port = strtol(&server_str[pos+1], &endptr, 0);
 	if (unlikely(&server_str[pos+1] == endptr) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	memcpy(server_ip, server_str, pos);
 	server_ip[pos] = '\0';
 	*server_port = port;
 	RTE_LOG(DEBUG, SPP_PCAP, "Set server IP   = %s\n", server_ip);
 	RTE_LOG(DEBUG, SPP_PCAP, "Set server port = %d\n", *server_port);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 
@@ -247,11 +247,11 @@ parse_fsize(const char *fsize_str, uint64_t *fsize)
 
 	fs = strtoull(fsize_str, &endptr, 10);
 	if (unlikely(fsize_str == endptr) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	*fsize = fs;
 	RTE_LOG(DEBUG, SPP_PCAP, "Set fzise = %ld\n", *fsize);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse `-c` option for captured port and get the port type and ID */
@@ -278,7 +278,7 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 		/* OTHER */
 		RTE_LOG(ERR, SPP_PCAP, "The interface that does not suppor. "
 					"(port = %s)\n", port_str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* Convert from string to number */
@@ -287,7 +287,7 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 		/* No IF number */
 		RTE_LOG(ERR, SPP_PCAP, "No interface number. (port = %s)\n",
 								port_str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*iface_type = type;
@@ -295,7 +295,7 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 
 	RTE_LOG(DEBUG, SPP_PCAP, "Port = %s => Type = %d No = %d\n",
 					port_str, *iface_type, *iface_no);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse options for client app */
@@ -344,9 +344,9 @@ parse_args(int argc, char *argv[])
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
 			if (client_id_toi(optarg,
 					&g_startup_param.client_id) !=
-								SPP_RET_OK) {
+								SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			proc_flg = 1;
 			break;
@@ -356,14 +356,14 @@ parse_args(int argc, char *argv[])
 			if (g_pcap_option.compress_file_path[0] == '\0' ||
 						stat(optarg, &statBuf) != 0) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			break;
 		case SPP_LONGOPT_RETVAL_FILE_SIZE:
 			if (parse_fsize(optarg, &g_pcap_option.fsize_limit) !=
-					SPP_RET_OK) {
+					SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			break;
 		case 'c':  /* captured port */
@@ -371,31 +371,31 @@ parse_args(int argc, char *argv[])
 			if (parse_captured_port(optarg,
 					&g_pcap_option.port_cap.iface_type,
 					&g_pcap_option.port_cap.iface_no) !=
-					SPP_RET_OK) {
+					SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			port_flg = 1;
 			break;
 		case 's':  /* server addr */
 			if (parse_server_ip(optarg, g_startup_param.server_ip,
 					&g_startup_param.server_port) !=
-								SPP_RET_OK) {
+								SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			server_flg = 1;
 			break;
 		default:
 			usage(progname);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	/* Check mandatory parameters */
 	if ((proc_flg == 0) || (server_flg == 0) || (port_flg == 0)) {
 		usage(progname);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	RTE_LOG(INFO, SPP_PCAP,
@@ -407,7 +407,7 @@ parse_args(int argc, char *argv[])
 			port_str,
 			g_pcap_option.compress_file_path,
 			g_pcap_option.fsize_limit);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Pcap get core status */
@@ -416,7 +416,7 @@ spp_pcap_get_core_status(
 		unsigned int lcore_id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char role_type[8];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	char name[PCAP_FPATH_STRLEN + PCAP_FDATE_STRLEN];
@@ -447,9 +447,9 @@ spp_pcap_get_core_status(
 		name, role_type,
 		rx_num, rx_ports, 0, NULL);
 	if (unlikely(ret != 0))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* write compressed data into file  */
@@ -458,14 +458,14 @@ static int output_pcap_file(FILE *compress_fp, void *srcbuf, size_t write_len)
 	size_t write_size;
 
 	if (write_len == 0)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	write_size = fwrite(srcbuf, write_len, 1, compress_fp);
 	if (write_size != 1) {
 		RTE_LOG(ERR, SPP_PCAP, "file write error len=%lu\n",
 								write_len);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* compress data & write file */
@@ -480,14 +480,14 @@ static int output_lz4_pcap_file(struct pcap_mng_info *info,
 	if (LZ4F_isError(compress_len)) {
 		RTE_LOG(ERR, SPP_PCAP, "Compression failed: error %zd\n",
 							compress_len);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	RTE_LOG(DEBUG, SPP_PCAP, "src len=%d\n", src_len);
 	if (output_pcap_file(info->compress_fp, info->outbuff,
 						compress_len) != 0)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -538,14 +538,14 @@ static int file_compression_operation(struct pcap_mng_info *info,
 			fclose(info->compress_fp);
 			info->compress_fp = NULL;
 			free(info->outbuff);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		if (output_pcap_file(info->compress_fp, info->outbuff,
-						compress_len) != SPP_RET_OK) {
+						compress_len) != SPPWK_RET_OK) {
 			fclose(info->compress_fp);
 			info->compress_fp = NULL;
 			free(info->outbuff);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		/* flush remained data */
@@ -585,7 +585,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 	} else { /* close mode */
 		/* Close temporary file and rename to persistent */
 		if (info->compress_fp == NULL)
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		compress_len = LZ4F_compressEnd(info->ctx, info->outbuff,
 					info->outbuf_capacity, NULL);
 		if (LZ4F_isError(compress_len)) {
@@ -616,7 +616,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 
 		info->compress_fp = NULL;
 		free(info->outbuff);
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	/* file open */
@@ -632,7 +632,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		RTE_LOG(ERR, SPP_PCAP, "file open error! filename=%s\n",
 						info->compress_file_name);
 		free(info->outbuff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* init lz4 stream */
@@ -643,7 +643,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		fclose(info->compress_fp);
 		info->compress_fp = NULL;
 		free(info->outbuff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* write compress frame header */
@@ -655,7 +655,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		fclose(info->compress_fp);
 		info->compress_fp = NULL;
 		free(info->outbuff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	RTE_LOG(DEBUG, SPP_PCAP, "Buffer size is %zd bytes, header size %zd "
 			"bytes\n", info->outbuf_capacity, headerSize);
@@ -664,7 +664,7 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		fclose(info->compress_fp);
 		info->compress_fp = NULL;
 		free(info->outbuff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	info->file_size = headerSize;
 
@@ -679,15 +679,15 @@ static int file_compression_operation(struct pcap_mng_info *info,
 
 	/* pcap header write */
 	if (output_lz4_pcap_file(info, &pcap_h, sizeof(struct pcap_header))
-							!= SPP_RET_OK) {
+							!= SPPWK_RET_OK) {
 		RTE_LOG(ERR, SPP_PCAP, "pcap header write  error!\n");
 		fclose(info->compress_fp);
 		info->compress_fp = NULL;
 		free(info->outbuff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* compress packet data */
@@ -702,13 +702,13 @@ static int compress_file_packet(struct pcap_mng_info *info,
 	int bytes_to_write;
 
 	if (info->compress_fp == NULL)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* capture file rool */
 	if (info->file_size > g_pcap_option.fsize_limit) {
 		if (file_compression_operation(info, UPDATE_MODE)
-							!= SPP_RET_OK)
-			return SPP_RET_NG;
+							!= SPPWK_RET_OK)
+			return SPPWK_RET_NG;
 	}
 
 	/* cast to packet */
@@ -729,9 +729,9 @@ static int compress_file_packet(struct pcap_mng_info *info,
 
 	/* output to lz4_pcap_file */
 	if (output_lz4_pcap_file(info, &pcap_packet_h.ts_sec,
-			sizeof(struct pcap_packet_header)) != SPP_RET_OK) {
+			sizeof(struct pcap_packet_header)) != SPPWK_RET_OK) {
 		file_compression_operation(info, CLOSE_MODE);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	info->file_size += sizeof(struct pcap_packet_header);
 
@@ -748,14 +748,14 @@ static int compress_file_packet(struct pcap_mng_info *info,
 				rte_pktmbuf_mtod(cap_pkt, void*),
 						bytes_to_write) != 0) {
 			file_compression_operation(info, CLOSE_MODE);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		cap_pkt = cap_pkt->next;
 		remaining_bytes -= bytes_to_write;
 		info->file_size += bytes_to_write;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Receive packets from shared ring buffer */
@@ -788,7 +788,7 @@ static int pcap_proc_receive(int lcore_id)
 			if (g_pcap_thread_info.start_up_cnt != 0)
 				g_pcap_thread_info.start_up_cnt -= 1;
 		}
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 	if (info->status == SPP_CAPTURE_IDLE) {
 		/* Get time for output file name */
@@ -812,13 +812,13 @@ static int pcap_proc_receive(int lcore_id)
 
 	/* Write thread start up wait. */
 	if (g_pcap_thread_info.thread_cnt > g_pcap_thread_info.start_up_cnt)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
 	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PCAP_BURST);
 	if (unlikely(nb_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* Forward to ring for writer thread */
 	nb_tx = rte_ring_enqueue_burst(write_ring, (void *)bufs, nb_rx, NULL);
@@ -834,13 +834,13 @@ static int pcap_proc_receive(int lcore_id)
 	total_rx += nb_rx;
 	total_drop += nb_rx - nb_tx;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Output packets to file on writer thread */
 static int pcap_proc_write(int lcore_id)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int buf;
 	int nb_rx = 0;
 	struct rte_mbuf *bufs[MAX_PCAP_BURST];
@@ -850,15 +850,15 @@ static int pcap_proc_write(int lcore_id)
 
 	if (g_capture_status == SPP_CAPTURE_IDLE) {
 		if (info->status == SPP_CAPTURE_IDLE)
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 	}
 	if (info->status == SPP_CAPTURE_IDLE) {
 		RTE_LOG(DEBUG, SPP_PCAP, "write[%d] idle->run\n", lcore_id);
 		info->status = SPP_CAPTURE_RUNNING;
 		if (file_compression_operation(info, INIT_MODE)
-						!= SPP_RET_OK) {
+						!= SPPWK_RET_OK) {
 			info->status = SPP_CAPTURE_IDLE;
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		g_pcap_thread_info.start_up_cnt += 1;
 		g_total_write[lcore_id] = 0;
@@ -880,22 +880,22 @@ static int pcap_proc_write(int lcore_id)
 			if (g_pcap_thread_info.start_up_cnt != 0)
 				g_pcap_thread_info.start_up_cnt -= 1;
 			if (file_compression_operation(info, CLOSE_MODE)
-							!= SPP_RET_OK)
-				return SPP_RET_NG;
+							!= SPPWK_RET_OK)
+				return SPPWK_RET_NG;
 		}
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	for (buf = 0; buf < nb_rx; buf++) {
 		mbuf = bufs[buf];
 		rte_prefetch0(rte_pktmbuf_mtod(mbuf, void *));
 		if (compress_file_packet(&g_pcap_info[lcore_id], mbuf)
-							!= SPP_RET_OK) {
+							!= SPPWK_RET_OK) {
 			RTE_LOG(ERR, SPP_PCAP,
 					"Failed compress_file_packet(), "
 					"errno=%d (%s)\n",
 					errno, strerror(errno));
-			ret = SPP_RET_NG;
+			ret = SPPWK_RET_NG;
 			info->status = SPP_CAPTURE_IDLE;
 			file_compression_operation(info, CLOSE_MODE);
 			break;
@@ -914,7 +914,7 @@ static int pcap_proc_write(int lcore_id)
 static int
 slave_main(void *arg __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	unsigned int lcore_id = rte_lcore_id();
 	struct pcap_mng_info *pcap_info = &g_pcap_info[lcore_id];
 
@@ -940,7 +940,7 @@ slave_main(void *arg __attribute__ ((unused)))
 			ret = pcap_proc_receive(lcore_id);
 		else
 			ret = pcap_proc_write(lcore_id);
-		if (unlikely(ret != SPP_RET_OK)) {
+		if (unlikely(ret != SPPWK_RET_OK)) {
 			RTE_LOG(ERR, SPP_PCAP, "Core[%d] Thread Error.\n",
 								lcore_id);
 			break;
@@ -955,12 +955,12 @@ slave_main(void *arg __attribute__ ((unused)))
 /**
  * Main function
  *
- * Return SPP_RET_NG explicitly if error is occurred.
+ * Return SPPWK_RET_NG explicitly if error is occurred.
  */
 int
 main(int argc, char *argv[])
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
 	int ret_daemon = daemon(0, 0);
@@ -1013,7 +1013,7 @@ main(int argc, char *argv[])
 		int ret_command_init = spp_command_proc_init(
 				g_startup_param.server_ip,
 				g_startup_param.server_port);
-		if (unlikely(ret_command_init != SPP_RET_OK))
+		if (unlikely(ret_command_init != SPPWK_RET_OK))
 			break;
 
 		/* capture port setup */
@@ -1037,7 +1037,7 @@ main(int argc, char *argv[])
 		} else {
 			if (port_info->iface_type == UNDEF) {
 				ret = add_ring_pmd(port_info->iface_no);
-				if (ret == SPP_RET_NG) {
+				if (ret == SPPWK_RET_NG) {
 					RTE_LOG(ERR, SPP_PCAP, "caputre port "
 						"undefined.(ring:%d)\n",
 						port_cap->iface_no);
@@ -1100,7 +1100,7 @@ main(int argc, char *argv[])
 				SPP_CORE_STOP_REQUEST)) {
 			/* Receive command */
 			ret_do = spp_command_proc_do();
-			if (unlikely(ret_do != SPP_RET_OK))
+			if (unlikely(ret_do != SPPWK_RET_OK))
 				break;
 
 			/*
@@ -1109,12 +1109,12 @@ main(int argc, char *argv[])
 			usleep(100);
 		}
 
-		if (unlikely(ret_do != SPP_RET_OK)) {
+		if (unlikely(ret_do != SPPWK_RET_OK)) {
 			set_all_core_status(SPP_CORE_STOP_REQUEST);
 			break;
 		}
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 	}
 

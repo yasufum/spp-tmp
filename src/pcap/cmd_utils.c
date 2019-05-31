@@ -40,7 +40,7 @@ add_ring_pmd(int ring_id)
 	if (unlikely(ring == NULL)) {
 		RTE_LOG(ERR, PCAP_UTILS,
 			"Cannot get RX ring - is server process running?\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* Create ring pmd */
@@ -52,7 +52,7 @@ add_ring_pmd(int ring_id)
 		if (ring_port_id < 0) {
 			RTE_LOG(ERR, PCAP_UTILS, "Cannot create eth dev with "
 						"rte_eth_from_ring()\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	} else {
 		ring_port_id = port_id;
@@ -73,7 +73,7 @@ spp_get_core_status(unsigned int lcore_id)
 /**
  * Check status of all of cores is same as given
  *
- * It returns SPP_RET_NG as status mismatch if status is not same.
+ * It returns SPPWK_RET_NG as status mismatch if status is not same.
  * If core is in use, status will be checked.
  */
 static int
@@ -84,10 +84,10 @@ check_core_status(enum sppwk_lcore_status status)
 		if ((g_mng_data_addr.p_core_info + lcore_id)->status !=
 								status) {
 			/* Status is mismatched */
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 int
@@ -98,12 +98,12 @@ check_core_status_wait(enum sppwk_lcore_status status)
 		sleep(1);
 		int ret = check_core_status(status);
 		if (ret == 0)
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 	}
 
 	RTE_LOG(ERR, PCAP_UTILS,
 			"Status check time out. (status = %d)\n", status);
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /* Set core status */
@@ -215,7 +215,7 @@ set_nic_interface(void)
 		p_iface_info->nic[nic_cnt].dpdk_port = nic_cnt;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Setup management info for spp_pcap */
@@ -227,10 +227,10 @@ init_mng_data(void)
 	init_core_info();
 
 	int ret_nic = set_nic_interface();
-	if (unlikely(ret_nic != SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret_nic != SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -249,12 +249,12 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 		iface_type_str = SPP_IFTYPE_RING_STR;
 		break;
 	default:
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(port, "%s:%d", iface_type_str, iface_no);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Set mange data address */
@@ -270,7 +270,7 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
 			capture_request_addr == NULL ||
 			capture_status_addr == NULL ||
 			main_lcore_id == 0xffffffff)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	g_mng_data_addr.p_startup_param = startup_param_addr;
 	g_mng_data_addr.p_iface_info = iface_addr;
@@ -279,7 +279,7 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
 	g_mng_data_addr.p_capture_status = capture_status_addr;
 	g_mng_data_addr.main_lcore_id = main_lcore_id;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Get manage data address */

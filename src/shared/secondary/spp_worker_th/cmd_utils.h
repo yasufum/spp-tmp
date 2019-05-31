@@ -102,7 +102,7 @@ enum spp_classifier_type {
 	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
 };
 
-enum spp_return_value {
+enum sppwk_return_val {
 	SPP_RET_OK = 0,  /**< succeeded */
 	SPP_RET_NG = -1, /**< failed */
 };

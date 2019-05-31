@@ -49,14 +49,14 @@ enum sppwk_lcore_status {
 };
 
 /* State on capture */
-enum spp_capture_status {
+enum sppwk_capture_status {
 	SPP_CAPTURE_IDLE,      /* Idling */
 	SPP_CAPTURE_RUNNING     /* Running */
 };
 
-enum spp_return_value {
-	SPP_RET_OK = 0,  /**< succeeded */
-	SPP_RET_NG = -1, /**< failed */
+enum sppwk_return_val {
+	SPPWK_RET_OK = 0,  /**< succeeded */
+	SPPWK_RET_NG = -1, /**< failed */
 };
 
 /**
@@ -325,8 +325,8 @@ struct core_info *get_core_info(unsigned int lcore_id);
  * @param iface_no
  *  interface no
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int
 spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
@@ -341,8 +341,8 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @param iface_no
  *  interface no
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int
 spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
@@ -363,8 +363,8 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @param main_lcore_id
  *  main_lcore_id mask
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
 			  struct iface_info *iface_addr,
