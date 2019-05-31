@@ -146,7 +146,7 @@ stop_process(int signal)
  *
  * It returns NULL value if given type is invalid.
  */
-struct spp_port_info *
+struct sppwk_port_info *
 get_iface_info(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
@@ -175,12 +175,12 @@ init_iface_info(void)
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
 		p_iface_info->nic[port_cnt].iface_type = UNDEF;
 		p_iface_info->nic[port_cnt].iface_no   = port_cnt;
-		p_iface_info->nic[port_cnt].dpdk_port  = -1;
+		p_iface_info->nic[port_cnt].ethdev_port_id  = -1;
 		p_iface_info->nic[port_cnt].class_id.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
-		p_iface_info->ring[port_cnt].dpdk_port  = -1;
+		p_iface_info->ring[port_cnt].ethdev_port_id  = -1;
 		p_iface_info->ring[port_cnt].class_id.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 	}
@@ -212,7 +212,7 @@ set_nic_interface(void)
 
 	for (nic_cnt = 0; nic_cnt < p_iface_info->num_nic; nic_cnt++) {
 		p_iface_info->nic[nic_cnt].iface_type   = PHY;
-		p_iface_info->nic[nic_cnt].dpdk_port = nic_cnt;
+		p_iface_info->nic[nic_cnt].ethdev_port_id = nic_cnt;
 	}
 
 	return SPPWK_RET_OK;

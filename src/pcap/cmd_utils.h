@@ -139,11 +139,11 @@ struct spp_port_class_identifier {
 	struct spp_vlantag_info vlantag;        /**< VLAN tag information */
 };
 
-/* Port info */
-struct spp_port_info {
-	enum port_type iface_type;      /**< Interface type (phy/vhost/ring) */
-	int            iface_no;        /**< Interface number */
-	int            dpdk_port;       /**< DPDK port number */
+/* Define detailed port params in addition to `sppwk_port_idx`. */
+struct sppwk_port_info {
+	enum port_type iface_type;  /**< phy, vhost or ring */
+	int iface_no;
+	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct spp_port_class_identifier class_id;
 					/**< Port class identifier */
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
@@ -175,9 +175,9 @@ struct startup_param {
 struct iface_info {
 	int num_nic;            /* The number of phy */
 	int num_ring;           /* The number of ring */
-	struct spp_port_info nic[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
 				/* Port information of phy */
-	struct spp_port_info ring[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 				/* Port information of ring */
 };
 
@@ -289,10 +289,10 @@ void stop_process(int signal);
  * @param iface_no
  *  Interface number to be validated.
  *
- * @retval !NULL  spp_port_info.
+ * @retval !NULL  sppwk_port_info.
  * @retval NULL   failed.
  */
-struct spp_port_info *
+struct sppwk_port_info *
 get_iface_info(enum port_type iface_type, int iface_no);
 
 /**

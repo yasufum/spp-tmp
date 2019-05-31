@@ -115,7 +115,7 @@ struct pcap_option {
 	uint64_t fsize_limit;        /* file size limit */
 	char compress_file_path[PCAP_FPATH_STRLEN]; /* file path */
 	char compress_file_date[PCAP_FDATE_STRLEN]; /* file name date */
-	struct spp_port_info port_cap;  /* capture port */
+	struct sppwk_port_info port_cap;  /* capture port */
 	struct rte_ring *cap_ring;      /* RTE ring structure */
 };
 
@@ -766,7 +766,7 @@ static int pcap_proc_receive(int lcore_id)
 	int buf;
 	int nb_rx = 0;
 	int nb_tx = 0;
-	struct spp_port_info *rx;
+	struct sppwk_port_info *rx;
 	struct rte_mbuf *bufs[MAX_PCAP_BURST];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
 	struct rte_ring *write_ring = g_pcap_option.cap_ring;
@@ -816,7 +816,7 @@ static int pcap_proc_receive(int lcore_id)
 
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
-	nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PCAP_BURST);
+	nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
 
@@ -1017,8 +1017,8 @@ main(int argc, char *argv[])
 			break;
 
 		/* capture port setup */
-		struct spp_port_info *port_cap = &g_pcap_option.port_cap;
-		struct spp_port_info *port_info = get_iface_info(
+		struct sppwk_port_info *port_cap = &g_pcap_option.port_cap;
+		struct sppwk_port_info *port_info = get_iface_info(
 						port_cap->iface_type,
 						port_cap->iface_no);
 		if (port_info == NULL) {
@@ -1027,7 +1027,8 @@ main(int argc, char *argv[])
 		}
 		if (port_cap->iface_type == PHY) {
 			if (port_info->iface_type != UNDEF)
-				port_cap->dpdk_port = port_info->dpdk_port;
+				port_cap->ethdev_port_id =
+					port_info->ethdev_port_id;
 			else {
 				RTE_LOG(ERR, SPP_PCAP,
 					"caputre port undefined.(phy:%d)\n",
@@ -1043,7 +1044,7 @@ main(int argc, char *argv[])
 						port_cap->iface_no);
 					break;
 				}
-				port_cap->dpdk_port = ret;
+				port_cap->ethdev_port_id = ret;
 			} else {
 				RTE_LOG(ERR, SPP_PCAP, "caputre port "
 						"undefined.(ring:%d)\n",
@@ -1054,7 +1055,7 @@ main(int argc, char *argv[])
 		RTE_LOG(DEBUG, SPP_PCAP,
 				"Recv port type=%d, no=%d, port_id=%d\n",
 				port_cap->iface_type, port_cap->iface_no,
-				port_cap->dpdk_port);
+				port_cap->ethdev_port_id);
 
 		/* create ring */
 		char ring_name[PORT_STR_SIZE];
