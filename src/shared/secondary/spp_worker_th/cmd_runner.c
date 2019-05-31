@@ -475,26 +475,25 @@ update_port(enum sppwk_action wk_action,
 	return ret;
 }
 
-/* Flush command to execute it */
+/* Activate temporarily stored command. */
 static int
-spp_flush(void)
+flush_cmd(void)
 {
-	int ret = SPP_RET_NG;
+	int ret;
 	struct cancel_backup_info *backup_info = NULL;
 
 	sppwk_get_mng_data(NULL, NULL, NULL,
 				NULL, NULL, NULL, &backup_info);
 
-	/* Initial setting of each interface. */
-	ret = flush_port();
+	ret = update_port_info();
 	if (ret < SPP_RET_OK)
 		return ret;
 
-	/* Flush of core index. */
-	flush_core();
+	/* TODO(yasufum) confirm why no returned value. */
+	update_lcore_info();
 
-	/* Flush of component */
-	ret = flush_component();
+	/* TODO(yasufum) confirm why no checking for returned value. */
+	ret = update_comp_info();
 
 	backup_mng_info(backup_info);
 	return ret;
@@ -744,7 +743,7 @@ exec_cmd(const struct spp_command *cmd)
 				&cmd->spec.cls_table.port);
 		if (ret == 0) {
 			RTE_LOG(INFO, WK_CMD_RUNNER, "Exec flush.\n");
-			ret = spp_flush();
+			ret = flush_cmd();
 		}
 		break;
 
@@ -756,7 +755,7 @@ exec_cmd(const struct spp_command *cmd)
 				cmd->spec.comp.wk_type);
 		if (ret == 0) {
 			RTE_LOG(INFO, WK_CMD_RUNNER, "Exec flush.\n");
-			ret = spp_flush();
+			ret = flush_cmd();
 		}
 		break;
 
@@ -768,7 +767,7 @@ exec_cmd(const struct spp_command *cmd)
 				cmd->spec.port.name, &cmd->spec.port.ability);
 		if (ret == 0) {
 			RTE_LOG(INFO, WK_CMD_RUNNER, "Exec flush.\n");
-			ret = spp_flush();
+			ret = flush_cmd();
 		}
 		break;
 

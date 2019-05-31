@@ -19,6 +19,7 @@
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
 
+/* TODO(yasufum) change log label after filename is revised. */
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
 /* A set of pointers of management data */
@@ -812,9 +813,9 @@ delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
 	return SPP_RET_OK;
 }
 
-/* Flush initial setting of each interface. */
+/* Activate temporarily stored port info while flushing. */
 int
-flush_port(void)
+update_port_info(void)
 {
 	int ret = 0;
 	int cnt = 0;
@@ -846,9 +847,9 @@ flush_port(void)
 	return SPP_RET_OK;
 }
 
-/* Flush changed core. */
+/* Activate temporarily stored lcore info while flushing. */
 void
-flush_core(void)
+update_lcore_info(void)
 {
 	int cnt = 0;
 	struct core_mng_info *info = NULL;
@@ -877,38 +878,39 @@ flush_core(void)
 	}
 }
 
-/* Flush change for forwarder or classifier_mac */
+/* Activate temporarily stored component info while flushing. */
 int
-flush_component(void)
+update_comp_info(void)
 {
 	int ret = 0;
 	int cnt = 0;
-	struct spp_component_info *component_info = NULL;
-	int *p_change_component = g_mng_data.p_change_component;
-	struct spp_component_info *p_component_info =
-					g_mng_data.p_component_info;
+	struct spp_component_info *comp_info = NULL;
+	int *p_change_comp = g_mng_data.p_change_component;
+	struct spp_component_info *p_comp_info = g_mng_data.p_component_info;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (*(p_change_component + cnt) == 0)
+		if (*(p_change_comp + cnt) == 0)
 			continue;
 
-		component_info = (p_component_info + cnt);
-		spp_port_ability_update(component_info);
+		comp_info = (p_comp_info + cnt);
+		spp_port_ability_update(comp_info);
 
 #ifdef SPP_VF_MODULE
-		if (component_info->wk_type == SPPWK_TYPE_CLS)
-			ret = spp_classifier_mac_update(component_info);
+		if (comp_info->wk_type == SPPWK_TYPE_CLS)
+			ret = spp_classifier_mac_update(comp_info);
 		else
-			ret = spp_forward_update(component_info);
+			ret = spp_forward_update(comp_info);
 #endif /* SPP_VF_MODULE */
+
 #ifdef SPP_MIRROR_MODULE
-		ret = spp_mirror_update(component_info);
+		ret = spp_mirror_update(comp_info);
 #endif /* SPP_MIRROR_MODULE */
+
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, APP, "Flush error. "
 					"( component = %s, type = %d)\n",
-					component_info->name,
-					component_info->wk_type);
+					comp_info->name,
+					comp_info->wk_type);
 			return SPP_RET_NG;
 		}
 	}

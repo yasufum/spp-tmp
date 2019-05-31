@@ -595,25 +595,23 @@ int delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
 		struct sppwk_port_info *p_info_ary[]);
 
 /**
- * Flush initial setting of each interface.
+ * Activate temporarily stored port info while flushing.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPP_RET_OK if succeeded.
+ * @retval SPP_RET_NG if failed.
  */
-int flush_port(void);
+int update_port_info(void);
+
+/* Activate temporarily stored lcore info while flushing. */
+void update_lcore_info(void);
 
 /**
- *  Flush changed core.
- */
-void flush_core(void);
-
-/**
- *  Flush change for forwarder or classifier_mac.
+ * Activate temporarily stored component info while flushing.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPP_RET_OK if succeeded.
+ * @retval SPP_RET_NG if failed.
  */
-int flush_component(void);
+int update_comp_info(void);
 
 /**
  * Port type to string
