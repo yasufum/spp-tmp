@@ -862,9 +862,9 @@ set_command_results(struct command_result *result,
 	}
 }
 
-/* set decode error to command result */
+/* Setup error message of parsing for requested command. */
 static void
-set_decode_error_to_results(struct command_result *results,
+prepare_parse_err_msg(struct command_result *results,
 		const struct sppwk_cmd_req *request,
 		const struct sppwk_parse_err_msg *wk_err_msg)
 {
@@ -1657,12 +1657,12 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 			"request_str=\n%.*s\n",
 			(int)request_str_len, request_str);
 
-	/* decode request message */
+	/* Parse request message. */
 	ret = sppwk_parse_req(
 			&request, request_str, request_str_len, &wk_err_msg);
 	if (unlikely(ret != SPP_RET_OK)) {
-		/* send error response */
-		set_decode_error_to_results(command_results, &request,
+		/* Setup and send error response. */
+		prepare_parse_err_msg(command_results, &request,
 				&wk_err_msg);
 		send_decode_error_response(sock, &request, command_results);
 		RTE_LOG(DEBUG, SPP_COMMAND_PROC,
