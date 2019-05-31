@@ -305,16 +305,16 @@ port_ability_set_ability(
 
 /* Update port capability. */
 void
-spp_port_ability_update(const struct spp_component_info *component)
+spp_port_ability_update(const struct sppwk_comp_info *component)
 {
 	int cnt;
 	struct sppwk_port_info *port = NULL;
-	for (cnt = 0; cnt < component->num_rx_port; cnt++) {
+	for (cnt = 0; cnt < component->nof_rx; cnt++) {
 		port = component->rx_ports[cnt];
 		port_ability_set_ability(port, SPP_PORT_RXTX_RX);
 	}
 
-	for (cnt = 0; cnt < component->num_tx_port; cnt++) {
+	for (cnt = 0; cnt < component->nof_tx; cnt++) {
 		port = component->tx_ports[cnt];
 		port_ability_set_ability(port, SPP_PORT_RXTX_TX);
 	}

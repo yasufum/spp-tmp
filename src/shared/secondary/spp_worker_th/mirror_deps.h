@@ -11,13 +11,13 @@
  * Update Mirror info
  *
  * @param component
- *  The pointer to struct spp_component_info.@n
+ *  The pointer to struct sppwk_comp_info.@n
  *  The data for updating the internal data of mirror.
  *
  * @retval SPP_RET_OK succeeded.
  * @retval SPP_RET_NG failed.
  */
-int spp_mirror_update(struct spp_component_info *component);
+int spp_mirror_update(struct sppwk_comp_info *component);
 
 /**
  * Mirror get component status

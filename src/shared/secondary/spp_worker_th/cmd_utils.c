@@ -26,7 +26,7 @@
 struct mng_data_info {
 	struct startup_param *p_startup_param;
 	struct iface_info *p_iface_info;
-	struct spp_component_info *p_component_info;
+	struct sppwk_comp_info *p_component_info;
 	struct core_mng_info *p_core_info;
 	int *p_change_core;
 	int *p_change_component;
@@ -309,10 +309,10 @@ dump_core_info(const struct core_mng_info *core_info)
 
 /* Dump of component information */
 void
-dump_component_info(const struct spp_component_info *comp_info)
+dump_component_info(const struct sppwk_comp_info *comp_info)
 {
 	char str[SPP_NAME_STR_LEN];
-	const struct spp_component_info *tmp_ci = NULL;
+	const struct sppwk_comp_info *tmp_ci = NULL;
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		tmp_ci = &comp_info[cnt];
@@ -322,17 +322,17 @@ dump_component_info(const struct spp_component_info *comp_info)
 		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, "
 				"core=%u, index=%d\n",
 				cnt, tmp_ci->name, tmp_ci->wk_type,
-				tmp_ci->lcore_id, tmp_ci->component_id);
+				tmp_ci->lcore_id, tmp_ci->comp_id);
 
 		sprintf(str, "component[%d] rx=%d", cnt,
-				tmp_ci->num_rx_port);
+				tmp_ci->nof_rx);
 		dump_buff(str, tmp_ci->rx_ports,
-			sizeof(struct sppwk_port_info *)*tmp_ci->num_rx_port);
+			sizeof(struct sppwk_port_info *)*tmp_ci->nof_rx);
 
 		sprintf(str, "component[%d] tx=%d", cnt,
-				tmp_ci->num_tx_port);
+				tmp_ci->nof_tx);
 		dump_buff(str, tmp_ci->tx_ports,
-			sizeof(struct sppwk_port_info *)*tmp_ci->num_tx_port);
+			sizeof(struct sppwk_port_info *)*tmp_ci->nof_tx);
 	}
 }
 
@@ -391,7 +391,7 @@ dump_interface_info(const struct iface_info *iface_info)
 void
 dump_all_mng_info(
 		const struct core_mng_info *core,
-		const struct spp_component_info *component,
+		const struct sppwk_comp_info *component,
 		const struct iface_info *interface)
 {
 	if (rte_log_get_global_level() < RTE_LOG_DEBUG)
@@ -406,10 +406,10 @@ dump_all_mng_info(
 void
 copy_mng_info(
 		struct core_mng_info *dst_core,
-		struct spp_component_info *dst_component,
+		struct sppwk_comp_info *dst_component,
 		struct iface_info *dst_interface,
 		const struct core_mng_info *src_core,
-		const struct spp_component_info *src_component,
+		const struct sppwk_comp_info *src_component,
 		const struct iface_info *src_interface,
 		enum copy_mng_flg flg)
 {
@@ -437,7 +437,7 @@ copy_mng_info(
 	}
 
 	memcpy(dst_component, src_component,
-			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
+			sizeof(struct sppwk_comp_info)*RTE_MAX_LCORE);
 	memcpy(dst_interface, src_interface,
 			sizeof(struct iface_info));
 }
@@ -497,9 +497,9 @@ init_component_info(void)
 {
 	int cnt;
 	memset(g_mng_data.p_component_info, 0x00,
-			sizeof(struct spp_component_info)*RTE_MAX_LCORE);
+			sizeof(struct sppwk_comp_info)*RTE_MAX_LCORE);
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++)
-		(g_mng_data.p_component_info + cnt)->component_id = cnt;
+		(g_mng_data.p_component_info + cnt)->comp_id = cnt;
 	memset(g_mng_data.p_change_component, 0x00,
 			sizeof(int)*RTE_MAX_LCORE);
 }
@@ -620,7 +620,7 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 enum sppwk_worker_type
 spp_get_component_type(int id)
 {
-	struct spp_component_info *component_info =
+	struct sppwk_comp_info *component_info =
 				(g_mng_data.p_component_info + id);
 	return component_info->wk_type;
 }
@@ -629,7 +629,7 @@ spp_get_component_type(int id)
 unsigned int
 spp_get_component_core(int component_id)
 {
-	struct spp_component_info *info =
+	struct sppwk_comp_info *info =
 			(g_mng_data.p_component_info + component_id);
 	return info->lcore_id;
 }
@@ -661,10 +661,10 @@ spp_check_used_port(
 		enum spp_port_rxtx rxtx)
 {
 	int cnt, port_cnt, max = 0;
-	struct spp_component_info *component = NULL;
+	struct sppwk_comp_info *component = NULL;
 	struct sppwk_port_info **port_array = NULL;
 	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
-	struct spp_component_info *component_info =
+	struct sppwk_comp_info *component_info =
 					g_mng_data.p_component_info;
 
 	if (port == NULL)
@@ -676,10 +676,10 @@ spp_check_used_port(
 			continue;
 
 		if (rxtx == SPP_PORT_RXTX_RX) {
-			max = component->num_rx_port;
+			max = component->nof_rx;
 			port_array = component->rx_ports;
 		} else if (rxtx == SPP_PORT_RXTX_TX) {
-			max = component->num_tx_port;
+			max = component->nof_tx;
 			port_array = component->tx_ports;
 		}
 		for (port_cnt = 0; port_cnt < max; port_cnt++) {
@@ -715,7 +715,7 @@ set_component_change_port(struct sppwk_port_info *port, enum spp_port_rxtx rxtx)
 int
 get_free_lcore_id(void)
 {
-	struct spp_component_info *comp_info = g_mng_data.p_component_info;
+	struct sppwk_comp_info *comp_info = g_mng_data.p_component_info;
 
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
@@ -729,7 +729,7 @@ get_free_lcore_id(void)
 int
 sppwk_get_lcore_id(const char *comp_name)
 {
-	struct spp_component_info *comp_info = g_mng_data.p_component_info;
+	struct sppwk_comp_info *comp_info = g_mng_data.p_component_info;
 
 	int cnt = 0;
 	if (comp_name[0] == '\0')
@@ -884,9 +884,9 @@ update_comp_info(void)
 {
 	int ret = 0;
 	int cnt = 0;
-	struct spp_component_info *comp_info = NULL;
+	struct sppwk_comp_info *comp_info = NULL;
 	int *p_change_comp = g_mng_data.p_change_component;
-	struct spp_component_info *p_comp_info = g_mng_data.p_component_info;
+	struct sppwk_comp_info *p_comp_info = g_mng_data.p_component_info;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		if (*(p_change_comp + cnt) == 0)
@@ -995,7 +995,7 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 int sppwk_set_mng_data(
 		struct startup_param *startup_param_p,
 		struct iface_info *iface_p,
-		struct spp_component_info *component_p,
+		struct sppwk_comp_info *component_p,
 		struct core_mng_info *core_mng_p,
 		int *change_core_p,
 		int *change_component_p,
@@ -1028,7 +1028,7 @@ int sppwk_set_mng_data(
 void sppwk_get_mng_data(
 		struct startup_param **startup_param_p,
 		struct iface_info **iface_p,
-		struct spp_component_info **component_p,
+		struct sppwk_comp_info **component_p,
 		struct core_mng_info **core_mng_p,
 		int **change_core_p,
 		int **change_component_p,

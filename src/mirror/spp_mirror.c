@@ -63,7 +63,7 @@ static struct startup_param g_startup_param;
 static struct iface_info g_iface_info;
 
 /* Component management information */
-static struct spp_component_info g_component_info[RTE_MAX_LCORE];
+static struct sppwk_comp_info g_component_info[RTE_MAX_LCORE];
 
 /* Core management information */
 static struct core_mng_info g_core_info[RTE_MAX_LCORE];
@@ -277,19 +277,19 @@ mirror_proc_init(void)
 
 /* Update mirror info */
 int
-spp_mirror_update(struct spp_component_info *component)
+spp_mirror_update(struct sppwk_comp_info *component)
 {
 	int cnt = 0;
-	int num_rx = component->num_rx_port;
-	int num_tx = component->num_tx_port;
-	struct mirror_info *info = &g_mirror_info[component->component_id];
+	int num_rx = component->nof_rx;
+	int num_tx = component->nof_tx;
+	struct mirror_info *info = &g_mirror_info[component->comp_id];
 	struct mirror_path *path = &info->path[info->upd_index];
 
 	/* mirror component allows only one receiving port. */
 	if (unlikely(num_rx > 1)) {
 		RTE_LOG(ERR, MIRROR,
 			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->component_id, component->wk_type, num_rx);
+			component->comp_id, component->wk_type, num_rx);
 		return SPP_RET_NG;
 	}
 
@@ -297,7 +297,7 @@ spp_mirror_update(struct spp_component_info *component)
 	if (unlikely(num_tx > 2)) {
 		RTE_LOG(ERR, MIRROR,
 			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->component_id, component->wk_type, num_tx);
+			component->comp_id, component->wk_type, num_tx);
 		return SPP_RET_NG;
 	}
 
@@ -306,14 +306,14 @@ spp_mirror_update(struct spp_component_info *component)
 	RTE_LOG(INFO, MIRROR,
 			"Component[%d] Start update component. "
 			"(name = %s, type = %d)\n",
-			component->component_id,
+			component->comp_id,
 			component->name,
 			component->wk_type);
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
 	path->wk_type = component->wk_type;
-	path->nof_rx = component->num_rx_port;
-	path->nof_tx = component->num_tx_port;
+	path->nof_rx = component->nof_rx;
+	path->nof_tx = component->nof_tx;
 	for (cnt = 0; cnt < num_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
@@ -330,8 +330,7 @@ spp_mirror_update(struct spp_component_info *component)
 	RTE_LOG(INFO, MIRROR,
 			"Component[%d] Complete update component. "
 			"(name = %s, type = %d)\n",
-			component->component_id,
-			component->name,
+			component->comp_id, component->name,
 			component->wk_type);
 
 	return SPP_RET_OK;

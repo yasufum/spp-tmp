@@ -216,11 +216,11 @@ update_comp(enum sppwk_action wk_action, const char *name,
 	int ret_del;
 	int comp_lcore_id = 0;
 	unsigned int tmp_lcore_id = 0;
-	struct spp_component_info *comp_info = NULL;
+	struct sppwk_comp_info *comp_info = NULL;
 	/* TODO(yasufum) revise `core` to be more specific. */
 	struct core_info *core = NULL;
 	struct core_mng_info *info = NULL;
-	struct spp_component_info *comp_info_base = NULL;
+	struct sppwk_comp_info *comp_info_base = NULL;
 	/* TODO(yasufum) revise `core_info` which is same as struct name. */
 	struct core_mng_info *core_info = NULL;
 	int *change_core = NULL;
@@ -255,11 +255,11 @@ update_comp(enum sppwk_action wk_action, const char *name,
 		core = &info->core[info->upd_index];
 
 		comp_info = (comp_info_base + comp_lcore_id);
-		memset(comp_info, 0x00, sizeof(struct spp_component_info));
+		memset(comp_info, 0x00, sizeof(struct sppwk_comp_info));
 		strcpy(comp_info->name, name);
 		comp_info->wk_type = wk_type;
-		comp_info->lcore_id	= lcore_id;
-		comp_info->component_id	= comp_lcore_id;
+		comp_info->lcore_id = lcore_id;
+		comp_info->comp_id = comp_lcore_id;
 
 		core->id[core->num] = comp_lcore_id;
 		core->num++;
@@ -275,7 +275,7 @@ update_comp(enum sppwk_action wk_action, const char *name,
 
 		comp_info = (comp_info_base + comp_lcore_id);
 		tmp_lcore_id = comp_info->lcore_id;
-		memset(comp_info, 0x00, sizeof(struct spp_component_info));
+		memset(comp_info, 0x00, sizeof(struct sppwk_comp_info));
 
 		info = (core_info + tmp_lcore_id);
 		core = &info->core[info->upd_index];
@@ -365,11 +365,11 @@ update_port(enum sppwk_action wk_action,
 	int ret_del = -1;
 	int comp_lcore_id = 0;
 	int cnt = 0;
-	struct spp_component_info *comp_info = NULL;
+	struct sppwk_comp_info *comp_info = NULL;
 	struct sppwk_port_info *port_info = NULL;
 	int *nof_ports = NULL;
 	struct sppwk_port_info **ports = NULL;
-	struct spp_component_info *comp_info_base = NULL;
+	struct sppwk_comp_info *comp_info_base = NULL;
 	int *change_component = NULL;
 
 	comp_lcore_id = sppwk_get_lcore_id(name);
@@ -383,10 +383,10 @@ update_port(enum sppwk_action wk_action,
 	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (rxtx == SPP_PORT_RXTX_RX) {
-		nof_ports = &comp_info->num_rx_port;
+		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;
 	} else {
-		nof_ports = &comp_info->num_tx_port;
+		nof_ports = &comp_info->nof_tx;
 		ports = comp_info->tx_ports;
 	}
 
@@ -394,8 +394,8 @@ update_port(enum sppwk_action wk_action,
 	case SPPWK_ACT_ADD:
 		/* Check if over the maximum num of ports of component. */
 		if (check_port_count(comp_info->wk_type, rxtx,
-				comp_info->num_rx_port,
-				comp_info->num_tx_port) != SPP_RET_OK)
+				comp_info->nof_rx,
+				comp_info->nof_tx) != SPP_RET_OK)
 			return SPP_RET_NG;
 
 		/* Check if the port_info is included in array `ports`. */
@@ -506,8 +506,8 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 	int ret;
 	int lcore_id, cnt;
 	struct core_info *core = NULL;
-	struct spp_component_info *comp_info_base = NULL;
-	struct spp_component_info *comp_info = NULL;
+	struct sppwk_comp_info *comp_info_base = NULL;
+	struct sppwk_comp_info *comp_info = NULL;
 
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
 		if (spp_get_core_status(lcore_id) == SPP_CORE_UNUSE)

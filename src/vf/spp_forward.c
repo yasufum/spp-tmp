@@ -51,29 +51,29 @@ spp_forward_init(void)
 
 /* Update forward info */
 int
-spp_forward_update(struct spp_component_info *component)
+spp_forward_update(struct sppwk_comp_info *component)
 {
 	int cnt = 0;
-	int num_rx = component->num_rx_port;
-	int num_tx = component->num_tx_port;
-	int max = (num_rx > num_tx)?num_rx*num_tx:num_tx;
-	struct forward_info *info = &g_forward_info[component->component_id];
+	int nof_rx = component->nof_rx;
+	int nof_tx = component->nof_tx;
+	int max = (nof_rx > nof_tx)?nof_rx*nof_tx:nof_tx;
+	struct forward_info *info = &g_forward_info[component->comp_id];
 	struct forward_path *path = &info->path[info->upd_index];
 
 	/* Forward component allows only one receiving port. */
 	if ((component->wk_type == SPPWK_TYPE_FWD) &&
-			unlikely(num_rx > 1)) {
+			unlikely(nof_rx > 1)) {
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->component_id, component->wk_type, num_rx);
+			component->comp_id, component->wk_type, nof_rx);
 		return SPP_RET_NG;
 	}
 
 	/* Component allows only one transmit port. */
-	if (unlikely(num_tx != 0) && unlikely(num_tx != 1)) {
+	if (unlikely(nof_tx != 0) && unlikely(nof_tx != 1)) {
 		RTE_LOG(ERR, FORWARD,
 			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->component_id, component->wk_type, num_tx);
+			component->comp_id, component->wk_type, nof_tx);
 		return SPP_RET_NG;
 	}
 
@@ -82,19 +82,19 @@ spp_forward_update(struct spp_component_info *component)
 	RTE_LOG(INFO, FORWARD,
 			"Component[%d] Start update component. "
 			"(name = %s, type = %d)\n",
-			component->component_id,
+			component->comp_id,
 			component->name,
 			component->wk_type);
 
 	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
 	path->wk_type = component->wk_type;
-	path->num_rx = component->num_rx_port;
-	path->num_tx = component->num_tx_port;
-	for (cnt = 0; cnt < num_rx; cnt++)
+	path->num_rx = component->nof_rx;
+	path->num_tx = component->nof_tx;
+	for (cnt = 0; cnt < nof_rx; cnt++)
 		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
 
-	/* Transmit port is set according with larger num_rx / num_tx. */
+	/* Transmit port is set according with larger nof_rx / nof_tx. */
 	for (cnt = 0; cnt < max; cnt++)
 		memcpy(&path->ports[cnt].tx, component->tx_ports[0],
 				sizeof(struct sppwk_port_info));
@@ -106,7 +106,7 @@ spp_forward_update(struct spp_component_info *component)
 	RTE_LOG(INFO, FORWARD,
 			"Component[%d] Complete update component. "
 			"(name = %s, type = %d)\n",
-			component->component_id,
+			component->comp_id,
 			component->name,
 			component->wk_type);
 

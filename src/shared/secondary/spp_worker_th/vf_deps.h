@@ -86,25 +86,25 @@ free_mac_classification(struct mac_classification *mac_cls)
  * classifier(mac address) update component info.
  *
  * @param component_info
- *  The pointer to struct spp_component_info.@n
+ *  The pointer to struct sppwk_comp_info.@n
  *  The data for updating the internal data of classifier.
  *
  * @retval SPP_RET_OK succeeded.
  * @retval SPP_RET_NG failed.
  */
-int spp_classifier_mac_update(struct spp_component_info *component_info);
+int spp_classifier_mac_update(struct sppwk_comp_info *component_info);
 
 /**
  * Update forward info
  *
  * @param component
- *  The pointer to struct spp_component_info.@n
+ *  The pointer to struct sppwk_comp_info.@n
  *  The data for updating the internal data of forwarder and merger.
  *
  * @retval SPP_RET_OK succeeded.
  * @retval SPP_RET_NG failed.
  */
-int spp_forward_update(struct spp_component_info *component);
+int spp_forward_update(struct sppwk_comp_info *component);
 
 void init_classifier_info(int component_id);
 

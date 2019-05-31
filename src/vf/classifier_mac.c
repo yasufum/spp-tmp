@@ -321,7 +321,7 @@ create_mac_classification(void)
 /* initialize classifier information. */
 static int
 init_component_info(struct component_info *cmp_info,
-		const struct spp_component_info *component_info)
+		const struct sppwk_comp_info *component_info)
 {
 	int ret = SPP_RET_NG;
 	int i;
@@ -334,7 +334,7 @@ init_component_info(struct component_info *cmp_info,
 	uint16_t vid;
 
 	/* set rx */
-	if (component_info->num_rx_port == 0) {
+	if (component_info->nof_rx == 0) {
 		clsd_data_rx->iface_type = UNDEF;
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global = 0;
@@ -352,9 +352,9 @@ init_component_info(struct component_info *cmp_info,
 	}
 
 	/* set tx */
-	cmp_info->n_classified_data_tx = component_info->num_tx_port;
+	cmp_info->n_classified_data_tx = component_info->nof_tx;
 	cmp_info->mac_addr_entry = 0;
-	for (i = 0; i < component_info->num_tx_port; i++) {
+	for (i = 0; i < component_info->nof_tx; i++) {
 		tx_port = component_info->tx_ports[i];
 		vid = tx_port->cls_attrs.vlantag.vid;
 
@@ -701,10 +701,10 @@ spp_classifier_mac_init(void)
 
 /* classifier(mac address) update component info. */
 int
-spp_classifier_mac_update(struct spp_component_info *component_info)
+spp_classifier_mac_update(struct sppwk_comp_info *component_info)
 {
 	int ret = SPP_RET_NG;
-	int id = component_info->component_id;
+	int id = component_info->comp_id;
 	struct management_info *mng_info = g_mng_infos + id;
 	struct component_info *cmp_info = NULL;
 

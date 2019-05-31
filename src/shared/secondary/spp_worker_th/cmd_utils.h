@@ -203,18 +203,16 @@ struct sppwk_port_info {
 	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
 };
 
-/* Component info */
-struct spp_component_info {
-	char name[SPP_NAME_STR_LEN];	/**< Component name */
-	enum sppwk_worker_type wk_type;	/**< Component type */
-	unsigned int lcore_id;		/**< Logical core ID for component */
-	int component_id;		/**< Component ID */
-	int num_rx_port;		/**< The number of rx ports */
-	int num_tx_port;		/**< The number of tx ports */
-	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to rx ports */
-	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to tx ports */
+/* Attributes of SPP worker thread named as `component`. */
+struct sppwk_comp_info {
+	char name[SPP_NAME_STR_LEN];  /**< Component name */
+	enum sppwk_worker_type wk_type;  /**< Type of worker thread */
+	unsigned int lcore_id;
+	int comp_id;  /**< Component ID */
+	int nof_rx;  /**< The number of rx ports */
+	int nof_tx;  /**< The number of tx ports */
+	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS]; /**< rx ports */
+	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
 };
 
 /* Manage given options as global variable */
@@ -268,7 +266,7 @@ struct cancel_backup_info {
 	struct core_mng_info core[RTE_MAX_LCORE];
 
 	/* Backup data of component information */
-	struct spp_component_info component[RTE_MAX_LCORE];
+	struct sppwk_comp_info component[RTE_MAX_LCORE];
 
 	/* Backup data of interface information */
 	struct iface_info interface;
@@ -438,7 +436,7 @@ get_sppwk_port(enum port_type iface_type, int iface_no);
 void dump_core_info(const struct core_mng_info *core_info);
 
 /* Dump of component information */
-void dump_component_info(const struct spp_component_info *component_info);
+void dump_component_info(const struct sppwk_comp_info *component_info);
 
 /* Dump of interface information */
 void dump_interface_info(const struct iface_info *iface_info);
@@ -446,16 +444,16 @@ void dump_interface_info(const struct iface_info *iface_info);
 /* Dump of all management information */
 void dump_all_mng_info(
 		const struct core_mng_info *core,
-		const struct spp_component_info *component,
+		const struct sppwk_comp_info *component,
 		const struct iface_info *interface);
 
 /* Copy management information */
 void copy_mng_info(
 		struct core_mng_info *dst_core,
-		struct spp_component_info *dst_component,
+		struct sppwk_comp_info *dst_component,
 		struct iface_info *dst_interface,
 		const struct core_mng_info *src_core,
-		const struct spp_component_info *src_component,
+		const struct sppwk_comp_info *src_component,
 		const struct iface_info *src_interface,
 		enum copy_mng_flg flg);
 
@@ -664,7 +662,7 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
  */
 int sppwk_set_mng_data(struct startup_param *startup_param_p,
 		struct iface_info *iface_p,
-		struct spp_component_info *component_p,
+		struct sppwk_comp_info *component_p,
 		struct core_mng_info *core_mng_p,
 		int *change_core_p,
 		int *change_component_p,
@@ -691,7 +689,7 @@ int sppwk_set_mng_data(struct startup_param *startup_param_p,
  */
 void sppwk_get_mng_data(struct startup_param **startup_param_p,
 		struct iface_info **iface_p,
-		struct spp_component_info **component_p,
+		struct sppwk_comp_info **component_p,
 		struct core_mng_info **core_mng_p,
 		int **change_core_p,
 		int **change_component_p,

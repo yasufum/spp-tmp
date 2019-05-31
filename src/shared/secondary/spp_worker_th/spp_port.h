@@ -61,10 +61,10 @@ void spp_port_ability_change_index(
  * Update port capability.
  *
  * @param component_info
- *  The pointer to struct spp_component_info.@n
+ *  The pointer to struct sppwk_comp_info.@n
  *  The data for updating the internal data of port ability.
  */
-void spp_port_ability_update(const struct spp_component_info *component);
+void spp_port_ability_update(const struct sppwk_comp_info *component);
 
 /**
  * Wrapper function for rte_eth_rx_burst().

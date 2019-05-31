@@ -63,13 +63,14 @@ enum spp_port_rxtx {
 	SPP_PORT_RXTX_ALL,  /**< rx/tx port */
 };
 
-/* Process type for each component */
-enum spp_component_type {
-	SPP_COMPONENT_UNUSE,          /**< Not used */
-	SPP_COMPONENT_CLASSIFIER_MAC, /**< Classifier_mac */
-	SPP_COMPONENT_MERGE,          /**< Merger */
-	SPP_COMPONENT_FORWARD,        /**< Forwarder */
-	SPP_COMPONENT_MIRROR,         /**< Mirror */
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
+/* Type of SPP worker thread. */
+enum sppwk_worker_type {
+	SPPWK_TYPE_NONE,  /**< Not used */
+	SPPWK_TYPE_CLS,  /**< Classifier_mac */
+	SPPWK_TYPE_MRG,  /**< Merger */
+	SPPWK_TYPE_FWD,  /**< Forwarder */
+	SPPWK_TYPE_MIR,  /**< Mirror */
 };
 
 /**
@@ -142,18 +143,17 @@ struct spp_port_info {
 					/**< Port ability */
 };
 
-/* Component info */
-struct spp_component_info {
-	char name[SPP_NAME_STR_LEN];    /**< Component name */
-	enum spp_component_type type;   /**< Component type */
-	unsigned int lcore_id;          /**< Logical core ID for component */
-	int component_id;               /**< Component ID */
-	int num_rx_port;                /**< The number of rx ports */
-	int num_tx_port;                /**< The number of tx ports */
-	struct spp_port_info *rx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to rx ports */
-	struct spp_port_info *tx_ports[RTE_MAX_ETHPORTS];
-					/**< Array of pointers to tx ports */
+/* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
+/* Attributes of SPP worker thread named as `component`. */
+struct sppwk_comp_info {
+	char name[SPP_NAME_STR_LEN];  /**< Component name */
+	enum sppwk_worker_type wk_type;  /**< Type of worker thread */
+	unsigned int lcore_id;
+	int comp_id;  /**< Component ID */
+	int nof_rx;  /**< The number of rx ports */
+	int nof_tx;  /**< The number of tx ports */
+	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS]; /**< rx ports */
+	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
 };
 
 /* Manage given options as global variable */

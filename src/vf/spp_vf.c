@@ -25,7 +25,7 @@ static struct startup_param g_startup_param;
 static struct iface_info g_iface_info;
 
 /* Component management information */
-static struct spp_component_info g_component_info[RTE_MAX_LCORE];
+static struct sppwk_comp_info g_component_info[RTE_MAX_LCORE];
 
 /* Core management information */
 static struct core_mng_info g_core_info[RTE_MAX_LCORE];
