@@ -104,7 +104,7 @@ spp_get_client_id(void)
 {
 	struct startup_param *startup_param;
 
-	spp_get_mng_data_addr(&startup_param,
+	sppwk_get_mng_data(&startup_param,
 			NULL, NULL, NULL, NULL, NULL, NULL);
 	return startup_param->client_id;
 }
@@ -115,7 +115,7 @@ spp_get_process_type(void)
 {
 	struct startup_param *startup_param;
 
-	spp_get_mng_data_addr(&startup_param,
+	sppwk_get_mng_data(&startup_param,
 			NULL, NULL, NULL, NULL, NULL, NULL);
 	return startup_param->secondary_type;
 }
@@ -235,7 +235,7 @@ spp_update_component(
 	int *change_core = NULL;
 	int *change_component = NULL;
 
-	spp_get_mng_data_addr(NULL, NULL, &comp_info_base, &core_info,
+	sppwk_get_mng_data(NULL, NULL, &comp_info_base, &core_info,
 				&change_core, &change_component, NULL);
 
 	switch (wk_action) {
@@ -387,7 +387,7 @@ spp_update_port(enum sppwk_action wk_action,
 				"(component = %s)\n", name);
 		return SPP_RET_NG;
 	}
-	spp_get_mng_data_addr(NULL, NULL,
+	sppwk_get_mng_data(NULL, NULL,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
 	comp_info = (comp_info_base + component_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
@@ -491,7 +491,7 @@ spp_flush(void)
 	int ret = SPP_RET_NG;
 	struct cancel_backup_info *backup_info = NULL;
 
-	spp_get_mng_data_addr(NULL, NULL, NULL,
+	sppwk_get_mng_data(NULL, NULL, NULL,
 				NULL, NULL, NULL, &backup_info);
 
 	/* Initial setting of each interface. */
@@ -540,7 +540,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 		}
 
 		for (cnt = 0; cnt < core->num; cnt++) {
-			spp_get_mng_data_addr(NULL, NULL, &comp_info_base,
+			sppwk_get_mng_data(NULL, NULL, &comp_info_base,
 							NULL, NULL, NULL, NULL);
 			comp_info = (comp_info_base + core->id[cnt]);
 #ifdef SPP_VF_MODULE
@@ -602,7 +602,7 @@ sppwk_get_ethdev_port_id(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = NULL;
 
-	spp_get_mng_data_addr(NULL, &iface_info,
+	sppwk_get_mng_data(NULL, &iface_info,
 				NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:

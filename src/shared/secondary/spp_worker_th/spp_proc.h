@@ -689,7 +689,7 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
 /**
  * Get mange data address
  *
- * @param iface_addr
+ * @param startup_param_p
  *  g_startup_param write address
  * @param iface_addr
  *  g_iface_info write address
@@ -704,12 +704,12 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
  * @param backup_info_addr
  *  g_backup_info write address
  */
-void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
-			   struct iface_info **iface_addr,
-			   struct spp_component_info **component_addr,
-			   struct core_mng_info **core_mng_addr,
-			   int **change_core_addr,
-			   int **change_component_addr,
-			   struct cancel_backup_info **backup_info_addr);
+void sppwk_get_mng_data(struct startup_param **startup_param_p,
+		struct iface_info **iface_p,
+		struct spp_component_info **component_p,
+		struct core_mng_info **core_mng_p,
+		int **change_core_p,
+		int **change_component_p,
+		struct cancel_backup_info **backup_info_p);
 
 #endif /* _SPP_PROC_H_ */

@@ -1020,29 +1020,30 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
 	return SPP_RET_OK;
 }
 
-/* Get manage data address */
-void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
-			   struct iface_info **iface_addr,
-			   struct spp_component_info **component_addr,
-			   struct core_mng_info **core_mng_addr,
-			   int **change_core_addr,
-			   int **change_component_addr,
-			   struct cancel_backup_info **backup_info_addr)
+/* Get manage data from global var for given non-NULL args. */
+void sppwk_get_mng_data(
+		struct startup_param **startup_param_p,
+		struct iface_info **iface_p,
+		struct spp_component_info **component_p,
+		struct core_mng_info **core_mng_p,
+		int **change_core_p,
+		int **change_component_p,
+		struct cancel_backup_info **backup_info_p)
 {
 
-	if (startup_param_addr != NULL)
-		*startup_param_addr = g_mng_data_addr.p_startup_param;
-	if (iface_addr != NULL)
-		*iface_addr = g_mng_data_addr.p_iface_info;
-	if (component_addr != NULL)
-		*component_addr = g_mng_data_addr.p_component_info;
-	if (core_mng_addr != NULL)
-		*core_mng_addr = g_mng_data_addr.p_core_info;
-	if (change_core_addr != NULL)
-		*change_core_addr = g_mng_data_addr.p_change_core;
-	if (change_component_addr != NULL)
-		*change_component_addr = g_mng_data_addr.p_change_component;
-	if (backup_info_addr != NULL)
-		*backup_info_addr = g_mng_data_addr.p_backup_info;
+	if (startup_param_p != NULL)
+		*startup_param_p = g_mng_data_addr.p_startup_param;
+	if (iface_p != NULL)
+		*iface_p = g_mng_data_addr.p_iface_info;
+	if (component_p != NULL)
+		*component_p = g_mng_data_addr.p_component_info;
+	if (core_mng_p != NULL)
+		*core_mng_p = g_mng_data_addr.p_core_info;
+	if (change_core_p != NULL)
+		*change_core_p = g_mng_data_addr.p_change_core;
+	if (change_component_p != NULL)
+		*change_component_p = g_mng_data_addr.p_change_component;
+	if (backup_info_p != NULL)
+		*backup_info_p = g_mng_data_addr.p_backup_info;
 
 }
