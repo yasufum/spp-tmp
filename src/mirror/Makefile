@@ -26,6 +26,7 @@ SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
 SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
+SRCS-y += $(SPP_WKT_DIR)/cmd_res_formatter.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3 -MMD
