@@ -2,8 +2,8 @@
  * Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
  */
 
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <rte_eth_ring.h>
 #include <rte_eth_vhost.h>
@@ -13,11 +13,13 @@
 
 #include "vf_deps.h"
 #include "mirror_deps.h"
+#include "shared/secondary/return_codes.h"
 #include "cmd_utils.h"
 #include "spp_port.h"
 
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
+
 
 /* TODO(yasufum) change log label after filename is revised. */
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1

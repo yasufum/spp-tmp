@@ -4,10 +4,11 @@
 
 #include <rte_cycles.h>
 
+#include "spp_forward.h"
+#include "spp_vf.h"
+#include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
-#include "spp_vf.h"
-#include "spp_forward.h"
 
 #define RTE_LOGTYPE_FORWARD RTE_LOGTYPE_USER1
 

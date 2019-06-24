@@ -9,6 +9,7 @@
 #include <rte_net_crc.h>
 
 #include "spp_port.h"
+#include "shared/secondary/return_codes.h"
 #include "ringlatencystats.h"
 
 /* Port ability management information */

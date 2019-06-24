@@ -32,6 +32,10 @@ CFLAGS += $(WERROR_FLAGS) -O3 -MMD
 CFLAGS += -I$(SRCDIR)/../
 CFLAGS += -DSPP_MIRROR_MODULE
 
+# There are two kinds of copy mode, deep copy and shallow copy. If this
+# `DSPP_MIRROR_SHALLOWCOPY` is commented out, spp_mirror runs as in
+# deep copy mode.
+# Default mode is shallow copy.
 CFLAGS += -DSPP_MIRROR_SHALLOWCOPY
 
 # Optional Settings

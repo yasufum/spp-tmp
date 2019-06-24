@@ -19,11 +19,13 @@
 #include <rte_per_lcore.h>
 #include <rte_eal.h>
 #include <rte_launch.h>
+#include <netinet/in.h>
 
+#include "classifier_mac.h"
+#include "spp_vf.h"
+#include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
-#include "spp_vf.h"
-#include "classifier_mac.h"
 
 #define RTE_LOGTYPE_SPP_CLASSIFIER_MAC RTE_LOGTYPE_USER1
 

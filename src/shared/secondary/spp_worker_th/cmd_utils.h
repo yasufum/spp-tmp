@@ -5,14 +5,14 @@
 #ifndef _SPPWK_CMD_UTILS_H_
 #define _SPPWK_CMD_UTILS_H_
 
+#include <netinet/in.h>
+
 /**
  * @file cmd_utils.h
  *
  * Command utility functions for SPP worker thread.
  */
 
-#include <netinet/in.h>
-#include "shared/secondary/return_codes.h"
 #include "shared/common.h"
 
 /**
