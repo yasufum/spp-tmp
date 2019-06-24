@@ -824,11 +824,7 @@ class Shell(cmd.Cmd, object):
         {'cmdqueue': [],
          'completekey': 'tab',
          'completion_matches': ['inspect'],
-         'lastcmd': 'inspect',
-         'old_completer': None,
-         'stdin': <open file '<stdin>', mode 'r' at 0x7fe96bddf0c0>,
-         'stdout': <open file '<stdout>', mode 'w' at 0x7fe96bddf150>}
-
+         ...
         """
 
         from pprint import pprint
@@ -841,22 +837,7 @@ class Shell(cmd.Cmd, object):
         return ['add', 'del']
 
     def do_topo_subgraph(self, args):
-        """Edit subgarph for topo command.
-
-        Subgraph is a group of object defined in dot language. For topo
-        command, it is used for grouping resources of each of VM or
-        container to topology be more understandable.
-
-        (1) Add subgraph labeled 'vm1'.
-        spp > topo_subgraph add vm1 vhost:1;vhost:2
-
-        (2) Delete subgraph 'vm1'.
-        spp > topo_subgraph del vm1
-
-        (3) Show subgraphs by running topo_subgraph without args.
-        spp > topo_subgraph
-        label: vm1	subgraph: "vhost:1;vhost:2"
-        """
+        """Edit subgarph for topo command."""
 
         # logger.info("Topo initialized with sec IDs %s" % sec_ids)
 
@@ -897,6 +878,10 @@ class Shell(cmd.Cmd, object):
             else:
                 print("Ivalid subcommand '%s'!" % tokens[0])
 
+    def help_topo_subgraph(self):
+        """Print help message of topo_subgraph command."""
+        topo.SppTopo.help_subgraph()
+
     def complete_topo_subgraph(self, text, line, begidx, endidx):
         terms = self.terms_topo_subgraph()
 
@@ -921,34 +906,20 @@ class Shell(cmd.Cmd, object):
             pass
 
     def do_topo_resize(self, args):
-        """Change the size of the image of topo command.
-
-        You can specify the size by percentage or ratio.
-
-        spp > topo resize 60%  # percentage
-        spp > topo resize 0.6  # ratio
-
-        """
-
+        """Change the size of the image of topo_resize command."""
         self.spp_topo.resize_graph(args)
 
+    def help_topo_resize(self):
+        """Print help message of topo command."""
+        topo.SppTopo.help_resize()
+
     def do_topo(self, args):
-        """Output network topology.
-
-        Support four types of output.
-        * terminal (but very few terminals supporting to display images)
-        * browser (websocket server is required)
-        * image file (jpg, png, bmp)
-        * text (dot, js or json, yml or yaml)
-
-        spp > topo term  # terminal
-        spp > topo http  # browser
-        spp > topo network_conf.jpg  # image
-        spp > topo network_conf.dot  # text
-        spp > topo network_conf.js# text
-        """
-
+        """Output network topology."""
         self.spp_topo.run(args, self.get_sec_ids('nfv'))
+
+    def help_topo(self):
+        """Print help message of topo command."""
+        topo.SppTopo.help()
 
     def complete_topo(self, text, line, begidx, endidx):
 

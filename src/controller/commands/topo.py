@@ -459,3 +459,55 @@ class SppTopo(object):
             return True
         else:
             return False
+
+    @classmethod
+    def help(cls):
+        msg = """Output network topology.
+
+        Support four types of output.
+        * terminal (but very few terminals supporting to display images)
+        * browser (websocket server is required)
+        * image file (jpg, png, bmp)
+        * text (dot, js or json, yml or yaml)
+
+        spp > topo term  # terminal
+        spp > topo http  # browser
+        spp > topo network_conf.jpg  # image
+        spp > topo network_conf.dot  # text
+        spp > topo network_conf.js# text
+        """
+
+        print(msg)
+
+    @classmethod
+    def help_resize(cls):
+        msg = """Change the size of the image of topo command.
+
+        You can specify the size by percentage or ratio.
+
+        spp > topo resize 60%  # percentage
+        spp > topo resize 0.6  # ratio
+        """
+
+        print(msg)
+
+    @classmethod
+    def help_subgraph(cls):
+        msg = """Edit subgarph for topo command.
+
+        Subgraph is a group of object defined in dot language. For topo
+        command, it is used for grouping resources of each of VM or
+        container to topology be more understandable.
+
+        (1) Add subgraph labeled 'vm1'.
+            spp > topo_subgraph add vm1 vhost:1;vhost:2
+
+        (2) Delete subgraph 'vm1'.
+            spp > topo_subgraph del vm1
+
+        (3) Show subgraphs by running topo_subgraph without args.
+            spp > topo_subgraph
+            label: vm1	subgraph: "vhost:1;vhost:2"
+        """
+
+        print(msg)
