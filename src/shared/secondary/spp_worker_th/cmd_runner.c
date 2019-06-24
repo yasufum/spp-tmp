@@ -561,7 +561,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 /* Iterate classifier_table to create response to status command */
 #ifdef SPP_VF_MODULE
 static int
-add_classifier_table(
+_add_classifier_table(
 		struct spp_iterate_classifier_table_params *params)
 {
 	int ret;
@@ -903,9 +903,9 @@ append_error_details_value(const char *name, char **output, void *tmp)
 	return ret;
 }
 
-/* append a client id for JSON format */
+/* Add entry of client ID to a response in JSON. */
 static int
-append_client_id_value(const char *name, char **output,
+add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	return append_json_int_value(name, output, sppwk_get_client_id());
@@ -947,9 +947,9 @@ append_process_type_value(const char *name, char **output,
 			SPPWK_PROC_TYPE_LIST[sppwk_get_proc_type()]);
 }
 
-/* append a list of interface numbers for JSON format */
+/* Add entry of port to a response in JSON such as "phy:0". */
 static int
-append_interface_value(const char *name, char **output,
+add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
@@ -1115,7 +1115,7 @@ append_port_array(const char *name, char **output, const int num,
 }
 
 /**
- * TODO(yasufum) add usages called from `append_core_value` or refactor
+ * TODO(yasufum) add usages called from `add_core` or refactor
  * confusing function names.
  */
 /* append one element of core information for JSON format */
@@ -1179,9 +1179,9 @@ append_core_element_value(
 	return ret;
 }
 
-/* append master lcore in JSON format */
+/* Add entry of master lcore to a response in JSON. */
 static int
-append_master_lcore_value(const char *name, char **output,
+add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
@@ -1189,9 +1189,9 @@ append_master_lcore_value(const char *name, char **output,
 	return ret;
 }
 
-/* append a list of core information for JSON format */
+/* Add entry of core info of worker to a response in JSON such as "core:0". */
 static int
-append_core_value(const char *name, char **output,
+add_core(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
@@ -1280,17 +1280,16 @@ append_classifier_element_value(
 #endif /* SPP_VF_MODULE */
 
 /**
- * Append entries of classifier table in JSON. Before iterating the entries,
+ * Add entries of classifier table in JSON. Before iterating the entries,
  * this function calls several nested functions.
- *   append_classifier_table()  // This function.
- *     -> add_classifier_table()  // Wrapper and doesn't almost nothing.
+ *   add_classifier_table()  // This function.
+ *     -> _add_classifier_table()  // Wrapper and doesn't almost nothing.
  *       -> add_classifier_table_val()  // Setup data and call iterator.
  *         -> iterate_adding_mac_entry()
- *
  */
 #ifdef SPP_VF_MODULE
 static int
-append_classifier_table(const char *name, char **output,
+add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
@@ -1307,7 +1306,7 @@ append_classifier_table(const char *name, char **output,
 	itr_params.output = tmp_buff;
 	itr_params.element_proc = append_classifier_element_value;
 
-	ret = add_classifier_table(&itr_params);
+	ret = _add_classifier_table(&itr_params);
 	if (unlikely(ret != SPP_RET_OK)) {
 		spp_strbuf_free(itr_params.output);
 		return SPP_RET_NG;
@@ -1386,20 +1385,26 @@ struct cmd_response response_result_list[] = {
 };
 
 /**
- * TODO(yasufum) Add desc why it is needed and how to be used. At least, func
- * name is not appropriate because not for reponse, but name of funcs returns
- * response.
+ * List of combination of tag and operator function. It is used to assemble
+ * a result of command in JSON like as following.
+ *
+ *     {
+ *         "client-id": 1,
+ *         "ports": ["phy:0", "phy:1", "vhost:0", "ring:0"],
+ *         "components": [
+ *             {
+ *                 "core": 2,
+ *                 ...
  */
-/* command response status information string list */
 struct cmd_response response_info_list[] = {
-	{ "client-id", append_client_id_value },
-	{ "phy", append_interface_value },
-	{ "vhost", append_interface_value },
-	{ "ring", append_interface_value },
-	{ "master-lcore", append_master_lcore_value },
-	{ "core", append_core_value },
+	{ "client-id", add_client_id },
+	{ "phy", add_interface },
+	{ "vhost", add_interface },
+	{ "ring", add_interface },
+	{ "master-lcore", add_master_lcore},
+	{ "core", add_core},
 #ifdef SPP_VF_MODULE
-	{ "classifier_table", append_classifier_table},
+	{ "classifier_table", add_classifier_table},
 #endif /* SPP_VF_MODULE */
 	{ "", NULL }
 };
@@ -1541,9 +1546,9 @@ send_decode_error_response(int *sock,
 	spp_strbuf_free(msg);
 }
 
-/* send response for command execution result */
+/* Send the result of command to spp-ctl. */
 static void
-send_command_result_response(int *sock,
+send_result_spp_ctl(int *sock,
 		const struct sppwk_cmd_req *request,
 		struct cmd_result *cmd_results)
 {
@@ -1569,7 +1574,7 @@ send_command_result_response(int *sock,
 
 	/* append client id information value */
 	if (request->is_requested_client_id) {
-		ret = append_client_id_value("client_id", &tmp_buff, NULL);
+		ret = add_client_id("client_id", &tmp_buff, NULL);
 		if (unlikely(ret < SPP_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, WK_CMD_RUNNER, "Failed to make "
@@ -1675,14 +1680,14 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 	/* Exec exit command. */
 	if (cmd_req.is_requested_exit) {
 		set_cmd_result(&cmd_results[0], CMD_SUCCESS, "");
-		send_command_result_response(sock, &cmd_req, cmd_results);
+		send_result_spp_ctl(sock, &cmd_req, cmd_results);
 		RTE_LOG(INFO, WK_CMD_RUNNER,
 				"Process is terminated with exit cmd.\n");
 		return SPP_RET_NG;
 	}
 
-	/* send response */
-	send_command_result_response(sock, &cmd_req, cmd_results);
+	/* Send response to spp-ctl. */
+	send_result_spp_ctl(sock, &cmd_req, cmd_results);
 
 	RTE_LOG(DEBUG, WK_CMD_RUNNER, "End command request processing.\n");
 
