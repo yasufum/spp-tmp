@@ -47,3 +47,22 @@ class SppBye(object):
         for sec_type, spp_procs in spp_secondaries.items():
             for sec in spp_procs.values():
                 sec.run('exit')
+
+    @classmethod
+    def help(cls):
+        msg = """Terminate SPP processes and controller.
+
+        There are three usages for terminating processes.
+        It terminates logging if you activated recording.
+
+        (1) Terminate secondary processes
+            spp > bye sec
+
+        (2) Terminate primary and secondary processes
+            spp > bye all
+
+        (3) Terminate SPP controller (not for primary and secondary)
+            spp > bye
+        """
+
+        print(msg)

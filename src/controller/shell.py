@@ -696,20 +696,7 @@ class Shell(cmd.Cmd, object):
         return common.compl_common(text, line)
 
     def do_bye(self, args):
-        """Terminate SPP processes and controller.
-
-        There are three usages for terminating processes.
-        It terminates logging if you activated recording.
-
-        (1) Terminate secondary processes
-        spp > bye sec
-
-        (2) Terminate primary and secondary processes
-        spp > bye all
-
-        (3) Terminate SPP controller (not for primary and secondary)
-        spp > bye
-        """
+        """Terminate SPP processes and controller."""
 
         cmds = args.split(' ')
         if cmds[0] == '':  # terminate SPP CLI itself
@@ -718,6 +705,10 @@ class Shell(cmd.Cmd, object):
         else:  # terminate other SPP processes
             spp_bye = bye.SppBye()
             spp_bye.run(args, self.primary, self.secondaries)
+
+    def help_bye(self):
+        """Print help message of bye command."""
+        bye.SppBye.help()
 
     def complete_bye(self, text, line, begidx, endidx):
         """Completion for bye commands"""
