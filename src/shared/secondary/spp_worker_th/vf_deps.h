@@ -20,7 +20,7 @@ struct mac_classifier {
 	int default_cls_idx;  /* Default index for classification. */
 };
 
-/* Set of attirbutes of port for classification.  */
+/* Attirbutes of port for classification. */
 /* TODO(yasufum) confirm what is `iface_no_global`. */
 struct cls_port_info {
 	enum port_type iface_type;
@@ -36,10 +36,10 @@ struct cls_comp_info {
 	char name[STR_LEN_NAME];  /* component name */
 	int mac_addr_entry;  /* mac address entry flag */
 	struct mac_classifier *mac_clfs[NOF_VLAN];  /* classifiers per VLAN. */
-	int n_classified_data_tx;  /* number of transmission ports */
-	struct cls_port_info classified_data_rx;  /* RX handled by cls */
-	/* transmission ports handled by classifier */
-	struct cls_port_info classified_data_tx[RTE_MAX_ETHPORTS];
+	int nof_tx_ports;  /* Number of TX ports info entries. */
+	/* Classifier has one RX port and several TX ports. */
+	struct cls_port_info rx_port_i;  /* RX port info classified. */
+	struct cls_port_info tx_ports_i[RTE_MAX_ETHPORTS];  /* TX info. */
 };
 
 /* free mac classification instance. */

@@ -330,42 +330,43 @@ init_component_info(struct cls_comp_info *cmp_info,
 	struct mac_classifier *mac_cls;
 	struct ether_addr eth_addr;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
-	struct cls_port_info *clsd_data_rx = &cmp_info->classified_data_rx;
-	struct cls_port_info *clsd_data_tx = cmp_info->classified_data_tx;
+	/* Classifier has one RX port and several TX ports. */
+	struct cls_port_info *cls_rx_port_info = &cmp_info->rx_port_i;
+	struct cls_port_info *cls_tx_ports_info = cmp_info->tx_ports_i;
 	struct sppwk_port_info *tx_port = NULL;
 	uint16_t vid;
 
 	/* set rx */
 	if (wk_comp_info->nof_rx == 0) {
-		clsd_data_rx->iface_type = UNDEF;
-		clsd_data_rx->iface_no = 0;
-		clsd_data_rx->iface_no_global = 0;
-		clsd_data_rx->ethdev_port_id = 0;
-		clsd_data_rx->nof_pkts = 0;
+		cls_rx_port_info->iface_type = UNDEF;
+		cls_rx_port_info->iface_no = 0;
+		cls_rx_port_info->iface_no_global = 0;
+		cls_rx_port_info->ethdev_port_id = 0;
+		cls_rx_port_info->nof_pkts = 0;
 	} else {
-		clsd_data_rx->iface_type =
+		cls_rx_port_info->iface_type =
 			wk_comp_info->rx_ports[0]->iface_type;
-		clsd_data_rx->iface_no = 0;
-		clsd_data_rx->iface_no_global =
+		cls_rx_port_info->iface_no = 0;
+		cls_rx_port_info->iface_no_global =
 			wk_comp_info->rx_ports[0]->iface_no;
-		clsd_data_rx->ethdev_port_id =
+		cls_rx_port_info->ethdev_port_id =
 			wk_comp_info->rx_ports[0]->ethdev_port_id;
-		clsd_data_rx->nof_pkts = 0;
+		cls_rx_port_info->nof_pkts = 0;
 	}
 
 	/* set tx */
-	cmp_info->n_classified_data_tx = wk_comp_info->nof_tx;
+	cmp_info->nof_tx_ports = wk_comp_info->nof_tx;
 	cmp_info->mac_addr_entry = 0;
 	for (i = 0; i < wk_comp_info->nof_tx; i++) {
 		tx_port = wk_comp_info->tx_ports[i];
 		vid = tx_port->cls_attrs.vlantag.vid;
 
 		/* store ports information */
-		clsd_data_tx[i].iface_type = tx_port->iface_type;
-		clsd_data_tx[i].iface_no = i;
-		clsd_data_tx[i].iface_no_global = tx_port->iface_no;
-		clsd_data_tx[i].ethdev_port_id = tx_port->ethdev_port_id;
-		clsd_data_tx[i].nof_pkts = 0;
+		cls_tx_ports_info[i].iface_type = tx_port->iface_type;
+		cls_tx_ports_info[i].iface_no = i;
+		cls_tx_ports_info[i].iface_no_global = tx_port->iface_no;
+		cls_tx_ports_info[i].ethdev_port_id = tx_port->ethdev_port_id;
+		cls_tx_ports_info[i].nof_pkts = 0;
 
 		if (tx_port->cls_attrs.mac_addr == 0)
 			continue;
@@ -475,9 +476,9 @@ static inline void
 transmit_all_packet(struct cls_comp_info *cmp_info)
 {
 	int i;
-	struct cls_port_info *clsd_data_tx = cmp_info->classified_data_tx;
+	struct cls_port_info *clsd_data_tx = cmp_info->tx_ports_i;
 
-	for (i = 0; i < cmp_info->n_classified_data_tx; i++) {
+	for (i = 0; i < cmp_info->nof_tx_ports; i++) {
 		if (unlikely(clsd_data_tx[i].nof_pkts != 0)) {
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 					"transmit all packets (drain). "
@@ -756,8 +757,8 @@ spp_classifier_mac_do(int id)
 	change_classifier_index(mng_info, id);
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
-	clsd_data_rx = &cmp_info->classified_data_rx;
-	clsd_data_tx = cmp_info->classified_data_tx;
+	clsd_data_rx = &cmp_info->rx_port_i;
+	clsd_data_tx = cmp_info->tx_ports_i;
 
 	/**
 	 * decide classifier information of the current cycle If at least,
@@ -765,14 +766,14 @@ spp_classifier_mac_do(int id)
 	 * classifying. If not, stop classifying.
 	 */
 	if (!(clsd_data_rx->iface_type != UNDEF &&
-			cmp_info->n_classified_data_tx >= 1 &&
-				cmp_info->mac_addr_entry == 1))
+			cmp_info->nof_tx_ports >= 1 &&
+			cmp_info->mac_addr_entry == 1))
 		return SPP_RET_OK;
 
 	/* drain tx packets, if buffer is not filled for interval */
 	cur_tsc = rte_rdtsc();
 	if (unlikely(cur_tsc - prev_tsc > drain_tsc)) {
-		for (i = 0; i < cmp_info->n_classified_data_tx; i++) {
+		for (i = 0; i < cmp_info->nof_tx_ports; i++) {
 			if (likely(clsd_data_tx[i].nof_pkts == 0))
 				continue;
 
@@ -825,19 +826,17 @@ spp_classifier_get_component_status(
 	}
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
-	clsd_data = cmp_info->classified_data_tx;
+	clsd_data = cmp_info->tx_ports_i;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
-	if (cmp_info->classified_data_rx.iface_type != UNDEF) {
+	if (cmp_info->rx_port_i.iface_type != UNDEF) {
 		nof_rx = 1;
-		rx_ports[0].iface_type = cmp_info->
-				classified_data_rx.iface_type;
-		rx_ports[0].iface_no   = cmp_info->
-				classified_data_rx.iface_no_global;
+		rx_ports[0].iface_type = cmp_info->rx_port_i.iface_type;
+		rx_ports[0].iface_no = cmp_info->rx_port_i.iface_no_global;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	nof_tx = cmp_info->n_classified_data_tx;
+	nof_tx = cmp_info->nof_tx_ports;
 	for (i = 0; i < nof_tx; i++) {
 		tx_ports[i].iface_type = clsd_data[i].iface_type;
 		tx_ports[i].iface_no   = clsd_data[i].iface_no_global;
@@ -925,7 +924,7 @@ spp_classifier_mac_iterate_table(
 			continue;
 
 		cmp_info = mng_info->cmp_infos + mng_info->ref_index;
-		clsd_data = cmp_info->classified_data_tx;
+		clsd_data = cmp_info->tx_ports_i;
 
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 			"Core[%u] Start iterate classifier table.\n", i);
