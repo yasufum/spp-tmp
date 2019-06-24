@@ -272,23 +272,23 @@ is_used_mng_info(const struct management_info *mng_info)
 }
 
 /* create mac classification instance. */
-static struct mac_classification *
+static struct mac_classifier *
 create_mac_classification(void)
 {
-	struct mac_classification *mac_cls;
+	struct mac_classifier *mac_cls;
 	char hash_tab_name[HASH_TABLE_NAME_BUF_SZ];
 	struct rte_hash **mac_cls_tab;
 
-	mac_cls = (struct mac_classification *)rte_zmalloc(
-			NULL, sizeof(struct mac_classification), 0);
+	mac_cls = (struct mac_classifier *)rte_zmalloc(
+			NULL, sizeof(struct mac_classifier), 0);
 
 	if (unlikely(mac_cls == NULL))
 		return NULL;
 
-	mac_cls->num_active_classified = 0;
-	mac_cls->default_classified = -1;
+	mac_cls->nof_cls_ports = 0;
+	mac_cls->default_cls_idx = -1;
 
-	mac_cls_tab = &mac_cls->classification_tab;
+	mac_cls_tab = &mac_cls->cls_tbl;
 
 	/* make hash table name(require uniqueness between processes) */
 	sprintf(hash_tab_name, "cmtab_%07x%02hx",
@@ -328,7 +328,7 @@ init_component_info(struct component_info *cmp_info,
 {
 	int ret = SPP_RET_NG;
 	int i;
-	struct mac_classification *mac_cls;
+	struct mac_classifier *mac_cls;
 	struct ether_addr eth_addr;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
 	struct classified_data *clsd_data_rx = &cmp_info->classified_data_rx;
@@ -385,8 +385,7 @@ init_component_info(struct component_info *cmp_info,
 		mac_cls = cmp_info->mac_classifications[vid];
 
 		/* store active tx_port that associate with mac address */
-		mac_cls->active_classifieds[
-				mac_cls->num_active_classified++] = i;
+		mac_cls->cls_ports[mac_cls->nof_cls_ports++] = i;
 
 		/* mac address entry flag set */
 		cmp_info->mac_addr_entry = 1;
@@ -394,7 +393,7 @@ init_component_info(struct component_info *cmp_info,
 		/* store default classified */
 		if (unlikely(tx_port->cls_attrs.mac_addr ==
 				SPP_DEFAULT_CLASSIFIED_DMY_ADDR)) {
-			mac_cls->default_classified = i;
+			mac_cls->default_cls_idx = i;
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 					"default classified. vid=%hu, "
 					"iface_type=%d, iface_no=%d, "
@@ -412,7 +411,7 @@ init_component_info(struct component_info *cmp_info,
 		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
 				&eth_addr);
 
-		ret = rte_hash_add_key_data(mac_cls->classification_tab,
+		ret = rte_hash_add_key_data(mac_cls->cls_tbl,
 				(void *)&eth_addr, (void *)(long)i);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
@@ -518,7 +517,7 @@ push_packet(struct rte_mbuf *pkt, struct classified_data *clsd_data)
 static inline int
 get_general_default_classified_index(struct component_info *cmp_info)
 {
-	struct mac_classification *mac_cls;
+	struct mac_classifier *mac_cls;
 
 	mac_cls = cmp_info->mac_classifications[VLAN_UNTAGGED_VID];
 	if (unlikely(mac_cls == NULL)) {
@@ -527,7 +526,7 @@ get_general_default_classified_index(struct component_info *cmp_info)
 		return SPP_RET_NG;
 	}
 
-	return mac_cls->default_classified;
+	return mac_cls->default_cls_idx;
 }
 
 /* handle L2 multicast(include broadcast) packet */
@@ -537,7 +536,7 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 		struct classified_data *clsd_data)
 {
 	int i;
-	struct mac_classification *mac_cls;
+	struct mac_classifier *mac_cls;
 	uint16_t vid = get_vid(pkt);
 	int gen_def_clsd_idx = get_general_default_classified_index(cmp_info);
 	int n_act_clsd;
@@ -545,7 +544,7 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 	/* select mac address classification by vid */
 	mac_cls = cmp_info->mac_classifications[vid];
 	if (unlikely(mac_cls == NULL ||
-			mac_cls->num_active_classified == 0)) {
+			mac_cls->nof_cls_ports == 0)) {
 		/* specific vlan is not registered
 		 * use untagged's default(as general default)
 		 */
@@ -564,18 +563,16 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 	}
 
 	/* add to mbuf's refcnt */
-	n_act_clsd = mac_cls->num_active_classified;
+	n_act_clsd = mac_cls->nof_cls_ports;
 	if (gen_def_clsd_idx >= 0 && vid != VLAN_UNTAGGED_VID)
 		++n_act_clsd;
 
 	rte_mbuf_refcnt_update(pkt, (int16_t)(n_act_clsd - 1));
 
 	/* transmit to specific segment & general default */
-	for (i = 0; i < mac_cls->num_active_classified; i++) {
-		LOG_CLS((long)mac_cls->active_classifieds[i],
-				pkt, cmp_info, clsd_data);
-		push_packet(pkt, clsd_data +
-				(long)mac_cls->active_classifieds[i]);
+	for (i = 0; i < mac_cls->nof_cls_ports; i++) {
+		LOG_CLS((long)mac_cls->cls_ports[i], pkt, cmp_info, clsd_data);
+		push_packet(pkt, clsd_data + (long)mac_cls->cls_ports[i]);
 	}
 
 	if (gen_def_clsd_idx >= 0 && vid != VLAN_UNTAGGED_VID) {
@@ -592,7 +589,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 	int ret;
 	struct ether_hdr *eth;
 	void *lookup_data;
-	struct mac_classification *mac_cls;
+	struct mac_classifier *mac_cls;
 	uint16_t vid;
 
 	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
@@ -607,7 +604,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 	}
 
 	/* find in table (by destination mac address) */
-	ret = rte_hash_lookup_data(mac_cls->classification_tab,
+	ret = rte_hash_lookup_data(mac_cls->cls_tbl,
 			(const void *)&eth->d_addr, &lookup_data);
 	if (ret >= 0) {
 		LOG_DBG(cmp_info->name, "Mac address is registered. "
@@ -624,7 +621,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 		return -2;
 
 	/* if default is not set, use untagged's default */
-	if (unlikely(mac_cls->default_classified < 0 &&
+	if (unlikely(mac_cls->default_cls_idx < 0 &&
 			vid != VLAN_UNTAGGED_VID)) {
 		LOG_DBG(cmp_info->name, "Vid's default is not set. "
 				"use general default. vid=%hu\n", vid);
@@ -633,7 +630,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 
 	/* use default */
 	LOG_DBG(cmp_info->name, "Use vid's default. vid=%hu\n", vid);
-	return mac_cls->default_classified;
+	return mac_cls->default_cls_idx;
 }
 
 /*
@@ -865,7 +862,7 @@ static void
 mac_classification_iterate_table(
 		struct spp_iterate_classifier_table_params *params,
 		uint16_t vid,
-		struct mac_classification *mac_cls,
+		struct mac_classifier *mac_cls,
 		__rte_unused struct component_info *cmp_info,
 		struct classified_data *clsd_data)
 {
@@ -881,13 +878,13 @@ mac_classification_iterate_table(
 	if (unlikely(vid == VLAN_UNTAGGED_VID))
 		type = SPP_CLASSIFIER_TYPE_MAC;
 
-	if (mac_cls->default_classified >= 0) {
+	if (mac_cls->default_cls_idx >= 0) {
 		port.iface_type = (clsd_data +
-				mac_cls->default_classified)->iface_type;
+				mac_cls->default_cls_idx)->iface_type;
 		port.iface_no   = (clsd_data +
-				mac_cls->default_classified)->iface_no_global;
+				mac_cls->default_cls_idx)->iface_no_global;
 
-		LOG_ENT((long)mac_cls->default_classified,
+		LOG_ENT((long)mac_cls->default_cls_idx,
 				vid,
 				SPP_DEFAULT_CLASSIFIED_SPEC_STR,
 				cmp_info, clsd_data);
@@ -902,7 +899,7 @@ mac_classification_iterate_table(
 
 	next = 0;
 	while (1) {
-		ret = rte_hash_iterate(mac_cls->classification_tab,
+		ret = rte_hash_iterate(mac_cls->cls_tbl,
 				&key, &data, &next);
 
 		if (unlikely(ret < 0))

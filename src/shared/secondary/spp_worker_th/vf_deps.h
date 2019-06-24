@@ -12,19 +12,12 @@
 /** Number of VLAN ID */
 #define NOF_VLAN 4096
 
-/* mac address classification */
-struct mac_classification {
-	/* hash table keeps classification */
-	struct rte_hash *classification_tab;
-
-	/* number of valid classification */
-	int num_active_classified;
-
-	/* index of valid classification */
-	int active_classifieds[RTE_MAX_ETHPORTS];
-
-	/* index of default classification */
-	int default_classified;
+/* Classifier for MAC addresses. */
+struct mac_classifier {
+	struct rte_hash *cls_tbl;  /* Hash table for MAC classification. */
+	int nof_cls_ports;  /* Num of ports classified validly. */
+	int cls_ports[RTE_MAX_ETHPORTS];  /* Ports for classification. */
+	int default_cls_idx;  /* Default index for classification. */
 };
 
 /* classified data (destination port, target packets, etc) */
@@ -54,7 +47,7 @@ struct component_info {
 	int mac_addr_entry;  /* mac address entry flag */
 
 	/* mac address classification per vlan-id */
-	struct mac_classification *mac_classifications[NOF_VLAN];
+	struct mac_classifier *mac_classifications[NOF_VLAN];
 
 	int n_classified_data_tx;  /* number of transmission ports */
 	struct classified_data classified_data_rx;  /* RX handled by cls */
@@ -64,13 +57,13 @@ struct component_info {
 
 /* free mac classification instance. */
 static inline void
-free_mac_classification(struct mac_classification *mac_cls)
+free_mac_classification(struct mac_classifier *mac_cls)
 {
 	if (mac_cls == NULL)
 		return;
 
-	if (mac_cls->classification_tab != NULL)
-		rte_hash_free(mac_cls->classification_tab);
+	if (mac_cls->cls_tbl != NULL)
+		rte_hash_free(mac_cls->cls_tbl);
 
 	rte_free(mac_cls);
 }
