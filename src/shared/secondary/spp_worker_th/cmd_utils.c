@@ -337,9 +337,9 @@ log_interface_info(const struct iface_info *iface_info)
 	const struct sppwk_port_info *port = NULL;
 	int cnt = 0;
 	RTE_LOG(DEBUG, APP, "interface phy=%d, vhost=%d, ring=%d\n",
-			iface_info->num_nic,
-			iface_info->num_vhost,
-			iface_info->num_ring);
+			iface_info->nof_phys,
+			iface_info->nof_vhosts,
+			iface_info->nof_rings);
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->nic[cnt];
 		if (port->iface_type == UNDEF)
@@ -522,11 +522,11 @@ set_nic_interface(void)
 	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
 
 	/* NIC Setting */
-	p_iface_info->num_nic = rte_eth_dev_count_avail();
-	if (p_iface_info->num_nic > RTE_MAX_ETHPORTS)
-		p_iface_info->num_nic = RTE_MAX_ETHPORTS;
+	p_iface_info->nof_phys = rte_eth_dev_count_avail();
+	if (p_iface_info->nof_phys > RTE_MAX_ETHPORTS)
+		p_iface_info->nof_phys = RTE_MAX_ETHPORTS;
 
-	for (nic_cnt = 0; nic_cnt < p_iface_info->num_nic; nic_cnt++) {
+	for (nic_cnt = 0; nic_cnt < p_iface_info->nof_phys; nic_cnt++) {
 		p_iface_info->nic[nic_cnt].iface_type   = PHY;
 		p_iface_info->nic[nic_cnt].ethdev_port_id = nic_cnt;
 	}

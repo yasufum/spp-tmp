@@ -812,7 +812,7 @@ spp_classifier_get_component_status(
 		struct spp_iterate_core_params *params)
 {
 	int ret = SPP_RET_NG;
-	int i, num_tx, num_rx = 0;
+	int i, nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
 	struct management_info *mng_info;
 	struct component_info *cmp_info;
 	struct classified_data *clsd_data;
@@ -833,7 +833,7 @@ spp_classifier_get_component_status(
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
 	if (cmp_info->classified_data_rx.iface_type != UNDEF) {
-		num_rx = 1;
+		nof_rx = 1;
 		rx_ports[0].iface_type = cmp_info->
 				classified_data_rx.iface_type;
 		rx_ports[0].iface_no   = cmp_info->
@@ -841,8 +841,8 @@ spp_classifier_get_component_status(
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	num_tx = cmp_info->n_classified_data_tx;
-	for (i = 0; i < num_tx; i++) {
+	nof_tx = cmp_info->n_classified_data_tx;
+	for (i = 0; i < nof_tx; i++) {
 		tx_ports[i].iface_type = clsd_data[i].iface_type;
 		tx_ports[i].iface_no   = clsd_data[i].iface_no_global;
 	}
@@ -851,7 +851,7 @@ spp_classifier_get_component_status(
 	ret = (*params->element_proc)(
 		params, lcore_id,
 		cmp_info->name, SPP_TYPE_CLASSIFIER_MAC_STR,
-		num_rx, rx_ports, num_tx, tx_ports);
+		nof_rx, rx_ports, nof_tx, tx_ports);
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_NG;
 

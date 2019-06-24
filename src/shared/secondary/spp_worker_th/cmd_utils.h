@@ -220,9 +220,9 @@ struct startup_param {
 
 /* Manage number of interfaces  and port information as global variable. */
 struct iface_info {
-	int num_nic;    /* The number of phy */
-	int num_vhost;  /* The number of vhost */
-	int num_ring;   /* The number of ring */
+	int nof_phys;    /* Number of phy ports */
+	int nof_vhosts;  /* Number of vhost ports */
+	int nof_rings;   /* Number of ring ports */
 	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info vhost[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
@@ -258,11 +258,11 @@ struct spp_iterate_core_params;
 typedef int (*spp_iterate_core_element_proc)(
 		struct spp_iterate_core_params *params,
 		const unsigned int lcore_id,
-		const char *name,
-		const char *type,
-		const int num_rx,
+		const char *wk_name,  /* Name of worker named as component. */
+		const char *wk_type,  /* Type of worker named as component. */
+		const int nof_rx,  /* Number of RX ports */
 		const struct sppwk_port_idx *rx_ports,
-		const int num_tx,
+		const int nof_tx,  /* Number of TX ports */
 		const struct sppwk_port_idx *tx_ports);
 
 /**
