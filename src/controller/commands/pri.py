@@ -155,6 +155,83 @@ class SppPrimary(object):
                     rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
                     rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
 
+    def _setup_launch_opts(self, tokens, cli_config):
+        """Make options for launch cmd from config params."""
+
+        if 'max_secondary' in cli_config.keys():
+            max_secondary = int(cli_config['max_secondary']['val'])
+
+            if (tokens[2] in spp_common.SEC_TYPES) and \
+                    (int(tokens[3])-1 in range(max_secondary)):
+                ptype = tokens[2]
+                sid = tokens[3]
+
+                if ptype == 'nfv':
+                    opt_sid = '-n'
+                else:
+                    opt_sid = '--client-id'
+
+                # Need to replace port from `7777` of spp-ctl to `6666`
+                # of secondary process.
+                server_addr = common.current_server_addr()
+                server_addr = server_addr.replace('7777', '6666')
+
+                # Lcore ID of worker lcore starts from sec ID in
+                # default.
+                lcore_base = int(sid)
+
+                # Define rest of worker lcores from config dynamically.
+                if ptype == 'nfv':  # one worker lcore is enough
+                    if 'sec_nfv_nof_lcores' in cli_config.keys():
+                        tmpkey = 'sec_nfv_nof_lcores'
+                        nof_workers = int(
+                                cli_config[tmpkey]['val'])
+
+                elif ptype == 'vf':
+                    if 'sec_vf_nof_lcores' in cli_config.keys():
+                        nof_workers = int(
+                                cli_config['sec_vf_nof_lcores']['val'])
+
+                elif ptype == 'mirror':  # two worker cores
+                    if 'sec_mirror_nof_lcores' in cli_config.keys():
+                        tmpkey = 'sec_mirror_nof_lcores'
+                        nof_workers = int(
+                                cli_config[tmpkey]['val'])
+
+                elif ptype == 'pcap':  # at least two worker cores
+                    if 'sec_pcap_nof_lcores' in cli_config.keys():
+                        tmpkey = 'sec_pcap_nof_lcores'
+                        nof_workers = int(
+                                cli_config[tmpkey]['val'])
+
+                    if 'sec_pcap_port' in cli_config.keys():
+                        temp = '-c {}'.format(
+                                cli_config['sec_pcap_port']['val'])
+
+                        self.launch_template = '{} {}'.format(
+                            self.launch_template, temp)
+
+                last_core = lcore_base + nof_workers - 1
+
+                # Decide lcore option based on configured number of
+                # lcores.
+                if last_core == lcore_base:
+                    rest_core = '{}'.format(last_core)
+                else:
+                    rest_core = '{}-{}'.format(lcore_base, last_core)
+
+                temp = self._setup_launch_template(
+                        cli_config, self.launch_template)
+                candidates = [temp.format(
+                    wlcores=rest_core, opt_sid=opt_sid, sid=sid,
+                    sec_addr=server_addr)]
+        else:
+            logger.error(
+                    'Error: max_secondary is not defined in config')
+            candidates = []
+
+        return candidates
+
     # TODO(yasufum) add checking for cli_config has keys
     def complete(self, text, line, begidx, endidx, cli_config):
         """Completion for primary process commands.
@@ -191,80 +268,7 @@ class SppPrimary(object):
                     candidates = []
 
             elif len(tokens) == 5 and tokens[1] == 'launch':
-                # TODO(yasufum) move this long completion to method.
-
-                if 'max_secondary' in cli_config.keys():
-                    max_secondary = int(cli_config['max_secondary']['val'])
-
-                    if (tokens[2] in spp_common.SEC_TYPES) and \
-                            (int(tokens[3])-1 in range(max_secondary)):
-                        ptype = tokens[2]
-                        sid = tokens[3]
-
-                        if ptype == 'nfv':
-                            opt_sid = '-n'
-                        else:
-                            opt_sid = '--client-id'
-
-                        # Need to replace port from `7777` of spp-ctl to `6666`
-                        # of secondary process.
-                        server_addr = common.current_server_addr()
-                        server_addr = server_addr.replace('7777', '6666')
-
-                        # Lcore ID of worker lcore starts from sec ID in
-                        # default.
-                        lcore_base = int(sid)
-
-                        # Define rest of worker lcores from config dynamically.
-                        if ptype == 'nfv':  # one worker lcore is enough
-                            if 'sec_nfv_nof_lcores' in cli_config.keys():
-                                tmpkey = 'sec_nfv_nof_lcores'
-                                nof_workers = int(
-                                        cli_config[tmpkey]['val'])
-
-                        elif ptype == 'vf':
-                            if 'sec_vf_nof_lcores' in cli_config.keys():
-                                nof_workers = int(
-                                        cli_config['sec_vf_nof_lcores']['val'])
-
-                        elif ptype == 'mirror':  # two worker cores
-                            if 'sec_mirror_nof_lcores' in cli_config.keys():
-                                tmpkey = 'sec_mirror_nof_lcores'
-                                nof_workers = int(
-                                        cli_config[tmpkey]['val'])
-
-                        elif ptype == 'pcap':  # at least two worker cores
-                            if 'sec_pcap_nof_lcores' in cli_config.keys():
-                                tmpkey = 'sec_pcap_nof_lcores'
-                                nof_workers = int(
-                                        cli_config[tmpkey]['val'])
-
-                            if 'sec_pcap_port' in cli_config.keys():
-                                temp = '-c {}'.format(
-                                        cli_config['sec_pcap_port']['val'])
-
-                                self.launch_template = '{} {}'.format(
-                                    self.launch_template, temp)
-
-                        last_core = lcore_base + nof_workers - 1
-
-                        # Decide lcore option based on configured number of
-                        # lcores.
-                        if last_core == lcore_base:
-                            rest_core = '{}'.format(last_core)
-                        else:
-                            rest_core = '{}-{}'.format(lcore_base, last_core)
-
-                        temp = self._setup_launch_template(
-                                cli_config, self.launch_template)
-                        candidates = [temp.format(
-                            wlcores=rest_core, opt_sid=opt_sid, sid=sid,
-                            sec_addr=server_addr)]
-
-                else:
-                    logger.error(
-                            'Error: max_secondary is not defined in config')
-                    candidates = []
+                candidates = self._setup_launch_opts(tokens, cli_config)
 
         if not text:
             completions = candidates
