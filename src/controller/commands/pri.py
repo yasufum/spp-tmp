@@ -301,9 +301,12 @@ class SppPrimary(object):
         res = self.spp_ctl_cli.get('processes')
         if res is not None:
             if res.status_code == 200:
-                for proc in res.json():
-                    if proc['type'] != 'primary':
-                        sec_ids.append(proc['client-id'])
+                try:
+                    for proc in res.json():
+                        if proc['type'] != 'primary':
+                            sec_ids.append(proc['client-id'])
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
             elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 # Print default error message
                 pass

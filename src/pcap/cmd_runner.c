@@ -7,11 +7,12 @@
 
 #include <rte_log.h>
 
-#include "shared/secondary/string_buffer.h"
-#include "spp_pcap.h"
-#include "shared/secondary/spp_worker_th/conn_spp_ctl.h"
 #include "cmd_parser.h"
 #include "cmd_runner.h"
+#include "spp_pcap.h"
+#include "shared/secondary/utils.h"
+#include "shared/secondary/string_buffer.h"
+#include "shared/secondary/spp_worker_th/conn_spp_ctl.h"
 
 #define RTE_LOGTYPE_PCAP_RUNNER RTE_LOGTYPE_USER2
 
@@ -58,16 +59,6 @@ const char *CAPTURE_STATUS_STRINGS[] = {
 	"running",
 	"", /* termination */
 };
-
-/* get client id */
-static int
-spp_get_client_id(void)
-{
-	struct startup_param *startup_param;
-
-	spp_get_mng_data_addr(&startup_param, NULL, NULL, NULL, NULL);
-	return startup_param->client_id;
-}
 
 /**
  * Iterate core information for number of available cores to
@@ -393,7 +384,7 @@ static int
 append_client_id_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_int_value(name, output, spp_get_client_id());
+	return append_json_int_value(name, output, get_client_id());
 }
 
 /* append a block of port entry for JSON format */

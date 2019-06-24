@@ -139,6 +139,7 @@ class Controller(object):
 
     def get_processes(self):
         procs = []
+        LOG.info('get_proesses: {}'.format(self.procs.values()))
         for proc in self.procs.values():
             p = {"type": proc.type}
             if proc.id != spp_proc.ID_PRIMARY:

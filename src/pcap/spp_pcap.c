@@ -177,28 +177,6 @@ usage(const char *progname)
 		, progname);
 }
 
-/**
- * Convert string type of client ID to integer and return SPPWK_RET_OK, or
- * SPPWK_RET_NG if failed.
- */
-static int
-client_id_toi(const char *client_id_str, int *client_id)
-{
-	int id = 0;
-	char *endptr = NULL;
-
-	id = strtol(client_id_str, &endptr, 0);
-	if (unlikely(client_id_str == endptr) || unlikely(*endptr != '\0'))
-		return SPPWK_RET_NG;
-
-	if (id >= RTE_MAX_LCORE)
-		return SPPWK_RET_NG;
-
-	*client_id = id;
-	RTE_LOG(DEBUG, SPP_PCAP, "Set client id = %d\n", *client_id);
-	return SPPWK_RET_OK;
-}
-
 /* Parse `--fsize` option and get the value */
 static int
 parse_fsize(const char *fsize_str, uint64_t *fsize)
@@ -263,6 +241,7 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 static int
 parse_app_args(int argc, char *argv[])
 {
+	int cli_id;  /* Client ID. */
 	char *ctl_ip;  /* IP address of spp_ctl. */
 	int ctl_port;  /* Port num to connect spp_ctl. */
 	char cap_port_str[PORT_STR_SIZE];  /* Captured port. */
@@ -307,12 +286,11 @@ parse_app_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (client_id_toi(optarg,
-					&g_startup_param.client_id) !=
-								SPPWK_RET_OK) {
+			if (parse_client_id(&cli_id, optarg) != SPPWK_RET_OK) {
 				usage(progname);
 				return SPPWK_RET_NG;
 			}
+			set_client_id(cli_id);
 			proc_flg = 1;
 			break;
 		case SPP_LONGOPT_RETVAL_OUT_DIR:
@@ -367,8 +345,7 @@ parse_app_args(int argc, char *argv[])
 	RTE_LOG(INFO, SPP_PCAP,
 			"Parsed app args ('--client-id %d', '-s %s:%d', "
 			"'-c %s', '--out-dir %s', '--fsize %ld')\n",
-			g_startup_param.client_id, ctl_ip, ctl_port,
-			cap_port_str,
+			cli_id, ctl_ip, ctl_port, cap_port_str,
 			g_pcap_option.compress_file_path,
 			g_pcap_option.fsize_limit);
 	return SPPWK_RET_OK;
@@ -1031,8 +1008,8 @@ main(int argc, char *argv[])
 		/* create ring */
 		char ring_name[PORT_STR_SIZE];
 		memset(ring_name, 0x00, PORT_STR_SIZE);
-		snprintf(ring_name, PORT_STR_SIZE,  "cap_ring_%d",
-						g_startup_param.client_id);
+		snprintf(ring_name, PORT_STR_SIZE, "cap_ring_%d",
+				get_client_id());
 		g_pcap_option.cap_ring = rte_ring_create(ring_name,
 					rte_align32pow2(RING_SIZE),
 					rte_socket_id(), 0);

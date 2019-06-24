@@ -157,7 +157,7 @@ struct sppwk_comp_info {
 
 /* Manage given options as global variable */
 struct startup_param {
-	int client_id;  /* Client ID */
+	//int client_id;  /* Client ID */
 	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
 	int server_port;  /* Port Number of spp-ctl */
 };

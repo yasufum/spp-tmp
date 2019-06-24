@@ -19,6 +19,7 @@ SRCS-y := spp_pcap.c
 SRCS-y += cmd_utils.c
 SRCS-y += cmd_runner.c cmd_parser.c
 SRCS-y += ../shared/common.c
+SRCS-y += $(SPP_SEC_DIR)/utils.c
 SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/spp_port.c

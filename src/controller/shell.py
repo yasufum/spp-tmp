@@ -142,9 +142,12 @@ class Shell(cmd.Cmd, object):
         res = self.spp_ctl_cli.get('processes')
         if res is not None:
             if res.status_code == 200:
-                for ent in res.json():
-                    if ent['type'] == ptype:
-                        ids.append(ent['client-id'])
+                try:
+                    for ent in res.json():
+                        if ent['type'] == ptype:
+                            ids.append(ent['client-id'])
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
         return ids
 
     def print_status(self):
@@ -156,34 +159,37 @@ class Shell(cmd.Cmd, object):
         res = self.spp_ctl_cli.get('processes')
         if res is not None:
             if res.status_code == 200:
-                proc_objs = res.json()
-                pri_obj = None
-                sec_obj = {}
-                sec_obj['nfv'] = []
-                sec_obj['vf'] = []
-                sec_obj['mirror'] = []
-                sec_obj['pcap'] = []
+                try:
+                    proc_objs = res.json()
+                    pri_obj = None
+                    sec_obj = {}
+                    sec_obj['nfv'] = []
+                    sec_obj['vf'] = []
+                    sec_obj['mirror'] = []
+                    sec_obj['pcap'] = []
 
-                for proc_obj in proc_objs:
-                    if proc_obj['type'] == 'primary':
-                        pri_obj = proc_obj
+                    for proc_obj in proc_objs:
+                        if proc_obj['type'] == 'primary':
+                            pri_obj = proc_obj
+                        else:
+                            sec_obj[proc_obj['type']].append(proc_obj)
+
+                    print('- primary:')
+                    if pri_obj is not None:
+                        print('  - status: running')
                     else:
-                        sec_obj[proc_obj['type']].append(proc_obj)
+                        print('  - status: not running')
 
-                print('- primary:')
-                if pri_obj is not None:
-                    print('  - status: running')
-                else:
-                    print('  - status: not running')
-
-                print('- secondary:')
-                print('  - processes:')
-                cnt = 1
-                for pt in ['nfv', 'vf', 'mirror', 'pcap']:
-                    for obj in sec_obj[pt]:
-                        print('    %d: %s:%s' %
-                              (cnt, obj['type'], obj['client-id']))
-                        cnt += 1
+                    print('- secondary:')
+                    print('  - processes:')
+                    cnt = 1
+                    for pt in ['nfv', 'vf', 'mirror', 'pcap']:
+                        for obj in sec_obj[pt]:
+                            print('    %d: %s:%s' %
+                                  (cnt, obj['type'], obj['client-id']))
+                            cnt += 1
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
             elif res.status_code in self.spp_ctl_cli.rest_common_error_codes:
                 pass
             else:
