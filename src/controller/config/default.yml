@@ -13,9 +13,9 @@ topo_size:
 sec_mem:
     val: -m 512
     desc: Mem size
-sec_base_lcore:
+sec_m_lcore:
     val: 1
-    desc: Shared lcore among secondaries
+    desc: Shared master lcore among secondaries
 sec_wait_launch:
     val: 0.5
     desc: Wait for launching secondary process in sec

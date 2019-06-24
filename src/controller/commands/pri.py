@@ -27,7 +27,7 @@ class SppPrimary(object):
 
         # TODO(yasufum) replace placeholders __XXX__ to {keyword}.
         # Setup template of args for `pri; launch`
-        temp = "-l __BASE_LCORE__,{wlcores} "
+        temp = "-l __MASTER_LCORE__,{slcores} "
         temp = temp + "__MEM__ "
         temp = temp + "-- "
         temp = temp + "{opt_sid} {sid} "  # '-n 1' or '--client-id 1'
@@ -155,6 +155,79 @@ class SppPrimary(object):
                     rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
                     rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
 
+    def _get_empty_lcores(self):
+        """Get lcore usage from spp-ctl for making launch options.
+
+        Return value is a double dimension list of unsed lcores.
+          [[2,3,...], [16,17,...]]
+
+        To get the result, get CPU layout as an list first, then remove
+        used lcores from the list.
+        """
+
+        sockets = []  # A set of CPU sockets.
+        # Get list of CPU layout
+        res = self.spp_ctl_cli.get('cpu_layout')
+        if res is not None:
+            if res.status_code == 200:
+                try:
+                    # Get layout of each of sockets as an array.
+                    # [[0,1,2,3,..., 15], [16,17,18],...]]
+                    socket = []
+                    for sock in res.json():
+                        for ent in sock['cores']:
+                            socket.append(ent['lcores'])
+                    socket.sort()
+                    socket = sum(socket, [])
+                    sockets.append(socket)
+
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
+
+        # Get list of used lcores.
+        res = self.spp_ctl_cli.get('cpu_usage')
+        if res is not None:
+            if res.status_code == 200:
+                try:
+                    p_master_lcore = None
+                    s_master_lcore = None
+                    p_slave_lcores = []
+                    s_slave_lcores = []
+
+                    cpu_usage = res.json()
+                    for ent in cpu_usage:
+                        if ent['proc-type'] == 'primary':
+                            p_master_lcore = ent['master-lcore']
+                            p_slave_lcores.append(ent['lcores'])
+                        else:
+                            s_master_lcore = ent['master-lcore']
+                            s_slave_lcores.append(ent['lcores'])
+
+                    # Remove duplicated lcores and make them unique.
+                    # sum() is used for flattening two dimension list.
+                    p_slave_lcores = list(set(sum(p_slave_lcores, [])))
+                    s_slave_lcores = list(set(sum(s_slave_lcores, [])))
+
+                    # Remove used lcores from `sockets`.
+                    for socket in sockets:
+                        if p_master_lcore is not None:
+                            if p_master_lcore in socket:
+                                socket.remove(p_master_lcore)
+                        if s_master_lcore is not None:
+                            if s_master_lcore in socket:
+                                socket.remove(s_master_lcore)
+                        for l in p_slave_lcores:
+                            if l in socket:
+                                socket.remove(l)
+                        for l in s_slave_lcores:
+                            if l in socket:
+                                socket.remove(l)
+
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
+
+        return sockets
+
     def _setup_launch_opts(self, tokens, cli_config):
         """Make options for launch cmd from config params."""
 
@@ -164,8 +237,13 @@ class SppPrimary(object):
             if (tokens[2] in spp_common.SEC_TYPES) and \
                     (int(tokens[3])-1 in range(max_secondary)):
                 ptype = tokens[2]
+
+                # TODO(yasufum) Not accept if given sec ID is already
+                # used.
                 sid = tokens[3]
 
+                # Option of secondary ID is different between spp_nfv
+                # and others.
                 if ptype == 'nfv':
                     opt_sid = '-n'
                 else:
@@ -176,34 +254,27 @@ class SppPrimary(object):
                 server_addr = common.current_server_addr()
                 server_addr = server_addr.replace('7777', '6666')
 
-                # Lcore ID of worker lcore starts from sec ID in
-                # default.
-                lcore_base = int(sid)
-
-                # Define rest of worker lcores from config dynamically.
-                if ptype == 'nfv':  # one worker lcore is enough
+                # Define number of slave lcores and other options
+                # from config.
+                if ptype == 'nfv':  # one slave lcore is enough
                     if 'sec_nfv_nof_lcores' in cli_config.keys():
                         tmpkey = 'sec_nfv_nof_lcores'
-                        nof_workers = int(
+                        nof_slaves = int(
                                 cli_config[tmpkey]['val'])
-
                 elif ptype == 'vf':
                     if 'sec_vf_nof_lcores' in cli_config.keys():
-                        nof_workers = int(
+                        nof_slaves = int(
                                 cli_config['sec_vf_nof_lcores']['val'])
-
-                elif ptype == 'mirror':  # two worker cores
+                elif ptype == 'mirror':  # two slave lcores
                     if 'sec_mirror_nof_lcores' in cli_config.keys():
                         tmpkey = 'sec_mirror_nof_lcores'
-                        nof_workers = int(
+                        nof_slaves = int(
                                 cli_config[tmpkey]['val'])
-
-                elif ptype == 'pcap':  # at least two worker cores
+                elif ptype == 'pcap':  # at least two slave lcores
                     if 'sec_pcap_nof_lcores' in cli_config.keys():
                         tmpkey = 'sec_pcap_nof_lcores'
-                        nof_workers = int(
+                        nof_slaves = int(
                                 cli_config[tmpkey]['val'])
-
                     if 'sec_pcap_port' in cli_config.keys():
                         temp = '-c {}'.format(
                                 cli_config['sec_pcap_port']['val'])
@@ -211,20 +282,37 @@ class SppPrimary(object):
                         self.launch_template = '{} {}'.format(
                             self.launch_template, temp)
 
-                last_core = lcore_base + nof_workers - 1
+                # Get and flatten empty lcores on each of sockets.
+                empty_lcores = self._get_empty_lcores()
+                empty_lcores = sum(empty_lcores, [])
+
+                if 'sec_m_lcore' in cli_config.keys():
+                    m_lcore_id = int(cli_config['sec_m_lcore']['val'])
 
                 # Decide lcore option based on configured number of
                 # lcores.
-                if last_core == lcore_base:
-                    rest_core = '{}'.format(last_core)
-                else:
-                    rest_core = '{}-{}'.format(lcore_base, last_core)
+                slave_lcores = []
+                for l in empty_lcores:
+                    # Master lcore ID should be smaller than slaves.
+                    if l > m_lcore_id:
+                        slave_lcores.append(str(l))
+                    # TODO(yasufum) warn if enough number of empty
+                    # lcores cannot be assinged.
+                    if len(slave_lcores) > (nof_slaves - 1):
+                        break
 
+                # TODO(yasufum) make smarter form, for example,
+                # change '1,2,3' to '1-3'.
+                slave_lcores = ','.join(slave_lcores)
+
+                # Replace labels in template with actual params to make
+                # candidate options.
                 temp = self._setup_launch_template(
                         cli_config, self.launch_template)
                 candidates = [temp.format(
-                    wlcores=rest_core, opt_sid=opt_sid, sid=sid,
+                    slcores=slave_lcores, opt_sid=opt_sid, sid=sid,
                     sec_addr=server_addr)]
+
         else:
             logger.error(
                     'Error: max_secondary is not defined in config')
@@ -287,9 +375,9 @@ class SppPrimary(object):
             sec_mem = cli_config['sec_mem']['val']
         template = template.replace('__MEM__', sec_mem)
 
-        if 'sec_base_lcore' in cli_config.keys():
-            sec_base_lcore = cli_config['sec_base_lcore']['val']
-        template = template.replace('__BASE_LCORE__', str(sec_base_lcore))
+        if 'sec_m_lcore' in cli_config.keys():
+            sec_m_lcore = cli_config['sec_m_lcore']['val']
+        template = template.replace('__MASTER_LCORE__', str(sec_m_lcore))
 
         if 'sec_vhost_cli' in cli_config.keys():
             if cli_config['sec_vhost_cli']['val']:
