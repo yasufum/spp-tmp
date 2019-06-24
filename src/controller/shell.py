@@ -10,6 +10,7 @@ from .commands import topo
 from .commands import vf
 from .commands import mirror
 from .commands import pcap
+from .commands import help_msg
 import os
 import re
 import readline
@@ -29,7 +30,7 @@ class Shell(cmd.Cmd, object):
         config_file = "{}/config/default.yml".format(
                 os.path.dirname(__file__))
         cli_config = yaml.load(open(config_file),
-                Loader=yaml.FullLoader)
+                               Loader=yaml.FullLoader)
     except IOError as e:
         print('Error: no config file found!')
         print(e)
@@ -205,7 +206,7 @@ class Shell(cmd.Cmd, object):
                 pt2 = id2.split(delim)[0]
                 if (pt1 in spp_common.PORT_TYPES) \
                         and (pt2 in spp_common.PORT_TYPES):
-                            return True
+                    return True
         return False
 
     def clean_cmd(self, cmdstr):
@@ -270,12 +271,12 @@ class Shell(cmd.Cmd, object):
         return res
 
     def do_status(self, _):
-        """Display status info of SPP processes
-
-        spp > status
-        """
-
+        """Display status info of SPP processes."""
         self.print_status()
+
+    def help_status(self):
+        """Print help message of status command."""
+        print(help_msg.commads['status'])
 
     def do_pri(self, command):
         """Send a command to primary process."""
