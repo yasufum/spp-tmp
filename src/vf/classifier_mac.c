@@ -56,7 +56,7 @@
 /* classifier management information */
 struct management_info {
 	/* classifier information */
-	struct component_info cmp_infos[NOF_CLS_INFO];
+	struct cls_comp_info cmp_infos[NOF_CLS_INFO];
 
 	/* Reference index number for classifier information */
 	volatile int ref_index;
@@ -182,7 +182,7 @@ static void
 log_classification(
 		long clsd_idx,
 		struct rte_mbuf *pkt,
-		struct component_info *cmp_info,
+		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data,
 		const char *func_name,
 		int line_num)
@@ -229,7 +229,7 @@ log_entry(
 		long clsd_idx,
 		uint16_t vid,
 		const char *mac_addr_str,
-		struct component_info *cmp_info,
+		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data,
 		const char *func_name,
 		int line_num)
@@ -322,8 +322,8 @@ create_mac_classification(void)
 
 /* initialize classifier information. */
 static int
-init_component_info(struct component_info *cmp_info,
-		const struct sppwk_comp_info *component_info)
+init_component_info(struct cls_comp_info *cmp_info,
+		const struct sppwk_comp_info *wk_comp_info)
 {
 	int ret = SPP_RET_NG;
 	int i;
@@ -336,7 +336,7 @@ init_component_info(struct component_info *cmp_info,
 	uint16_t vid;
 
 	/* set rx */
-	if (component_info->nof_rx == 0) {
+	if (wk_comp_info->nof_rx == 0) {
 		clsd_data_rx->iface_type = UNDEF;
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global = 0;
@@ -344,20 +344,20 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_rx->nof_pkts = 0;
 	} else {
 		clsd_data_rx->iface_type =
-			component_info->rx_ports[0]->iface_type;
+			wk_comp_info->rx_ports[0]->iface_type;
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global =
-			component_info->rx_ports[0]->iface_no;
+			wk_comp_info->rx_ports[0]->iface_no;
 		clsd_data_rx->ethdev_port_id =
-			component_info->rx_ports[0]->ethdev_port_id;
+			wk_comp_info->rx_ports[0]->ethdev_port_id;
 		clsd_data_rx->nof_pkts = 0;
 	}
 
 	/* set tx */
-	cmp_info->n_classified_data_tx = component_info->nof_tx;
+	cmp_info->n_classified_data_tx = wk_comp_info->nof_tx;
 	cmp_info->mac_addr_entry = 0;
-	for (i = 0; i < component_info->nof_tx; i++) {
-		tx_port = component_info->tx_ports[i];
+	for (i = 0; i < wk_comp_info->nof_tx; i++) {
+		tx_port = wk_comp_info->tx_ports[i];
 		vid = tx_port->cls_attrs.vlantag.vid;
 
 		/* store ports information */
@@ -371,17 +371,16 @@ init_component_info(struct component_info *cmp_info,
 			continue;
 
 		/* if mac classification is NULL, make instance */
-		if (unlikely(cmp_info->mac_classifications[vid] == NULL)) {
+		if (unlikely(cmp_info->mac_clfs[vid] == NULL)) {
 			RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 					"Mac classification is not registered."
 					" create. vid=%hu\n", vid);
-			cmp_info->mac_classifications[vid] =
+			cmp_info->mac_clfs[vid] =
 					create_mac_classification();
-			if (unlikely(cmp_info->mac_classifications[vid] ==
-					NULL))
+			if (unlikely(cmp_info->mac_clfs[vid] == NULL))
 				return SPP_RET_NG;
 		}
-		mac_cls = cmp_info->mac_classifications[vid];
+		mac_cls = cmp_info->mac_clfs[vid];
 
 		/* store active tx_port that associate with mac address */
 		mac_cls->cls_ports[mac_cls->nof_cls_ports++] = i;
@@ -437,14 +436,14 @@ init_component_info(struct component_info *cmp_info,
 
 /* uninitialize classifier information. */
 void
-uninit_component_info(struct component_info *cmp_info)
+uninit_component_info(struct cls_comp_info *cmp_info)
 {
 	int i;
 
 	for (i = 0; i < NOF_VLAN; ++i)
-		free_mac_classification(cmp_info->mac_classifications[i]);
+		free_mac_classification(cmp_info->mac_clfs[i]);
 
-	memset(cmp_info, 0, sizeof(struct component_info));
+	memset(cmp_info, 0, sizeof(struct cls_comp_info));
 }
 
 /* transmit packet to one destination. */
@@ -473,7 +472,7 @@ transmit_packet(struct cls_port_info *clsd_data)
 
 /* transmit packet to one destination. */
 static inline void
-transmit_all_packet(struct component_info *cmp_info)
+transmit_all_packet(struct cls_comp_info *cmp_info)
 {
 	int i;
 	struct cls_port_info *clsd_data_tx = cmp_info->classified_data_tx;
@@ -514,11 +513,11 @@ push_packet(struct rte_mbuf *pkt, struct cls_port_info *clsd_data)
 
 /* get index of general default classified */
 static inline int
-get_general_default_classified_index(struct component_info *cmp_info)
+get_general_default_classified_index(struct cls_comp_info *cmp_info)
 {
 	struct mac_classifier *mac_cls;
 
-	mac_cls = cmp_info->mac_classifications[VLAN_UNTAGGED_VID];
+	mac_cls = cmp_info->mac_clfs[VLAN_UNTAGGED_VID];
 	if (unlikely(mac_cls == NULL)) {
 		LOG_DBG(cmp_info->name, "Untagged's default is not set. "
 				"vid=%d\n", (int)VLAN_UNTAGGED_VID);
@@ -531,7 +530,7 @@ get_general_default_classified_index(struct component_info *cmp_info)
 /* handle L2 multicast(include broadcast) packet */
 static inline void
 handle_l2multicast_packet(struct rte_mbuf *pkt,
-		struct component_info *cmp_info,
+		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data)
 {
 	int i;
@@ -541,7 +540,7 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 	int n_act_clsd;
 
 	/* select mac address classification by vid */
-	mac_cls = cmp_info->mac_classifications[vid];
+	mac_cls = cmp_info->mac_clfs[vid];
 	if (unlikely(mac_cls == NULL ||
 			mac_cls->nof_cls_ports == 0)) {
 		/* specific vlan is not registered
@@ -583,7 +582,7 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 /* select index of classified */
 static inline int
 select_classified_index(const struct rte_mbuf *pkt,
-		struct component_info *cmp_info)
+		struct cls_comp_info *cmp_info)
 {
 	int ret;
 	struct ether_hdr *eth;
@@ -595,7 +594,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 	vid = get_vid(pkt);
 
 	/* select mac address classification by vid */
-	mac_cls = cmp_info->mac_classifications[vid];
+	mac_cls = cmp_info->mac_clfs[vid];
 	if (unlikely(mac_cls == NULL)) {
 		LOG_DBG(cmp_info->name, "Mac classification is not "
 				"registered. vid=%hu\n", vid);
@@ -638,7 +637,7 @@ select_classified_index(const struct rte_mbuf *pkt,
  */
 static inline void
 classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
-		struct component_info *cmp_info,
+		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data)
 {
 	int i;
@@ -697,12 +696,12 @@ spp_classifier_mac_init(void)
 
 /* classifier(mac address) update component info. */
 int
-spp_classifier_mac_update(struct sppwk_comp_info *component_info)
+spp_classifier_mac_update(struct sppwk_comp_info *wk_comp_info)
 {
 	int ret = SPP_RET_NG;
-	int id = component_info->comp_id;
+	int id = wk_comp_info->comp_id;
 	struct management_info *mng_info = g_mng_infos + id;
-	struct component_info *cmp_info = NULL;
+	struct cls_comp_info *cmp_info = NULL;
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 			"Component[%u] Start update component.\n", id);
@@ -710,13 +709,13 @@ spp_classifier_mac_update(struct sppwk_comp_info *component_info)
 	cmp_info = mng_info->cmp_infos + mng_info->upd_index;
 
 	/* initialize update side classifier information */
-	ret = init_component_info(cmp_info, component_info);
+	ret = init_component_info(cmp_info, wk_comp_info);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Cannot update classifier mac. ret=%d\n", ret);
 		return ret;
 	}
-	memcpy(cmp_info->name, component_info->name, STR_LEN_NAME);
+	memcpy(cmp_info->name, wk_comp_info->name, STR_LEN_NAME);
 
 	/* change index of reference side */
 	mng_info->upd_index = mng_info->ref_index;
@@ -743,7 +742,7 @@ spp_classifier_mac_do(int id)
 	int i;
 	int n_rx;
 	struct management_info *mng_info = g_mng_infos + id;
-	struct component_info *cmp_info = NULL;
+	struct cls_comp_info *cmp_info = NULL;
 	struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
 
 	struct cls_port_info *clsd_data_rx = NULL;
@@ -811,7 +810,7 @@ spp_classifier_get_component_status(
 	int ret = SPP_RET_NG;
 	int i, nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
 	struct management_info *mng_info;
-	struct component_info *cmp_info;
+	struct cls_comp_info *cmp_info;
 	struct cls_port_info *clsd_data;
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
@@ -860,7 +859,7 @@ mac_classification_iterate_table(
 		struct spp_iterate_classifier_table_params *params,
 		uint16_t vid,
 		struct mac_classifier *mac_cls,
-		__rte_unused struct component_info *cmp_info,
+		__rte_unused struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data)
 {
 	int ret;
@@ -917,7 +916,7 @@ spp_classifier_mac_iterate_table(
 {
 	int i, n;
 	struct management_info *mng_info;
-	struct component_info *cmp_info;
+	struct cls_comp_info *cmp_info;
 	struct cls_port_info *clsd_data;
 
 	for (i = 0; i < RTE_MAX_LCORE; i++) {
@@ -932,12 +931,12 @@ spp_classifier_mac_iterate_table(
 			"Core[%u] Start iterate classifier table.\n", i);
 
 		for (n = 0; n < NOF_VLAN; ++n) {
-			if (cmp_info->mac_classifications[n] == NULL)
+			if (cmp_info->mac_clfs[n] == NULL)
 				continue;
 
 			mac_classification_iterate_table(params, (uint16_t) n,
-					cmp_info->mac_classifications[n],
-					cmp_info, clsd_data);
+					cmp_info->mac_clfs[n], cmp_info,
+					clsd_data);
 		}
 	}
 

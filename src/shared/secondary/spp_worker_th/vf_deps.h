@@ -32,13 +32,10 @@ struct cls_port_info {
 };
 
 /* classifier component information */
-struct component_info {
+struct cls_comp_info {
 	char name[STR_LEN_NAME];  /* component name */
 	int mac_addr_entry;  /* mac address entry flag */
-
-	/* mac address classification per vlan-id */
-	struct mac_classifier *mac_classifications[NOF_VLAN];
-
+	struct mac_classifier *mac_clfs[NOF_VLAN];  /* classifiers per VLAN. */
 	int n_classified_data_tx;  /* number of transmission ports */
 	struct cls_port_info classified_data_rx;  /* RX handled by cls */
 	/* transmission ports handled by classifier */
@@ -78,7 +75,7 @@ int spp_forward_update(struct sppwk_comp_info *component);
 
 void init_classifier_info(int component_id);
 
-void uninit_component_info(struct component_info *cmp_info);
+void uninit_component_info(struct cls_comp_info *cmp_info);
 
 int spp_classifier_mac_iterate_table(
 		struct spp_iterate_classifier_table_params *params);
