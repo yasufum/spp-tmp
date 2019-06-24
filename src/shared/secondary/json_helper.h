@@ -5,7 +5,11 @@
 #ifndef _SPPWK_JSON_HELPER_H_
 #define _SPPWK_JSON_HELPER_H_
 
-#include "cmd_utils.h"
+#include <string.h>
+#include <rte_branch_prediction.h>
+#include <rte_log.h>
+#include "return_codes.h"
+#include "string_buffer.h"
 
 /* TODO(yasufum) revise name considering the usage. */
 #define JSON_APPEND_LEN 16

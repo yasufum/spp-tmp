@@ -7,7 +7,7 @@
 
 #include <rte_log.h>
 
-#include "shared/secondary/spp_worker_th/string_buffer.h"
+#include "shared/secondary/string_buffer.h"
 #include "spp_pcap.h"
 #include "shared/secondary/spp_worker_th/conn_spp_ctl.h"
 #include "cmd_parser.h"

@@ -11,9 +11,9 @@
 #include "vf_deps.h"
 #include "mirror_deps.h"
 #include "spp_port.h"
-#include "string_buffer.h"
+#include "shared/secondary/string_buffer.h"
 
-#include "json_helper.h"
+#include "shared/secondary/json_helper.h"
 #include "conn_spp_ctl.h"
 #include "cmd_parser.h"
 #include "cmd_runner.h"

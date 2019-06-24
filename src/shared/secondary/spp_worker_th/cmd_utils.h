@@ -12,6 +12,7 @@
  */
 
 #include <netinet/in.h>
+#include "shared/secondary/return_codes.h"
 #include "shared/common.h"
 
 /**
@@ -92,11 +93,6 @@ enum spp_classifier_type {
 	SPP_CLASSIFIER_TYPE_NONE, /**< Type none */
 	SPP_CLASSIFIER_TYPE_MAC,  /**< MAC address */
 	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
-};
-
-enum sppwk_return_val {
-	SPP_RET_OK = 0,  /**< succeeded */
-	SPP_RET_NG = -1, /**< failed */
 };
 
 /**

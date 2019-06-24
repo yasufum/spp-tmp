@@ -11,20 +11,21 @@ include $(RTE_SDK)/mk/rte.vars.mk
 # binary name
 APP = spp_vf
 
+SPP_SEC_DIR = ../shared/secondary
 SPP_WKT_DIR = ../shared/secondary/spp_worker_th
 
 # all source are stored in SRCS-y
 SRCS-y := spp_vf.c classifier_mac.c spp_forward.c
-SRCS-y += $(SPP_WKT_DIR)/string_buffer.c
+SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
+SRCS-y += $(SPP_SEC_DIR)/json_helper.c
+SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c
 SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
 SRCS-y += $(SPP_WKT_DIR)/spp_port.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_utils.c
-SRCS-y += $(SPP_WKT_DIR)/json_helper.c
 SRCS-y += ../shared/common.c
-SRCS-y += ../shared/secondary/utils.c ../shared/secondary/add_port.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3 -MMD
