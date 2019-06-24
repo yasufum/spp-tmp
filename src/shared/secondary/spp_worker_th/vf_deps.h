@@ -100,6 +100,15 @@ int add_classifier_table_val(
  */
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
+int append_classifier_element_value(
+		struct spp_iterate_classifier_table_params *params,
+		enum spp_classifier_type type,
+		int vid, const char *mac,
+		const struct sppwk_port_idx *port);
+
+int add_classifier_table(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
 
 #endif  /* _SPPWK_TH_VF_DEPS_H_ */

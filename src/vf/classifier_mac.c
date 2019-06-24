@@ -24,6 +24,9 @@
 #include "classifier_mac.h"
 #include "spp_vf.h"
 #include "shared/secondary/return_codes.h"
+#include "shared/secondary/string_buffer.h"
+#include "shared/secondary/json_helper.h"
+#include "shared/secondary/spp_worker_th/cmd_res_formatter.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 
@@ -955,4 +958,58 @@ add_classifier_table_val(
 	}
 
 	return SPP_RET_OK;
+}
+
+/* Iterate classifier_table to create response to status command */
+static int
+_add_classifier_table(
+		struct spp_iterate_classifier_table_params *params)
+{
+	int ret;
+
+	ret = add_classifier_table_val(params);
+	if (unlikely(ret != 0)) {
+		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+				"Cannot iterate classifier_mac_table.\n");
+		return SPP_RET_NG;
+	}
+
+	return SPP_RET_OK;
+}
+
+/**
+ * Add entries of classifier table in JSON. Before iterating the entries,
+ * this function calls several nested functions.
+ *   add_classifier_table()  // This function.
+ *     -> _add_classifier_table()  // Wrapper and doesn't almost nothing.
+ *       -> add_classifier_table_val()  // Setup data and call iterator.
+ *         -> iterate_adding_mac_entry()
+ */
+int
+add_classifier_table(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	struct spp_iterate_classifier_table_params itr_params;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = %s)\n",
+				name);
+		return SPP_RET_NG;
+	}
+
+	itr_params.output = tmp_buff;
+	itr_params.element_proc = append_classifier_element_value;
+
+	ret = _add_classifier_table(&itr_params);
+	if (unlikely(ret != SPP_RET_OK)) {
+		spp_strbuf_free(itr_params.output);
+		return SPP_RET_NG;
+	}
+
+	ret = append_json_array_brackets(output, name, itr_params.output);
+	spp_strbuf_free(itr_params.output);
+	return ret;
 }
