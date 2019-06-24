@@ -276,7 +276,7 @@ class Shell(cmd.Cmd, object):
 
     def help_status(self):
         """Print help message of status command."""
-        print(help_msg.commads['status'])
+        print(help_msg.cmds['status'])
 
     def do_pri(self, command):
         """Send a command to primary process."""
@@ -533,31 +533,22 @@ class Shell(cmd.Cmd, object):
                         self.get_sec_ids('pcap'), text, line, begidx, endidx)
 
     def do_record(self, fname):
-        """Save commands as a recipe file.
-
-        Save all of commands to a specified file as a recipe. This file
-        is reloaded with 'playback' command later. You can also edit
-        the recipe by hand to customize.
-
-        spp > record path/to/recipe_file
-        """
+        """Save commands as a recipe file."""
 
         if fname == '':
             print("Record file is required!")
         else:
             self.recorded_file = open(fname, 'w')
 
+    def help_record(self):
+        """Print help message of record command."""
+        print(help_msg.cmds['record'])
+
     def complete_record(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_playback(self, fname):
-        """Setup a network configuration from recipe file.
-
-        Recipe is a file describing a series of SPP command to setup
-        a network configuration.
-
-        spp > playback path/to/recipe_file
-        """
+        """Setup a network configuration from recipe file."""
 
         if fname == '':
             print("Record file is required!")
@@ -575,18 +566,15 @@ class Shell(cmd.Cmd, object):
                 message = "Error: File does not exist."
                 print(message)
 
+    def help_playback(self):
+        """Print help message of playback command."""
+        print(help_msg.cmds['playback'])
+
     def complete_playback(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_config(self, args):
-        """Show or update config.
-
-        # show list of config
-        spp > config
-
-        # set prompt to "$ spp "
-        spp > config prompt "$ spp "
-        """
+        """Show or update config."""
 
         tokens = args.strip().split(' ')
         if len(tokens) == 1:
@@ -620,6 +608,10 @@ class Shell(cmd.Cmd, object):
                 if key == 'prompt':
                     self.prompt = self.cli_config['prompt']['val']
 
+    def help_config(self):
+        """Print help message of config command."""
+        print(help_msg.cmds['config'])
+
     def complete_config(self, text, line, begidx, endidx):
         candidates = []
         tokens = line.strip().split(' ')
@@ -640,22 +632,15 @@ class Shell(cmd.Cmd, object):
         return completions
 
     def do_pwd(self, args):
-        """Show corrent directory.
-
-        It behaves as UNIX's pwd command.
-
-        spp > pwd
-        """
-
+        """Show corrent directory."""
         print(os.getcwd())
 
+    def help_pwd(self):
+        """Print help message of pwd command."""
+        print(help_msg.cmds['pwd'])
+
     def do_ls(self, args):
-        """Show a list of specified directory.
-
-        It behaves as UNIX's ls command.
-
-        spp > ls path/to/dir
-        """
+        """Show a list of specified directory."""
 
         if args == '' or os.path.isdir(args):
             c = 'ls -F %s' % args
@@ -663,14 +648,15 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
+    def help_ls(self):
+        """Print help message of ls command."""
+        print(help_msg.cmds['ls'])
+
     def complete_ls(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_cd(self, args):
-        """Change current directory.
-
-        spp > cd path/to/dir
-        """
+        """Change current directory."""
 
         if os.path.isdir(args):
             os.chdir(args)
@@ -678,20 +664,22 @@ class Shell(cmd.Cmd, object):
         else:
             print("No such a directory.")
 
+    def help_cd(self):
+        """Print help message of cd command."""
+        print(help_msg.cmds['cd'])
+
     def complete_cd(self, text, line, begidx, endidx):
         return common.compl_common(text, line, 'directory')
 
     def do_mkdir(self, args):
-        """Create a new directory.
-
-        It behaves as 'mkdir -p' which means that you can create sub
-        directories at once.
-
-        spp > mkdir path/to/dir
-        """
+        """Create a new directory."""
 
         c = 'mkdir -p %s' % args
         subprocess.call(c, shell=True)
+
+    def help_mkdir(self):
+        """Print help message of mkdir command."""
+        print(help_msg.cmds['mkdir'])
 
     def complete_mkdir(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
@@ -718,21 +706,19 @@ class Shell(cmd.Cmd, object):
         return spp_bye.complete(text, line, begidx, endidx)
 
     def do_cat(self, arg):
-        """View contents of a file.
-
-        spp > cat file
-        """
+        """View contents of a file."""
         if os.path.isfile(arg):
             c = 'cat %s' % arg
             subprocess.call(c, shell=True)
         else:
             print("No such a directory.")
 
-    def do_redo(self, args):
-        """Execute command of index of history.
+    def help_cat(self):
+        """Print help message of cat command."""
+        print(help_msg.cmds['cat'])
 
-        spp > redo 5  # exec 5th command in the history
-        """
+    def do_redo(self, args):
+        """Execute command of index of history."""
 
         idx = int(args)
         cmdline = None
@@ -754,18 +740,12 @@ class Shell(cmd.Cmd, object):
         except IOError:
             print('Error: Cannot open history file "%s"' % self.hist_file)
 
+    def help_redo(self):
+        """Print help message of redo command."""
+        print(help_msg.cmds['redo'])
+
     def do_history(self, arg):
-        """Show command history.
-
-        spp > history
-          1  ls
-          2  cat file.txt
-          ...
-
-        Command history is recorded in a file named '.spp_history'.
-        It does not add some command which are no meaning for history.
-        'bye', 'exit', 'history', 'redo'
-        """
+        """Show command history."""
 
         try:
             f = open(self.hist_file)
@@ -785,52 +765,50 @@ class Shell(cmd.Cmd, object):
         except IOError:
             print('Error: Cannot open history file "%s"' % self.hist_file)
 
+    def help_history(self):
+        """Print help message of history command."""
+        print(help_msg.cmds['history'])
+
     def complete_cat(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_less(self, arg):
-        """View contents of a file.
+        """View contents of a file."""
 
-        spp > less file
-        """
         if os.path.isfile(arg):
             c = 'less %s' % arg
             subprocess.call(c, shell=True)
         else:
             print("No such a directory.")
 
+    def help_less(self):
+        """Print help message of less command."""
+        print(help_msg.cmds['less'])
+
     def complete_less(self, text, line, begidx, endidx):
         return common.compl_common(text, line)
 
     def do_exit(self, args):
-        """Terminate SPP controller process.
-
-        It is an alias of bye command to terminate controller.
-
-        spp > exit
-        Thank you for using Soft Patch Panel
-        """
+        """Terminate SPP controller process."""
 
         self.close()
         print('Thank you for using Soft Patch Panel')
         return True
 
+    def help_exit(self):
+        """Print help message of exit command."""
+        print(help_msg.cmds['exit'])
+
     def do_inspect(self, args):
-        """Print attributes of Shell for debugging.
-
-        This command is intended to be used by developers to show the
-        inside of the object of Shell class.
-
-        spp > inspect
-        {'cmdqueue': [],
-         'completekey': 'tab',
-         'completion_matches': ['inspect'],
-         ...
-        """
+        """Print attributes of Shell for debugging."""
 
         from pprint import pprint
         if args == '':
             pprint(vars(self))
+
+    def help_inspect(self):
+        """Print help message of inspect command."""
+        print(help_msg.cmds['inspect'])
 
     def terms_topo_subgraph(self):
         """Define terms of topo_subgraph command."""
@@ -927,12 +905,7 @@ class Shell(cmd.Cmd, object):
         return self.spp_topo.complete(text, line, begidx, endidx)
 
     def do_load_cmd(self, args):
-        """Load command plugin.
-
-        Path of plugin file is 'spp/src/controller/plugins'.
-
-        spp > load_cmd hello
-        """
+        """Load command plugin."""
 
         args = re.sub(',', ' ', args)
         args = re.sub(r'\s+', ' ', args)
@@ -946,6 +919,10 @@ class Shell(cmd.Cmd, object):
         exec('Shell.%s = %s' % (method_name, do_cmd))
 
         print("Module '%s' loaded." % mod_name)
+
+    def help_load_cmd(self):
+        """Print help message of load_cmd command."""
+        print(help_msg.cmds['load_cmd'])
 
     def complete_load_cmd(self, text, line, begidx, endidx):
         """Complete command plugins
