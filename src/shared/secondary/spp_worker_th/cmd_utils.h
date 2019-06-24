@@ -297,13 +297,14 @@ struct spp_iterate_classifier_table_params {
 };
 
 /**
- * Make a hexdump of an array data in every 4 byte
+ * Hexdump `addr` for logging, used for core_info or component info.
  *
- * @param name Dumped name.
- * @param addr Dumped address.
- * @param size Dumped byte size.
+ * @param name Name of object to be dumped.
+ * @param addr Address of dumped value.
+ * @param size Size of dumped value.
  */
-void dump_buff(const char *name, const void *addr, const size_t size);
+void log_hexdumped(const char *obj_name, const void *obj_addr,
+		const size_t size);
 
 /**
  * Add ring pmd for owned proccess or thread.
@@ -376,17 +377,17 @@ void stop_process(int signal);
 struct sppwk_port_info *
 get_sppwk_port(enum port_type iface_type, int iface_no);
 
-/* Dump of core information */
-void dump_core_info(const struct core_mng_info *core_info);
+/* Output log message for core information */
+void log_core_info(const struct core_mng_info *core_info);
 
-/* Dump of component information */
-void dump_component_info(const struct sppwk_comp_info *component_info);
+/* Output log message for component information */
+void log_component_info(const struct sppwk_comp_info *component_info);
 
-/* Dump of interface information */
-void dump_interface_info(const struct iface_info *iface_info);
+/* Output log message for interface information */
+void log_interface_info(const struct iface_info *iface_info);
 
-/* Dump of all management information */
-void dump_all_mng_info(
+/* Output log message for all management information */
+void log_all_mng_info(
 		const struct core_mng_info *core,
 		const struct sppwk_comp_info *component,
 		const struct iface_info *interface);

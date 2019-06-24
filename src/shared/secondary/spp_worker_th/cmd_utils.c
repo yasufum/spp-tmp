@@ -34,38 +34,30 @@ struct mng_data_info {
 	unsigned int main_lcore_id;
 };
 
-/* Declare global variables */
 /* Logical core ID for main process */
 static struct mng_data_info g_mng_data;
 
-/**
- * Make a hexdump of an array data in every 4 byte.
- * This function is used to dump core_info or component info.
- */
+/* Hexdump `addr` for logging, used for core_info or component info. */
 void
-dump_buff(const char *name, const void *addr, const size_t size)
+log_hexdumped(const char *obj_name, const void *obj_addr, const size_t size)
 {
-	size_t cnt = 0;
-	size_t max = (size / sizeof(unsigned int)) +
+	size_t cnt;
+	size_t max_cnt = (size / sizeof(unsigned int)) +
 			((size % sizeof(unsigned int)) != 0);
-	const uint32_t *buff = addr;
+	const uint32_t *buf = obj_addr;
 
-	if ((name != NULL) && (name[0] != '\0'))
-		RTE_LOG(DEBUG, APP, "dump buff. (%s)\n", name);
+	if ((obj_name != NULL) && (obj_name[0] != '\0'))
+		RTE_LOG(DEBUG, APP, "Name of dumped buf: %s.\n", obj_name);
 
-	for (cnt = 0; cnt < max; cnt += 16) {
+	for (cnt = 0; cnt < max_cnt; cnt += 16) {
 		RTE_LOG(DEBUG, APP, "[%p]"
-				" %08x %08x %08x %08x %08x %08x %08x %08x"
-				" %08x %08x %08x %08x %08x %08x %08x %08x",
-				&buff[cnt],
-				buff[cnt+0], buff[cnt+1],
-				buff[cnt+2], buff[cnt+3],
-				buff[cnt+4], buff[cnt+5],
-				buff[cnt+6], buff[cnt+7],
-				buff[cnt+8], buff[cnt+9],
-				buff[cnt+10], buff[cnt+11],
-				buff[cnt+12], buff[cnt+13],
-				buff[cnt+14], buff[cnt+15]);
+			" %08x %08x %08x %08x %08x %08x %08x %08x"
+			" %08x %08x %08x %08x %08x %08x %08x %08x",
+			&buf[cnt],
+			buf[cnt+0], buf[cnt+1], buf[cnt+2], buf[cnt+3],
+			buf[cnt+4], buf[cnt+5], buf[cnt+6], buf[cnt+7],
+			buf[cnt+8], buf[cnt+9], buf[cnt+10], buf[cnt+11],
+			buf[cnt+12], buf[cnt+13], buf[cnt+14], buf[cnt+15]);
 	}
 }
 
@@ -288,7 +280,7 @@ get_sppwk_port(enum port_type iface_type, int iface_no)
 
 /* Dump of core information */
 void
-dump_core_info(const struct core_mng_info *core_info)
+log_core_info(const struct core_mng_info *core_info)
 {
 	char str[SPP_NAME_STR_LEN];
 	const struct core_mng_info *info = NULL;
@@ -300,16 +292,18 @@ dump_core_info(const struct core_mng_info *core_info)
 				info->ref_index, info->upd_index);
 
 		memset(str, 0x00, SPP_NAME_STR_LEN);
-		dump_buff(str, info->core[0].id, sizeof(int)*info->core[0].num);
+		log_hexdumped(str, info->core[0].id,
+				sizeof(int)*info->core[0].num);
 
 		sprintf(str, "core[%d]-1 num=%d", lcore_id, info->core[1].num);
-		dump_buff(str, info->core[1].id, sizeof(int)*info->core[1].num);
+		log_hexdumped(str, info->core[1].id,
+				sizeof(int)*info->core[1].num);
 	}
 }
 
 /* Dump of component information */
 void
-dump_component_info(const struct sppwk_comp_info *comp_info)
+log_component_info(const struct sppwk_comp_info *comp_info)
 {
 	char str[SPP_NAME_STR_LEN];
 	const struct sppwk_comp_info *tmp_ci = NULL;
@@ -326,19 +320,19 @@ dump_component_info(const struct sppwk_comp_info *comp_info)
 
 		sprintf(str, "component[%d] rx=%d", cnt,
 				tmp_ci->nof_rx);
-		dump_buff(str, tmp_ci->rx_ports,
+		log_hexdumped(str, tmp_ci->rx_ports,
 			sizeof(struct sppwk_port_info *)*tmp_ci->nof_rx);
 
 		sprintf(str, "component[%d] tx=%d", cnt,
 				tmp_ci->nof_tx);
-		dump_buff(str, tmp_ci->tx_ports,
+		log_hexdumped(str, tmp_ci->tx_ports,
 			sizeof(struct sppwk_port_info *)*tmp_ci->nof_tx);
 	}
 }
 
 /* Dump of interface information */
 void
-dump_interface_info(const struct iface_info *iface_info)
+log_interface_info(const struct iface_info *iface_info)
 {
 	const struct sppwk_port_info *port = NULL;
 	int cnt = 0;
@@ -389,7 +383,7 @@ dump_interface_info(const struct iface_info *iface_info)
 
 /* Dump of all management information */
 void
-dump_all_mng_info(
+log_all_mng_info(
 		const struct core_mng_info *core,
 		const struct sppwk_comp_info *component,
 		const struct iface_info *interface)
@@ -397,9 +391,9 @@ dump_all_mng_info(
 	if (rte_log_get_global_level() < RTE_LOG_DEBUG)
 		return;
 
-	dump_core_info(core);
-	dump_component_info(component);
-	dump_interface_info(interface);
+	log_core_info(core);
+	log_component_info(component);
+	log_interface_info(interface);
 }
 
 /* Copy management information */
@@ -446,7 +440,7 @@ copy_mng_info(
 void
 backup_mng_info(struct cancel_backup_info *backup)
 {
-	dump_all_mng_info(g_mng_data.p_core_info,
+	log_all_mng_info(g_mng_data.p_core_info,
 			g_mng_data.p_component_info,
 			g_mng_data.p_iface_info);
 	copy_mng_info(backup->core, backup->component, &backup->interface,
@@ -454,7 +448,7 @@ backup_mng_info(struct cancel_backup_info *backup)
 			g_mng_data.p_component_info,
 			g_mng_data.p_iface_info,
 			COPY_MNG_FLG_ALLCOPY);
-	dump_all_mng_info(backup->core, backup->component, &backup->interface);
+	log_all_mng_info(backup->core, backup->component, &backup->interface);
 	memset(g_mng_data.p_change_core, 0x00,
 				sizeof(int)*RTE_MAX_LCORE);
 	memset(g_mng_data.p_change_component, 0x00,
