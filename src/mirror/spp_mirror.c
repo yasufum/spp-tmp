@@ -194,15 +194,11 @@ parse_app_args(int argc, char *argv[])
 		usage(progname);
 		return SPP_RET_NG;
 	}
-	g_startup_param.wk_proc_type = WK_PROC_TYPE_MIRROR;
 	RTE_LOG(INFO, MIRROR,
-			"app opts (client_id=%d,type=%d,"
-			"server=%s:%d,vhost_client=%d,)\n",
-			cli_id,
-			g_startup_param.wk_proc_type,
-			g_startup_param.server_ip,
-			g_startup_param.server_port,
-			g_enable_vhost_cli);
+			"Parsed app args (client_id=%d, server=%s:%d, "
+			"vhost_client=%d,)\n",
+			cli_id, g_startup_param.server_ip,
+			g_startup_param.server_port, g_enable_vhost_cli);
 	return SPP_RET_OK;
 }
 

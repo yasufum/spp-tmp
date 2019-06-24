@@ -9,6 +9,8 @@
 #include "cmd_parser.h"
 #include "cmd_res_formatter.h"
 
+#define SPPWK_PROC_TYPE "mirror"
+
 /* Num of entries of ops_list in mir_cmd_runner.c. */
 #define NOF_STAT_OPS 7
 

@@ -22,18 +22,6 @@ static int append_error_details_value(const char *name, char **output,
 		void *tmp);
 
 /**
- * List of worker process type. The order of items should be same as the order
- * of enum `wk_proc_type` in cmd_utils.h.
- */
-/* TODO(yasufum) Add "pcap" after spp_pcap is made to use shared. */
-const char *SPPWK_PROC_TYPE_LIST[] = {
-	"none",
-	"vf",
-	"mirror",
-	"",  /* termination */
-};
-
-/**
  * List of port abilities. The order of items should be same as the order of
  * enum `sppwk_port_abl_ops` in spp_vf.h.
  */
@@ -121,23 +109,12 @@ append_interface_array(char **output, const enum port_type type)
 	return SPP_RET_OK;
 }
 
-/* TODO(yasufum) move to another file for util funcs. */
-/* Get proc type from global command params. */
-static int
-get_wk_type(void)
-{
-	struct startup_param *params;
-	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
-	return params->wk_proc_type;
-}
-
 /* append a secondary process type for JSON format */
 int
 append_process_type_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_str_value(output, name,
-			SPPWK_PROC_TYPE_LIST[get_wk_type()]);
+	return append_json_str_value(output, name, SPPWK_PROC_TYPE);
 }
 
 /* append a value of vlan for JSON format */

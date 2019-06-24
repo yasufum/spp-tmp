@@ -11,6 +11,8 @@
 #include "cmd_parser.h"
 #include "cmd_res_formatter.h"
 
+#define SPPWK_PROC_TYPE "vf"
+
 /* Number of VLAN ID */
 #define NOF_VLAN 4096
 
