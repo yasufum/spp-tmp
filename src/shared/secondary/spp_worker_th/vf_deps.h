@@ -60,7 +60,7 @@ free_mac_classifier(struct mac_classifier *mac_clf)
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
-int spp_classifier_mac_update(struct sppwk_comp_info *comp_info);
+int update_classifier(struct sppwk_comp_info *comp_info);
 
 /**
  * Update forwarder info.

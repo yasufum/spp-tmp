@@ -891,7 +891,7 @@ update_comp_info(void)
 
 #ifdef SPP_VF_MODULE
 		if (comp_info->wk_type == SPPWK_TYPE_CLS)
-			ret = spp_classifier_mac_update(comp_info);
+			ret = update_classifier(comp_info);
 		else
 			ret = spp_forward_update(comp_info);
 #endif /* SPP_VF_MODULE */

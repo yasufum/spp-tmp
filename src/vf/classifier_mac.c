@@ -695,26 +695,27 @@ spp_classifier_mac_init(void)
 
 /* classifier(mac address) update component info. */
 int
-spp_classifier_mac_update(struct sppwk_comp_info *wk_comp_info)
+update_classifier(struct sppwk_comp_info *wk_comp_info)
 {
-	int ret = SPP_RET_NG;
-	int id = wk_comp_info->comp_id;
-	struct management_info *mng_info = g_mng_infos + id;
-	struct cls_comp_info *cmp_info = NULL;
+	int ret;
+	int wk_id = wk_comp_info->comp_id;
+	struct management_info *mng_info = g_mng_infos + wk_id;
+	struct cls_comp_info *cls_info = NULL;
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
-			"Component[%u] Start update component.\n", id);
+			"Start updating classifier, id=%u.\n", wk_id);
 
-	cmp_info = mng_info->cmp_infos + mng_info->upd_index;
+	/* TODO(yasufum) rename `infos`. */
+	cls_info = mng_info->cmp_infos + mng_info->upd_index;
 
 	/* initialize update side classifier information */
-	ret = init_component_info(cmp_info, wk_comp_info);
+	ret = init_component_info(cls_info, wk_comp_info);
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				"Cannot update classifier mac. ret=%d\n", ret);
+				"Cannot update classifier, ret=%d.\n", ret);
 		return ret;
 	}
-	memcpy(cmp_info->name, wk_comp_info->name, STR_LEN_NAME);
+	memcpy(cls_info->name, wk_comp_info->name, STR_LEN_NAME);
 
 	/* change index of reference side */
 	mng_info->upd_index = mng_info->ref_index;
@@ -729,7 +730,7 @@ spp_classifier_mac_update(struct sppwk_comp_info *wk_comp_info)
 	uninit_component_info(mng_info->cmp_infos + mng_info->upd_index);
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
-			"Component[%u] Complete update component.\n", id);
+			"Done update classifier, id=%u.\n", wk_id);
 
 	return SPP_RET_OK;
 }
