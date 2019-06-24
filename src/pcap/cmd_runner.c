@@ -743,7 +743,7 @@ send_parse_error_response(int *sock,
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
-	ret = spp_send_message(sock, msg, strlen(msg));
+	ret = send_ctl_msg(sock, msg, strlen(msg));
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 				"Failed to send parse error response.\n");
@@ -839,7 +839,7 @@ send_command_result_response(int *sock,
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
-	ret = spp_send_message(sock, msg, strlen(msg));
+	ret = send_ctl_msg(sock, msg, strlen(msg));
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, PCAP_RUNNER,
 			"Failed to send command result response.\n");
@@ -923,9 +923,9 @@ process_request(int *sock, const char *request_str, size_t request_str_len)
 
 /* initialize command processor. */
 int
-spp_command_proc_init(const char *controller_ip, int controller_port)
+spp_command_proc_init(const char *ctl_ipaddr, int ctl_port)
 {
-	return spp_command_conn_init(controller_ip, controller_port);
+	return conn_spp_ctl_init(ctl_ipaddr, ctl_port);
 }
 
 /* process command from controller. */
@@ -948,11 +948,11 @@ spp_command_proc_do(void)
 		}
 	}
 
-	ret = spp_connect_to_controller(&sock);
+	ret = conn_spp_ctl(&sock);
 	if (unlikely(ret != SPPWK_RET_OK))
 		return SPPWK_RET_OK;
 
-	msg_ret = spp_receive_message(&sock, &msgbuf);
+	msg_ret = recv_ctl_msg(&sock, &msgbuf);
 	if (unlikely(msg_ret <= 0)) {
 		if (likely(msg_ret == 0))
 			return SPPWK_RET_OK;

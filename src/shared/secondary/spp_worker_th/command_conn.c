@@ -27,19 +27,19 @@ static char g_controller_ip[128] = "";
 /* controller's port number */
 static int g_controller_port;
 
-/* initialize command connection */
+/* Initialize connection to spp-ctl. */
 int
-spp_command_conn_init(const char *controller_ip, int controller_port)
+conn_spp_ctl_init(const char *ctl_ipaddr, int ctl_port)
 {
-	strcpy(g_controller_ip, controller_ip);
-	g_controller_port = controller_port;
+	strcpy(g_controller_ip, ctl_ipaddr);
+	g_controller_port = ctl_port;
 
 	return SPP_RET_OK;
 }
 
 /* connect to controller */
 int
-spp_connect_to_controller(int *sock)
+conn_spp_ctl(int *sock)
 {
 	static struct sockaddr_in controller_addr;
 	int ret = SPP_RET_NG;
@@ -90,7 +90,7 @@ spp_connect_to_controller(int *sock)
 
 /* receive message */
 int
-spp_receive_message(int *sock, char **strbuf)
+recv_ctl_msg(int *sock, char **strbuf)
 {
 	int ret = SPP_RET_NG;
 	int n_rx = 0;
@@ -134,13 +134,13 @@ spp_receive_message(int *sock, char **strbuf)
 	return n_rx;
 }
 
-/* send message */
+/* Send message to spp-ctl. */
 int
-spp_send_message(int *sock, const char *message, size_t message_len)
+send_ctl_msg(int *sock, const char *msg, size_t msg_len)
 {
 	int ret = SPP_RET_NG;
 
-	ret = send(*sock, message, message_len, 0);
+	ret = send(*sock, msg, msg_len, 0);
 	if (unlikely(ret == -1)) {
 		RTE_LOG(ERR, SPP_COMMAND_PROC, "Send failure. ret=%d\n", ret);
 		close(*sock);

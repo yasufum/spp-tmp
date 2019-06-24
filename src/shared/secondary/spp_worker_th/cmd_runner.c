@@ -1525,7 +1525,7 @@ send_decode_error_response(int *sock,
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
-	ret = spp_send_message(sock, msg, strlen(msg));
+	ret = send_ctl_msg(sock, msg, strlen(msg));
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				"Failed to send decode error response.\n");
@@ -1608,7 +1608,7 @@ send_command_result_response(int *sock,
 			"response_str=\n%s\n", msg);
 
 	/* send response to requester */
-	ret = spp_send_message(sock, msg, strlen(msg));
+	ret = send_ctl_msg(sock, msg, strlen(msg));
 	if (unlikely(ret != SPP_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 			"Failed to send command result response.\n");
@@ -1687,7 +1687,7 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 int
 sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port)
 {
-	return spp_command_conn_init(ctl_ipaddr, ctl_port);
+	return conn_spp_ctl_init(ctl_ipaddr, ctl_port);
 }
 
 /* Run command sent from spp-ctl. */
@@ -1710,12 +1710,12 @@ sppwk_run_cmd(void)
 		}
 	}
 
-	ret = spp_connect_to_controller(&sock);
+	ret = conn_spp_ctl(&sock);
 
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_OK;
 
-	msg_ret = spp_receive_message(&sock, &msgbuf);
+	msg_ret = recv_ctl_msg(&sock, &msgbuf);
 	if (unlikely(msg_ret <= 0)) {
 		if (likely(msg_ret == 0))
 			return SPP_RET_OK;
