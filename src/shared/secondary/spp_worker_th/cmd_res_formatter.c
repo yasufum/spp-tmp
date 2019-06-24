@@ -35,7 +35,7 @@ const char *SPPWK_PROC_TYPE_LIST[] = {
 
 /**
  * List of port abilities. The order of items should be same as the order of
- * enum `spp_port_ability_type` in spp_vf.h.
+ * enum `sppwk_port_abl_ops` in spp_vf.h.
  */
 const char *PORT_ABILITY_STAT_LIST[] = {
 	"none",
