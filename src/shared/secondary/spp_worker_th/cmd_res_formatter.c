@@ -25,7 +25,7 @@ static int append_error_details_value(const char *name, char **output,
  * List of worker process type. The order of items should be same as the order
  * of enum `secondary_type` in cmd_utils.h.
  */
-/* TODO(yasufum) rename `secondary_type` to `sppwk_proc_type`. */
+/* TODO(yasufum) Add "pcap" after spp_pcap is made to use shared. */
 const char *SPPWK_PROC_TYPE_LIST[] = {
 	"none",
 	"vf",
@@ -128,7 +128,7 @@ get_wk_type(void)
 {
 	struct startup_param *params;
 	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
-	return params->secondary_type;
+	return params->wk_proc_type;
 }
 
 /* append a secondary process type for JSON format */

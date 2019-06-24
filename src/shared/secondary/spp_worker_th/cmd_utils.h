@@ -130,11 +130,11 @@ enum copy_mng_flg {
 };
 
 /* secondary process type used only from spp_vf and spp_mirror */
-/* TODO(yasufum) rename `secondary_type` to `sppwk_proc_type`. */
-enum secondary_type {
-	SECONDARY_TYPE_NONE,
-	SECONDARY_TYPE_VF,
-	SECONDARY_TYPE_MIRROR,
+/* TODO(yasufum) Add WK_PROC_TYPE_PCAP. */
+enum sppwk_proc_type {
+	WK_PROC_TYPE_NONE,
+	WK_PROC_TYPE_VF,
+	WK_PROC_TYPE_MIRROR,
 };
 
 /** VLAN tag information */
@@ -200,7 +200,7 @@ struct startup_param {
 	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
 	int server_port;   /* Port Number of spp-ctl */
 	int vhost_client;  /* Flag for --vhost-client option */
-	enum secondary_type secondary_type;
+	enum sppwk_proc_type wk_proc_type;
 };
 
 /* Manage number of interfaces  and port information as global variable. */
