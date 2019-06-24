@@ -118,13 +118,17 @@ class Controller(object):
 
     @staticmethod
     def _send_command(conn, command):
-        conn.sendall(command.encode())
-        data = conn.recv(MSG_SIZE)
-        if data and len(data) == MSG_SIZE:
-            # could not receive data at once. recieve remining data.
-            data += self._continue_recv(conn)
-        if data:
-            data = data.decode()
+        data = None
+        try:
+            conn.sendall(command.encode())
+            data = conn.recv(MSG_SIZE)
+            if data and len(data) == MSG_SIZE:
+                # could not receive data at once. recieve remining data.
+                data += self._continue_recv(conn)
+            if data:
+                data = data.decode()
+        except Exception as e:
+            LOG.info("Error: {}".format(e))
         return data
 
     def _get_proc(self, conn):
@@ -137,9 +141,26 @@ class Controller(object):
             if sec_id is not None:
                 return proc(sec_id, conn)
 
+    def _update_procs(self):
+        """Remove no existing processes from `self.procs`."""
+        removed_ids = []
+        for idx, proc in self.procs.items():
+            if proc.id != spp_proc.ID_PRIMARY:
+                try:
+                    # Check the process can be accessed. If not, go
+                    # to except block.
+                    proc.get_status()
+                except Exception as e:
+                    LOG.error(e)
+                    removed_ids.append(idx)
+        for idx in removed_ids:
+            LOG.info("Remove no existing {}:{}.".format(
+                self.procs[idx].type, self.procs[idx].id))
+            del self.procs[idx]
+
     def get_processes(self):
         procs = []
-        LOG.info('get_proesses: {}'.format(self.procs.values()))
+        self._update_procs()
         for proc in self.procs.values():
             p = {"type": proc.type}
             if proc.id != spp_proc.ID_PRIMARY:
