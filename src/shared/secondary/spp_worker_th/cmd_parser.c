@@ -10,6 +10,8 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_parser.h"
+#include "vf_deps.h"
+#include "mirror_deps.h"
 #include "shared/secondary/return_codes.h"
 
 #define RTE_LOGTYPE_WK_CMD_PARSER RTE_LOGTYPE_USER1
@@ -175,35 +177,6 @@ parse_resource_uid(const char *res_uid,
 	RTE_LOG(DEBUG, WK_CMD_PARSER, "Parsed '%s' to '%d' and '%d'.\n",
 			res_uid, *iface_type, *iface_no);
 	return SPP_RET_OK;
-}
-
-/* Get component type from string of its name. */
-/* TODO(yasufum) should be worker local, separated for vf and mirror. */
-static enum sppwk_worker_type
-get_comp_type_from_str(const char *type_str)
-{
-	RTE_LOG(DEBUG, WK_CMD_PARSER, "type_str is %s\n", type_str);
-
-#ifdef SPP_VF_MODULE
-	if (strncmp(type_str, CORE_TYPE_CLASSIFIER_MAC_STR,
-			strlen(CORE_TYPE_CLASSIFIER_MAC_STR)+1) == 0) {
-		return SPPWK_TYPE_CLS;
-	} else if (strncmp(type_str, CORE_TYPE_MERGE_STR,
-			strlen(CORE_TYPE_MERGE_STR)+1) == 0) {
-		return SPPWK_TYPE_MRG;
-	} else if (strncmp(type_str, CORE_TYPE_FORWARD_STR,
-			strlen(CORE_TYPE_FORWARD_STR)+1) == 0) {
-		return SPPWK_TYPE_FWD;
-	}
-#endif /* SPP_VF_MODULE */
-
-#ifdef SPP_MIRROR_MODULE
-	if (strncmp(type_str, SPPWK_TYPE_MIR_STR,
-			strlen(SPPWK_TYPE_MIR_STR)+1) == 0)
-		return SPPWK_TYPE_MIR;
-#endif /* SPP_MIRROR_MODULE */
-
-	return SPPWK_TYPE_NONE;
 }
 
 /* Format error message object and return error code for an error case. */

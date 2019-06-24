@@ -401,3 +401,16 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 	}
 	return SPP_RET_OK;
 }
+
+/* Get component type from string of its name. */
+enum sppwk_worker_type
+get_comp_type_from_str(const char *type_str)
+{
+	RTE_LOG(DEBUG, MIR_CMD_RUNNER, "type_str is %s\n", type_str);
+
+	if (strncmp(type_str, SPPWK_TYPE_MIR_STR,
+			strlen(SPPWK_TYPE_MIR_STR)+1) == 0)
+		return SPPWK_TYPE_MIR;
+
+	return SPPWK_TYPE_NONE;
+}

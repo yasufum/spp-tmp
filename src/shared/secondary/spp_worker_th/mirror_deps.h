@@ -32,4 +32,6 @@ int update_mirror(struct sppwk_comp_info *wk_comp_info);
  */
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
+enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
+
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */
