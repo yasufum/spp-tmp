@@ -9,14 +9,20 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_runner.h"
-#include "vf_deps.h"
-#include "mirror_deps.h"
 #include "spp_port.h"
-#include "shared/secondary/string_buffer.h"
-#include "shared/secondary/json_helper.h"
 #include "cmd_res_formatter.h"
 #include "conn_spp_ctl.h"
 #include "cmd_parser.h"
+#include "shared/secondary/string_buffer.h"
+#include "shared/secondary/json_helper.h"
+
+#ifdef SPP_VF_MODULE
+#include "vf_deps.h"
+#endif
+
+#ifdef SPP_MIRROR_MODULE
+#include "mirror_deps.h"
+#endif
 
 #define RTE_LOGTYPE_WK_CMD_RUNNER RTE_LOGTYPE_USER1
 

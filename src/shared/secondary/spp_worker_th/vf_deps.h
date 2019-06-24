@@ -101,4 +101,5 @@ int add_classifier_table_val(
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
 enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
+
 #endif  /* _SPPWK_TH_VF_DEPS_H_ */

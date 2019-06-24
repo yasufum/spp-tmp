@@ -4,9 +4,15 @@
 
 #include "cmd_res_formatter.h"
 #include "cmd_utils.h"
-#include "vf_deps.h"
-#include "mirror_deps.h"
 #include "shared/secondary/json_helper.h"
+
+#ifdef SPP_VF_MODULE
+#include "vf_deps.h"
+#endif
+
+#ifdef SPP_MIRROR_MODULE
+#include "mirror_deps.h"
+#endif
 
 #define RTE_LOGTYPE_WK_CMD_RES_FMT RTE_LOGTYPE_USER1
 

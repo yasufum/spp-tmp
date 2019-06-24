@@ -11,11 +11,17 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
-#include "vf_deps.h"
-#include "mirror_deps.h"
 #include "shared/secondary/return_codes.h"
 #include "cmd_utils.h"
 #include "spp_port.h"
+
+#ifdef SPP_VF_MODULE
+#include "vf_deps.h"
+#endif
+
+#ifdef SPP_MIRROR_MODULE
+#include "mirror_deps.h"
+#endif
 
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"

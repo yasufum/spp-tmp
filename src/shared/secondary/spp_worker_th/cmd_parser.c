@@ -10,9 +10,15 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_parser.h"
-#include "vf_deps.h"
-#include "mirror_deps.h"
 #include "shared/secondary/return_codes.h"
+
+#ifdef SPP_VF_MODULE
+#include "vf_deps.h"
+#endif
+
+#ifdef SPP_MIRROR_MODULE
+#include "mirror_deps.h"
+#endif
 
 #define RTE_LOGTYPE_WK_CMD_PARSER RTE_LOGTYPE_USER1
 
