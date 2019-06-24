@@ -52,6 +52,31 @@ struct cmd_response response_result_list[] = {
 	{ "", NULL }
 };
 
+/**
+ * List of combination of tag and operator function. It is used to assemble
+ * a result of command in JSON like as following.
+ *
+ *     {
+ *         "client-id": 1,
+ *         "ports": ["phy:0", "phy:1", "vhost:0", "ring:0"],
+ *         "components": [
+ *             {
+ *                 "core": 2,
+ *                 ...
+ */
+struct cmd_response response_info_list[] = {
+	{ "client-id", add_client_id },
+	{ "phy", add_interface },
+	{ "vhost", add_interface },
+	{ "ring", add_interface },
+	{ "master-lcore", add_master_lcore},
+	{ "core", add_core},
+#ifdef SPP_VF_MODULE
+	{ "classifier_table", add_classifier_table},
+#endif /* SPP_VF_MODULE */
+	{ "", NULL }
+};
+
 /* append a command result for JSON format */
 int
 append_result_value(const char *name, char **output, void *tmp)
@@ -535,6 +560,32 @@ append_command_results_value(const char *name, char **output,
 	return ret;
 }
 
+/* append a list of status information for JSON format. */
+int
+append_info_value(const char *name, char **output)
+{
+	int ret = SPP_RET_NG;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, WK_CMD_RES_FMT,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = %s)\n",
+				name);
+		return SPP_RET_NG;
+	}
+
+	ret = append_response_list_value(&tmp_buff,
+			response_info_list, NULL);
+	if (unlikely(ret < SPP_RET_OK)) {
+		spp_strbuf_free(tmp_buff);
+		return SPP_RET_NG;
+	}
+
+	ret = append_json_block_brackets(output, name, tmp_buff);
+	spp_strbuf_free(tmp_buff);
+	return ret;
+}
+
 /* Iterate core information to create response to status command */
 static int
 spp_iterate_core_info(struct spp_iterate_core_params *params)
@@ -694,3 +745,58 @@ add_core(const char *name, char **output,
 	return ret;
 }
 
+#ifdef SPP_VF_MODULE
+/* Iterate classifier_table to create response to status command */
+static int
+_add_classifier_table(
+		struct spp_iterate_classifier_table_params *params)
+{
+	int ret;
+
+	ret = add_classifier_table_val(params);
+	if (unlikely(ret != 0)) {
+		RTE_LOG(ERR, WK_CMD_RES_FMT,
+				"Cannot iterate classifier_mac_table.\n");
+		return SPP_RET_NG;
+	}
+
+	return SPP_RET_OK;
+}
+
+/**
+ * Add entries of classifier table in JSON. Before iterating the entries,
+ * this function calls several nested functions.
+ *   add_classifier_table()  // This function.
+ *     -> _add_classifier_table()  // Wrapper and doesn't almost nothing.
+ *       -> add_classifier_table_val()  // Setup data and call iterator.
+ *         -> iterate_adding_mac_entry()
+ */
+int
+add_classifier_table(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	struct spp_iterate_classifier_table_params itr_params;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, WK_CMD_RES_FMT,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = %s)\n",
+				name);
+		return SPP_RET_NG;
+	}
+
+	itr_params.output = tmp_buff;
+	itr_params.element_proc = append_classifier_element_value;
+
+	ret = _add_classifier_table(&itr_params);
+	if (unlikely(ret != SPP_RET_OK)) {
+		spp_strbuf_free(itr_params.output);
+		return SPP_RET_NG;
+	}
+
+	ret = append_json_array_brackets(output, name, itr_params.output);
+	spp_strbuf_free(itr_params.output);
+	return ret;
+}
+#endif /* SPP_VF_MODULE */
