@@ -187,7 +187,7 @@ log_classification(
 	struct ether_hdr *eth;
 	uint16_t vid;
 	char mac_addr_str[2][ETHER_ADDR_STR_BUF_SZ];
-	char iface_str[SPP_NAME_STR_LEN];
+	char iface_str[STR_LEN_NAME];
 
 	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
 	vid = get_vid(pkt);
@@ -232,7 +232,7 @@ log_entry(
 		const char *func_name,
 		int line_num)
 {
-	char iface_str[SPP_NAME_STR_LEN];
+	char iface_str[STR_LEN_NAME];
 
 	if (clsd_idx < 0)
 		snprintf(iface_str, sizeof(iface_str), "%ld", clsd_idx);
@@ -720,7 +720,7 @@ spp_classifier_mac_update(struct sppwk_comp_info *component_info)
 				"Cannot update classifier mac. ret=%d\n", ret);
 		return ret;
 	}
-	memcpy(cmp_info->name, component_info->name, SPP_NAME_STR_LEN);
+	memcpy(cmp_info->name, component_info->name, STR_LEN_NAME);
 
 	/* change index of reference side */
 	mng_info->upd_index = mng_info->ref_index;

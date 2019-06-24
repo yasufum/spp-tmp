@@ -19,7 +19,7 @@ struct forward_rxtx {
 
 /* Information on the path used for forward. */
 struct forward_path {
-	char name[SPP_NAME_STR_LEN];    /* component name          */
+	char name[STR_LEN_NAME];    /* component name */
 	volatile enum sppwk_worker_type wk_type;
 	int num_rx;                     /* number of receive ports */
 	int num_tx;                     /* number of trans ports   */
@@ -86,7 +86,7 @@ spp_forward_update(struct sppwk_comp_info *component)
 			component->name,
 			component->wk_type);
 
-	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
+	memcpy(&path->name, component->name, STR_LEN_NAME);
 	path->wk_type = component->wk_type;
 	path->num_rx = component->nof_rx;
 	path->num_tx = component->nof_tx;

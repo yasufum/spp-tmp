@@ -174,8 +174,7 @@ update_cls_table(enum sppwk_action wk_action,
 		/* Initialize deleted attributes again. */
 		port_info->cls_attrs.vlantag.vid = ETH_VLAN_ID_MAX;
 		port_info->cls_attrs.mac_addr = 0;
-		memset(port_info->cls_attrs.mac_addr_str, 0x00,
-							SPP_MIN_STR_LEN);
+		memset(port_info->cls_attrs.mac_addr_str, 0x00, STR_LEN_SHORT);
 	} else if (wk_action == SPPWK_ACT_ADD) {
 		if (unlikely(port_info->cls_attrs.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
@@ -1236,7 +1235,7 @@ append_classifier_element_value(
 	int ret = SPP_RET_NG;
 	char *buff, *tmp_buff;
 	char port_str[CMD_TAG_APPEND_SIZE];
-	char value_str[SPP_MIN_STR_LEN];
+	char value_str[STR_LEN_SHORT];
 	buff = params->output;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -1253,7 +1252,7 @@ append_classifier_element_value(
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
-	memset(value_str, 0x00, SPP_MIN_STR_LEN);
+	memset(value_str, 0x00, STR_LEN_SHORT);
 	switch (type) {
 	case SPP_CLASSIFIER_TYPE_MAC:
 		sprintf(value_str, "%s", mac);

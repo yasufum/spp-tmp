@@ -282,7 +282,7 @@ get_sppwk_port(enum port_type iface_type, int iface_no)
 void
 log_core_info(const struct core_mng_info *core_info)
 {
-	char str[SPP_NAME_STR_LEN];
+	char str[STR_LEN_NAME];
 	const struct core_mng_info *info = NULL;
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
@@ -291,7 +291,7 @@ log_core_info(const struct core_mng_info *core_info)
 				lcore_id, info->status,
 				info->ref_index, info->upd_index);
 
-		memset(str, 0x00, SPP_NAME_STR_LEN);
+		memset(str, 0x00, STR_LEN_NAME);
 		log_hexdumped(str, info->core[0].id,
 				sizeof(int)*info->core[0].num);
 
@@ -305,7 +305,7 @@ log_core_info(const struct core_mng_info *core_info)
 void
 log_component_info(const struct sppwk_comp_info *comp_info)
 {
-	char str[SPP_NAME_STR_LEN];
+	char str[STR_LEN_NAME];
 	const struct sppwk_comp_info *tmp_ci = NULL;
 	int cnt = 0;
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
@@ -945,7 +945,7 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 	int64_t ret_mac = 0;
 	int64_t token_val = 0;
 	int token_cnt = 0;
-	char tmp_mac[SPP_MIN_STR_LEN];
+	char tmp_mac[STR_LEN_SHORT];
 	char *str = tmp_mac;
 	char *saveptr = NULL;
 	char *endptr = NULL;

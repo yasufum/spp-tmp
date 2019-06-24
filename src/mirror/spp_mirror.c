@@ -35,7 +35,7 @@ struct mirror_rxtx {
 
 /* Information on the path used for mirror. */
 struct mirror_path {
-	char name[SPP_NAME_STR_LEN];  /* component name */
+	char name[STR_LEN_NAME];  /* component name */
 	volatile enum sppwk_worker_type wk_type;
 	int nof_rx;  /* number of receive ports */
 	int nof_tx;  /* number of mirror ports */
@@ -310,7 +310,7 @@ spp_mirror_update(struct sppwk_comp_info *component)
 			component->name,
 			component->wk_type);
 
-	memcpy(&path->name, component->name, SPP_NAME_STR_LEN);
+	memcpy(&path->name, component->name, STR_LEN_NAME);
 	path->wk_type = component->wk_type;
 	path->nof_rx = component->nof_rx;
 	path->nof_tx = component->nof_tx;

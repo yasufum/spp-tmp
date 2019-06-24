@@ -50,21 +50,14 @@ struct classified_data {
 
 /* classifier component information */
 struct component_info {
-	/* component name */
-	char name[SPP_NAME_STR_LEN];
-
-	/* mac address entry flag */
-	int mac_addr_entry;
+	char name[STR_LEN_NAME];  /* component name */
+	int mac_addr_entry;  /* mac address entry flag */
 
 	/* mac address classification per vlan-id */
 	struct mac_classification *mac_classifications[SPP_NUM_VLAN_VID];
 
-	/* number of transmission ports */
-	int n_classified_data_tx;
-
-	/* receive port handled by classifier */
-	struct classified_data classified_data_rx;
-
+	int n_classified_data_tx;  /* number of transmission ports */
+	struct classified_data classified_data_rx;  /* RX handled by cls */
 	/* transmission ports handled by classifier */
 	struct classified_data classified_data_tx[RTE_MAX_ETHPORTS];
 };

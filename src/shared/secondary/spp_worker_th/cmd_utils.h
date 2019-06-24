@@ -33,17 +33,12 @@
 /** Update wait timer (micro sec) */
 #define SPP_CHANGE_UPDATE_INTERVAL 10
 
-/** The max number of buffer for management */
-#define SPP_INFO_AREA_MAX 2
+#define SPP_INFO_AREA_MAX 2  /* The max number of buffer for management */
 
-/** The length of shortest character string */
-#define SPP_MIN_STR_LEN   32
+#define STR_LEN_SHORT 32  /* Size of short string. */
+#define STR_LEN_NAME 128  /* Size of string for names. */
 
-/** The length of NAME string */
-#define SPP_NAME_STR_LEN  128
-
-/** Maximum number of port abilities available */
-#define SPP_PORT_ABILITY_MAX 4
+#define SPP_PORT_ABILITY_MAX 4  /* Max num of port abilities. */
 
 /** Number of VLAN ID */
 #define SPP_NUM_VLAN_VID 4096
@@ -175,7 +170,7 @@ struct spp_port_ability {
 /* Attributes for classifying. */
 struct sppwk_cls_attrs {
 	uint64_t mac_addr;  /**< Mac address (binary) */
-	char mac_addr_str[SPP_MIN_STR_LEN];  /**< Mac address (text) */
+	char mac_addr_str[STR_LEN_SHORT];  /**< Mac address (text) */
 	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
 };
 
@@ -199,7 +194,7 @@ struct sppwk_port_info {
 
 /* Attributes of SPP worker thread named as `component`. */
 struct sppwk_comp_info {
-	char name[SPP_NAME_STR_LEN];  /**< Component name */
+	char name[STR_LEN_NAME];  /**< Component name */
 	enum sppwk_worker_type wk_type;  /**< Type of worker thread */
 	unsigned int lcore_id;
 	int comp_id;  /**< Component ID */
