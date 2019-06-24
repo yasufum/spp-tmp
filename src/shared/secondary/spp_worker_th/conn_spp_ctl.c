@@ -14,7 +14,7 @@
 
 #include "shared/common.h"
 #include "string_buffer.h"
-#include "command_conn.h"
+#include "conn_spp_ctl.h"
 
 #define RTE_LOGTYPE_SPP_COMMAND_PROC RTE_LOGTYPE_USER1
 

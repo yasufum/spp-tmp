@@ -13,7 +13,7 @@
 #include "spp_port.h"
 #include "string_buffer.h"
 
-#include "command_conn.h"
+#include "conn_spp_ctl.h"
 #include "cmd_parser.h"
 #include "cmd_runner.h"
 
