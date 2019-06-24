@@ -183,7 +183,7 @@ log_classification(
 		long clsd_idx,
 		struct rte_mbuf *pkt,
 		struct component_info *cmp_info,
-		struct classified_data *clsd_data,
+		struct cls_port_info *clsd_data,
 		const char *func_name,
 		int line_num)
 {
@@ -203,8 +203,7 @@ log_classification(
 	if (clsd_idx < 0)
 		snprintf(iface_str, sizeof(iface_str), "%ld", clsd_idx);
 	else
-		spp_format_port_string(
-				iface_str,
+		spp_format_port_string(iface_str,
 				clsd_data[clsd_idx].iface_type,
 				clsd_data[clsd_idx].iface_no_global);
 
@@ -231,7 +230,7 @@ log_entry(
 		uint16_t vid,
 		const char *mac_addr_str,
 		struct component_info *cmp_info,
-		struct classified_data *clsd_data,
+		struct cls_port_info *clsd_data,
 		const char *func_name,
 		int line_num)
 {
@@ -331,8 +330,8 @@ init_component_info(struct component_info *cmp_info,
 	struct mac_classifier *mac_cls;
 	struct ether_addr eth_addr;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
-	struct classified_data *clsd_data_rx = &cmp_info->classified_data_rx;
-	struct classified_data *clsd_data_tx = cmp_info->classified_data_tx;
+	struct cls_port_info *clsd_data_rx = &cmp_info->classified_data_rx;
+	struct cls_port_info *clsd_data_tx = cmp_info->classified_data_tx;
 	struct sppwk_port_info *tx_port = NULL;
 	uint16_t vid;
 
@@ -341,7 +340,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_rx->iface_type = UNDEF;
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global = 0;
-		clsd_data_rx->port = 0;
+		clsd_data_rx->ethdev_port_id = 0;
 		clsd_data_rx->nof_pkts = 0;
 	} else {
 		clsd_data_rx->iface_type =
@@ -349,7 +348,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global =
 			component_info->rx_ports[0]->iface_no;
-		clsd_data_rx->port =
+		clsd_data_rx->ethdev_port_id =
 			component_info->rx_ports[0]->ethdev_port_id;
 		clsd_data_rx->nof_pkts = 0;
 	}
@@ -362,10 +361,10 @@ init_component_info(struct component_info *cmp_info,
 		vid = tx_port->cls_attrs.vlantag.vid;
 
 		/* store ports information */
-		clsd_data_tx[i].iface_type      = tx_port->iface_type;
-		clsd_data_tx[i].iface_no        = i;
+		clsd_data_tx[i].iface_type = tx_port->iface_type;
+		clsd_data_tx[i].iface_no = i;
 		clsd_data_tx[i].iface_no_global = tx_port->iface_no;
-		clsd_data_tx[i].port            = tx_port->ethdev_port_id;
+		clsd_data_tx[i].ethdev_port_id = tx_port->ethdev_port_id;
 		clsd_data_tx[i].nof_pkts = 0;
 
 		if (tx_port->cls_attrs.mac_addr == 0)
@@ -450,13 +449,13 @@ uninit_component_info(struct component_info *cmp_info)
 
 /* transmit packet to one destination. */
 static inline void
-transmit_packet(struct classified_data *clsd_data)
+transmit_packet(struct cls_port_info *clsd_data)
 {
 	int i;
 	uint16_t n_tx;
 
 	/* transmit packets */
-	n_tx = spp_eth_tx_burst(clsd_data->port, 0,
+	n_tx = spp_eth_tx_burst(clsd_data->ethdev_port_id, 0,
 			clsd_data->pkts, clsd_data->nof_pkts);
 
 	/* free cannot transmit packets */
@@ -466,7 +465,7 @@ transmit_packet(struct classified_data *clsd_data)
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"drop packets(tx). num=%hu, ethdev_port_id=%hu\n",
 				(uint16_t)(clsd_data->nof_pkts - n_tx),
-				clsd_data->port);
+				clsd_data->ethdev_port_id);
 	}
 
 	clsd_data->nof_pkts = 0;
@@ -477,7 +476,7 @@ static inline void
 transmit_all_packet(struct component_info *cmp_info)
 {
 	int i;
-	struct classified_data *clsd_data_tx = cmp_info->classified_data_tx;
+	struct cls_port_info *clsd_data_tx = cmp_info->classified_data_tx;
 
 	for (i = 0; i < cmp_info->n_classified_data_tx; i++) {
 		if (unlikely(clsd_data_tx[i].nof_pkts != 0)) {
@@ -494,7 +493,7 @@ transmit_all_packet(struct component_info *cmp_info)
 
 /* set mbuf pointer to tx buffer and transmit packet, if buffer is filled */
 static inline void
-push_packet(struct rte_mbuf *pkt, struct classified_data *clsd_data)
+push_packet(struct rte_mbuf *pkt, struct cls_port_info *clsd_data)
 {
 	clsd_data->pkts[clsd_data->nof_pkts++] = pkt;
 
@@ -507,7 +506,7 @@ push_packet(struct rte_mbuf *pkt, struct classified_data *clsd_data)
 				clsd_data->iface_type,
 				clsd_data->iface_no_global,
 				clsd_data->iface_no,
-				clsd_data->port,
+				clsd_data->ethdev_port_id,
 				clsd_data->nof_pkts);
 		transmit_packet(clsd_data);
 	}
@@ -533,7 +532,7 @@ get_general_default_classified_index(struct component_info *cmp_info)
 static inline void
 handle_l2multicast_packet(struct rte_mbuf *pkt,
 		struct component_info *cmp_info,
-		struct classified_data *clsd_data)
+		struct cls_port_info *clsd_data)
 {
 	int i;
 	struct mac_classifier *mac_cls;
@@ -640,7 +639,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 static inline void
 classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
 		struct component_info *cmp_info,
-		struct classified_data *clsd_data)
+		struct cls_port_info *clsd_data)
 {
 	int i;
 	long clsd_idx;
@@ -747,8 +746,8 @@ spp_classifier_mac_do(int id)
 	struct component_info *cmp_info = NULL;
 	struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
 
-	struct classified_data *clsd_data_rx = NULL;
-	struct classified_data *clsd_data_tx = NULL;
+	struct cls_port_info *clsd_data_rx = NULL;
+	struct cls_port_info *clsd_data_tx = NULL;
 
 	uint64_t cur_tsc, prev_tsc = 0;
 	const uint64_t drain_tsc = (rte_get_tsc_hz() + US_PER_S - 1) /
@@ -792,7 +791,8 @@ spp_classifier_mac_do(int id)
 		return SPP_RET_OK;
 
 	/* retrieve packets */
-	n_rx = spp_eth_rx_burst(clsd_data_rx->port, 0, rx_pkts, MAX_PKT_BURST);
+	n_rx = spp_eth_rx_burst(clsd_data_rx->ethdev_port_id, 0, rx_pkts,
+			MAX_PKT_BURST);
 	if (unlikely(n_rx == 0))
 		return SPP_RET_OK;
 
@@ -812,7 +812,7 @@ spp_classifier_get_component_status(
 	int i, nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
 	struct management_info *mng_info;
 	struct component_info *cmp_info;
-	struct classified_data *clsd_data;
+	struct cls_port_info *clsd_data;
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
@@ -861,7 +861,7 @@ mac_classification_iterate_table(
 		uint16_t vid,
 		struct mac_classifier *mac_cls,
 		__rte_unused struct component_info *cmp_info,
-		struct classified_data *clsd_data)
+		struct cls_port_info *clsd_data)
 {
 	int ret;
 	const void *key;
@@ -918,7 +918,7 @@ spp_classifier_mac_iterate_table(
 	int i, n;
 	struct management_info *mng_info;
 	struct component_info *cmp_info;
-	struct classified_data *clsd_data;
+	struct cls_port_info *clsd_data;
 
 	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		mng_info = g_mng_infos + i;
