@@ -35,8 +35,11 @@
 #define DEFAULT_HASH_FUNC rte_jhash
 #endif
 
+/* number of classifier information (reference/update) */
+#define NOF_CLS_INFO 2
+
 /* number of classifier mac table entry */
-#define NUM_CLASSIFIER_MAC_TABLE_ENTRY 128
+#define NOF_CLS_TABLE_ENTRIES 128
 
 /* interval that wait until change update index (micro second) */
 #define CHANGE_UPDATE_INDEX_WAIT_INTERVAL SPP_CHANGE_UPDATE_INTERVAL
@@ -53,7 +56,7 @@
 /* classifier management information */
 struct management_info {
 	/* classifier information */
-	struct component_info cmp_infos[NUM_CLASSIFIER_MAC_INFO];
+	struct component_info cmp_infos[NOF_CLS_INFO];
 
 	/* Reference index number for classifier information */
 	volatile int ref_index;
@@ -75,7 +78,7 @@ uninit_classifier(struct management_info *mng_info)
 
 	mng_info->is_used = 0;
 
-	for (i = 0; i < NUM_CLASSIFIER_MAC_INFO; ++i)
+	for (i = 0; i < NOF_CLS_INFO; ++i)
 		uninit_component_info(mng_info->cmp_infos + (long)i);
 
 	memset(mng_info, 0, sizeof(struct management_info));
@@ -298,7 +301,7 @@ create_mac_classification(void)
 	/* set hash creating parameters */
 	struct rte_hash_parameters hash_params = {
 			.name      = hash_tab_name,
-			.entries   = NUM_CLASSIFIER_MAC_TABLE_ENTRY,
+			.entries   = NOF_CLS_TABLE_ENTRIES,
 			.key_len   = sizeof(struct ether_addr),
 			.hash_func = DEFAULT_HASH_FUNC,
 			.hash_func_init_val = 0,
@@ -440,7 +443,7 @@ uninit_component_info(struct component_info *cmp_info)
 {
 	int i;
 
-	for (i = 0; i < SPP_NUM_VLAN_VID; ++i)
+	for (i = 0; i < NOF_VLAN; ++i)
 		free_mac_classification(cmp_info->mac_classifications[i]);
 
 	memset(cmp_info, 0, sizeof(struct component_info));
@@ -686,7 +689,7 @@ change_classifier_index(struct management_info *mng_info, int id)
 				"Core[%u] Change update index.\n", id);
 		mng_info->ref_index =
 				(mng_info->upd_index + 1) %
-				NUM_CLASSIFIER_MAC_INFO;
+				NOF_CLS_INFO;
 	}
 }
 
@@ -943,7 +946,7 @@ spp_classifier_mac_iterate_table(
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 			"Core[%u] Start iterate classifier table.\n", i);
 
-		for (n = 0; n < SPP_NUM_VLAN_VID; ++n) {
+		for (n = 0; n < NOF_VLAN; ++n) {
 			if (cmp_info->mac_classifications[n] == NULL)
 				continue;
 

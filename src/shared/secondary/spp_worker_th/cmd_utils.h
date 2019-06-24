@@ -40,9 +40,6 @@
 
 #define SPP_PORT_ABILITY_MAX 4  /* Max num of port abilities. */
 
-/** Number of VLAN ID */
-#define SPP_NUM_VLAN_VID 4096
-
 /** Maximum VLAN PCP */
 #define SPP_VLAN_PCP_MAX 7
 

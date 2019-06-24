@@ -9,8 +9,8 @@
 #include <rte_hash.h>
 #include "cmd_utils.h"
 
-/* number of classifier information (reference/update) */
-#define NUM_CLASSIFIER_MAC_INFO 2
+/** Number of VLAN ID */
+#define NOF_VLAN 4096
 
 /* mac address classification */
 struct mac_classification {
@@ -54,7 +54,7 @@ struct component_info {
 	int mac_addr_entry;  /* mac address entry flag */
 
 	/* mac address classification per vlan-id */
-	struct mac_classification *mac_classifications[SPP_NUM_VLAN_VID];
+	struct mac_classification *mac_classifications[NOF_VLAN];
 
 	int n_classified_data_tx;  /* number of transmission ports */
 	struct classified_data classified_data_rx;  /* RX handled by cls */
