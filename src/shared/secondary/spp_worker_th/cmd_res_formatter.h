@@ -72,4 +72,10 @@ int append_response_list_value(char **output, struct cmd_response *responses,
 int append_command_results_value(const char *name, char **output,
 		int num, struct cmd_result *results);
 
+int add_master_lcore(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
+int add_core(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 #endif
