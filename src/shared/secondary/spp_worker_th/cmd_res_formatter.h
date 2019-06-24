@@ -56,12 +56,6 @@ int append_core_element_value(struct spp_iterate_core_params *params,
 		const int num_rx, const struct sppwk_port_idx *rx_ports,
 		const int num_tx, const struct sppwk_port_idx *tx_ports);
 
-int append_classifier_element_value(
-		struct spp_iterate_classifier_table_params *params,
-		enum spp_classifier_type type,
-		int vid, const char *mac,
-		const struct sppwk_port_idx *port);
-
 int append_response_list_value(char **output, struct cmd_response *responses,
 		void *tmp);
 

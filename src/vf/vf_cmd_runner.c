@@ -14,6 +14,18 @@
 
 #define RTE_LOGTYPE_VF_CMD_RUNNER RTE_LOGTYPE_USER1
 
+/**
+ * List of classifier type. The order of items should be same as the order of
+ * enum `spp_classifier_type` defined in cmd_utils.h.
+ */
+/* TODO(yasufum) fix similar var in cmd_parser.c */
+const char *CLS_TYPE_A_LIST[] = {
+	"none",
+	"mac",
+	"vlan",
+	"",  /* termination */
+};
+
 /* Update classifier table with given action, add or del. */
 static int
 update_cls_table(enum sppwk_action wk_action,
@@ -536,7 +548,65 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 	return SPP_RET_OK;
 }
 
+/**
+ * Operator function called in iterator for getting each of entries of
+ * classifier table named as iterate_adding_mac_entry().
+ */
+int
+append_classifier_element_value(
+		struct spp_iterate_classifier_table_params *params,
+		enum spp_classifier_type type,
+		int vid, const char *mac,
+		const struct sppwk_port_idx *port)
+{
+	int ret = SPP_RET_NG;
+	char *buff, *tmp_buff;
+	char port_str[CMD_TAG_APPEND_SIZE];
+	char value_str[STR_LEN_SHORT];
+	buff = params->output;
+	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, VF_CMD_RUNNER,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = classifier_table)\n");
+		return ret;
+	}
+
+	spp_format_port_string(port_str, port->iface_type, port->iface_no);
+
+	ret = append_json_str_value(&tmp_buff, "type", CLS_TYPE_A_LIST[type]);
+	if (unlikely(ret < SPP_RET_OK))
+		return ret;
+
+	memset(value_str, 0x00, STR_LEN_SHORT);
+	switch (type) {
+	case SPP_CLASSIFIER_TYPE_MAC:
+		sprintf(value_str, "%s", mac);
+		break;
+	case SPP_CLASSIFIER_TYPE_VLAN:
+		sprintf(value_str, "%d/%s", vid, mac);
+		break;
+	default:
+		/* not used */
+		break;
+	}
+
+	ret = append_json_str_value(&tmp_buff, "value", value_str);
+	if (unlikely(ret < 0))
+		return ret;
+
+	ret = append_json_str_value(&tmp_buff, "port", port_str);
+	if (unlikely(ret < SPP_RET_OK))
+		return ret;
+
+	ret = append_json_block_brackets(&buff, "", tmp_buff);
+	spp_strbuf_free(tmp_buff);
+	params->output = buff;
+	return ret;
+}
+
 /* Get component type from string of its name. */
+/* TODO(yasufum) consider to create and move to vf_cmd_parser.c */
 enum sppwk_worker_type
 get_comp_type_from_str(const char *type_str)
 {
