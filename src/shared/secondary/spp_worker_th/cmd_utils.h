@@ -132,12 +132,9 @@ enum sppwk_port_abl_ops {
 enum SPP_LONGOPT_RETVAL {
 	SPP_LONGOPT_RETVAL__ = 127,
 
-	/*
-	 * Return value definition for getopt_long()
-	 * Only for long option
-	 */
-	SPP_LONGOPT_RETVAL_CLIENT_ID,   /* --client-id    */
-	SPP_LONGOPT_RETVAL_VHOST_CLIENT /* --vhost-client */
+	/* Return value definition for getopt_long(). Only for long option. */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,    /* For `--client-id` */
+	SPP_LONGOPT_RETVAL_VHOST_CLIENT  /* For `--vhost-client` */
 };
 
 /* Flag of processing type to copy management information */
@@ -162,23 +159,20 @@ struct spp_vlantag_info {
 	int tci; /**< Tag Control Information */
 };
 
-/**
- * Data for each port ability which indicates vlantag related information
- * for the port
- */
+/* Ability for vlantag for a port. */
 union spp_ability_data {
 	/** VLAN tag information */
 	struct spp_vlantag_info vlantag;
 };
 
-/** Port ability information */
+/* Port ability information. */
 struct spp_port_ability {
 	enum sppwk_port_abl_ops ops;  /**< Port ability Operations */
 	enum spp_port_rxtx rxtx;      /**< rx/tx identifier */
 	union spp_ability_data data;  /**< Port ability data */
 };
 
-/* Attributes for classifying . */
+/* Attributes for classifying. */
 struct sppwk_cls_attrs {
 	uint64_t mac_addr;  /**< Mac address (binary) */
 	char mac_addr_str[SPP_MIN_STR_LEN];  /**< Mac address (text) */
@@ -217,67 +211,49 @@ struct sppwk_comp_info {
 
 /* Manage given options as global variable */
 struct startup_param {
-	int client_id;		/* Client ID */
-	char server_ip[INET_ADDRSTRLEN];
-				/* IP address stiring of spp-ctl */
-	int server_port;	/* Port Number of spp-ctl */
-	int vhost_client;	/* Flag for --vhost-client option */
+	int client_id;  /* Client ID */
+	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
+	int server_port;   /* Port Number of spp-ctl */
+	int vhost_client;  /* Flag for --vhost-client option */
 	enum secondary_type secondary_type;
-				/* secondary type */
 };
 
-/* Manage number of interfaces  and port information as global variable */
+/* Manage number of interfaces  and port information as global variable. */
 struct iface_info {
-	int num_nic;		/* The number of phy */
-	int num_vhost;		/* The number of vhost */
-	int num_ring;		/* The number of ring */
+	int num_nic;    /* The number of phy */
+	int num_vhost;  /* The number of vhost */
+	int num_ring;   /* The number of ring */
 	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
-				/* Port information of phy */
 	struct sppwk_port_info vhost[RTE_MAX_ETHPORTS];
-				/* Port information of vhost */
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
-				/* Port information of ring */
 };
 
-/* Manage component running in core as global variable */
+/* Manage component running in core as global variable. */
 struct core_info {
-	int num;	       /* The number of IDs below */
-	int id[RTE_MAX_LCORE]; /* ID list of components executed on cpu core */
+	int num;  /* Number of IDs below */
+	int id[RTE_MAX_LCORE];  /* IDs of components run on the lcore. */
 };
 
-/* Manage core status and component information as global variable */
+/* Manage core status and component info as global variable. */
 struct core_mng_info {
-	/* Status of cpu core */
 	volatile enum sppwk_lcore_status status;
-
-	/* Index number of core information for reference */
-	volatile int ref_index;
-
-	/* Index number of core information for updating */
-	volatile int upd_index;
-
-	/* Core information of each cpu core */
-	struct core_info core[SPP_INFO_AREA_MAX];
+	volatile int ref_index;  /* index for reference */
+	volatile int upd_index;  /* index for update */
+	struct core_info core[SPP_INFO_AREA_MAX];  /* info of each core */
 };
 
-/* Manage data to be backup */
+/* Manage data used for backup. */
 struct cancel_backup_info {
-	/* Backup data of core information */
 	struct core_mng_info core[RTE_MAX_LCORE];
-
-	/* Backup data of component information */
 	struct sppwk_comp_info component[RTE_MAX_LCORE];
-
-	/* Backup data of interface information */
 	struct iface_info interface;
 };
 
+/* TODO(yasufum) revise using term `iterate`, or comments. */
 struct spp_iterate_core_params;
 /**
- * definition of iterated core element procedure function
- * which is member of spp_iterate_core_params structure.
- * Above structure is used when listing core information
- * (e.g) create resonse to status command.
+ * Define func to iterate lcore to list core information for showing status
+ * or so, as a member of struct `spp_iterate_core_params`.
  */
 typedef int (*spp_iterate_core_element_proc)(
 		struct spp_iterate_core_params *params,
@@ -290,24 +266,19 @@ typedef int (*spp_iterate_core_element_proc)(
 		const struct sppwk_port_idx *tx_ports);
 
 /**
- * iterate core table parameters which is
- * used when listing core table content
- * (e.g.) create response to status command.
+ * iterate core table parameters used to list content of lcore table for.
+ * showing status or so.
  */
 struct spp_iterate_core_params {
-	/** Output buffer */
-	char *output;
-
+	char *output;  /* Buffer used for output */
 	/** The function for creating core information */
 	spp_iterate_core_element_proc element_proc;
 };
 
 struct spp_iterate_classifier_table_params;
 /**
- * definition of iterated classifier element procedure function
- * which is member of spp_iterate_classifier_table_params structure.
- * Above structure is used when listing classifier table information
- * (e.g) create resonse to status command.
+ * Define func to iterate classifier for showing status or so, as a member
+ * member of struct `spp_iterate_classifier_table_params`.
  */
 typedef int (*spp_iterate_classifier_element_proc)(
 		struct spp_iterate_classifier_table_params *params,
@@ -316,14 +287,11 @@ typedef int (*spp_iterate_classifier_element_proc)(
 		const struct sppwk_port_idx *port);
 
 /**
- * iterate classifier table parameters which is
- * used when listing classifier table content
- * (e.g.) create response to status command.
+ * iterate classifier table parameters which is used when listing classifier
+ * table content for status command or so.
  */
 struct spp_iterate_classifier_table_params {
-	/* Output buffer */
-	void *output;
-
+	void *output;  /* Buffer used for output */
 	/* The function for creating classifier table information */
 	spp_iterate_classifier_element_proc element_proc;
 };
@@ -331,100 +299,76 @@ struct spp_iterate_classifier_table_params {
 /**
  * Make a hexdump of an array data in every 4 byte
  *
- * @param name
- *  dump name.
- * @param addr
- *  dump address.
- * @param size
- *  dump byte size.
- *
+ * @param name Dumped name.
+ * @param addr Dumped address.
+ * @param size Dumped byte size.
  */
 void dump_buff(const char *name, const void *addr, const size_t size);
 
 /**
- * added ring_pmd
+ * Add ring pmd for owned proccess or thread.
  *
- * @param ring_id
- *  added ring id.
- *
- * @retval 0~   ring_port_id.
- * @retval -1   failed.
+ * @param[in] ring_id added ring id.
+ * @return ring port ID, or -1 if failed.
  */
 int spp_vf_add_ring_pmd(int ring_id);
 
 /**
- * added vhost_pmd
+ * Add ring pmd for owned proccess or thread.
  *
- * @param index
- *  add vohst id.
- * @param client
- *  add client id.
- *
- * @retval 0~   vhost_port_id.
- * @retval -1   failed.
+ * @param[in] index Vohst port id.
+ * @param[in] client Client id.
+ * @return Vhost port ID, or -1 if failed.
  */
 int spp_vf_add_vhost_pmd(int index, int client);
 
 /**
  * Get core status
  *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  Status of specified logical core.
+ * @param[in] lcore_id Logical core ID.
+ * @return Status of specified logical core.
  */
 enum sppwk_lcore_status spp_get_core_status(unsigned int lcore_id);
 
 /**
  * Get component type of target component_info
  *
- * @param id
- *  component ID.
- *
- * @return
- *  Type of component executed
+ * @param id Component ID.
+ * @return Type of component executed
  */
 enum sppwk_worker_type spp_get_component_type(int id);
 
+/* TODO(yasufum) revise the name of func. */
 /**
- * Run check_core_status() for SPP_CORE_STATUS_CHECK_MAX times with
- * interval time (1sec)
+ * Run check_core_status() several times with interval, up to
+ * SPP_CORE_STATUS_CHECK_MAX times.
  *
- * @param status
- *  wait check status.
- *
- * @retval 0  succeeded.
- * @retval -1 failed.
+ * @param[in] status Status for checking.
+ * @retval  0 If succeeded.
+ * @retval -1 If failed.
  */
 int check_core_status_wait(enum sppwk_lcore_status status);
 
 /**
  * Set core status
  *
- * @param lcore_id
- *  Logical core ID.
- * @param status
- *  set status.
+ * @param lcore_id Lcore ID.
+ * @param status Status to be set.
  *
  */
 void set_core_status(unsigned int lcore_id, enum sppwk_lcore_status status);
 
 /**
- * Set all core status to given
+ * Set all core status to given one.
  *
- * @param status
- *  set status.
- *
+ * @param status status to be set.
  */
 void set_all_core_status(enum sppwk_lcore_status status);
 
 /**
- * Set all of component status to SPP_CORE_STOP_REQUEST if received signal
- * is SIGTERM or SIGINT
+ * Set all comp status to SPP_CORE_STOP_REQUEST if received SIGTERM or SIGINT.
  *
- * @param signl
- *  received signal.
+ * @param[in] signal Received signal.
  */
 void stop_process(int signal);
 
@@ -460,15 +404,11 @@ void copy_mng_info(
 /* Backup the management information */
 void backup_mng_info(struct cancel_backup_info *backup);
 
-/**
- * Setup management info for spp_vf
- */
+/* Setup management info for spp_vf */
 int init_mng_data(void);
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-/**
- * Print statistics of time for packet processing in ring interface
- */
+/* Print statistics of time for packet processing in ring interface */
 void print_ring_latency_stats(void);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -478,11 +418,8 @@ void  del_vhost_sockfile(struct sppwk_port_info *vhost);
 /**
  * Get core ID of target component
  *
- * @param component_id
- *  unique component ID.
- *
- * @return
- *  Logical core id of specified component.
+ * @param component_id Unique component ID.
+ * @return Logical core id of specified component.
  */
 unsigned int spp_get_component_core(int component_id);
 
@@ -492,27 +429,20 @@ struct core_info *get_core_info(unsigned int lcore_id);
 /**
  * Check core index change
  *
- * @param lcore_id
- *  Logical core ID.
- *
- *  True if index has changed.
- * @retval SPP_RET_OK index has changed.
- * @retval SPP_RET_NG index not changed.
+ * @param lcore_id Lcore ID.
+ * @retval SPP_RET_OK If index is updated.
+ * @retval SPP_RET_NG If index is not updated.
  */
 int spp_check_core_update(unsigned int lcore_id);
 
 /**
  * Check if component is using port.
  *
- * @param iface_type
- *  Interface type to be validated.
- * @param iface_no
- *  Interface number to be validated.
- * @param rxtx
- *  tx/rx type to be validated.
- *
- * @retval 0~127      match component ID
- * @retval SPP_RET_NG failed.
+ * @param iface_type Interface type to be validated.
+ * @param iface_no Interface number to be validated.
+ * @param rxtx Value of spp_port_rxtx to be validated.
+ * @retval 0~127      If match component ID
+ * @retval SPP_RET_NG If failed.
  */
 int spp_check_used_port(
 		enum port_type iface_type,
@@ -605,60 +535,45 @@ void update_lcore_info(void);
 /**
  * Activate temporarily stored component info while flushing.
  *
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
 int update_comp_info(void);
 
 /**
- * Port type to string
+ * Port type to string.
  *
- * @param port
- *  Character string of Port type to be converted.
- * @param iface_type
- *  port interface type
- * @param iface_no
- *  interface no
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @param port String of port type to be converted.
+ * @param iface_type Interface type.
+ * @param iface_no Interface number.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
 int
 spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 
 /**
- * Change mac address string to int64
+ * Change string of MAC address to int64.
  *
- * @param mac
- *  Character string of MAC address to be converted.
- *
- * @retval 0< int64 that store mac address
- * @retval SPP_RET_NG
+ * @param macaddr String of MAC address to be converted.
+ * @retval 0~N MAC address in int64 format.
+ * @retval SPP_RET_NG if invalid.
  */
 int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 
 /**
- * Set mange data address
+ * Set mange data address.
  *
- * @param startup_param_p
- *  g_startup_param address
- * @param iface_p
- *  g_iface_info address
- * @param component_p
- *  g_component_info address
- * @param core_mng_p
- *  g_core_info address
- * @param change_core_p
- *  g_change_core address
- * @param change_component_p
- *  g_change_component address
- * @param backup_info_p
- *  g_backup_info address
- * @param main_lcore_id
- *  main_lcore_id mask
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @param startup_param_p Pointer to  g_startup_param address.
+ * @param iface_p Pointer to g_iface_info address.
+ * @param component_p Pointer to g_component_info address.
+ * @param core_mng_p Pointer to g_core_info address.
+ * @param change_core_p Pointer to g_change_core address.
+ * @param change_component_p Pointer to g_change_component address.
+ * @param backup_info_p Pointer to g_backup_info address.
+ * @param main_lcore_id Lcore ID of main thread.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
 int sppwk_set_mng_data(struct startup_param *startup_param_p,
 		struct iface_info *iface_p,
@@ -670,22 +585,15 @@ int sppwk_set_mng_data(struct startup_param *startup_param_p,
 		unsigned int main_lcore_id);
 
 /**
- * Get mange data address
+ * Get mange data address.
  *
- * @param startup_param_p
- *  g_startup_param write address
- * @param iface_addr
- *  g_iface_info write address
- * @param component_addr
- *  g_component_info write address
- * @param core_mng_addr
- *  g_core_mng_info write address
- * @param change_core_addr
- *  g_change_core write address
- * @param change_component_addr
- *  g_change_component write address
- * @param backup_info_addr
- *  g_backup_info write address
+ * @param startup_param_p Pointer to startup params.
+ * @param iface_addr Pointer to g_iface_info.
+ * @param component_addr Pointer to g_component_info.
+ * @param core_mng_addr Pointer to g_core_mng_info.
+ * @param change_core_addr Pointer to change_core_addr.
+ * @param change_component_addr Pointer to g_change_component.
+ * @param backup_info_addr Pointer to g_backup_info.
  */
 void sppwk_get_mng_data(struct startup_param **startup_param_p,
 		struct iface_info **iface_p,
