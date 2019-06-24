@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <rte_ethdev_driver.h>
 
+#define IPADDR_LEN 16  /* Length of IP address in string. */
+
 #define MSG_SIZE 2048  /* socket buffer len */
 
 #define SOCK_RESET  -1
@@ -125,11 +127,49 @@ int set_user_log_level(int num_user_log, uint32_t log_level);
 int set_user_log_debug(int num_user_log);
 
 int parse_num_clients(uint16_t *num_clients, const char *clients);
+
 int parse_server(char **server_ip, int *server_port, char *server_addr);
 
-/* Get directory name of given proc_name */
+/**
+ * Get directory name of given proc_name.
+ *
+ * @param[in] proc_name Name of sec process such as spp_nfv.
+ * @param[out] dir_name Directory name.
+ * @return 0
+ */
 int get_sec_dir(char *proc_name, char *dir_name);
 
 extern uint8_t lcore_id_used[RTE_MAX_LCORE];
+
+/**
+ * Get IP address of spp_ctl as string.
+ *
+ * @param[in,out] s_ip IP address of spp_ctl.
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int get_spp_ctl_ip(char *s_ip);
+
+/**
+ * Set IP address of spp_ctl.
+ *
+ * @param[in] s_ip IP address of spp_ctl.
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int set_spp_ctl_ip(const char *s_ip);
+
+/**
+ * Get port number for connecting to spp_ctl as string.
+ *
+ * @return Port number, or -1 if failed.
+ */
+int get_spp_ctl_port(void);
+
+/**
+ * Set port number for connecting to spp_ctl.
+ *
+ * @param[in] s_port Port number for spp_ctl.
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int set_spp_ctl_port(int s_port);
 
 #endif

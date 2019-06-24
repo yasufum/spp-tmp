@@ -116,6 +116,7 @@ do_connection(int *connected, int *sock)
 {
 	static struct sockaddr_in servaddr;
 	int ret = 0;
+	char ctl_ip[IPADDR_LEN] = { 0 };  /* spp_ctl's IP addr. */
 
 	if (*connected == 0) {
 		if (*sock < 0) {
@@ -127,8 +128,9 @@ do_connection(int *connected, int *sock)
 			/*Create of the tcp socket*/
 			memset(&servaddr, 0, sizeof(servaddr));
 			servaddr.sin_family = AF_INET;
-			servaddr.sin_addr.s_addr = inet_addr(server_ip);
-			servaddr.sin_port = htons(server_port);
+			get_spp_ctl_ip(ctl_ip);
+			servaddr.sin_addr.s_addr = inet_addr(ctl_ip);
+			servaddr.sin_port = htons(get_spp_ctl_port());
 		}
 
 		RTE_LOG(INFO,

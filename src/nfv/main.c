@@ -65,6 +65,8 @@ parse_app_args(int argc, char *argv[])
 	int cli_id;
 	char **argvopt = argv;
 	const char *progname = argv[0];
+	char *ctl_ip;  /* IP address of spp_ctl. */
+	int ctl_port;  /* Port num to connect spp_ctl. */
 	int ret;
 
 	while ((opt = getopt_long(argc, argvopt, "n:s:", lgopts,
@@ -81,7 +83,9 @@ parse_app_args(int argc, char *argv[])
 			set_client_id(cli_id);
 			break;
 		case 's':
-			ret = parse_server(&server_ip, &server_port, optarg);
+			ret = parse_server(&ctl_ip, &ctl_port, optarg);
+			set_spp_ctl_ip(ctl_ip);
+			set_spp_ctl_port(ctl_port);
 			if (ret != 0) {
 				usage(progname);
 				return -1;

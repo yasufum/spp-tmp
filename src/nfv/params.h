@@ -26,13 +26,6 @@ static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
 /* the port details */
 struct port_info *ports;
 
-/*
- * our client id number - tells us which rx queue to read, and NIC TX
- * queue to write to.
- */
-static char *server_ip;
-static int server_port;
-
 static enum cmd_type cmd;
 
 static struct port_map port_map[RTE_MAX_ETHPORTS];
