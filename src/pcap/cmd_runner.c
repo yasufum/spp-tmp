@@ -399,7 +399,7 @@ append_client_id_value(const char *name, char **output,
 /* append a block of port entry for JSON format */
 static int
 append_port_entry(char **output, const struct sppwk_port_idx *port,
-		const enum spp_port_rxtx rxtx __attribute__ ((unused)))
+		const enum sppwk_port_dir dir __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
 	char port_str[CMD_TAG_APPEND_SIZE];
@@ -424,7 +424,7 @@ append_port_entry(char **output, const struct sppwk_port_idx *port,
 static int
 append_port_array(const char *name, char **output, const int num,
 		const struct sppwk_port_idx *ports,
-		const enum spp_port_rxtx rxtx)
+		const enum sppwk_port_dir dir)
 {
 	int ret = SPPWK_RET_NG;
 	int i = 0;
@@ -437,7 +437,7 @@ append_port_array(const char *name, char **output, const int num,
 	}
 
 	for (i = 0; i < num; i++) {
-		ret = append_port_entry(&tmp_buff, &ports[i], rxtx);
+		ret = append_port_entry(&tmp_buff, &ports[i], dir);
 		if (unlikely(ret < SPPWK_RET_OK))
 			return SPPWK_RET_NG;
 	}
@@ -493,7 +493,7 @@ append_pcap_core_element_value(
 
 	if (num_rx != 0)
 		ret = append_port_array("rx_port", &tmp_buff,
-				num_rx, rx_ports, SPP_PORT_RXTX_RX);
+				num_rx, rx_ports, SPPWK_PORT_DIR_RX);
 	else
 		ret = append_json_str_value("filename", &tmp_buff, name);
 	if (unlikely(ret < 0))

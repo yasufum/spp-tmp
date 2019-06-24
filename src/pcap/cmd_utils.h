@@ -59,15 +59,12 @@ enum sppwk_return_val {
 	SPPWK_RET_NG = -1, /**< failed */
 };
 
-/**
- * Port type (rx or tx) to indicate which direction packet goes
- * (e.g. receiving or transmitting)
- */
-enum spp_port_rxtx {
-	SPP_PORT_RXTX_NONE, /**< none */
-	SPP_PORT_RXTX_RX,   /**< rx port */
-	SPP_PORT_RXTX_TX,   /**< tx port */
-	SPP_PORT_RXTX_ALL,  /**< rx/tx port */
+/* Direction of RX or TX on a port. */
+enum sppwk_port_dir {
+	SPPWK_PORT_DIR_NONE,  /**< None */
+	SPPWK_PORT_DIR_RX,    /**< RX port */
+	SPPWK_PORT_DIR_TX,    /**< TX port */
+	SPPWK_PORT_DIR_BOTH,  /**< Both of RX and TX */
 };
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
@@ -122,7 +119,7 @@ union spp_ability_data {
 /** Port ability information */
 struct spp_port_ability {
 	enum spp_port_ability_ope ope; /**< Operation */
-	enum spp_port_rxtx rxtx;       /**< rx/tx identifier */
+	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both */
 	union spp_ability_data data;   /**< Port ability data */
 };
 
