@@ -8,8 +8,8 @@
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
-char spp_ctl_ip[IPADDR_LEN];  /* IP address of spp_ctl. */
-int spp_ctl_port;  /* Port num to connect spp_ctl. */
+char spp_ctl_ip[IPADDR_LEN] = { 0 };  /* IP address of spp_ctl. */
+int spp_ctl_port = -1;  /* Port num to connect spp_ctl. */
 
 /**
  * Set log level of type RTE_LOGTYPE_USER* to given level, for instance,

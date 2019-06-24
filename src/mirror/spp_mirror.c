@@ -101,43 +101,24 @@ usage(const char *progname)
 			, progname);
 }
 
-/* Parse options for server IP and port */
-static int
-parse_app_server(const char *server_str, char *server_ip, int *server_port)
-{
-	const char delim[2] = ":";
-	unsigned int pos = 0;
-	int port = 0;
-	char *endptr = NULL;
-
-	pos = strcspn(server_str, delim);
-	if (pos >= strlen(server_str))
-		return SPP_RET_NG;
-
-	port = strtol(&server_str[pos+1], &endptr, 0);
-	if (unlikely(&server_str[pos+1] == endptr) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
-
-	memcpy(server_ip, server_str, pos);
-	server_ip[pos] = '\0';
-	*server_port = port;
-	RTE_LOG(DEBUG, MIRROR, "Set server IP   = %s\n", server_ip);
-	RTE_LOG(DEBUG, MIRROR, "Set server port = %d\n", *server_port);
-	return SPP_RET_OK;
-}
-
 /* Parse options for client app */
 static int
 parse_app_args(int argc, char *argv[])
 {
+	int cli_id;  /* Client ID. */
+	char *ctl_ip;  /* IP address of spp_ctl. */
+	int ctl_port;  /* Port num to connect spp_ctl. */
+	int ret;
 	int cnt;
-	int cli_id;
+	int option_index, opt;
+
 	int proc_flg = 0;
 	int server_flg = 0;
-	int option_index, opt;
+
 	const int argcopt = argc;
 	char *argvopt[argcopt];
 	const char *progname = argv[0];
+
 	static struct option lgopts[] = {
 			{ "client-id", required_argument, NULL,
 					SPP_LONGOPT_RETVAL_CLIENT_ID },
@@ -175,12 +156,13 @@ parse_app_args(int argc, char *argv[])
 			g_enable_vhost_cli = 1;
 			break;
 		case 's':
-			if (parse_app_server(optarg, g_startup_param.server_ip,
-					     &g_startup_param.server_port) !=
-					     SPP_RET_OK) {
+			ret = parse_server(&ctl_ip, &ctl_port, optarg);
+			if (ret != SPP_RET_OK) {
 				usage(progname);
 				return SPP_RET_NG;
 			}
+			set_spp_ctl_ip(ctl_ip);
+			set_spp_ctl_port(ctl_port);
 			server_flg = 1;
 			break;
 		default:
@@ -197,8 +179,7 @@ parse_app_args(int argc, char *argv[])
 	RTE_LOG(INFO, MIRROR,
 			"Parsed app args (client_id=%d, server=%s:%d, "
 			"vhost_client=%d,)\n",
-			cli_id, g_startup_param.server_ip,
-			g_startup_param.server_port, g_enable_vhost_cli);
+			cli_id, ctl_ip, ctl_port, g_enable_vhost_cli);
 	return SPP_RET_OK;
 }
 
@@ -488,6 +469,11 @@ int
 main(int argc, char *argv[])
 {
 	int ret = SPP_RET_NG;
+	char ctl_ip[IPADDR_LEN] = { 0 };
+	int ctl_port;
+	int ret_cmd_init;
+	unsigned int lcore_id;
+
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
 	int ret_daemon = daemon(0, 0);
@@ -543,10 +529,10 @@ main(int argc, char *argv[])
 		spp_port_ability_init();
 
 		/* Setup connection for accepting commands from controller */
-		int ret_command_init = sppwk_cmd_runner_conn(
-				g_startup_param.server_ip,
-				g_startup_param.server_port);
-		if (unlikely(ret_command_init != SPP_RET_OK))
+		get_spp_ctl_ip(ctl_ip);
+		ctl_port = get_spp_ctl_port();
+		ret_cmd_init = sppwk_cmd_runner_conn(ctl_ip, ctl_port);
+		if (unlikely(ret_cmd_init != SPP_RET_OK))
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -558,7 +544,7 @@ main(int argc, char *argv[])
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 		/* Start worker threads of classifier and forwarder */
-		unsigned int lcore_id = 0;
+		lcore_id = 0;
 		RTE_LCORE_FOREACH_SLAVE(lcore_id) {
 			rte_eal_remote_launch(slave_main, NULL, lcore_id);
 		}
