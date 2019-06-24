@@ -239,3 +239,27 @@ class SppPcap(object):
                             status['core_ids'].append(wk['core'])
 
         return status
+
+    @classmethod
+    def help(cls):
+        msg = """Send a command to spp_pcap.
+
+        Spp_pcap is a secondary process for capturing incoming packets.
+
+        'start' for launching a worker is replaced with 'stop' for
+        terminating. 'exit' for spp_pcap terminating.
+
+        Examples:
+
+        # (1) show status of worker threads and resources
+        spp > pcap 1; status
+
+        # (2) launch or terminate capture thread
+        spp > pcap 1; start
+        spp > pcap 1; stop
+
+        # (3) terminate spp_pcap secondaryd
+        spp > pcap 1; exit
+        """
+
+        print(msg)

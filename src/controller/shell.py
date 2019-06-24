@@ -475,25 +475,7 @@ class Shell(cmd.Cmd, object):
                         self.get_sec_ids('mirror'), text, line, begidx, endidx)
 
     def do_pcap(self, cmd):
-        """Send a command to spp_pcap.
-
-        Spp_pcap is a secondary process for capturing incoming packets.
-
-        'start' for launching a worker is replaced with 'stop' for
-        terminating. 'exit' for spp_pcap terminating.
-
-        Examples:
-
-        # (1) show status of worker threads and resources
-        spp > pcap 1; status
-
-        # (2) launch or terminate capture thread
-        spp > pcap 1; start
-        spp > pcap 1; stop
-
-        # (3) terminate spp_pcap secondaryd
-        spp > pcap 1; exit
-        """
+        """Send a command to spp_pcap."""
 
         # remove unwanted spaces to avoid invalid command error
         tmparg = self.clean_cmd(cmd)
@@ -505,6 +487,10 @@ class Shell(cmd.Cmd, object):
                 self.secondaries['pcap'][int(cmds[0])].run(cmds[1])
         else:
             print('Invalid command: {}'.format(tmparg))
+
+    def help_pcap(self):
+        """Print help message of pcap command."""
+        pcap.SppPcap.help()
 
     def complete_pcap(self, text, line, begidx, endidx):
         """Completion for pcap command."""
