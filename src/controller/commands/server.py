@@ -258,3 +258,36 @@ class SppCtlServer(object):
                 removed.ip_addr, removed.port))
 
         return True
+
+    @classmethod
+    def help(cls):
+        msg = """Switch SPP REST API server.
+
+        Show a list of servers. '*' means that it is under the control.
+
+            spp > server  # or 'server list'
+              1: 192.168.1.101:7777 *
+              2: 192.168.1.102:7777
+
+        Switch to the second node with index or address.
+
+            spp > server 2
+            Switch spp-ctl to "2: 192.168.1.102:7777".
+
+            # It is the same
+            spp > server 192.168.1.101  # no need port if default
+            Switch spp-ctl to "1: 192.168.1.101:7777".
+
+        Register or unregister a node by using 'add' or 'del' command.
+        For unregistering, node is also specified with index.
+
+            # Register third node
+            spp > server add 192.168.122.177
+            Registered spp-ctl "192.168.122.177:7777".
+
+            # Unregister second one
+            spp > server del 2  # or 192.168.1.102
+            Unregistered spp-ctl "192.168.1.102:7777".
+        """
+
+        print(msg)

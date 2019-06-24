@@ -253,37 +253,14 @@ class Shell(cmd.Cmd, object):
             self.recorded_file = None
 
     def do_server(self, commands):
-        """Switch SPP REST API server.
-
-        Show a list of servers. '*' means that it is under the control.
-
-            spp > server  # or 'server list'
-              1: 192.168.1.101:7777 *
-              2: 192.168.1.102:7777
-
-        Switch to the second node with index or address.
-
-            spp > server 2
-            Switch spp-ctl to "2: 192.168.1.102:7777".
-
-            # It is the same
-            spp > server 192.168.1.101  # no need port if default
-            Switch spp-ctl to "1: 192.168.1.101:7777".
-
-        Register or unregister a node by using 'add' or 'del' command.
-        For unregistering, node is also specified with index.
-
-            # Register third node
-            spp > server add 192.168.122.177
-            Registered spp-ctl "192.168.122.177:7777".
-
-            # Unregister second one
-            spp > server del 2  # or 192.168.1.102
-            Unregistered spp-ctl "192.168.1.102:7777".
-        """
+        """Switch SPP REST API server."""
 
         self.spp_ctl_server.run(commands)
         self.spp_ctl_cli = self.spp_ctl_server.get_current_server()
+
+    def help_server(self):
+        """Print help message of server command."""
+        server.SppCtlServer.help()
 
     def complete_server(self, text, line, begidx, endidx):
         """Completion for server command."""
