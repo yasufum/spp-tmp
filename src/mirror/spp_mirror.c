@@ -9,6 +9,7 @@
 #include <rte_common.h>
 #include <rte_cycles.h>
 
+#include "spp_mirror.h"
 #include "shared/common.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/utils.h"
@@ -457,50 +458,6 @@ mirror_proc(int id)
 	return SPP_RET_OK;
 }
 
-/* Mirror get component status */
-int
-get_mirror_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params)
-{
-	int ret = SPP_RET_NG;
-	int cnt;
-	const char *component_type = NULL;
-	struct mirror_info *info = &g_mirror_info[id];
-	struct mirror_path *path = &info->path[info->ref_index];
-	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
-	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
-
-	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
-		RTE_LOG(ERR, MIRROR,
-			"Mirror is not used. (id=%d, lcore=%d, type=%d)\n",
-			id, lcore_id, path->wk_type);
-		return SPP_RET_NG;
-	}
-
-	component_type = SPPWK_TYPE_MIR_STR;
-
-	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < path->nof_rx; cnt++) {
-		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
-		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
-	}
-
-	memset(tx_ports, 0x00, sizeof(tx_ports));
-	for (cnt = 0; cnt < path->nof_tx; cnt++) {
-		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
-		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
-	}
-
-	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(params, lcore_id, path->name,
-			component_type, path->nof_rx, rx_ports, path->nof_tx,
-			tx_ports);
-	if (unlikely(ret != 0))
-		return SPP_RET_NG;
-
-	return SPP_RET_OK;
-}
-
 /* Main process of slave core */
 static int
 slave_main(void *arg __attribute__ ((unused)))
@@ -705,4 +662,48 @@ main(int argc, char *argv[])
 
 	RTE_LOG(INFO, MIRROR, "spp_mirror exit.\n");
 	return ret;
+}
+
+/* Mirror get component status */
+int
+get_mirror_status(unsigned int lcore_id, int id,
+		struct spp_iterate_core_params *params)
+{
+	int ret = SPP_RET_NG;
+	int cnt;
+	const char *component_type = NULL;
+	struct mirror_info *info = &g_mirror_info[id];
+	struct mirror_path *path = &info->path[info->ref_index];
+	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
+
+	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
+		RTE_LOG(ERR, MIRROR,
+			"Mirror is not used. (id=%d, lcore=%d, type=%d)\n",
+			id, lcore_id, path->wk_type);
+		return SPP_RET_NG;
+	}
+
+	component_type = SPPWK_TYPE_MIR_STR;
+
+	memset(rx_ports, 0x00, sizeof(rx_ports));
+	for (cnt = 0; cnt < path->nof_rx; cnt++) {
+		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
+		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
+	}
+
+	memset(tx_ports, 0x00, sizeof(tx_ports));
+	for (cnt = 0; cnt < path->nof_tx; cnt++) {
+		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
+		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
+	}
+
+	/* Set the information with the function specified by the command. */
+	ret = (*params->element_proc)(params, lcore_id, path->name,
+			component_type, path->nof_rx, rx_ports, path->nof_tx,
+			tx_ports);
+	if (unlikely(ret != 0))
+		return SPP_RET_NG;
+
+	return SPP_RET_OK;
 }

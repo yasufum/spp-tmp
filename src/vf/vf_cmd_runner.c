@@ -3,9 +3,13 @@
  */
 
 #include "classifier_mac.h"
+#include "spp_forward.h"
 #include "shared/secondary/return_codes.h"
+#include "shared/secondary/string_buffer.h"
+#include "shared/secondary/json_helper.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
+#include "shared/secondary/spp_worker_th/cmd_res_formatter.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 
 #define RTE_LOGTYPE_VF_CMD_RUNNER RTE_LOGTYPE_USER1
@@ -407,5 +411,93 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 		break;
 	}
 
+	return ret;
+}
+
+/* Iterate core information to create response to status command */
+static int
+spp_iterate_core_info(struct spp_iterate_core_params *params)
+{
+	int ret;
+	int lcore_id, cnt;
+	struct core_info *core = NULL;
+	struct sppwk_comp_info *comp_info_base = NULL;
+	struct sppwk_comp_info *comp_info = NULL;
+
+	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+		if (spp_get_core_status(lcore_id) == SPP_CORE_UNUSE)
+			continue;
+
+		core = get_core_info(lcore_id);
+		if (core->num == 0) {
+			ret = (*params->element_proc)(
+				params, lcore_id,
+				"", SPPWK_TYPE_NONE_STR,
+				0, NULL, 0, NULL);
+			if (unlikely(ret != 0)) {
+				RTE_LOG(ERR, VF_CMD_RUNNER,
+						"Cannot iterate core "
+						"information. "
+						"(core = %d, type = %d)\n",
+						lcore_id, SPPWK_TYPE_NONE);
+				return SPP_RET_NG;
+			}
+			continue;
+		}
+
+		for (cnt = 0; cnt < core->num; cnt++) {
+			sppwk_get_mng_data(NULL, NULL, &comp_info_base,
+							NULL, NULL, NULL, NULL);
+			comp_info = (comp_info_base + core->id[cnt]);
+
+			if (comp_info->wk_type == SPPWK_TYPE_CLS) {
+				ret = get_classifier_status(lcore_id,
+						core->id[cnt], params);
+			} else {
+				ret = get_forwarder_status(lcore_id,
+						core->id[cnt], params);
+			}
+
+			if (unlikely(ret != 0)) {
+				RTE_LOG(ERR, VF_CMD_RUNNER,
+						"Cannot iterate core "
+						"information. "
+						"(core = %d, type = %d)\n",
+						lcore_id, comp_info->wk_type);
+				return SPP_RET_NG;
+			}
+		}
+	}
+
+	return SPP_RET_OK;
+}
+
+/* Add entry of core info of worker to a response in JSON such as "core:0". */
+int
+add_core(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	struct spp_iterate_core_params itr_params;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, VF_CMD_RUNNER,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = %s)\n",
+				name);
+		return SPP_RET_NG;
+	}
+
+	itr_params.output = tmp_buff;
+	itr_params.element_proc = append_core_element_value;
+
+	ret = spp_iterate_core_info(&itr_params);
+	if (unlikely(ret != SPP_RET_OK)) {
+		spp_strbuf_free(itr_params.output);
+		return SPP_RET_NG;
+	}
+
+	ret = append_json_array_brackets(output, name, itr_params.output);
+	spp_strbuf_free(itr_params.output);
 	return ret;
 }

@@ -10,6 +10,9 @@
 
 int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
 
+int add_core(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 /**
  * Update mirror info.
  *
@@ -18,17 +21,5 @@ int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
  * @retval SPP_RET_NG If failed.
  */
 int update_mirror(struct sppwk_comp_info *wk_comp_info);
-
-/**
- * Get mirror status.
- *
- * @param lcore_id Lcore ID for forwarder and merger.
- * @param id Unique component ID.
- * @param params Pointer to detailed data of mirror status.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
- */
-int get_mirror_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
 
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */

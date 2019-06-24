@@ -43,6 +43,9 @@ struct cls_comp_info {
 	struct cls_port_info tx_ports_i[RTE_MAX_ETHPORTS];  /* TX info. */
 };
 
+int add_core(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 /* Release instance of mac classifier. */
 static inline void
 free_mac_classifier(struct mac_classifier *mac_clf)
@@ -86,29 +89,5 @@ void uninit_component_info(struct cls_comp_info *cmp_info);
  */
 int add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params);
-
-/**
- * Get classifier status.
- *
- * @param[in] lcore_id Lcore ID for classifier.
- * @param[in] id Unique component ID.
- * @param[in,out] params Pointer to detailed data of classifier status.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
- */
-int get_classifier_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
-
-/**
- * Get forwarder status.
- *
- * @param lcore_id Lcore ID for forwarder and merger.
- * @param id Unique component ID.
- * @param params Pointer detailed data of forwarder and merger status.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
- */
-int get_forwarder_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
 
 #endif  /* _SPPWK_TH_VF_DEPS_H_ */

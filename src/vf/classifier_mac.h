@@ -5,6 +5,8 @@
 #ifndef _CLASSIFIER_MAC_H_
 #define _CLASSIFIER_MAC_H_
 
+#include "shared/secondary/spp_worker_th/cmd_utils.h"
+
 /**
  * @file
  * SPP Classifier
@@ -58,5 +60,23 @@ int spp_classifier_mac_do(int id);
  */
 int add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params);
+
+/**
+ * Get classifier status.
+ *
+ * @param[in] lcore_id Lcore ID for classifier.
+ * @param[in] id Unique component ID.
+ * @param[in,out] params Pointer to detailed data of classifier status.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
+ */
+/**
+ * TODO(yasufum) Consider to move this function to `vf_cmd_runner.c`.
+ * This function is called only from `vf_cmd_runner.c`, but
+ * must be defined in `classifier_mac.c` because it refers g_mng_info defined
+ * in this file. It is bad dependency for the global variable.
+ */
+int get_classifier_status(unsigned int lcore_id, int id,
+		struct spp_iterate_core_params *params);
 
 #endif /* _CLASSIFIER_MAC_H_ */

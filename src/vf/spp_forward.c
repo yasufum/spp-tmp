@@ -50,6 +50,55 @@ spp_forward_init(void)
 	}
 }
 
+/* Get forwarder status. */
+int
+get_forwarder_status(unsigned int lcore_id, int id,
+		struct spp_iterate_core_params *params)
+{
+	int ret = SPP_RET_NG;
+	int cnt;
+	const char *component_type = NULL;
+	struct forward_info *fwd_info = &g_forward_info[id];
+	struct forward_path *fwd_path = &fwd_info->path[fwd_info->ref_index];
+	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
+
+	if (unlikely(fwd_path->wk_type == SPPWK_TYPE_NONE)) {
+		RTE_LOG(ERR, FORWARD,
+				"Forwarder is not used. "
+				"(id=%d, lcore=%d, type=%d).\n",
+				id, lcore_id, fwd_path->wk_type);
+		return SPP_RET_NG;
+	}
+
+	if (fwd_path->wk_type == SPPWK_TYPE_MRG)
+		component_type = SPPWK_TYPE_MRG_STR;
+	else
+		component_type = SPPWK_TYPE_FWD_STR;
+
+	memset(rx_ports, 0x00, sizeof(rx_ports));
+	for (cnt = 0; cnt < fwd_path->num_rx; cnt++) {
+		rx_ports[cnt].iface_type = fwd_path->ports[cnt].rx.iface_type;
+		rx_ports[cnt].iface_no = fwd_path->ports[cnt].rx.iface_no;
+	}
+
+	memset(tx_ports, 0x00, sizeof(tx_ports));
+	for (cnt = 0; cnt < fwd_path->num_tx; cnt++) {
+		tx_ports[cnt].iface_type = fwd_path->ports[cnt].tx.iface_type;
+		tx_ports[cnt].iface_no = fwd_path->ports[cnt].tx.iface_no;
+	}
+
+	/* Set the information with the function specified by the command. */
+	ret = (*params->element_proc)(
+		params, lcore_id,
+		fwd_path->name, component_type,
+		fwd_path->num_rx, rx_ports, fwd_path->num_tx, tx_ports);
+	if (unlikely(ret != SPP_RET_OK))
+		return SPP_RET_NG;
+
+	return SPP_RET_OK;
+}
+
 /* Update forward info */
 int
 update_forwarder(struct sppwk_comp_info *comp_info)
@@ -180,54 +229,5 @@ spp_forward(int id)
 				rte_pktmbuf_free(bufs[buf]);
 		}
 	}
-	return SPP_RET_OK;
-}
-
-/* Get forwarder status */
-int
-get_forwarder_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params)
-{
-	int ret = SPP_RET_NG;
-	int cnt;
-	const char *component_type = NULL;
-	struct forward_info *fwd_info = &g_forward_info[id];
-	struct forward_path *fwd_path = &fwd_info->path[fwd_info->ref_index];
-	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
-	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
-
-	if (unlikely(fwd_path->wk_type == SPPWK_TYPE_NONE)) {
-		RTE_LOG(ERR, FORWARD,
-				"Forwarder is not used. "
-				"(id=%d, lcore=%d, type=%d).\n",
-				id, lcore_id, fwd_path->wk_type);
-		return SPP_RET_NG;
-	}
-
-	if (fwd_path->wk_type == SPPWK_TYPE_MRG)
-		component_type = SPPWK_TYPE_MRG_STR;
-	else
-		component_type = SPPWK_TYPE_FWD_STR;
-
-	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < fwd_path->num_rx; cnt++) {
-		rx_ports[cnt].iface_type = fwd_path->ports[cnt].rx.iface_type;
-		rx_ports[cnt].iface_no = fwd_path->ports[cnt].rx.iface_no;
-	}
-
-	memset(tx_ports, 0x00, sizeof(tx_ports));
-	for (cnt = 0; cnt < fwd_path->num_tx; cnt++) {
-		tx_ports[cnt].iface_type = fwd_path->ports[cnt].tx.iface_type;
-		tx_ports[cnt].iface_no = fwd_path->ports[cnt].tx.iface_no;
-	}
-
-	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(
-		params, lcore_id,
-		fwd_path->name, component_type,
-		fwd_path->num_rx, rx_ports, fwd_path->num_tx, tx_ports);
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_NG;
-
 	return SPP_RET_OK;
 }
