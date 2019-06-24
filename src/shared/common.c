@@ -122,11 +122,11 @@ int get_sec_dir(char *proc_name, char *dir_name)
 /* Get IP address of spp_ctl as string. */
 int get_spp_ctl_ip(char *s_ip)
 {
-	sprintf(s_ip, "%s", spp_ctl_ip);
 	if (spp_ctl_ip == NULL) {
-		RTE_LOG(ERR, SHARED, "Failed to get IP of spp_ctl.\n");
+		RTE_LOG(ERR, SHARED, "IP addr of spp_ctl not initialized.\n");
 		return -1;
 	}
+	sprintf(s_ip, "%s", spp_ctl_ip);
 	return 0;
 }
 
