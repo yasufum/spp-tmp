@@ -49,7 +49,7 @@ const char *PORT_ABILITY_STAT_LIST[] = {
 };
 
 /* command response result string list */
-struct cmd_response response_result_list[] = {
+struct cmd_res_formatter_ops response_result_list[] = {
 	{ "result", append_result_value },
 	{ "error_details", append_error_details_value },
 	{ "", NULL }
@@ -67,7 +67,7 @@ struct cmd_response response_result_list[] = {
  *                 "core": 2,
  *                 ...
  */
-struct cmd_response response_info_list[] = {
+struct cmd_res_formatter_ops response_info_list[] = {
 	{ "client-id", add_client_id },
 	{ "phy", add_interface },
 	{ "vhost", add_interface },
@@ -392,8 +392,8 @@ append_core_element_value(
 
 /* append string of command response list for JSON format */
 int
-append_response_list_value(char **output, struct cmd_response *responses,
-		void *tmp)
+append_response_list_value(char **output,
+		struct cmd_res_formatter_ops *responses, void *tmp)
 {
 	int ret = SPP_RET_NG;
 	int i;
@@ -559,8 +559,8 @@ wk_get_client_id(void)
 
 /**
  * Operator functions start with prefix `add_` defined in `response_info_list`
- * of struct `cmd_response` which are for making each of parts of command
- * response.
+ * of struct `cmd_res_formatter_ops` which are for making each of parts of
+ * command response.
  */
 
 /* Add entry of client ID such as `"client-id": 1` to a response in JSON. */
@@ -614,4 +614,3 @@ add_master_lcore(const char *name, char **output,
 	ret = append_json_int_value(output, name, rte_get_master_lcore());
 	return ret;
 }
-

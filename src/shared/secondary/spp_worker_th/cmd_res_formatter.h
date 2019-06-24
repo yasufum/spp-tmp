@@ -26,8 +26,7 @@ struct cmd_result {
  * Contains command response and operator func for. It is used as an array of
  * this struct.
  */
-/* TODO(yasufum) add comment describes the purpose of this struct is used. */
-struct cmd_response {
+struct cmd_res_formatter_ops {
 	char tag_name[CMD_RES_TAG_LEN];
 	int (*func)(const char *name, char **output, void *tmp);
 };
@@ -56,8 +55,8 @@ int append_core_element_value(struct spp_iterate_core_params *params,
 		const int num_rx, const struct sppwk_port_idx *rx_ports,
 		const int num_tx, const struct sppwk_port_idx *tx_ports);
 
-int append_response_list_value(char **output, struct cmd_response *responses,
-		void *tmp);
+int append_response_list_value(char **output,
+		struct cmd_res_formatter_ops *responses, void *tmp);
 
 int append_command_results_value(const char *name, char **output,
 		int num, struct cmd_result *results);
@@ -66,8 +65,8 @@ int append_info_value(const char *name, char **output);
 
 /**
  * Operator functions start with prefix `add_` defined in `response_info_list`
- * of struct `cmd_response` which are for making each of parts of command
- * response.
+ * of struct `cmd_res_formatter_ops` which are for making each of parts of
+ * command response.
  */
 int add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
