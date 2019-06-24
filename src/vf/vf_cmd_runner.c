@@ -297,11 +297,11 @@ update_port(enum sppwk_action wk_action,
 		if (port_idx >= SPP_RET_OK) {
 			/* registered */
 			if (ability->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
-				while ((cnt < SPP_PORT_ABILITY_MAX) &&
+				while ((cnt < PORT_ABL_MAX) &&
 					    (port_info->ability[cnt].ops !=
 					    SPPWK_PORT_ABL_OPS_ADD_VLANTAG))
 					cnt++;
-				if (cnt >= SPP_PORT_ABILITY_MAX) {
+				if (cnt >= PORT_ABL_MAX) {
 					RTE_LOG(ERR, VF_CMD_RUNNER, "update VLAN tag "
 						"Non-registratio\n");
 					return SPP_RET_NG;
@@ -322,12 +322,12 @@ update_port(enum sppwk_action wk_action,
 		}
 
 		if (ability->ops != SPPWK_PORT_ABL_OPS_NONE) {
-			while ((cnt < SPP_PORT_ABILITY_MAX) &&
+			while ((cnt < PORT_ABL_MAX) &&
 					(port_info->ability[cnt].ops !=
 					SPPWK_PORT_ABL_OPS_NONE)) {
 				cnt++;
 			}
-			if (cnt >= SPP_PORT_ABILITY_MAX) {
+			if (cnt >= PORT_ABL_MAX) {
 				RTE_LOG(ERR, VF_CMD_RUNNER,
 						"No space of port ability.\n");
 				return SPP_RET_NG;
@@ -344,7 +344,7 @@ update_port(enum sppwk_action wk_action,
 		break;
 
 	case SPPWK_ACT_DEL:
-		for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
+		for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
 			if (port_info->ability[cnt].ops ==
 					SPPWK_PORT_ABL_OPS_NONE)
 				continue;

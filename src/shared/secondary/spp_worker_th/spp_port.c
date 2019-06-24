@@ -16,7 +16,7 @@
 struct port_abl_info {
 	volatile int ref_index; /* Index to reference area. */
 	volatile int upd_index; /* Index to update area. */
-	struct spp_port_ability ability[TWO_SIDES][SPP_PORT_ABILITY_MAX];
+	struct spp_port_ability ability[TWO_SIDES][PORT_ABL_MAX];
 				/* Port ability information. */
 };
 
@@ -267,8 +267,8 @@ port_ability_set_ability(struct sppwk_port_info *port,
 
 	out_ability = mng->ability[mng->upd_index];
 	memset(out_ability, 0x00, sizeof(struct spp_port_ability)
-			* SPP_PORT_ABILITY_MAX);
-	for (in_cnt = 0; in_cnt < SPP_PORT_ABILITY_MAX; in_cnt++) {
+			* PORT_ABL_MAX);
+	for (in_cnt = 0; in_cnt < PORT_ABL_MAX; in_cnt++) {
 		if (in_ability[in_cnt].dir != dir)
 			continue;
 
@@ -338,7 +338,7 @@ port_ability_each_operation(uint16_t port_id,
 	if (unlikely(info[0].ops == SPPWK_PORT_ABL_OPS_NONE))
 		return nb_pkts;
 
-	for (cnt = 0; cnt < SPP_PORT_ABILITY_MAX; cnt++) {
+	for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
 		if (info[cnt].ops == SPPWK_PORT_ABL_OPS_NONE)
 			break;
 

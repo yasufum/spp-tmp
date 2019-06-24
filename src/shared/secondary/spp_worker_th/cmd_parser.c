@@ -632,7 +632,7 @@ parse_mac_addr(void *output, const char *arg_val,
 
 	/* If given value is the default, use dummy address instead. */
 	if (unlikely(strcmp(str_val, SPPWK_TERM_DEFAULT) == 0))
-		str_val = SPP_DEFAULT_CLASSIFIED_DMY_ADDR_STR;
+		str_val = CLS_DUMMY_ADDR_STR;
 
 	/* Check if the given value is valid. */
 	res = sppwk_convert_mac_str_to_int64(str_val);

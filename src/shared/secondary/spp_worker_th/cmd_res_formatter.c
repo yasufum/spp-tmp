@@ -23,7 +23,7 @@ static int append_error_details_value(const char *name, char **output,
 
 /**
  * List of worker process type. The order of items should be same as the order
- * of enum `secondary_type` in cmd_utils.h.
+ * of enum `wk_proc_type` in cmd_utils.h.
  */
 /* TODO(yasufum) Add "pcap" after spp_pcap is made to use shared. */
 const char *SPPWK_PROC_TYPE_LIST[] = {
@@ -179,7 +179,7 @@ append_vlan_block(const char *name, char **output,
 	}
 
 	spp_port_ability_get_info(port_id, dir, &info);
-	for (i = 0; i < SPP_PORT_ABILITY_MAX; i++) {
+	for (i = 0; i < PORT_ABL_MAX; i++) {
 		switch (info[i].ops) {
 		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
@@ -194,14 +194,14 @@ append_vlan_block(const char *name, char **output,
 			 * An if statement after loop termination is false
 			 * by "maximum+1 ".
 			 */
-			i = SPP_PORT_ABILITY_MAX + 1;
+			i = PORT_ABL_MAX + 1;
 			break;
 		default:
 			/* not used */
 			break;
 		}
 	}
-	if (i == SPP_PORT_ABILITY_MAX) {
+	if (i == PORT_ABL_MAX) {
 		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_ABL_OPS_NONE,
 				0, 0);
 		if (unlikely(ret < SPP_RET_OK))

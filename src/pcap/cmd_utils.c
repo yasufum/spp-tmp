@@ -13,7 +13,7 @@
 #define RTE_LOGTYPE_PCAP_UTILS RTE_LOGTYPE_USER2
 
 /* Manage data to addoress */
-struct manage_data_addr_info {
+struct mng_data_info {
 	struct startup_param	  *p_startup_param;
 	struct iface_info	  *p_iface_info;
 	struct core_mng_info	  *p_core_info;
@@ -24,7 +24,7 @@ struct manage_data_addr_info {
 
 /* Declare global variables */
 /* Logical core ID for main process */
-static struct manage_data_addr_info g_mng_data_addr;
+static struct mng_data_info g_mng_data_addr;
 
 /* generation of the ring port */
 int
@@ -206,11 +206,11 @@ set_nic_interface(void)
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 
 	/* NIC Setting */
-	p_iface_info->num_nic = rte_eth_dev_count_avail();
-	if (p_iface_info->num_nic > RTE_MAX_ETHPORTS)
-		p_iface_info->num_nic = RTE_MAX_ETHPORTS;
+	p_iface_info->nof_phys = rte_eth_dev_count_avail();
+	if (p_iface_info->nof_phys > RTE_MAX_ETHPORTS)
+		p_iface_info->nof_phys = RTE_MAX_ETHPORTS;
 
-	for (nic_cnt = 0; nic_cnt < p_iface_info->num_nic; nic_cnt++) {
+	for (nic_cnt = 0; nic_cnt < p_iface_info->nof_phys; nic_cnt++) {
 		p_iface_info->nic[nic_cnt].iface_type   = PHY;
 		p_iface_info->nic[nic_cnt].ethdev_port_id = nic_cnt;
 	}
@@ -258,47 +258,47 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 }
 
 /* Set mange data address */
-int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
-			  struct iface_info *iface_addr,
-			  struct core_mng_info *core_mng_addr,
-			  int *capture_request_addr,
-			  int *capture_status_addr,
+int spp_set_mng_data_addr(struct startup_param *startup_param_p,
+			  struct iface_info *iface_p,
+			  struct core_mng_info *core_mng_p,
+			  int *capture_request_p,
+			  int *capture_status_p,
 			  unsigned int main_lcore_id)
 {
-	if (startup_param_addr == NULL || iface_addr == NULL ||
-			core_mng_addr == NULL ||
-			capture_request_addr == NULL ||
-			capture_status_addr == NULL ||
+	if (startup_param_p == NULL || iface_p == NULL ||
+			core_mng_p == NULL ||
+			capture_request_p == NULL ||
+			capture_status_p == NULL ||
 			main_lcore_id == 0xffffffff)
 		return SPPWK_RET_NG;
 
-	g_mng_data_addr.p_startup_param = startup_param_addr;
-	g_mng_data_addr.p_iface_info = iface_addr;
-	g_mng_data_addr.p_core_info = core_mng_addr;
-	g_mng_data_addr.p_capture_request = capture_request_addr;
-	g_mng_data_addr.p_capture_status = capture_status_addr;
+	g_mng_data_addr.p_startup_param = startup_param_p;
+	g_mng_data_addr.p_iface_info = iface_p;
+	g_mng_data_addr.p_core_info = core_mng_p;
+	g_mng_data_addr.p_capture_request = capture_request_p;
+	g_mng_data_addr.p_capture_status = capture_status_p;
 	g_mng_data_addr.main_lcore_id = main_lcore_id;
 
 	return SPPWK_RET_OK;
 }
 
 /* Get manage data address */
-void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
-			   struct iface_info **iface_addr,
-			   struct core_mng_info **core_mng_addr,
-			   int **capture_request_addr,
-			   int **capture_status_addr)
+void spp_get_mng_data_addr(struct startup_param **startup_param_p,
+			   struct iface_info **iface_p,
+			   struct core_mng_info **core_mng_p,
+			   int **capture_request_p,
+			   int **capture_status_p)
 {
 
-	if (startup_param_addr != NULL)
-		*startup_param_addr = g_mng_data_addr.p_startup_param;
-	if (iface_addr != NULL)
-		*iface_addr = g_mng_data_addr.p_iface_info;
-	if (core_mng_addr != NULL)
-		*core_mng_addr = g_mng_data_addr.p_core_info;
-	if (capture_request_addr != NULL)
-		*capture_request_addr = g_mng_data_addr.p_capture_request;
-	if (capture_status_addr != NULL)
-		*capture_status_addr = g_mng_data_addr.p_capture_status;
+	if (startup_param_p != NULL)
+		*startup_param_p = g_mng_data_addr.p_startup_param;
+	if (iface_p != NULL)
+		*iface_p = g_mng_data_addr.p_iface_info;
+	if (core_mng_p != NULL)
+		*core_mng_p = g_mng_data_addr.p_core_info;
+	if (capture_request_p != NULL)
+		*capture_request_p = g_mng_data_addr.p_capture_request;
+	if (capture_status_p != NULL)
+		*capture_status_p = g_mng_data_addr.p_capture_status;
 
 }

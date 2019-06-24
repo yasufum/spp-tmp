@@ -5,14 +5,13 @@
 #ifndef _SPPWK_CMD_UTILS_H_
 #define _SPPWK_CMD_UTILS_H_
 
-#include <netinet/in.h>
-
 /**
  * @file cmd_utils.h
  *
  * Command utility functions for SPP worker thread.
  */
 
+#include <netinet/in.h>
 #include "shared/common.h"
 
 /**
@@ -24,6 +23,7 @@
 #define SPPWK_TYPE_MRG_STR "merge"
 #define SPPWK_TYPE_FWD_STR "forward"
 #define SPPWK_TYPE_MIR_STR "mirror"
+#define SPPWK_TYPE_PCAP_STR "pcap"
 #define SPPWK_TYPE_NONE_STR "unuse"
 
 /** Identifier string for each interface */
@@ -31,19 +31,22 @@
 #define SPP_IFTYPE_VHOST_STR "vhost"
 #define SPP_IFTYPE_RING_STR  "ring"
 
-/** Update wait timer (micro sec) */
-#define SPP_CHANGE_UPDATE_INTERVAL 10
+/** Waiting time for checking update (not used for spp_pcap). */
+#define SPP_CHANGE_UPDATE_INTERVAL 10  /* micro sec */
 
-/* Used for index of arrary of management data which has two sides. */
+/**
+ * Used for index of arrary of management data which has two sides. It is not
+ * used for spp_pcap.
+ */
 #define TWO_SIDES 2
 
 #define STR_LEN_SHORT 32  /* Size of short string. */
 #define STR_LEN_NAME 128  /* Size of string for names. */
 
 /* TODO(yasufum) confirm usage of this value and why it is 4. */
-#define SPP_PORT_ABILITY_MAX 4  /* Max num of port abilities. */
+#define PORT_ABL_MAX 4  /* Max num of port abilities. */
 
-/** Maximum VLAN PCP */
+/** Maximum VLAN PCP, used only for spp_vf. */
 #define SPP_VLAN_PCP_MAX 7
 
 /* Max number of core status check */
@@ -52,11 +55,11 @@
 /** Character sting for default port of classifier */
 #define SPPWK_TERM_DEFAULT "default"
 
-/** Value for default MAC address of classifier */
-#define SPP_DEFAULT_CLASSIFIED_DMY_ADDR     0x010000000000
-
-/** Character sting for default MAC address of classifier */
-#define SPP_DEFAULT_CLASSIFIED_DMY_ADDR_STR "00:00:00:00:00:01"
+/**
+ * Character sting for default MAC address of classifier.
+ * It is used only for spp_vf.
+ */
+#define CLS_DUMMY_ADDR_STR "00:00:00:00:00:01"
 
 /* Sampling interval timer for latency evaluation */
 #define SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL 1000000
@@ -181,7 +184,7 @@ struct sppwk_port_info {
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct sppwk_cls_attrs cls_attrs;
-	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
+	struct spp_port_ability ability[PORT_ABL_MAX];
 };
 
 /* Attributes of SPP worker thread named as `component`. */
@@ -196,7 +199,7 @@ struct sppwk_comp_info {
 	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
 };
 
-/* Manage given options as global variable */
+/* Manage cmd arg as global variable, used for spp_vf and spp_mirror. */
 struct startup_param {
 	int client_id;  /* Client ID */
 	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
@@ -221,7 +224,10 @@ struct core_info {
 	int id[RTE_MAX_LCORE];  /* IDs of components run on the lcore. */
 };
 
-/* Manage core status and component info as global variable. */
+/**
+ * Manage core status and comp info as global variable,
+ * used for spp_vf and spp_mirror.
+ */
 struct core_mng_info {
 	volatile enum sppwk_lcore_status status;
 	volatile int ref_index;  /* index for reference */
@@ -256,6 +262,7 @@ typedef int (*spp_iterate_core_element_proc)(
  * iterate core table parameters used to list content of lcore table for.
  * showing status or so.
  */
+/* TODO(yasufum) refactor name of func and vars, and comments. */
 struct spp_iterate_core_params {
 	char *output;  /* Buffer used for output */
 	/** The function for creating core information */
@@ -544,7 +551,7 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 /**
  * Set mange data address.
  *
- * @param startup_param_p Pointer to  g_startup_param address.
+ * @param startup_param_p Pointer to g_startup_param address.
  * @param iface_p Pointer to g_iface_info address.
  * @param component_p Pointer to g_component_info address.
  * @param core_mng_p Pointer to g_core_info address.
@@ -568,12 +575,12 @@ int sppwk_set_mng_data(struct startup_param *startup_param_p,
  * Get mange data address.
  *
  * @param startup_param_p Pointer to startup params.
- * @param iface_addr Pointer to g_iface_info.
- * @param component_addr Pointer to g_component_info.
- * @param core_mng_addr Pointer to g_core_mng_info.
- * @param change_core_addr Pointer to change_core_addr.
- * @param change_component_addr Pointer to g_change_component.
- * @param backup_info_addr Pointer to g_backup_info.
+ * @param iface_p Pointer to g_iface_info.
+ * @param component_p Pointer to g_component_info.
+ * @param core_mng_p Pointer to g_core_mng_info.
+ * @param change_core_p Pointer to change_core_addr.
+ * @param change_component_p Pointer to g_change_component.
+ * @param backup_info_p Pointer to g_backup_info.
  */
 void sppwk_get_mng_data(struct startup_param **startup_param_p,
 		struct iface_info **iface_p,

@@ -21,21 +21,17 @@
 #include <netinet/in.h>
 #include "shared/common.h"
 
-/* Max number of core status check */
-#define SPP_CORE_STATUS_CHECK_MAX 5
-
-/** The length of shortest character string */
-#define SPP_MIN_STR_LEN   32
-
-/** The length of NAME string */
-#define SPP_NAME_STR_LEN  128
-
-/** Maximum number of port abilities available */
-#define SPP_PORT_ABILITY_MAX 4
-
 /** Identifier string for each interface */
 #define SPP_IFTYPE_NIC_STR   "phy"
 #define SPP_IFTYPE_RING_STR  "ring"
+
+#define STR_LEN_SHORT 32  /* Size of short string. */
+#define STR_LEN_NAME 128  /* Size of string for names. */
+
+#define PORT_ABL_MAX 4  /* Max num of port abilities. */
+
+/* Max number of core status check */
+#define SPP_CORE_STATUS_CHECK_MAX 5
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
 /* State on core */
@@ -127,7 +123,7 @@ struct spp_port_ability {
 /* Attributes for classifying . */
 struct sppwk_cls_attrs {
 	uint64_t mac_addr;  /**< Mac address (binary) */
-	char mac_addr_str[SPP_MIN_STR_LEN];  /**< Mac address (text) */
+	char mac_addr_str[STR_LEN_SHORT];  /**< Mac address (text) */
 	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
 };
 
@@ -143,13 +139,13 @@ struct sppwk_port_info {
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct sppwk_cls_attrs cls_attrs;
-	struct spp_port_ability ability[SPP_PORT_ABILITY_MAX];
+	struct spp_port_ability ability[PORT_ABL_MAX];
 };
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
 /* Attributes of SPP worker thread named as `component`. */
 struct sppwk_comp_info {
-	char name[SPP_NAME_STR_LEN];  /**< Component name */
+	char name[STR_LEN_NAME];  /**< Component name */
 	enum sppwk_worker_type wk_type;  /**< Type of worker thread */
 	unsigned int lcore_id;
 	int comp_id;  /**< Component ID */
@@ -161,20 +157,18 @@ struct sppwk_comp_info {
 
 /* Manage given options as global variable */
 struct startup_param {
-	int client_id;		/* Client ID */
-	char server_ip[INET_ADDRSTRLEN];
-				/* IP address stiring of spp-ctl */
-	int server_port;	/* Port Number of spp-ctl */
+	int client_id;  /* Client ID */
+	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
+	int server_port;  /* Port Number of spp-ctl */
 };
 
 /* Manage interfaces and port information as global variable */
+/* TODO(yasufum) confirm why nof_rings is required not used in anywhere. */
 struct iface_info {
-	int num_nic;            /* The number of phy */
-	int num_ring;           /* The number of ring */
+	int nof_phys;    /* Number of phy ports */
+	int nof_rings;   /* Number of ring ports */
 	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
-				/* Port information of phy */
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
-				/* Port information of ring */
 };
 
 /* Manage core status and component information as global variable */
@@ -184,46 +178,42 @@ struct core_mng_info {
 };
 
 /* TODO(yasufum) refactor name of func and vars, and comments. */
+/* TODO(yasufum) confirm this var is used in spp_pcap. */
+/* TODO(yasufum) if so, consider to merge to shared. */
 struct spp_iterate_core_params;
 /**
- * definition of iterated core element procedure function
- * which is member of spp_iterate_core_params structure.
- * Above structure is used when listing core information
- * (e.g) create resonse to status command.
+ * Define func to iterate lcore to list core information for showing status
+ * or so, as a member of struct `spp_iterate_core_params`.
  */
 typedef int (*spp_iterate_core_element_proc)(
 		struct spp_iterate_core_params *params,
 		const unsigned int lcore_id,
-		const char *name,
-		const char *type,
-		const int num_rx,
+		const char *wk_name,
+		const char *wk_type,
+		const int nof_rx,
 		const struct sppwk_port_idx *rx_ports,
-		const int num_tx,
+		const int nof_tx,
 		const struct sppwk_port_idx *tx_ports);
 
-/* TODO(yasufum) refactor name of func and vars, and comments. */
 /**
- * iterate core table parameters which is
- * used when listing core table content
- * (e.g.) create response to status command.
+ * iterate core table parameters used to list content of lcore table for.
+ * showing status or so.
  */
+/* TODO(yasufum) consider to merge to shared. */
+/* TODO(yasufum) refactor name of func and vars, and comments. */
 struct spp_iterate_core_params {
-	/** Output buffer */
-	char *output;
-
+	char *output;  /* Buffer used for output */
 	/** The function for creating core information */
 	spp_iterate_core_element_proc element_proc;
 };
 
 /**
- * added ring_pmd
+ * Add ring pmd for owned proccess or thread.
  *
- * @param ring_id
- *  added ring id.
- *
- * @retval 0~   ring_port_id.
- * @retval -1   failed.
+ * @param[in] ring_id added ring id.
+ * @return ring port ID, or -1 if failed.
  */
+/* TODO(yasufum) consider to merge to shared. */
 int add_ring_pmd(int ring_id);
 
 /**
@@ -308,16 +298,13 @@ struct core_info *get_core_info(unsigned int lcore_id);
 /**
  * Port type to string
  *
- * @param port
- *  Character string of Port type to be converted.
- * @param iface_type
- *  port interface type
- * @param iface_no
- *  interface no
- *
- * @retval SPPWK_RET_OK succeeded.
- * @retval SPPWK_RET_NG failed.
+ * @param port String of port type to be converted.
+ * @param iface_type Interface type.
+ * @param iface_no Interface number.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
+/* TODO(yasufum) consider to merge to shared. */
 int
 spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 
@@ -340,47 +327,35 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 /**
  * Set mange data address
  *
- * @param startup_param_addr
- *  g_startup_param address
- * @param iface_addr
- *  g_iface_info address
- * @param core_mng_addr
- *  g_core_info address
- * @param capture_request_addr
- *  g_capture_request address
- * @param capture_status_addr
- *  g_capture_status address
- * @param main_lcore_id
- *  main_lcore_id mask
- *
- * @retval SPPWK_RET_OK succeeded.
- * @retval SPPWK_RET_NG failed.
+ * @param startup_param_p Pointer to g_startup_param address.
+ * @param iface_p Pointer to g_iface_info address.
+ * @param core_mng_p Pointer to g_core_info address.
+ * @param capture_status_p Pointer to status of pcap.
+ * @param capture_request_p Pointer to req of pcap.
+ * @param main_lcore_id Lcore ID of main thread.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
-int spp_set_mng_data_addr(struct startup_param *startup_param_addr,
-			  struct iface_info *iface_addr,
-			  struct core_mng_info *core_mng_addr,
-			  int *capture_request_addr,
-			  int *capture_status_addr,
+int spp_set_mng_data_addr(struct startup_param *startup_param_p,
+			  struct iface_info *iface_p,
+			  struct core_mng_info *core_mng_p,
+			  int *capture_request_p,
+			  int *capture_status_p,
 			  unsigned int main_lcore_id);
 
 /**
  * Get mange data address
  *
- * @param iface_addr
- *  g_startup_param write address
- * @param iface_addr
- *  g_iface_info write address
- * @param core_mng_addr
- *  g_core_mng_info write address
- * @param change_core_addr
- *  g_capture_request write address
- * @param change_component_addr
- *  g_capture_status write address
+ * @param startup_param_p Pointer to startup params.
+ * @param iface_p Pointer to g_iface_info.
+ * @param core_mng_p Pointer to g_core_mng_info.
+ * @param capture_request_p Pointer to status of pcap.
+ * @param capture_status_p Pointer to req of pcap.
  */
-void spp_get_mng_data_addr(struct startup_param **startup_param_addr,
-			   struct iface_info **iface_addr,
-			   struct core_mng_info **core_mng_addr,
-			   int **capture_request_addr,
-			   int **capture_status_addr);
+void spp_get_mng_data_addr(struct startup_param **startup_param_p,
+			   struct iface_info **iface_p,
+			   struct core_mng_info **core_mng_p,
+			   int **capture_request_p,
+			   int **capture_status_p);
 
 #endif

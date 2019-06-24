@@ -58,6 +58,9 @@
 /* VID of VLAN untagged */
 #define VLAN_UNTAGGED_VID 0x0fff
 
+/** Value for default MAC address of classifier */
+#define CLS_DUMMY_ADDR 0x010000000000
+
 /* classifier management information */
 struct management_info {
 	/* classifier information */
@@ -396,8 +399,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 		cmp_info->mac_addr_entry = 1;
 
 		/* store default classified */
-		if (unlikely(tx_port->cls_attrs.mac_addr ==
-				SPP_DEFAULT_CLASSIFIED_DMY_ADDR)) {
+		if (unlikely(tx_port->cls_attrs.mac_addr == CLS_DUMMY_ADDR)) {
 			mac_cls->default_cls_idx = i;
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 					"default classified. vid=%hu, "
