@@ -277,50 +277,45 @@ mirror_proc_init(void)
 
 /* Update mirror info */
 int
-spp_mirror_update(struct sppwk_comp_info *component)
+update_mirror(struct sppwk_comp_info *wk_comp)
 {
 	int cnt = 0;
-	int num_rx = component->nof_rx;
-	int num_tx = component->nof_tx;
-	struct mirror_info *info = &g_mirror_info[component->comp_id];
+	int nof_rx = wk_comp->nof_rx;
+	int nof_tx = wk_comp->nof_tx;
+	struct mirror_info *info = &g_mirror_info[wk_comp->comp_id];
 	struct mirror_path *path = &info->path[info->upd_index];
 
-	/* mirror component allows only one receiving port. */
-	if (unlikely(num_rx > 1)) {
+	/* Check mirror has just one RX and two TX port. */
+	if (unlikely(nof_rx > 1)) {
 		RTE_LOG(ERR, MIRROR,
-			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->comp_id, component->wk_type, num_rx);
+			"Invalid num of RX (id=%d, type=%d, nof_rx=%d)\n",
+			wk_comp->comp_id, wk_comp->wk_type, nof_rx);
 		return SPP_RET_NG;
 	}
-
-	/* Component allows only tewo transmit port. */
-	if (unlikely(num_tx > 2)) {
+	if (unlikely(nof_tx > 2)) {
 		RTE_LOG(ERR, MIRROR,
-			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->comp_id, component->wk_type, num_tx);
+			"Invalid num of TX (id=%d, type=%d, nof_tx=%d)\n",
+			wk_comp->comp_id, wk_comp->wk_type, nof_tx);
 		return SPP_RET_NG;
 	}
 
 	memset(path, 0x00, sizeof(struct mirror_path));
 
 	RTE_LOG(INFO, MIRROR,
-			"Component[%d] Start update component. "
-			"(name = %s, type = %d)\n",
-			component->comp_id,
-			component->name,
-			component->wk_type);
+			"Start updating mirror (id=%d, name=%s, type=%d)\n",
+			wk_comp->comp_id, wk_comp->name, wk_comp->wk_type);
 
-	memcpy(&path->name, component->name, STR_LEN_NAME);
-	path->wk_type = component->wk_type;
-	path->nof_rx = component->nof_rx;
-	path->nof_tx = component->nof_tx;
-	for (cnt = 0; cnt < num_rx; cnt++)
-		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
+	memcpy(&path->name, wk_comp->name, STR_LEN_NAME);
+	path->wk_type = wk_comp->wk_type;
+	path->nof_rx = wk_comp->nof_rx;
+	path->nof_tx = wk_comp->nof_tx;
+	for (cnt = 0; cnt < nof_rx; cnt++)
+		memcpy(&path->ports[cnt].rx, wk_comp->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
 
-	/* Transmit port is set according with larger num_rx / num_tx. */
-	for (cnt = 0; cnt < num_tx; cnt++)
-		memcpy(&path->ports[cnt].tx, component->tx_ports[cnt],
+	/* Transmit port is set according with larger nof_rx / nof_tx. */
+	for (cnt = 0; cnt < nof_tx; cnt++)
+		memcpy(&path->ports[cnt].tx, wk_comp->tx_ports[cnt],
 				sizeof(struct sppwk_port_info));
 
 	info->upd_index = info->ref_index;
@@ -328,10 +323,8 @@ spp_mirror_update(struct sppwk_comp_info *component)
 		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, MIRROR,
-			"Component[%d] Complete update component. "
-			"(name = %s, type = %d)\n",
-			component->comp_id, component->name,
-			component->wk_type);
+			"Done update mirror (id=%d, name=%s, type=%d)\n",
+			wk_comp->comp_id, wk_comp->name, wk_comp->wk_type);
 
 	return SPP_RET_OK;
 }
@@ -465,8 +458,7 @@ mirror_proc(int id)
 
 /* Mirror get component status */
 int
-spp_mirror_get_component_status(
-		unsigned int lcore_id, int id,
+get_mirror_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
 	int ret = SPP_RET_NG;
@@ -479,9 +471,8 @@ spp_mirror_get_component_status(
 
 	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
 		RTE_LOG(ERR, MIRROR,
-				"Component[%d] Not used. "
-				"(status)(core = %d, type = %d)\n",
-				id, lcore_id, path->wk_type);
+			"Mirror is not used. (id=%d, lcore=%d, type=%d)\n",
+			id, lcore_id, path->wk_type);
 		return SPP_RET_NG;
 	}
 
@@ -500,10 +491,9 @@ spp_mirror_get_component_status(
 	}
 
 	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(
-		params, lcore_id,
-		path->name, component_type,
-		path->nof_rx, rx_ports, path->nof_tx, tx_ports);
+	ret = (*params->element_proc)(params, lcore_id, path->name,
+			component_type, path->nof_rx, rx_ports, path->nof_tx,
+			tx_ports);
 	if (unlikely(ret != 0))
 		return SPP_RET_NG;
 

@@ -8,33 +8,24 @@
 #include "cmd_utils.h"
 
 /**
- * Update Mirror info
+ * Update mirror info.
  *
- * @param component
- *  The pointer to struct sppwk_comp_info.@n
- *  The data for updating the internal data of mirror.
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @param wk_comp_info Pointer to internal data of mirror.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
-int spp_mirror_update(struct sppwk_comp_info *component);
+int update_mirror(struct sppwk_comp_info *wk_comp_info);
 
 /**
- * Mirror get component status
+ * Get mirror status.
  *
- * @param lcore_id
- *  The logical core ID for forwarder and merger.
- * @param id
- *  The unique component ID.
- * @param params
- *  The pointer to struct spp_iterate_core_params.@n
- *  Detailed data of mirror status.
- *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @param lcore_id Lcore ID for forwarder and merger.
+ * @param id Unique component ID.
+ * @param params Pointer to detailed data of mirror status.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
-int spp_mirror_get_component_status(
-		unsigned int lcore_id, int id,
+int get_mirror_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */

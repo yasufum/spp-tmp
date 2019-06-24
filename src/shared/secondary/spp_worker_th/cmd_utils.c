@@ -897,7 +897,7 @@ update_comp_info(void)
 #endif /* SPP_VF_MODULE */
 
 #ifdef SPP_MIRROR_MODULE
-		ret = spp_mirror_update(comp_info);
+		ret = update_mirror(comp_info);
 #endif /* SPP_MIRROR_MODULE */
 
 		if (unlikely(ret < 0)) {

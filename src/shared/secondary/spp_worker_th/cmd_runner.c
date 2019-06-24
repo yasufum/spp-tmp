@@ -540,10 +540,8 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 			}
 #endif /* SPP_VF_MODULE */
 #ifdef SPP_MIRROR_MODULE
-			ret = spp_mirror_get_component_status(
-						lcore_id,
-						core->id[cnt],
-						params);
+			ret = get_mirror_status(lcore_id, core->id[cnt],
+					params);
 #endif /* SPP_MIRROR_MODULE */
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, WK_CMD_RUNNER, "Cannot iterate core "
