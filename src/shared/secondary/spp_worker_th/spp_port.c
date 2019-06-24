@@ -13,30 +13,23 @@
 #include "ringlatencystats.h"
 
 /* Port ability management information */
-struct port_ability_mng_info {
-	volatile int ref_index; /* Index to reference area */
-	volatile int upd_index; /* Index to update area    */
+struct port_abl_info {
+	volatile int ref_index; /* Index to reference area. */
+	volatile int upd_index; /* Index to update area. */
 	struct spp_port_ability ability[TWO_SIDES][SPP_PORT_ABILITY_MAX];
-				/* Port ability information */
+				/* Port ability information. */
 };
 
 /* Port ability port information */
-struct port_ability_port_mng_info {
-	/* Interface type (phy/vhost/ring) */
-	enum port_type iface_type;
-
-	/* Interface number */
-	int            iface_no;
-
-	/* Management data of port ability for receiving */
-	struct port_ability_mng_info rx;
-
-	/* Management data of port ability for sending */
-	struct port_ability_mng_info tx;
+struct port_mng_info {
+	enum port_type iface_type;  /* Interface type (phy, vhost or so). */
+	int iface_no;  /* Interface number. */
+	struct port_abl_info rx;  /* Mng data of port ability for RX. */
+	struct port_abl_info tx;  /* Mng data of port ability for Tx. */
 };
 
 /* Information for VLAN tag management. */
-struct port_ability_port_mng_info g_port_mng_info[RTE_MAX_ETHPORTS];
+struct port_mng_info g_port_mng_info[RTE_MAX_ETHPORTS];
 
 /* TPID of VLAN. */
 static uint16_t g_vlan_tpid;
@@ -62,7 +55,7 @@ spp_port_ability_get_info(
 		int port_id, enum sppwk_port_dir dir,
 		struct spp_port_ability **info)
 {
-	struct port_ability_mng_info *mng = NULL;
+	struct port_abl_info *mng = NULL;
 
 	switch (dir) {
 	case SPPWK_PORT_DIR_RX:
@@ -97,7 +90,7 @@ add_vlantag_packet(
 	struct ether_hdr *old_ether = NULL;
 	struct ether_hdr *new_ether = NULL;
 	struct vlan_hdr  *vlan      = NULL;
-	const struct spp_vlantag_info *vlantag = &data->vlantag;
+	const struct sppwk_vlan_tag *vlantag = &data->vlantag;
 
 	old_ether = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
 	if (old_ether->ether_type == g_vlan_tpid) {
@@ -208,7 +201,7 @@ spp_port_ability_change_index(
 	static int rx_list[RTE_MAX_ETHPORTS];
 	static int num_tx;
 	static int tx_list[RTE_MAX_ETHPORTS];
-	struct port_ability_mng_info *mng = NULL;
+	struct port_abl_info *mng = NULL;
 
 	if (type == PORT_ABILITY_CHG_INDEX_UPD) {
 		switch (dir) {
@@ -246,18 +239,16 @@ spp_port_ability_change_index(
 
 /* Set ability data of port ability. */
 static void
-port_ability_set_ability(
-		struct sppwk_port_info *port,
+port_ability_set_ability(struct sppwk_port_info *port,
 		enum sppwk_port_dir dir)
 {
 	int in_cnt, out_cnt = 0;
 	int port_id = port->ethdev_port_id;
-	struct port_ability_port_mng_info *port_mng =
-						&g_port_mng_info[port_id];
-	struct port_ability_mng_info *mng         = NULL;
-	struct spp_port_ability      *in_ability  = port->ability;
-	struct spp_port_ability      *out_ability = NULL;
-	struct spp_vlantag_info      *tag         = NULL;
+	struct port_mng_info *port_mng = &g_port_mng_info[port_id];
+	struct port_abl_info *mng = NULL;
+	struct spp_port_ability *in_ability = port->ability;
+	struct spp_port_ability *out_ability = NULL;
+	struct sppwk_vlan_tag *tag = NULL;
 
 	port_mng->iface_type = port->iface_type;
 	port_mng->iface_no   = port->iface_no;

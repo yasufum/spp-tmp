@@ -19,11 +19,8 @@
 
 /** Type for changing index. */
 enum port_ability_chg_index_type {
-	/** Type for changing index to reference area. */
-	PORT_ABILITY_CHG_INDEX_REF,
-
-	/** Type for changing index to update area. */
-	PORT_ABILITY_CHG_INDEX_UPD,
+	PORT_ABILITY_CHG_INDEX_REF,  /** To change index to reference area. */
+	PORT_ABILITY_CHG_INDEX_UPD,  /** To change index to update area. */
 };
 
 /** Initialize port ability. */
@@ -32,12 +29,9 @@ void spp_port_ability_init(void);
 /**
  * Get information of port ability.
  *
- * @param port_id
- *  The port identifier of the Ethernet device.
- * @param rxtx
- *  rx/tx identifier of port_id.
- * @param info
- *  Port ability information.
+ * @param port_id Etherdev ID.
+ * @param rxtx RX/TX ID of port_id.
+ * @param info Port ability information.
  */
 void spp_port_ability_get_info(
 		int port_id, enum sppwk_port_dir dir,
@@ -46,12 +40,9 @@ void spp_port_ability_get_info(
 /**
  * Change index of management information.
  *
- * @param port_id
- *  The port identifier of the Ethernet device.
- * @param rxtx
- *  rx/tx identifier of port_id.
- * @param type
- *  Type for changing index.
+ * @param port_id Etherdev ID.
+ * @param rxtx RX/TX ID of port_id.
+ * @param type Type for changing index.
  */
 void spp_port_ability_change_index(
 		enum port_ability_chg_index_type type,
@@ -69,8 +60,7 @@ void spp_port_ability_update(const struct sppwk_comp_info *component);
 /**
  * Wrapper function for rte_eth_rx_burst().
  *
- * @param port_id
- *  The port identifier of the Ethernet device.
+ * @param port_id Etherdev ID.
  * @param queue_id
  *  The index of the receive queue from which to retrieve input packets.
  *  SPP is fixed at 0.
@@ -91,8 +81,7 @@ uint16_t spp_eth_rx_burst(uint16_t port_id, uint16_t queue_id,
 /**
  * Wrapper function for rte_eth_tx_burst().
  *
- * @param port_id
- *  The port identifier of the Ethernet device.
+ * @param port_id Etherdev ID.
  * @param queue_id
  *  The index of the transmit queue through which output packets must be sent.
  *  SPP is fixed at 0.

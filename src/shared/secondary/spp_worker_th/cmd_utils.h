@@ -40,6 +40,7 @@
 #define STR_LEN_SHORT 32  /* Size of short string. */
 #define STR_LEN_NAME 128  /* Size of string for names. */
 
+/* TODO(yasufum) confirm usage of this value and why it is 4. */
 #define SPP_PORT_ABILITY_MAX 4  /* Max num of port abilities. */
 
 /** Maximum VLAN PCP */
@@ -139,7 +140,7 @@ enum sppwk_proc_type {
 };
 
 /** VLAN tag information */
-struct spp_vlantag_info {
+struct sppwk_vlan_tag {
 	int vid; /**< VLAN ID */
 	int pcp; /**< Priority Code Point */
 	int tci; /**< Tag Control Information */
@@ -148,7 +149,7 @@ struct spp_vlantag_info {
 /* Ability for vlantag for a port. */
 union spp_ability_data {
 	/** VLAN tag information */
-	struct spp_vlantag_info vlantag;
+	struct sppwk_vlan_tag vlantag;
 };
 
 /* Port ability information. */
@@ -162,7 +163,7 @@ struct spp_port_ability {
 struct sppwk_cls_attrs {
 	uint64_t mac_addr;  /**< Mac address (binary) */
 	char mac_addr_str[STR_LEN_SHORT];  /**< Mac address (text) */
-	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
+	struct sppwk_vlan_tag vlantag;   /**< VLAN tag information */
 };
 
 /**
