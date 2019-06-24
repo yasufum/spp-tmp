@@ -201,7 +201,6 @@ struct sppwk_comp_info {
 
 /* Manage cmd arg as global variable, used for spp_vf and spp_mirror. */
 struct startup_param {
-	int client_id;  /* Client ID */
 	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
 	int server_port;   /* Port Number of spp-ctl */
 	enum sppwk_proc_type wk_proc_type;

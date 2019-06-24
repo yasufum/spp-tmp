@@ -8,6 +8,42 @@
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
+int client_id;
+
+int set_client_id(int cid)
+{
+	client_id = cid;
+	return 0;
+}
+
+int get_client_id(void)
+{
+	if (client_id < 0) {
+		RTE_LOG(ERR, SHARED, "Client ID is not initialized.\n");
+		return -1;
+	}
+	return client_id;
+}
+
+/* Parse client ID from given value of string. */
+int
+parse_client_id(int *cli_id, const char *cli_id_str)
+{
+	int id = 0;
+	char *endptr = NULL;
+
+	id = strtol(cli_id_str, &endptr, 0);
+	if (unlikely(cli_id_str == endptr) || unlikely(*endptr != '\0'))
+		return -1;
+
+	if (id >= RTE_MAX_LCORE)
+		return -1;
+
+	*cli_id = id;
+	RTE_LOG(DEBUG, SHARED, "Parse client ID %d.\n", *cli_id);
+	return 0;
+}
+
 /**
  * Retieve port type and ID from resource UID. For example, resource UID
  * 'ring:0' is  parsed to retrieve port tyep 'ring' and ID '0'.
@@ -43,14 +79,11 @@ int
 spp_atoi(const char *str, int *val)
 {
 	char *end;
-
 	*val = strtol(str, &end, 10);
-
 	if (*end) {
 		RTE_LOG(ERR, SHARED, "Bad integer value: %s\n", str);
 		return -1;
 	}
-
 	return 0;
 }
 

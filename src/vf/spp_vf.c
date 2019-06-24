@@ -7,9 +7,10 @@
 #include <getopt.h>
 
 #include "spp_vf.h"
-#include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "classifier_mac.h"
 #include "forwarder.h"
+#include "shared/secondary/utils.h"
+#include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
@@ -56,30 +57,6 @@ usage(const char *progname)
 			, progname);
 }
 
-/**
- * Convert string of given client id to integer
- *
- * If succeeded, client id of integer is assigned to client_id and
- * return SPP_RET_OK Or return SPP_RET_NG if failed.
- */
-static int
-parse_app_client_id(const char *client_id_str, int *client_id)
-{
-	int id = 0;
-	char *endptr = NULL;
-
-	id = strtol(client_id_str, &endptr, 0);
-	if (unlikely(client_id_str == endptr) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
-
-	if (id >= RTE_MAX_LCORE)
-		return SPP_RET_NG;
-
-	*client_id = id;
-	RTE_LOG(DEBUG, APP, "Set client id = %d\n", *client_id);
-	return SPP_RET_OK;
-}
-
 /* Parse options for server IP and port */
 static int
 parse_app_server(const char *server_str, char *server_ip, int *server_port)
@@ -111,6 +88,7 @@ static int
 parse_app_args(int argc, char *argv[])
 {
 	int cnt;
+	int cli_id;
 	int proc_flg = 0;
 	int server_flg = 0;
 	int option_index, opt;
@@ -142,12 +120,12 @@ parse_app_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (parse_app_client_id(optarg,
-					&g_startup_param.client_id) !=
-								SPP_RET_OK) {
+			if (parse_client_id(&cli_id, optarg) != SPP_RET_OK) {
 				usage(progname);
 				return SPP_RET_NG;
 			}
+			set_client_id(cli_id);
+
 			proc_flg = 1;
 			break;
 		case SPP_LONGOPT_RETVAL_VHOST_CLIENT:
@@ -177,7 +155,7 @@ parse_app_args(int argc, char *argv[])
 	RTE_LOG(INFO, APP,
 			"app opts (client_id=%d,type=%d,server=%s:%d,"
 			"vhost_client=%d)\n",
-			g_startup_param.client_id,
+			cli_id,
 			g_startup_param.wk_proc_type,
 			g_startup_param.server_ip,
 			g_startup_param.server_port,

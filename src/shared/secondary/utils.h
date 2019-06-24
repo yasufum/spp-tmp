@@ -9,6 +9,18 @@ int parse_resource_uid(char *str, char **port_type, int *port_id);
 
 int spp_atoi(const char *str, int *val);
 
+int set_client_id(int cid);
+int get_client_id(void);
+
+/**
+ * Parse client ID from given value of string.
+ *
+ * @params[in] cli_id_str String value of client ID.
+ * @params[in,out] cli_id client ID of int value.
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int parse_client_id(int *cli_id, const char *cli_id_str);
+
 /**
  * Attach a new Ethernet device specified by arguments.
  *

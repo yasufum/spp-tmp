@@ -530,16 +530,6 @@ append_info_value(const char *name, char **output)
 	return ret;
 }
 
-/* TODO(yasufum) move to another file for util funcs. */
-/* Get client ID from global command params. */
-static int
-wk_get_client_id(void)
-{
-	struct startup_param *params;
-	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
-	return params->client_id;
-}
-
 /**
  * Operation functions start with prefix `add_` defined in get_status_ops()
  * of struct `cmd_res_formatter_ops` which are for making each of parts of
@@ -551,7 +541,7 @@ int
 add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_int_value(output, name, wk_get_client_id());
+	return append_json_int_value(output, name, get_client_id());
 }
 
 /* Add entry of port to a response in JSON such as "phy:0". */

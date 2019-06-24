@@ -40,4 +40,6 @@ enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
 
 int get_status_ops(struct cmd_res_formatter_ops *ops_list);
 
+int get_client_id(void);
+
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */
