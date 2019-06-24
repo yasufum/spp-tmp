@@ -345,12 +345,12 @@ append_core_element_value(
 
 	if (unuse_flg) {
 		ret = append_port_array("rx_port", &tmp_buff,
-				num_rx, rx_ports, SPP_PORT_RXTX_RX);
+				num_rx, rx_ports, SPPWK_PORT_DIR_RX);
 		if (unlikely(ret < 0))
 			return ret;
 
 		ret = append_port_array("tx_port", &tmp_buff,
-				num_tx, tx_ports, SPP_PORT_RXTX_TX);
+				num_tx, tx_ports, SPPWK_PORT_DIR_TX);
 		if (unlikely(ret < SPP_RET_OK))
 			return ret;
 	}

@@ -107,7 +107,7 @@ update_cls_table(enum sppwk_action wk_action,
 		strcpy(port_info->cls_attrs.mac_addr_str, mac_str);
 	}
 
-	set_component_change_port(port_info, SPP_PORT_RXTX_TX);
+	set_component_change_port(port_info, SPPWK_PORT_DIR_TX);
 	return SPP_RET_OK;
 }
 
@@ -214,7 +214,7 @@ check_vf_port_count(int component_type, enum sppwk_port_dir dir,
 {
 	RTE_LOG(INFO, VF_CMD_RUNNER, "port count, port_type=%d,"
 				" rx=%d, tx=%d\n", dir, nof_rx, nof_tx);
-	if (dir == SPP_PORT_RXTX_RX)
+	if (dir == SPPWK_PORT_DIR_RX)
 		nof_rx++;
 	else
 		nof_tx++;
@@ -276,7 +276,7 @@ update_port(enum sppwk_action wk_action,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
-	if (dir == SPP_PORT_RXTX_RX) {
+	if (dir == SPPWK_PORT_DIR_RX) {
 		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;
 	} else {

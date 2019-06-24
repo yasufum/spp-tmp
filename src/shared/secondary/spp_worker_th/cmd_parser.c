@@ -462,10 +462,10 @@ parse_port(void *output, const char *arg_val, int allow_override)
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(spp_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
-						SPP_PORT_RXTX_RX) >= 0) &&
+						SPPWK_PORT_DIR_RX) >= 0) &&
 				(spp_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
-						SPP_PORT_RXTX_TX) >= 0)) {
+						SPPWK_PORT_DIR_TX) >= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port `%s` is already used.\n",
 				arg_val);

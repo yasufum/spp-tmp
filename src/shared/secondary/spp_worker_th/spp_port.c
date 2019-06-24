@@ -66,10 +66,10 @@ spp_port_ability_get_info(
 	struct port_ability_mng_info *mng = NULL;
 
 	switch (dir) {
-	case SPP_PORT_RXTX_RX:
+	case SPPWK_PORT_DIR_RX:
 		mng = &g_port_mng_info[port_id].rx;
 		break;
-	case SPP_PORT_RXTX_TX:
+	case SPPWK_PORT_DIR_TX:
 		mng = &g_port_mng_info[port_id].tx;
 		break;
 	default:
@@ -213,12 +213,12 @@ spp_port_ability_change_index(
 
 	if (type == PORT_ABILITY_CHG_INDEX_UPD) {
 		switch (dir) {
-		case SPP_PORT_RXTX_RX:
+		case SPPWK_PORT_DIR_RX:
 			mng = &g_port_mng_info[port_id].rx;
 			mng->upd_index = mng->ref_index;
 			rx_list[num_rx++] = port_id;
 			break;
-		case SPP_PORT_RXTX_TX:
+		case SPPWK_PORT_DIR_TX:
 			mng = &g_port_mng_info[port_id].tx;
 			mng->upd_index = mng->ref_index;
 			tx_list[num_tx++] = port_id;
@@ -264,10 +264,10 @@ port_ability_set_ability(
 	port_mng->iface_no   = port->iface_no;
 
 	switch (dir) {
-	case SPP_PORT_RXTX_RX:
+	case SPPWK_PORT_DIR_RX:
 		mng = &port_mng->rx;
 		break;
-	case SPP_PORT_RXTX_TX:
+	case SPPWK_PORT_DIR_TX:
 		mng = &port_mng->tx;
 		break;
 	default:
@@ -312,12 +312,12 @@ spp_port_ability_update(const struct sppwk_comp_info *component)
 	struct sppwk_port_info *port = NULL;
 	for (cnt = 0; cnt < component->nof_rx; cnt++) {
 		port = component->rx_ports[cnt];
-		port_ability_set_ability(port, SPP_PORT_RXTX_RX);
+		port_ability_set_ability(port, SPPWK_PORT_DIR_RX);
 	}
 
 	for (cnt = 0; cnt < component->nof_tx; cnt++) {
 		port = component->tx_ports[cnt];
-		port_ability_set_ability(port, SPP_PORT_RXTX_TX);
+		port_ability_set_ability(port, SPPWK_PORT_DIR_TX);
 	}
 }
 
@@ -384,7 +384,7 @@ spp_eth_rx_burst(
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 	return port_ability_each_operation(port_id, rx_pkts, nb_rx,
-			SPP_PORT_RXTX_RX);
+			SPPWK_PORT_DIR_RX);
 }
 
 /* Wrapper function for rte_eth_tx_burst(). */
@@ -395,7 +395,7 @@ spp_eth_tx_burst(
 {
 	uint16_t nb_tx = 0;
 	nb_tx = port_ability_each_operation(port_id, tx_pkts, nb_pkts,
-			SPP_PORT_RXTX_TX);
+			SPPWK_PORT_DIR_TX);
 	if (unlikely(nb_tx == 0))
 		return SPP_RET_OK;
 

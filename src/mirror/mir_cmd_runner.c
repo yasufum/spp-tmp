@@ -111,7 +111,7 @@ check_mir_port_count(enum sppwk_port_dir dir, int nof_rx, int nof_tx)
 {
 	RTE_LOG(INFO, MIR_CMD_RUNNER, "port count, port_type=%d,"
 				" rx=%d, tx=%d\n", dir, nof_rx, nof_tx);
-	if (dir == SPP_PORT_RXTX_RX)
+	if (dir == SPPWK_PORT_DIR_RX)
 		nof_rx++;
 	else
 		nof_tx++;
@@ -155,7 +155,7 @@ update_port(enum sppwk_action wk_action,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
-	if (dir == SPP_PORT_RXTX_RX) {
+	if (dir == SPPWK_PORT_DIR_RX) {
 		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;
 	} else {

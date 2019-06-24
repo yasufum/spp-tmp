@@ -97,10 +97,10 @@ enum spp_classifier_type {
 
 /* Direction of RX or TX on a port. */
 enum sppwk_port_dir {
-	SPP_PORT_RXTX_NONE, /**< none */
-	SPP_PORT_RXTX_RX,   /**< rx port */
-	SPP_PORT_RXTX_TX,   /**< tx port */
-	SPP_PORT_RXTX_ALL,  /**< rx/tx port */
+	SPPWK_PORT_DIR_NONE,  /**< None */
+	SPPWK_PORT_DIR_RX,    /**< RX port */
+	SPPWK_PORT_DIR_TX,    /**< TX port */
+	SPPWK_PORT_DIR_BOTH,  /**< Both of RX and TX */
 };
 
 /**
