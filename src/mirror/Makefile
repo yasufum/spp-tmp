@@ -22,6 +22,7 @@ SRCS-y += $(SPP_WKT_DIR)/spp_port.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
+SRCS-y += $(SPP_WKT_DIR)/json_helper.c
 SRCS-y += $(SPP_WKT_DIR)/string_buffer.c
 SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
 

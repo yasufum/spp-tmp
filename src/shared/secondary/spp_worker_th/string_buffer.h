@@ -5,6 +5,8 @@
 #ifndef _STRING_BUFFER_H_
 #define _STRING_BUFFER_H_
 
+#include <stdlib.h>
+
 /**
  * @file
  * SPP String buffer management

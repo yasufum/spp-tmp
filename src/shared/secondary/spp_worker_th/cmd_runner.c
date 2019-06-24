@@ -13,6 +13,7 @@
 #include "spp_port.h"
 #include "string_buffer.h"
 
+#include "json_helper.h"
 #include "conn_spp_ctl.h"
 #include "cmd_parser.h"
 #include "cmd_runner.h"
@@ -21,16 +22,8 @@
 
 /* request message initial size */
 #define CMD_ERR_MSG_LEN 128
-#define CMD_TAG_APPEND_SIZE 16
 #define CMD_REQ_BUF_INIT_SIZE 2048
 #define CMD_RES_BUF_INIT_SIZE 2048
-
-/* TODO(yasufum) confirm why using "" for the alternative of comma? */
-#define JSON_APPEND_COMMA(flg)    ((flg)?", ":"")
-#define JSON_APPEND_VALUE(format) "%s\"%s\": "format
-#define JSON_APPEND_ARRAY         "%s\"%s\": [ %s ]"
-#define JSON_APPEND_BLOCK         "%s\"%s\": { %s }"
-#define JSON_APPEND_BLOCK_NONAME  "%s%s{ %s }"
 
 enum cmd_res_code {
 	CMD_SUCCESS = 0,
@@ -595,124 +588,6 @@ sppwk_get_ethdev_port_id(enum port_type iface_type, int iface_no)
 	default:
 		return SPP_RET_NG;
 	}
-}
-
-/* append a comma for JSON format */
-static int
-append_json_comma(char **output)
-{
-	*output = spp_strbuf_append(*output, ", ", strlen(", "));
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's comma failed to add.\n");
-		return SPP_RET_NG;
-	}
-
-	return SPP_RET_OK;
-}
-
-/* append data of unsigned integral type for JSON format */
-static int
-append_json_uint_value(const char *name, char **output, unsigned int value)
-{
-	int len = strlen(*output);
-	/* extend the buffer */
-	*output = spp_strbuf_append(*output, "",
-			strlen(name) + CMD_TAG_APPEND_SIZE*2);
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's numeric format failed to add. "
-				"(name = %s, uint = %u)\n", name, value);
-		return SPP_RET_NG;
-	}
-
-	sprintf(&(*output)[len], JSON_APPEND_VALUE("%u"),
-			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
-}
-
-/* append data of integral type for JSON format */
-static int
-append_json_int_value(const char *name, char **output, int value)
-{
-	int len = strlen(*output);
-	/* extend the buffer */
-	*output = spp_strbuf_append(*output, "",
-			strlen(name) + CMD_TAG_APPEND_SIZE*2);
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's numeric format failed to add. "
-				"(name = %s, int = %d)\n", name, value);
-		return SPP_RET_NG;
-	}
-
-	sprintf(&(*output)[len], JSON_APPEND_VALUE("%d"),
-			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
-}
-
-/* append data of string type for JSON format */
-static int
-append_json_str_value(const char *name, char **output, const char *str)
-{
-	int len = strlen(*output);
-	/* extend the buffer */
-	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's string format failed to add. "
-				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
-	}
-
-	sprintf(&(*output)[len], JSON_APPEND_VALUE("\"%s\""),
-			JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
-}
-
-/* append brackets of the array for JSON format */
-static int
-append_json_array_brackets(const char *name, char **output, const char *str)
-{
-	int len = strlen(*output);
-	/* extend the buffer */
-	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's square bracket failed to add. "
-				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
-	}
-
-	sprintf(&(*output)[len], JSON_APPEND_ARRAY,
-			JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
-}
-
-/* append brackets of the blocks for JSON format */
-static int
-append_json_block_brackets(const char *name, char **output, const char *str)
-{
-	int len = strlen(*output);
-	/* extend the buffer */
-	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
-	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_CMD_RUNNER,
-				"JSON's curly bracket failed to add. "
-				"(name = %s, str = %s)\n", name, str);
-		return SPP_RET_NG;
-	}
-
-	if (name[0] == '\0')
-		sprintf(&(*output)[len], JSON_APPEND_BLOCK_NONAME,
-				JSON_APPEND_COMMA(len), name, str);
-	else
-		sprintf(&(*output)[len], JSON_APPEND_BLOCK,
-				JSON_APPEND_COMMA(len), name, str);
-	return SPP_RET_OK;
 }
 
 /* Execute one command. */
