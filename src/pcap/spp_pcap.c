@@ -17,6 +17,7 @@
 #include "spp_pcap.h"
 #include "cmd_runner.h"
 #include "cmd_parser.h"
+#include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */
@@ -198,32 +199,6 @@ client_id_toi(const char *client_id_str, int *client_id)
 	return SPPWK_RET_OK;
 }
 
-/* Parse options for server IP and port */
-static int
-parse_server_ip(const char *server_str, char *server_ip, int *server_port)
-{
-	const char delim[2] = ":";
-	unsigned int pos = 0;
-	int port = 0;
-	char *endptr = NULL;
-
-	pos = strcspn(server_str, delim);
-	if (pos >= strlen(server_str))
-		return SPPWK_RET_NG;
-
-	port = strtol(&server_str[pos+1], &endptr, 0);
-	if (unlikely(&server_str[pos+1] == endptr) || unlikely(*endptr != '\0'))
-		return SPPWK_RET_NG;
-
-	memcpy(server_ip, server_str, pos);
-	server_ip[pos] = '\0';
-	*server_port = port;
-	RTE_LOG(DEBUG, SPP_PCAP, "Set server IP   = %s\n", server_ip);
-	RTE_LOG(DEBUG, SPP_PCAP, "Set server port = %d\n", *server_port);
-	return SPPWK_RET_OK;
-}
-
-
 /* Parse `--fsize` option and get the value */
 static int
 parse_fsize(const char *fsize_str, uint64_t *fsize)
@@ -286,17 +261,23 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 
 /* Parse options for client app */
 static int
-parse_args(int argc, char *argv[])
+parse_app_args(int argc, char *argv[])
 {
+	char *ctl_ip;  /* IP address of spp_ctl. */
+	int ctl_port;  /* Port num to connect spp_ctl. */
+	char cap_port_str[PORT_STR_SIZE];  /* Captured port. */
 	int cnt;
+	int ret;
+	int option_index, opt;
+
 	int proc_flg = 0;
 	int server_flg = 0;
 	int port_flg = 0;
-	int option_index, opt;
+
 	const int argcopt = argc;
 	char *argvopt[argcopt];
 	const char *progname = argv[0];
-	char port_str[PORT_STR_SIZE];
+
 	static struct option lgopts[] = {
 		{ "client-id", required_argument, NULL,
 			SPP_LONGOPT_RETVAL_CLIENT_ID },
@@ -351,7 +332,7 @@ parse_args(int argc, char *argv[])
 			}
 			break;
 		case 'c':  /* captured port */
-			strcpy(port_str, optarg);
+			strcpy(cap_port_str, optarg);
 			if (parse_captured_port(optarg,
 					&g_pcap_option.port_cap.iface_type,
 					&g_pcap_option.port_cap.iface_no) !=
@@ -362,9 +343,10 @@ parse_args(int argc, char *argv[])
 			port_flg = 1;
 			break;
 		case 's':  /* server addr */
-			if (parse_server_ip(optarg, g_startup_param.server_ip,
-					&g_startup_param.server_port) !=
-								SPPWK_RET_OK) {
+			ret = parse_server(&ctl_ip, &ctl_port, optarg);
+			set_spp_ctl_ip(ctl_ip);
+			set_spp_ctl_port(ctl_port);
+			if (ret != SPPWK_RET_OK) {
 				usage(progname);
 				return SPPWK_RET_NG;
 			}
@@ -383,12 +365,10 @@ parse_args(int argc, char *argv[])
 	}
 
 	RTE_LOG(INFO, SPP_PCAP,
-			"App opts: '--client-id %d', '-s %s:%d', "
-			"'-c %s', '--out-dir %s', '--fsize %ld'\n",
-			g_startup_param.client_id,
-			g_startup_param.server_ip,
-			g_startup_param.server_port,
-			port_str,
+			"Parsed app args ('--client-id %d', '-s %s:%d', "
+			"'-c %s', '--out-dir %s', '--fsize %ld')\n",
+			g_startup_param.client_id, ctl_ip, ctl_port,
+			cap_port_str,
 			g_pcap_option.compress_file_path,
 			g_pcap_option.fsize_limit);
 	return SPPWK_RET_OK;
@@ -946,6 +926,12 @@ int
 main(int argc, char *argv[])
 {
 	int ret = SPPWK_RET_NG;
+	char ctl_ip[IPADDR_LEN] = { 0 };
+	int ctl_port;
+	int ret_cmd_init;
+	unsigned int lcore_id;
+	unsigned int thread_no;
+
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
 	int ret_daemon = daemon(0, 0);
@@ -969,7 +955,7 @@ main(int argc, char *argv[])
 		argv += ret_eal;
 
 		/* Parse spp_pcap specific parameters */
-		int ret_parse = parse_args(argc, argv);
+		int ret_parse = parse_app_args(argc, argv);
 		if (unlikely(ret_parse != 0))
 			break;
 
@@ -995,10 +981,10 @@ main(int argc, char *argv[])
 		spp_port_ability_init();
 
 		/* Setup connection for accepting commands from controller */
-		int ret_command_init = spp_command_proc_init(
-				g_startup_param.server_ip,
-				g_startup_param.server_port);
-		if (unlikely(ret_command_init != SPPWK_RET_OK))
+		get_spp_ctl_ip(ctl_ip);
+		ctl_port = get_spp_ctl_port();
+		ret_cmd_init = spp_command_proc_init(ctl_ip, ctl_port);
+		if (unlikely(ret_cmd_init != SPPWK_RET_OK))
 			break;
 
 		/* capture port setup */
@@ -1060,10 +1046,10 @@ main(int argc, char *argv[])
 				g_pcap_option.cap_ring->flags);
 
 		/* Start worker threads of recive or write */
-		unsigned int lcore_id = 0;
-		unsigned int thread_no = 0;
 		g_pcap_thread_info.thread_cnt = 0;
 		g_pcap_thread_info.start_up_cnt = 0;
+		lcore_id = 0;
+		thread_no = 0;
 		RTE_LCORE_FOREACH_SLAVE(lcore_id) {
 			g_pcap_thread_info.thread_cnt += 1;
 			g_pcap_info[lcore_id].thread_no = thread_no++;
