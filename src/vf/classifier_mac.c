@@ -437,14 +437,12 @@ init_component_info(struct cls_comp_info *cmp_info,
 
 /* uninitialize classifier information. */
 void
-uninit_component_info(struct cls_comp_info *cmp_info)
+uninit_component_info(struct cls_comp_info *comp_info)
 {
 	int i;
-
 	for (i = 0; i < NOF_VLAN; ++i)
-		free_mac_classification(cmp_info->mac_clfs[i]);
-
-	memset(cmp_info, 0, sizeof(struct cls_comp_info));
+		free_mac_classifier(comp_info->mac_clfs[i]);
+	memset(comp_info, 0, sizeof(struct cls_comp_info));
 }
 
 /* transmit packet to one destination. */

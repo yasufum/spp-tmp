@@ -42,17 +42,15 @@ struct cls_comp_info {
 	struct cls_port_info tx_ports_i[RTE_MAX_ETHPORTS];  /* TX info. */
 };
 
-/* free mac classification instance. */
+/* Release instance of mac classifier. */
 static inline void
-free_mac_classification(struct mac_classifier *mac_cls)
+free_mac_classifier(struct mac_classifier *mac_clf)
 {
-	if (mac_cls == NULL)
+	if (mac_clf == NULL)
 		return;
-
-	if (mac_cls->cls_tbl != NULL)
-		rte_hash_free(mac_cls->cls_tbl);
-
-	rte_free(mac_cls);
+	if (mac_clf->cls_tbl != NULL)
+		rte_hash_free(mac_clf->cls_tbl);
+	rte_free(mac_clf);
 }
 
 /**
