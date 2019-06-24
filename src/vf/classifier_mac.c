@@ -850,7 +850,7 @@ spp_classifier_get_component_status(
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(
 		params, lcore_id,
-		cmp_info->name, SPP_TYPE_CLASSIFIER_MAC_STR,
+		cmp_info->name, SPPWK_TYPE_CLS_STR,
 		nof_rx, rx_ports, nof_tx, tx_ports);
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_NG;

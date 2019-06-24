@@ -197,8 +197,8 @@ get_comp_type_from_str(const char *type_str)
 #endif /* SPP_VF_MODULE */
 
 #ifdef SPP_MIRROR_MODULE
-	if (strncmp(type_str, SPP_TYPE_MIRROR_STR,
-			strlen(SPP_TYPE_MIRROR_STR)+1) == 0)
+	if (strncmp(type_str, SPPWK_TYPE_MIR_STR,
+			strlen(SPPWK_TYPE_MIR_STR)+1) == 0)
 		return SPPWK_TYPE_MIR;
 #endif /* SPP_MIRROR_MODULE */
 

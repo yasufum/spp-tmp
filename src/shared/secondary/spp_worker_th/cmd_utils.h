@@ -19,11 +19,11 @@
  *  "merge" -> "merger", "forward" -> "forwarder".
  */
 /** Identifier string for each component (status command) */
-#define SPP_TYPE_CLASSIFIER_MAC_STR "classifier_mac"
-#define SPP_TYPE_MERGE_STR	    "merge"
-#define SPP_TYPE_FORWARD_STR	    "forward"
-#define SPP_TYPE_MIRROR_STR	    "mirror"
-#define SPP_TYPE_UNUSE_STR	    "unuse"
+#define SPPWK_TYPE_CLS_STR "classifier_mac"
+#define SPPWK_TYPE_MRG_STR "merge"
+#define SPPWK_TYPE_FWD_STR "forward"
+#define SPPWK_TYPE_MIR_STR "mirror"
+#define SPPWK_TYPE_NONE_STR "unuse"
 
 /** Identifier string for each interface */
 #define SPP_IFTYPE_NIC_STR   "phy"

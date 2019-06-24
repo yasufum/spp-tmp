@@ -485,7 +485,7 @@ spp_mirror_get_component_status(
 		return SPP_RET_NG;
 	}
 
-	component_type = SPP_TYPE_MIRROR_STR;
+	component_type = SPPWK_TYPE_MIR_STR;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
 	for (cnt = 0; cnt < path->nof_rx; cnt++) {

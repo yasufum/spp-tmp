@@ -514,7 +514,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 		if (core->num == 0) {
 			ret = (*params->element_proc)(
 				params, lcore_id,
-				"", SPP_TYPE_UNUSE_STR,
+				"", SPPWK_TYPE_NONE_STR,
 				0, NULL, 0, NULL);
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, WK_CMD_RUNNER, "Cannot iterate core "
@@ -1145,7 +1145,7 @@ append_core_element_value(
 	}
 
 	/* there is unnecessary data when "unuse" by type */
-	unuse_flg = strcmp(type, SPP_TYPE_UNUSE_STR);
+	unuse_flg = strcmp(type, SPPWK_TYPE_NONE_STR);
 
 	/**
 	 * TODO(yasufum) change ambiguous "core" to more specific one such as
