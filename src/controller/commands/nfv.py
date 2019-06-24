@@ -442,3 +442,22 @@ class SppNfv(object):
                 pass
             else:
                 print('Error: unknown response.')
+
+    @classmethod
+    def help(cls):
+        msg = """Send a command to spp_nfv specified with ID.
+
+        Spp_nfv is specified with secondary ID and takes sub commands.
+
+          spp > nfv 1; status
+          spp > nfv 1; add ring:0
+          spp > nfv 1; patch phy:0 ring:0
+
+        You can refer all of sub commands by pressing TAB after
+        'nfv 1;'.
+
+          spp > nfv 1;  # press TAB
+          add     del     exit    forward patch   status  stop
+        """
+
+        print(msg)
