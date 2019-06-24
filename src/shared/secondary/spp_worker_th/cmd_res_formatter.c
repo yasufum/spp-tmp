@@ -88,7 +88,7 @@ struct cmd_response response_info_list[] = {
 	{ "", NULL }
 };
 
-/* append a command result for JSON format */
+/* Append a command result in JSON format. */
 static int
 append_result_value(const char *name, char **output, void *tmp)
 {
@@ -96,7 +96,7 @@ append_result_value(const char *name, char **output, void *tmp)
 	return append_json_str_value(output, name, result->result);
 }
 
-/* append error details for JSON format */
+/* Append error details in JSON format. */
 static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
@@ -110,9 +110,7 @@ append_error_details_value(const char *name, char **output, void *tmp)
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s)\n",
-				name);
+				"Fail to alloc buf for `%s`.\n", name);
 		return SPP_RET_NG;
 	}
 
@@ -135,7 +133,7 @@ is_port_flushed(enum port_type iface_type, int iface_no)
 	return port->ethdev_port_id >= 0;
 }
 
-/* append a list of interface numbers */
+/* Append index number as comma separated format such as `0, 1, ...`. */
 int
 append_interface_array(char **output, const enum port_type type)
 {
@@ -151,14 +149,12 @@ append_interface_array(char **output, const enum port_type type)
 		*output = spp_strbuf_append(*output, tmp_str, strlen(tmp_str));
 		if (unlikely(*output == NULL)) {
 			RTE_LOG(ERR, WK_CMD_RES_FMT,
-					"Interface number failed to add. "
-					"(type = %d)\n", type);
+				/* TODO(yasufum) replace %d to string. */
+				"Failed to add index for type `%d`.\n", type);
 			return SPP_RET_NG;
 		}
-
 		port_cnt++;
 	}
-
 	return SPP_RET_OK;
 }
 
@@ -519,7 +515,10 @@ append_response_list_value(char **output, struct cmd_response *responses,
 	return SPP_RET_OK;
 }
 
-/* append a list of command results for JSON format. */
+/**
+ * Setup `results` section in JSON msg. This is an example.
+ *   "results": [ { "result": "success" } ]
+ */
 int
 append_command_results_value(const char *name, char **output,
 		int num, struct cmd_result *results)
@@ -527,27 +526,26 @@ append_command_results_value(const char *name, char **output,
 	int ret = SPP_RET_NG;
 	int i;
 	char *tmp_buff1, *tmp_buff2;
+
+	/* Setup result statement step by step with two buffers. */
 	tmp_buff1 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff1 == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s, buff=1)\n",
-				name);
+				"Faield to alloc 1st buf for `%s`.\n", name);
 		return SPP_RET_NG;
 	}
-
 	tmp_buff2 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff2 == NULL)) {
 		spp_strbuf_free(tmp_buff1);
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s, buff=2)\n",
-				name);
+				"Faield to alloc 2nd buf for `%s`.\n", name);
 		return SPP_RET_NG;
 	}
 
 	for (i = 0; i < num; i++) {
 		tmp_buff1[0] = '\0';
+
+		/* Setup key-val pair such as `"result": "success"` */
 		ret = append_response_list_value(&tmp_buff1,
 				response_result_list, &results[i]);
 		if (unlikely(ret < 0)) {
@@ -556,22 +554,41 @@ append_command_results_value(const char *name, char **output,
 			return SPP_RET_NG;
 		}
 
+		/* Surround key-val pair such as `{ "result": "success" }`. */
 		ret = append_json_block_brackets(&tmp_buff2, "", tmp_buff1);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
 			return SPP_RET_NG;
 		}
-
 	}
 
+	/**
+	 * Setup result statement such as
+	 * `"results": [ { "result": "success" } ]`.
+	 */
 	ret = append_json_array_brackets(output, name, tmp_buff2);
+
 	spp_strbuf_free(tmp_buff1);
 	spp_strbuf_free(tmp_buff2);
 	return ret;
 }
 
-/* append a list of status information for JSON format. */
+/**
+ * Setup response of `status` command.
+ *
+ * This is an example of the response.
+ *   "results": [ { "result": "success" } ],
+ *   "info": {
+ *       "client-id": 2,
+ *       "phy": [ 0, 1 ], "vhost": [  ], "ring": [  ],
+ *       "master-lcore": 1,
+ *       "core": [
+ *           {"core": 2, "type": "unuse"}, {"core": 3, "type": "unuse"}, ...
+ *       ],
+ *       "classifier_table": [  ]
+ *   }
+ */
 int
 append_info_value(const char *name, char **output)
 {
@@ -579,19 +596,19 @@ append_info_value(const char *name, char **output)
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s)\n",
+				"Failed to get empty buf for append `%s`.\n",
 				name);
 		return SPP_RET_NG;
 	}
 
-	ret = append_response_list_value(&tmp_buff,
-			response_info_list, NULL);
+	/* Setup JSON msg in value of `info` key. */
+	ret = append_response_list_value(&tmp_buff, response_info_list, NULL);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		return SPP_RET_NG;
 	}
 
+	/* Setup response of JSON msg. */
 	ret = append_json_block_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
@@ -674,7 +691,8 @@ wk_get_client_id(void)
  * of struct `cmd_response` which are for making each of parts of command
  * response.
  */
-/* Add entry of client ID to a response in JSON. */
+
+/* Add entry of client ID such as `"client-id": 1` to a response in JSON. */
 int
 add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
