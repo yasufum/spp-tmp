@@ -16,14 +16,10 @@
 
 #define RTE_LOGTYPE_WK_CMD_RES_FMT RTE_LOGTYPE_USER1
 
-/* Proto type declaration for a list of operator functions. */
+/* Proto type declaration for a list of operation functions. */
 static int append_result_value(const char *name, char **output, void *tmp);
 static int append_error_details_value(const char *name, char **output,
 		void *tmp);
-static int add_interface(const char *name, char **output,
-		void *tmp __attribute__ ((unused)));
-static int add_master_lcore(const char *name, char **output,
-		void *tmp __attribute__ ((unused)));
 
 /**
  * List of worker process type. The order of items should be same as the order
@@ -52,31 +48,6 @@ const char *PORT_ABILITY_STAT_LIST[] = {
 struct cmd_res_formatter_ops response_result_list[] = {
 	{ "result", append_result_value },
 	{ "error_details", append_error_details_value },
-	{ "", NULL }
-};
-
-/**
- * List of combination of tag and operator function. It is used to assemble
- * a result of command in JSON like as following.
- *
- *     {
- *         "client-id": 1,
- *         "ports": ["phy:0", "phy:1", "vhost:0", "ring:0"],
- *         "components": [
- *             {
- *                 "core": 2,
- *                 ...
- */
-struct cmd_res_formatter_ops response_info_list[] = {
-	{ "client-id", add_client_id },
-	{ "phy", add_interface },
-	{ "vhost", add_interface },
-	{ "ring", add_interface },
-	{ "master-lcore", add_master_lcore},
-	{ "core", add_core},
-#ifdef SPP_VF_MODULE
-	{ "classifier_table", add_classifier_table},
-#endif /* SPP_VF_MODULE */
 	{ "", NULL }
 };
 
@@ -527,6 +498,8 @@ append_info_value(const char *name, char **output)
 {
 	int ret = SPP_RET_NG;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	struct cmd_res_formatter_ops ops_list[NOF_STAT_OPS];
+
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Failed to get empty buf for append `%s`.\n",
@@ -534,8 +507,18 @@ append_info_value(const char *name, char **output)
 		return SPP_RET_NG;
 	}
 
+	memset(ops_list, 0x00,
+			sizeof(struct cmd_res_formatter_ops) * NOF_STAT_OPS);
+
+	int is_got_ops = get_status_ops(ops_list);
+	if (unlikely(is_got_ops < 0)) {
+		RTE_LOG(ERR, WK_CMD_RES_FMT,
+				"Failed to get ops_list.\n");
+		return SPP_RET_NG;
+	}
+
 	/* Setup JSON msg in value of `info` key. */
-	ret = append_response_list_value(&tmp_buff, response_info_list, NULL);
+	ret = append_response_list_value(&tmp_buff, ops_list, NULL);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		return SPP_RET_NG;
@@ -558,7 +541,7 @@ wk_get_client_id(void)
 }
 
 /**
- * Operator functions start with prefix `add_` defined in `response_info_list`
+ * Operation functions start with prefix `add_` defined in get_status_ops()
  * of struct `cmd_res_formatter_ops` which are for making each of parts of
  * command response.
  */
@@ -572,7 +555,7 @@ add_client_id(const char *name, char **output,
 }
 
 /* Add entry of port to a response in JSON such as "phy:0". */
-static int
+int
 add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
@@ -606,7 +589,7 @@ add_interface(const char *name, char **output,
 }
 
 /* Add entry of master lcore to a response in JSON. */
-static int
+int
 add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {

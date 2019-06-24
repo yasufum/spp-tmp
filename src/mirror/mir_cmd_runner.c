@@ -414,3 +414,37 @@ get_comp_type_from_str(const char *type_str)
 
 	return SPPWK_TYPE_NONE;
 }
+
+/**
+ * List of combination of tag and operator function. It is used to assemble
+ * a result of command in JSON like as following.
+ *
+ *     {
+ *         "client-id": 1,
+ *         "ports": ["phy:0", "phy:1", "vhost:0", "ring:0"],
+ *         "components": [
+ *             {
+ *                 "core": 2,
+ *                 ...
+ */
+/* TODO(yasufum) consider to create and move to vf_cmd_formatter.c */
+int get_status_ops(struct cmd_res_formatter_ops *ops_list)
+{
+	/* Num of entries should be the same as NOF_STAT_OPS in vf_deps.h. */
+	struct cmd_res_formatter_ops tmp_ops_list[] = {
+		{ "client-id", add_client_id },
+		{ "phy", add_interface },
+		{ "vhost", add_interface },
+		{ "ring", add_interface },
+		{ "master-lcore", add_master_lcore},
+		{ "core", add_core},
+		{ "", NULL }
+	};
+	memcpy(ops_list, tmp_ops_list, sizeof(tmp_ops_list));
+	if (unlikely(ops_list == NULL)) {
+		RTE_LOG(ERR, MIR_CMD_RUNNER, "Failed to setup ops_list.\n");
+		return -1;
+	}
+
+	return 0;
+}

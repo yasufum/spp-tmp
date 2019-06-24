@@ -9,9 +9,13 @@
 #include <rte_hash.h>
 #include "cmd_utils.h"
 #include "cmd_parser.h"
+#include "cmd_res_formatter.h"
 
-/** Number of VLAN ID */
+/* Number of VLAN ID */
 #define NOF_VLAN 4096
+
+/* Num of entries of ops_list in vf_cmd_runner.c. */
+#define NOF_STAT_OPS 8
 
 /* Classifier for MAC addresses. */
 struct mac_classifier {
@@ -110,5 +114,7 @@ int add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
 
 enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
+
+int get_status_ops(struct cmd_res_formatter_ops *ops_list);
 
 #endif  /* _SPPWK_TH_VF_DEPS_H_ */

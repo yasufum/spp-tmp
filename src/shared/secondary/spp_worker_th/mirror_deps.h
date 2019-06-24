@@ -7,6 +7,10 @@
 
 #include "cmd_utils.h"
 #include "cmd_parser.h"
+#include "cmd_res_formatter.h"
+
+/* Num of entries of ops_list in mir_cmd_runner.c. */
+#define NOF_STAT_OPS 7
 
 int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
 
@@ -33,5 +37,7 @@ int update_mirror(struct sppwk_comp_info *wk_comp_info);
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
 enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
+
+int get_status_ops(struct cmd_res_formatter_ops *ops_list);
 
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */
