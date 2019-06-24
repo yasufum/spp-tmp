@@ -205,8 +205,7 @@ slave_main(void *arg __attribute__ ((unused)))
 
 		if (spp_check_core_update(lcore_id) == SPP_RET_OK) {
 			/* Setting with the flush command trigger. */
-			info->ref_index = (info->upd_index+1) %
-					SPP_INFO_AREA_MAX;
+			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);
 		}
 

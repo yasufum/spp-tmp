@@ -48,7 +48,7 @@ struct mirror_path {
 struct mirror_info {
 	volatile int ref_index; /* index to reference area */
 	volatile int upd_index; /* index to update area    */
-	struct mirror_path path[SPP_INFO_AREA_MAX];
+	struct mirror_path path[TWO_SIDES];
 				/* Information of data path */
 };
 
@@ -339,7 +339,7 @@ change_mirror_index(int id)
 	if (info->ref_index == info->upd_index) {
 	/* Change reference index of port ability. */
 		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
-		info->ref_index = (info->upd_index+1)%SPP_INFO_AREA_MAX;
+		info->ref_index = (info->upd_index+1) % TWO_SIDES;
 	}
 }
 
@@ -479,8 +479,7 @@ slave_main(void *arg __attribute__ ((unused)))
 
 		if (spp_check_core_update(lcore_id) == SPP_RET_OK) {
 			/* Setting with the flush command trigger. */
-			info->ref_index = (info->upd_index+1) %
-					SPP_INFO_AREA_MAX;
+			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);
 		}
 

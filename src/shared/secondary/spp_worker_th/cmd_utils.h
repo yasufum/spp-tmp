@@ -34,7 +34,8 @@
 /** Update wait timer (micro sec) */
 #define SPP_CHANGE_UPDATE_INTERVAL 10
 
-#define SPP_INFO_AREA_MAX 2  /* The max number of buffer for management */
+/* Used for index of arrary of management data which has two sides. */
+#define TWO_SIDES 2
 
 #define STR_LEN_SHORT 32  /* Size of short string. */
 #define STR_LEN_NAME 128  /* Size of string for names. */
@@ -224,7 +225,7 @@ struct core_mng_info {
 	volatile enum sppwk_lcore_status status;
 	volatile int ref_index;  /* index for reference */
 	volatile int upd_index;  /* index for update */
-	struct core_info core[SPP_INFO_AREA_MAX];  /* info of each core */
+	struct core_info core[TWO_SIDES];  /* info of each core */
 };
 
 /* Manage data used for backup. */

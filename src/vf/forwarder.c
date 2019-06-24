@@ -31,7 +31,7 @@ struct forward_path {
 struct forward_info {
 	volatile int ref_index; /* index to reference area */
 	volatile int upd_index; /* index to update area    */
-	struct forward_path path[SPP_INFO_AREA_MAX];
+	struct forward_path path[TWO_SIDES];
 				/* Information of data path */
 };
 
@@ -169,10 +169,10 @@ change_forward_index(int id)
 	struct forward_info *info = &g_forward_info[id];
 	if (info->ref_index == info->upd_index) {
 		/* Change reference index of port ability. */
-		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF,
-									0, 0);
+		spp_port_ability_change_index(
+				PORT_ABILITY_CHG_INDEX_REF, 0, 0);
 
-		info->ref_index = (info->upd_index+1)%SPP_INFO_AREA_MAX;
+		info->ref_index = (info->upd_index+1) % TWO_SIDES;
 	}
 }
 /**

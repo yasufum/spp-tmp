@@ -16,8 +16,7 @@
 struct port_ability_mng_info {
 	volatile int ref_index; /* Index to reference area */
 	volatile int upd_index; /* Index to update area    */
-	struct spp_port_ability ability[SPP_INFO_AREA_MAX]
-				[SPP_PORT_ABILITY_MAX];
+	struct spp_port_ability ability[TWO_SIDES][SPP_PORT_ABILITY_MAX];
 				/* Port ability information */
 };
 
@@ -232,12 +231,12 @@ spp_port_ability_change_index(
 
 	for (cnt = 0; cnt < num_rx; cnt++) {
 		mng = &g_port_mng_info[rx_list[cnt]].rx;
-		mng->ref_index = (mng->upd_index+1)%SPP_INFO_AREA_MAX;
+		mng->ref_index = (mng->upd_index+1) % TWO_SIDES;
 		rx_list[cnt] = 0;
 	}
 	for (cnt = 0; cnt < num_tx; cnt++) {
 		mng = &g_port_mng_info[tx_list[cnt]].tx;
-		mng->ref_index = (mng->upd_index+1)%SPP_INFO_AREA_MAX;
+		mng->ref_index = (mng->upd_index+1) % TWO_SIDES;
 		tx_list[cnt] = 0;
 	}
 
