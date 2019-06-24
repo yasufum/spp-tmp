@@ -204,7 +204,6 @@ struct startup_param {
 	int client_id;  /* Client ID */
 	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
 	int server_port;   /* Port Number of spp-ctl */
-	int vhost_client;  /* Flag for --vhost-client option */
 	enum sppwk_proc_type wk_proc_type;
 };
 
@@ -299,14 +298,6 @@ struct spp_iterate_classifier_table_params {
  */
 void log_hexdumped(const char *obj_name, const void *obj_addr,
 		const size_t size);
-
-/**
- * Add ring pmd for owned proccess or thread.
- *
- * @param[in] ring_id added ring id.
- * @return ring port ID, or -1 if failed.
- */
-int spp_vf_add_ring_pmd(int ring_id);
 
 /**
  * Add ring pmd for owned proccess or thread.

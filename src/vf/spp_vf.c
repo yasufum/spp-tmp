@@ -11,6 +11,7 @@
 #include "classifier_mac.h"
 #include "forwarder.h"
 #include "shared/secondary/return_codes.h"
+#include "shared/secondary/add_port.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
@@ -150,7 +151,7 @@ parse_app_args(int argc, char *argv[])
 			proc_flg = 1;
 			break;
 		case SPP_LONGOPT_RETVAL_VHOST_CLIENT:
-			g_startup_param.vhost_client = 1;
+			g_enable_vhost_cli = 1;
 			break;
 		case 's':
 			if (parse_app_server(optarg, g_startup_param.server_ip,
@@ -180,7 +181,7 @@ parse_app_args(int argc, char *argv[])
 			g_startup_param.wk_proc_type,
 			g_startup_param.server_ip,
 			g_startup_param.server_port,
-			g_startup_param.vhost_client);
+			g_enable_vhost_cli);
 	return SPP_RET_OK;
 }
 

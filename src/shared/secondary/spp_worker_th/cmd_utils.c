@@ -11,9 +11,10 @@
 #include <rte_log.h>
 #include <rte_branch_prediction.h>
 
-#include "shared/secondary/return_codes.h"
 #include "cmd_utils.h"
 #include "spp_port.h"
+#include "shared/secondary/add_port.h"
+#include "shared/secondary/return_codes.h"
 
 #ifdef SPP_VF_MODULE
 #include "vf_deps.h"
@@ -68,125 +69,6 @@ log_hexdumped(const char *obj_name, const void *obj_addr, const size_t size)
 			buf[cnt+8], buf[cnt+9], buf[cnt+10], buf[cnt+11],
 			buf[cnt+12], buf[cnt+13], buf[cnt+14], buf[cnt+15]);
 	}
-}
-
-/* generation of the ring port */
-int
-spp_vf_add_ring_pmd(int ring_id)
-{
-	struct rte_ring *ring;
-	int ring_port_id;
-	uint16_t port_id = PORT_RESET;
-	char dev_name[RTE_ETH_NAME_MAX_LEN];
-
-	/* Lookup ring of given id */
-	ring = rte_ring_lookup(get_rx_queue_name(ring_id));
-	if (unlikely(ring == NULL)) {
-		RTE_LOG(ERR, APP,
-			"Cannot get RX ring - is server process running?\n");
-		return SPP_RET_NG;
-	}
-
-	/* Create ring pmd */
-	snprintf(dev_name, RTE_ETH_NAME_MAX_LEN - 1, "net_ring_%s", ring->name);
-	/* check whether a port already exists. */
-	ring_port_id = rte_eth_dev_get_port_by_name(dev_name, &port_id);
-	if (port_id == PORT_RESET) {
-		ring_port_id = rte_eth_from_ring(ring);
-		if (ring_port_id < 0) {
-			RTE_LOG(ERR, APP, "Cannot create eth dev with "
-						"rte_eth_from_ring()\n");
-			return SPP_RET_NG;
-		}
-	} else {
-		ring_port_id = port_id;
-		rte_eth_dev_start(ring_port_id);
-	}
-	RTE_LOG(INFO, APP, "ring port add. (no = %d / port = %d)\n",
-			ring_id, ring_port_id);
-	return ring_port_id;
-}
-
-/* generation of the vhost port */
-int
-spp_vf_add_vhost_pmd(int index, int client)
-{
-	struct rte_eth_conf port_conf = {
-		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
-	};
-	struct rte_mempool *mp;
-	uint16_t vhost_port_id;
-	int nr_queues = 1;
-	const char *name;
-	char devargs[64];
-	char *iface;
-	uint16_t q;
-	int ret;
-#define NR_DESCS 128
-
-	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
-	if (unlikely(mp == NULL)) {
-		RTE_LOG(ERR, APP, "Cannot get mempool for mbufs. "
-				"(name = %s)\n", PKTMBUF_POOL_NAME);
-		return SPP_RET_NG;
-	}
-
-	/* eth_vhost0 index 0 iface /tmp/sock0 on numa 0 */
-	name = get_vhost_backend_name(index);
-	iface = get_vhost_iface_name(index);
-
-	sprintf(devargs, "%s,iface=%s,queues=%d,client=%d",
-			name, iface, nr_queues, client);
-	ret = dev_attach_by_devargs(devargs, &vhost_port_id);
-	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "spp_rte_eth_dev_attach error. "
-				"(ret = %d)\n", ret);
-		return ret;
-	}
-
-	ret = rte_eth_dev_configure(vhost_port_id, nr_queues, nr_queues,
-		&port_conf);
-	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_configure error. "
-				"(ret = %d)\n", ret);
-		return ret;
-	}
-
-	/* Allocate and set up 1 RX queue per Ethernet port. */
-	for (q = 0; q < nr_queues; q++) {
-		ret = rte_eth_rx_queue_setup(vhost_port_id, q, NR_DESCS,
-			rte_eth_dev_socket_id(vhost_port_id), NULL, mp);
-		if (unlikely(ret < 0)) {
-			RTE_LOG(ERR, APP,
-				"rte_eth_rx_queue_setup error. (ret = %d)\n",
-				ret);
-			return ret;
-		}
-	}
-
-	/* Allocate and set up 1 TX queue per Ethernet port. */
-	for (q = 0; q < nr_queues; q++) {
-		ret = rte_eth_tx_queue_setup(vhost_port_id, q, NR_DESCS,
-			rte_eth_dev_socket_id(vhost_port_id), NULL);
-		if (unlikely(ret < 0)) {
-			RTE_LOG(ERR, APP,
-				"rte_eth_tx_queue_setup error. (ret = %d)\n",
-				ret);
-			return ret;
-		}
-	}
-
-	/* Start the Ethernet port. */
-	ret = rte_eth_dev_start(vhost_port_id);
-	if (unlikely(ret < 0)) {
-		RTE_LOG(ERR, APP, "rte_eth_dev_start error. (ret = %d)\n",
-			ret);
-		return ret;
-	}
-
-	RTE_LOG(INFO, APP, "vhost port add. (no = %d / port = %d)\n",
-			index, vhost_port_id);
-	return vhost_port_id;
 }
 
 /* Get core status */
@@ -606,7 +488,7 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 	int cnt;
 
 	/* Do not remove for if it is running in vhost-client mode. */
-	if (g_mng_data.p_startup_param->vhost_client != 0)
+	if (g_enable_vhost_cli != 0)
 		return;
 
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
@@ -830,8 +712,7 @@ update_port_info(void)
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &p_iface_info->vhost[cnt];
 		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
-			ret = spp_vf_add_vhost_pmd(port->iface_no,
-				g_mng_data.p_startup_param->vhost_client);
+			ret = add_vhost_pmd(port->iface_no);
 			if (ret < 0)
 				return SPP_RET_NG;
 			port->ethdev_port_id = ret;

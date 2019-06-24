@@ -20,6 +20,7 @@
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
+/* TODO(yasufum) remove it after --vhost-client is retrieved from a func. */
 extern int g_enable_vhost_cli;
 
 /**

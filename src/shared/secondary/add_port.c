@@ -165,36 +165,52 @@ add_vhost_pmd(int index)
 
 	sprintf(devargs, "%s,iface=%s,queues=%d,client=%d",
 			name, iface, nr_queues, g_enable_vhost_cli);
-	RTE_LOG(DEBUG, SHARED, "devargs for vhost: '%s'\n", devargs);
+	RTE_LOG(DEBUG, SHARED, "Devargs for vhost: '%s'.\n", devargs);
 	ret = dev_attach_by_devargs(devargs, &vhost_port_id);
-	if (ret < 0)
+	if (ret < 0) {
+		RTE_LOG(ERR, SHARED, "Cannot attach: %s.\n", devargs);
 		return ret;
+	}
 
 	ret = rte_eth_dev_configure(vhost_port_id, nr_queues, nr_queues,
 		&port_conf);
-	if (ret < 0)
+	if (ret < 0) {
+		RTE_LOG(ERR, SHARED, "Failed to dev configure.\n");
 		return ret;
+	}
 
 	/* Allocate and set up 1 RX queue per Ethernet port. */
 	for (q = 0; q < nr_queues; q++) {
 		ret = rte_eth_rx_queue_setup(vhost_port_id, q, NR_DESCS,
 			rte_eth_dev_socket_id(vhost_port_id), NULL, mp);
-		if (ret < 0)
+		if (ret < 0) {
+			RTE_LOG(ERR, SHARED,
+				"Failed to setup RX queue, "
+				"port: %d, queue: %d.\n",
+				vhost_port_id, q);
 			return ret;
+		}
 	}
 
 	/* Allocate and set up 1 TX queue per Ethernet port. */
 	for (q = 0; q < nr_queues; q++) {
 		ret = rte_eth_tx_queue_setup(vhost_port_id, q, NR_DESCS,
 			rte_eth_dev_socket_id(vhost_port_id), NULL);
-		if (ret < 0)
+		if (ret < 0) {
+			RTE_LOG(ERR, SHARED,
+				"Failed to setup TX queue, "
+				"port: %d, queue: %d.\n",
+				vhost_port_id, q);
 			return ret;
+		}
 	}
 
 	/* Start the Ethernet port. */
 	ret = rte_eth_dev_start(vhost_port_id);
-	if (ret < 0)
+	if (ret < 0) {
+		RTE_LOG(ERR, SHARED, "Failed to start vhost.\n");
 		return ret;
+	}
 
 	RTE_LOG(DEBUG, SHARED, "vhost port id %d\n", vhost_port_id);
 
