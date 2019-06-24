@@ -597,6 +597,63 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 	return SPP_RET_OK;
 }
 
+/* TODO(yasufum) move to another file for util funcs. */
+/* Get client ID from global command params. */
+static int
+wk_get_client_id(void)
+{
+	struct startup_param *params;
+	sppwk_get_mng_data(&params, NULL, NULL, NULL, NULL, NULL, NULL);
+	return params->client_id;
+}
+
+/**
+ * Operator functions start with prefix `add_` defined in `response_info_list`
+ * of struct `cmd_response` which are for making each of parts of command
+ * response.
+ */
+/* Add entry of client ID to a response in JSON. */
+int
+add_client_id(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	return append_json_int_value(output, name, wk_get_client_id());
+}
+
+/* Add entry of port to a response in JSON such as "phy:0". */
+int
+add_interface(const char *name, char **output,
+		void *tmp __attribute__ ((unused)))
+{
+	int ret = SPP_RET_NG;
+	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+	if (unlikely(tmp_buff == NULL)) {
+		RTE_LOG(ERR, WK_CMD_RES_FMT,
+				/* TODO(yasufum) refactor no meaning err msg */
+				"allocate error. (name = %s)\n",
+				name);
+		return SPP_RET_NG;
+	}
+
+	if (strcmp(name, SPP_IFTYPE_NIC_STR) == 0)
+		ret = append_interface_array(&tmp_buff, PHY);
+
+	else if (strcmp(name, SPP_IFTYPE_VHOST_STR) == 0)
+		ret = append_interface_array(&tmp_buff, VHOST);
+
+	else if (strcmp(name, SPP_IFTYPE_RING_STR) == 0)
+		ret = append_interface_array(&tmp_buff, RING);
+
+	if (unlikely(ret < SPP_RET_OK)) {
+		spp_strbuf_free(tmp_buff);
+		return SPP_RET_NG;
+	}
+
+	ret = append_json_array_brackets(output, name, tmp_buff);
+	spp_strbuf_free(tmp_buff);
+	return ret;
+}
+
 /* Add entry of master lcore to a response in JSON. */
 int
 add_master_lcore(const char *name, char **output,

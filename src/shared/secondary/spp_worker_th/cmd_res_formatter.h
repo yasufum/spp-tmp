@@ -72,6 +72,17 @@ int append_response_list_value(char **output, struct cmd_response *responses,
 int append_command_results_value(const char *name, char **output,
 		int num, struct cmd_result *results);
 
+/**
+ * Operator functions start with prefix `add_` defined in `response_info_list`
+ * of struct `cmd_response` which are for making each of parts of command
+ * response.
+ */
+int add_client_id(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
+int add_interface(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 int add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
 
