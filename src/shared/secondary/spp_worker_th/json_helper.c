@@ -7,27 +7,27 @@
 
 #define RTE_LOGTYPE_WK_JSON_HELPER RTE_LOGTYPE_USER1
 
+/* Add a comma to given JSON string, or nothing if the end of the msg. */
 int
 append_json_comma(char **output)
 {
 	*output = spp_strbuf_append(*output, ", ", strlen(", "));
 	if (unlikely(*output == NULL)) {
-		RTE_LOG(ERR, WK_JSON_HELPER,
-				"JSON's comma failed to add.\n");
+		RTE_LOG(ERR, WK_JSON_HELPER, "Failed to add comma.\n");
 		return SPP_RET_NG;
 	}
 
 	return SPP_RET_OK;
 }
 
-/* append data of unsigned integral type for JSON format */
+/* Add a uint value to given JSON string. */
 int
-append_json_uint_value(const char *name, char **output, unsigned int value)
+append_json_uint_value(char **output, const char *name, unsigned int value)
 {
 	int len = strlen(*output);
-	/* extend the buffer */
+
 	*output = spp_strbuf_append(*output, "",
-			strlen(name) + CMD_TAG_APPEND_SIZE*2);
+			strlen(name) + JSON_APPEND_LEN*2);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's numeric format failed to add. "
@@ -40,14 +40,14 @@ append_json_uint_value(const char *name, char **output, unsigned int value)
 	return SPP_RET_OK;
 }
 
-/* append data of integral type for JSON format */
+/* Add an int value to given JSON string. */
 int
-append_json_int_value(const char *name, char **output, int value)
+append_json_int_value(char **output, const char *name, int value)
 {
 	int len = strlen(*output);
 	/* extend the buffer */
 	*output = spp_strbuf_append(*output, "",
-			strlen(name) + CMD_TAG_APPEND_SIZE*2);
+			strlen(name) + JSON_APPEND_LEN*2);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's numeric format failed to add. "
@@ -60,66 +60,77 @@ append_json_int_value(const char *name, char **output, int value)
 	return SPP_RET_OK;
 }
 
-/* append data of string type for JSON format */
+/* Add a string value to given JSON string. */
 int
-append_json_str_value(const char *name, char **output, const char *str)
+append_json_str_value(char **output, const char *name, const char *val)
 {
 	int len = strlen(*output);
 	/* extend the buffer */
 	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
+			strlen(name) + strlen(val) + JSON_APPEND_LEN);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's string format failed to add. "
-				"(name = %s, str = %s)\n", name, str);
+				"(name = %s, val= %s)\n", name, val);
 		return SPP_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("\"%s\""),
-			JSON_APPEND_COMMA(len), name, str);
+			JSON_APPEND_COMMA(len), name, val);
 	return SPP_RET_OK;
 }
 
-/* append brackets of the array for JSON format */
+/**
+ * Add an entry of array by surrounding given value with '[' and ']' to make
+ * it an array entry. The added entry `"key": [ val ]"` is defined as macro
+ * `JSON_APPEND_ARRAY`.
+ */
 int
-append_json_array_brackets(const char *name, char **output, const char *str)
+append_json_array_brackets(char **output, const char *name, const char *val)
 {
 	int len = strlen(*output);
 	/* extend the buffer */
 	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
+			strlen(name) + strlen(val) + JSON_APPEND_LEN);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's square bracket failed to add. "
-				"(name = %s, str = %s)\n", name, str);
+				"(name = %s, val= %s)\n", name, val);
 		return SPP_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_ARRAY,
-			JSON_APPEND_COMMA(len), name, str);
+			JSON_APPEND_COMMA(len), name, val);
 	return SPP_RET_OK;
 }
 
-/* append brackets of the blocks for JSON format */
+/**
+ * Add an entry of hash by surrounding given value with '{' and '}' to make
+ * it a hash entry. The added entry `"key": { val }"` is defined as macro
+ * `JSON_APPEND_BLOCK`.
+ *
+ * This function is also used to make a block without key `{ val }` if given
+ * key is `""`.
+ */
 int
-append_json_block_brackets(const char *name, char **output, const char *str)
+append_json_block_brackets(char **output, const char *name, const char *val)
 {
 	int len = strlen(*output);
 	/* extend the buffer */
 	*output = spp_strbuf_append(*output, "",
-			strlen(name) + strlen(str) + CMD_TAG_APPEND_SIZE);
+			strlen(name) + strlen(val) + JSON_APPEND_LEN);
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's curly bracket failed to add. "
-				"(name = %s, str = %s)\n", name, str);
+				"(name = %s, val= %s)\n", name, val);
 		return SPP_RET_NG;
 	}
 
 	if (name[0] == '\0')
 		sprintf(&(*output)[len], JSON_APPEND_BLOCK_NONAME,
-				JSON_APPEND_COMMA(len), name, str);
+				JSON_APPEND_COMMA(len), name, val);
 	else
 		sprintf(&(*output)[len], JSON_APPEND_BLOCK,
-				JSON_APPEND_COMMA(len), name, str);
+				JSON_APPEND_COMMA(len), name, val);
 	return SPP_RET_OK;
 }

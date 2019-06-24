@@ -21,6 +21,7 @@
 #define RTE_LOGTYPE_WK_CMD_RUNNER RTE_LOGTYPE_USER1
 
 /* request message initial size */
+#define CMD_TAG_APPEND_SIZE 16
 #define CMD_ERR_MSG_LEN 128
 #define CMD_REQ_BUF_INIT_SIZE 2048
 #define CMD_RES_BUF_INIT_SIZE 2048
@@ -741,7 +742,7 @@ static int
 append_result_value(const char *name, char **output, void *tmp)
 {
 	const struct cmd_result *result = tmp;
-	return append_json_str_value(name, output, result->result);
+	return append_json_str_value(output, name, result->result);
 }
 
 /* append error details for JSON format */
@@ -764,14 +765,13 @@ append_error_details_value(const char *name, char **output, void *tmp)
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_str_value("message", &tmp_buff,
-			result->err_msg);
+	ret = append_json_str_value(&tmp_buff, "message", result->err_msg);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_block_brackets(name, output, tmp_buff);
+	ret = append_json_block_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -781,7 +781,7 @@ static int
 add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_int_value(name, output, sppwk_get_client_id());
+	return append_json_int_value(output, name, sppwk_get_client_id());
 }
 
 /* append a list of interface numbers */
@@ -816,7 +816,7 @@ static int
 append_process_type_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	return append_json_str_value(name, output,
+	return append_json_str_value(output, name,
 			SPPWK_PROC_TYPE_LIST[sppwk_get_proc_type()]);
 }
 
@@ -849,7 +849,7 @@ add_interface(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_array_brackets(name, output, tmp_buff);
+	ret = append_json_array_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -859,16 +859,16 @@ static int
 append_vlan_value(char **output, const int ope, const int vid, const int pcp)
 {
 	int ret = SPP_RET_OK;
-	ret = append_json_str_value("operation", output,
+	ret = append_json_str_value(output, "operation",
 			PORT_ABILITY_STAT_LIST[ope]);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
 
-	ret = append_json_int_value("id", output, vid);
+	ret = append_json_int_value(output, "id", vid);
 	if (unlikely(ret < 0))
 		return SPP_RET_NG;
 
-	ret = append_json_int_value("pcp", output, pcp);
+	ret = append_json_int_value(output, "pcp", pcp);
 	if (unlikely(ret < 0))
 		return SPP_RET_NG;
 
@@ -922,7 +922,7 @@ append_vlan_block(const char *name, char **output,
 			return SPP_RET_NG;
 	}
 
-	ret = append_json_block_brackets(name, output, tmp_buff);
+	ret = append_json_block_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -943,7 +943,7 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 	}
 
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
-	ret = append_json_str_value("port", &tmp_buff, port_str);
+	ret = append_json_str_value(&tmp_buff, "port", port_str);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
 
@@ -954,7 +954,7 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
 
-	ret = append_json_block_brackets("", output, tmp_buff);
+	ret = append_json_block_brackets(output, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -982,7 +982,7 @@ append_port_array(const char *name, char **output, const int num,
 			return SPP_RET_NG;
 	}
 
-	ret = append_json_array_brackets(name, output, tmp_buff);
+	ret = append_json_array_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -1020,17 +1020,17 @@ append_core_element_value(
 	 * TODO(yasufum) change ambiguous "core" to more specific one such as
 	 * "worker-lcores" or "slave-lcores".
 	 */
-	ret = append_json_uint_value("core", &tmp_buff, lcore_id);
+	ret = append_json_uint_value(&tmp_buff, "core", lcore_id);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
 	if (unuse_flg) {
-		ret = append_json_str_value("name", &tmp_buff, name);
+		ret = append_json_str_value(&tmp_buff, "name", name);
 		if (unlikely(ret < 0))
 			return ret;
 	}
 
-	ret = append_json_str_value("type", &tmp_buff, type);
+	ret = append_json_str_value(&tmp_buff, "type", type);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
@@ -1046,7 +1046,7 @@ append_core_element_value(
 			return ret;
 	}
 
-	ret = append_json_block_brackets("", &buff, tmp_buff);
+	ret = append_json_block_brackets(&buff, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	params->output = buff;
 	return ret;
@@ -1058,7 +1058,7 @@ add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
-	ret = append_json_int_value(name, output, rte_get_master_lcore());
+	ret = append_json_int_value(output, name, rte_get_master_lcore());
 	return ret;
 }
 
@@ -1087,7 +1087,7 @@ add_core(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_array_brackets(name, output, itr_params.output);
+	ret = append_json_array_brackets(output, name, itr_params.output);
 	spp_strbuf_free(itr_params.output);
 	return ret;
 }
@@ -1119,8 +1119,7 @@ append_classifier_element_value(
 
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 
-	ret = append_json_str_value("type", &tmp_buff,
-			CLS_TYPE_A_LIST[type]);
+	ret = append_json_str_value(&tmp_buff, "type", CLS_TYPE_A_LIST[type]);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
@@ -1137,15 +1136,15 @@ append_classifier_element_value(
 		break;
 	}
 
-	ret = append_json_str_value("value", &tmp_buff, value_str);
+	ret = append_json_str_value(&tmp_buff, "value", value_str);
 	if (unlikely(ret < 0))
 		return ret;
 
-	ret = append_json_str_value("port", &tmp_buff, port_str);
+	ret = append_json_str_value(&tmp_buff, "port", port_str);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
-	ret = append_json_block_brackets("", &buff, tmp_buff);
+	ret = append_json_block_brackets(&buff, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	params->output = buff;
 	return ret;
@@ -1185,7 +1184,7 @@ add_classifier_table(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_array_brackets(name, output, itr_params.output);
+	ret = append_json_array_brackets(output, name, itr_params.output);
 	spp_strbuf_free(itr_params.output);
 	return ret;
 }
@@ -1319,7 +1318,7 @@ append_command_results_value(const char *name, char **output,
 			return SPP_RET_NG;
 		}
 
-		ret = append_json_block_brackets("", &tmp_buff2, tmp_buff1);
+		ret = append_json_block_brackets(&tmp_buff2, "", tmp_buff1);
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
@@ -1328,7 +1327,7 @@ append_command_results_value(const char *name, char **output,
 
 	}
 
-	ret = append_json_array_brackets(name, output, tmp_buff2);
+	ret = append_json_array_brackets(output, name, tmp_buff2);
 	spp_strbuf_free(tmp_buff1);
 	spp_strbuf_free(tmp_buff2);
 	return ret;
@@ -1355,7 +1354,7 @@ append_info_value(const char *name, char **output)
 		return SPP_RET_NG;
 	}
 
-	ret = append_json_block_brackets(name, output, tmp_buff);
+	ret = append_json_block_brackets(output, name, tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	return ret;
 }
@@ -1394,7 +1393,7 @@ send_decode_error_response(int *sock,
 				"(name = decode_error_response)\n");
 		return;
 	}
-	ret = append_json_block_brackets("", &msg, tmp_buff);
+	ret = append_json_block_brackets(&msg, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
@@ -1477,7 +1476,7 @@ send_result_spp_ctl(int *sock,
 				"allocate error. (name = result_response)\n");
 		return;
 	}
-	ret = append_json_block_brackets("", &msg, tmp_buff);
+	ret = append_json_block_brackets(&msg, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
 	if (unlikely(ret < SPP_RET_OK)) {
 		spp_strbuf_free(msg);
