@@ -803,29 +803,29 @@ spp_classifier_mac_do(int id)
 
 /* classifier iterate component information */
 int
-spp_classifier_get_component_status(
-		unsigned int lcore_id, int id,
+get_classifier_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
 	int ret = SPP_RET_NG;
-	int i, nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
+	int i;
+	int nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
 	struct management_info *mng_info;
 	struct cls_comp_info *cmp_info;
-	struct cls_port_info *clsd_data;
+	struct cls_port_info *port_info;
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
 	mng_info = g_mng_infos + id;
 	if (!is_used_mng_info(mng_info)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				"Component[%d] Not used. "
-				"(status)(core = %d, type = %d)\n",
+				"Classifier is not used "
+				"(comp_id=%d, lcore_id=%d, type=%d).\n",
 				id, lcore_id, SPPWK_TYPE_CLS);
 		return SPP_RET_NG;
 	}
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
-	clsd_data = cmp_info->tx_ports_i;
+	port_info = cmp_info->tx_ports_i;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
 	if (cmp_info->rx_port_i.iface_type != UNDEF) {
@@ -837,14 +837,14 @@ spp_classifier_get_component_status(
 	memset(tx_ports, 0x00, sizeof(tx_ports));
 	nof_tx = cmp_info->nof_tx_ports;
 	for (i = 0; i < nof_tx; i++) {
-		tx_ports[i].iface_type = clsd_data[i].iface_type;
-		tx_ports[i].iface_no   = clsd_data[i].iface_no_global;
+		tx_ports[i].iface_type = port_info[i].iface_type;
+		tx_ports[i].iface_no = port_info[i].iface_no_global;
 	}
 
 	/* Set the information with the function specified by the command. */
+	/* TODO(yasufum) rename `element_proc` */
 	ret = (*params->element_proc)(
-		params, lcore_id,
-		cmp_info->name, SPPWK_TYPE_CLS_STR,
+		params, lcore_id, cmp_info->name, SPPWK_TYPE_CLS_STR,
 		nof_rx, rx_ports, nof_tx, tx_ports);
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_NG;

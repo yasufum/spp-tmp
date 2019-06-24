@@ -532,15 +532,11 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 			comp_info = (comp_info_base + core->id[cnt]);
 #ifdef SPP_VF_MODULE
 			if (comp_info->wk_type == SPPWK_TYPE_CLS) {
-				ret = spp_classifier_get_component_status(
-						lcore_id,
-						core->id[cnt],
-						params);
+				ret = get_classifier_status(lcore_id,
+						core->id[cnt], params);
 			} else {
-				ret = spp_forward_get_component_status(
-						lcore_id,
-						core->id[cnt],
-						params);
+				ret = get_forwarder_status(lcore_id,
+						core->id[cnt], params);
 			}
 #endif /* SPP_VF_MODULE */
 #ifdef SPP_MIRROR_MODULE

@@ -182,50 +182,49 @@ spp_forward(int id)
 	return SPP_RET_OK;
 }
 
-/* Merge/Forward get component status */
+/* Get forwarder status */
 int
-spp_forward_get_component_status(
-		unsigned int lcore_id, int id,
+get_forwarder_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
 	int ret = SPP_RET_NG;
 	int cnt;
 	const char *component_type = NULL;
-	struct forward_info *info = &g_forward_info[id];
-	struct forward_path *path = &info->path[info->ref_index];
+	struct forward_info *fwd_info = &g_forward_info[id];
+	struct forward_path *fwd_path = &fwd_info->path[fwd_info->ref_index];
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
-	if (unlikely(path->wk_type == SPPWK_TYPE_NONE)) {
+	if (unlikely(fwd_path->wk_type == SPPWK_TYPE_NONE)) {
 		RTE_LOG(ERR, FORWARD,
-				"Component[%d] Not used. "
-				"(status)(core = %d, type = %d)\n",
-				id, lcore_id, path->wk_type);
+				"Forwarder is not used. "
+				"(id=%d, lcore=%d, type=%d).\n",
+				id, lcore_id, fwd_path->wk_type);
 		return SPP_RET_NG;
 	}
 
-	if (path->wk_type == SPPWK_TYPE_MRG)
+	if (fwd_path->wk_type == SPPWK_TYPE_MRG)
 		component_type = SPPWK_TYPE_MRG_STR;
 	else
 		component_type = SPPWK_TYPE_FWD_STR;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < path->num_rx; cnt++) {
-		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
-		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
+	for (cnt = 0; cnt < fwd_path->num_rx; cnt++) {
+		rx_ports[cnt].iface_type = fwd_path->ports[cnt].rx.iface_type;
+		rx_ports[cnt].iface_no = fwd_path->ports[cnt].rx.iface_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	for (cnt = 0; cnt < path->num_tx; cnt++) {
-		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
-		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
+	for (cnt = 0; cnt < fwd_path->num_tx; cnt++) {
+		tx_ports[cnt].iface_type = fwd_path->ports[cnt].tx.iface_type;
+		tx_ports[cnt].iface_no = fwd_path->ports[cnt].tx.iface_no;
 	}
 
 	/* Set the information with the function specified by the command. */
 	ret = (*params->element_proc)(
 		params, lcore_id,
-		path->name, component_type,
-		path->num_rx, rx_ports, path->num_tx, tx_ports);
+		fwd_path->name, component_type,
+		fwd_path->num_rx, rx_ports, fwd_path->num_tx, tx_ports);
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_NG;
 

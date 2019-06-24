@@ -79,7 +79,7 @@ int spp_classifier_mac_iterate_table(
 		struct spp_iterate_classifier_table_params *params);
 
 /**
- * classifier get component status.
+ * Get classifier status.
  *
  * @param[in] lcore_id Lcore ID for classifier.
  * @param[in] id Unique component ID.
@@ -87,11 +87,11 @@ int spp_classifier_mac_iterate_table(
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
-int spp_classifier_get_component_status(unsigned int lcore_id, int id,
+int get_classifier_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
 /**
- * Merge/Forward get component status
+ * Get forwarder status.
  *
  * @param lcore_id Lcore ID for forwarder and merger.
  * @param id Unique component ID.
@@ -99,7 +99,7 @@ int spp_classifier_get_component_status(unsigned int lcore_id, int id,
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
-int spp_forward_get_component_status(unsigned int lcore_id, int id,
+int get_forwarder_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params);
 
 #endif  /* _SPPWK_TH_VF_DEPS_H_ */
