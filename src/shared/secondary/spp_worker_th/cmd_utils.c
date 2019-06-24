@@ -893,7 +893,7 @@ update_comp_info(void)
 		if (comp_info->wk_type == SPPWK_TYPE_CLS)
 			ret = update_classifier(comp_info);
 		else
-			ret = spp_forward_update(comp_info);
+			ret = update_forwarder(comp_info);
 #endif /* SPP_VF_MODULE */
 
 #ifdef SPP_MIRROR_MODULE

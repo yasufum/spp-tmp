@@ -51,64 +51,64 @@ spp_forward_init(void)
 
 /* Update forward info */
 int
-spp_forward_update(struct sppwk_comp_info *component)
+update_forwarder(struct sppwk_comp_info *comp_info)
 {
 	int cnt = 0;
-	int nof_rx = component->nof_rx;
-	int nof_tx = component->nof_tx;
+	int nof_rx = comp_info->nof_rx;
+	int nof_tx = comp_info->nof_tx;
 	int max = (nof_rx > nof_tx)?nof_rx*nof_tx:nof_tx;
-	struct forward_info *info = &g_forward_info[component->comp_id];
-	struct forward_path *path = &info->path[info->upd_index];
+	struct forward_info *fwd_info = &g_forward_info[comp_info->comp_id];
+	/* TODO(yasufum) rename `path` of struct forward_path. */
+	struct forward_path *fwd_path = &fwd_info->path[fwd_info->upd_index];
 
-	/* Forward component allows only one receiving port. */
-	if ((component->wk_type == SPPWK_TYPE_FWD) &&
+	/**
+	 * Check num of RX and TX ports because forwarder has just a set of
+	 * RX and TX.
+	 */
+	if ((comp_info->wk_type == SPPWK_TYPE_FWD) &&
 			unlikely(nof_rx > 1)) {
 		RTE_LOG(ERR, FORWARD,
-			"Component[%d] Setting error. (type = %d, rx = %d)\n",
-			component->comp_id, component->wk_type, nof_rx);
+			"Invalid forwarder type or num of RX ports "
+			"(id=%d, type=%d, nof_rx=%d).\n",
+			comp_info->comp_id, comp_info->wk_type, nof_rx);
 		return SPP_RET_NG;
 	}
-
-	/* Component allows only one transmit port. */
 	if (unlikely(nof_tx != 0) && unlikely(nof_tx != 1)) {
 		RTE_LOG(ERR, FORWARD,
-			"Component[%d] Setting error. (type = %d, tx = %d)\n",
-			component->comp_id, component->wk_type, nof_tx);
+			"Invalid forwarder type or num of TX ports "
+			"(id=%d, type=%d, nof_tx=%d).\n",
+			comp_info->comp_id, comp_info->wk_type, nof_tx);
 		return SPP_RET_NG;
 	}
 
-	memset(path, 0x00, sizeof(struct forward_path));
+	memset(fwd_path, 0x00, sizeof(struct forward_path));
 
 	RTE_LOG(INFO, FORWARD,
-			"Component[%d] Start update component. "
-			"(name = %s, type = %d)\n",
-			component->comp_id,
-			component->name,
-			component->wk_type);
+			"Start updating forwarder (id=%d, name=%s, type=%d)\n",
+			comp_info->comp_id, comp_info->name,
+			comp_info->wk_type);
 
-	memcpy(&path->name, component->name, STR_LEN_NAME);
-	path->wk_type = component->wk_type;
-	path->num_rx = component->nof_rx;
-	path->num_tx = component->nof_tx;
+	memcpy(&fwd_path->name, comp_info->name, STR_LEN_NAME);
+	fwd_path->wk_type = comp_info->wk_type;
+	fwd_path->num_rx = comp_info->nof_rx;
+	fwd_path->num_tx = comp_info->nof_tx;
 	for (cnt = 0; cnt < nof_rx; cnt++)
-		memcpy(&path->ports[cnt].rx, component->rx_ports[cnt],
+		memcpy(&fwd_path->ports[cnt].rx, comp_info->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
 
-	/* Transmit port is set according with larger nof_rx / nof_tx. */
+	/* TX port is set according with larger nof_rx / nof_tx. */
 	for (cnt = 0; cnt < max; cnt++)
-		memcpy(&path->ports[cnt].tx, component->tx_ports[0],
+		memcpy(&fwd_path->ports[cnt].tx, comp_info->tx_ports[0],
 				sizeof(struct sppwk_port_info));
 
-	info->upd_index = info->ref_index;
-	while (likely(info->ref_index == info->upd_index))
+	fwd_info->upd_index = fwd_info->ref_index;
+	while (likely(fwd_info->ref_index == fwd_info->upd_index))
 		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, FORWARD,
-			"Component[%d] Complete update component. "
-			"(name = %s, type = %d)\n",
-			component->comp_id,
-			component->name,
-			component->wk_type);
+			"Done update forwarder. (id=%d, name=%s, type=%d)\n",
+			comp_info->comp_id, comp_info->name,
+			comp_info->wk_type);
 
 	return SPP_RET_OK;
 }
