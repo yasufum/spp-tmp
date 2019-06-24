@@ -10,6 +10,17 @@
 
 #define RTE_LOGTYPE_WK_CMD_RES_FMT RTE_LOGTYPE_USER1
 
+/* Proto type declaration for a list of operator functions. */
+static int append_result_value(const char *name, char **output, void *tmp);
+static int append_error_details_value(const char *name, char **output,
+		void *tmp);
+static int add_interface(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+static int add_master_lcore(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+static int add_core(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
+
 /**
  * List of worker process type. The order of items should be same as the order
  * of enum `secondary_type` in cmd_utils.h.
@@ -78,7 +89,7 @@ struct cmd_response response_info_list[] = {
 };
 
 /* append a command result for JSON format */
-int
+static int
 append_result_value(const char *name, char **output, void *tmp)
 {
 	const struct cmd_result *result = tmp;
@@ -86,7 +97,7 @@ append_result_value(const char *name, char **output, void *tmp)
 }
 
 /* append error details for JSON format */
-int
+static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
 	int ret = SPP_RET_NG;
@@ -672,7 +683,7 @@ add_client_id(const char *name, char **output,
 }
 
 /* Add entry of port to a response in JSON such as "phy:0". */
-int
+static int
 add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
@@ -706,7 +717,7 @@ add_interface(const char *name, char **output,
 }
 
 /* Add entry of master lcore to a response in JSON. */
-int
+static int
 add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
@@ -716,7 +727,7 @@ add_master_lcore(const char *name, char **output,
 }
 
 /* Add entry of core info of worker to a response in JSON such as "core:0". */
-int
+static int
 add_core(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
