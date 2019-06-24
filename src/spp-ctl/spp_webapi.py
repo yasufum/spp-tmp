@@ -53,7 +53,7 @@ class BaseHandler(bottle.Bottle):
             if if_type not in ["phy", "vhost", "ring", "pcap", "nullpmd"]:
                 raise
             int(if_num)
-        except:
+        except Exception:
             raise KeyInvalid('port', port)
 
     def log_url(self):
@@ -152,15 +152,21 @@ class V1Handler(BaseHandler):
 
     def set_route(self):
         self.route('/processes', 'GET', callback=self.get_processes)
-        self.route('/cpus', 'GET', callback=self.get_cpu_layout)
+        self.route('/cpu_usage', 'GET', callback=self.get_cpu_usage)
+        self.route('/cpu_layout', 'GET', callback=self.get_cpu_layout)
 
     def get_processes(self):
         LOG.info("get processes called.")
         return self.ctrl.get_processes()
 
+    def get_cpu_usage(self):
+        LOG.info("get cpu usage called.")
+        return self.ctrl.get_cpu_usage()
+
     def get_cpu_layout(self):
         LOG.info("get cpu layout called.")
         return self.ctrl.get_cpu_layout()
+
 
 class V1VFCommon(object):
     """Define common methods for vf and mirror handler."""
@@ -251,7 +257,7 @@ class V1VFHandler(BaseHandler, V1VFCommon):
                     if vlan['operation'] == "add":
                         int(vlan['id'])
                         int(vlan['pcp'])
-                except:
+                except Exception:
                     raise KeyInvalid('vlan', vlan)
 
     def vf_comp_port(self, proc, name, body):
@@ -277,7 +283,7 @@ class V1VFHandler(BaseHandler, V1VFCommon):
     def _validate_mac(self, mac_address):
         try:
             netaddr.EUI(mac_address)
-        except:
+        except Exception:
             raise KeyInvalid('mac_address', mac_address)
 
     def _validate_vf_classifier(self, body):
@@ -296,7 +302,7 @@ class V1VFHandler(BaseHandler, V1VFCommon):
         if body['type'] == "vlan":
             try:
                 int(body['vlan'])
-            except:
+            except Exception:
                 raise KeyInvalid('vlan', body.get('vlan'))
 
     def vf_classifier(self, proc, body):
@@ -466,7 +472,7 @@ class V1PrimaryHandler(BaseHandler):
 
     def get_status(self):
         proc = self._get_proc()
-        return self.convert_status(proc.status())
+        return proc.get_status()
 
     def clear_status(self):
         proc = self._get_proc()

@@ -284,12 +284,8 @@ class PrimaryProc(SppProc):
     def __init__(self, conn):
         super(PrimaryProc, self).__init__(TYPE_PRIMARY, ID_PRIMARY, conn)
 
-    @staticmethod
-    def _decode_reply(data):
-        return data.strip('\0')
-
     @exec_command
-    def status(self):
+    def get_status(self):
         return "status"
 
     @exec_command

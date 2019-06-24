@@ -18,11 +18,11 @@ import spp_webapi
 
 LOG = logging.getLogger(__name__)
 
-
 MSG_SIZE = 4096
 
 # relative path of `cpu_layout.py`
 CPU_LAYOUT_TOOL = 'tools/helpers/cpu_layout.py'
+
 
 class Controller(object):
 
@@ -143,6 +143,7 @@ class Controller(object):
 
     def _update_procs(self):
         """Remove no existing processes from `self.procs`."""
+
         removed_ids = []
         for idx, proc in self.procs.items():
             if proc.id != spp_proc.ID_PRIMARY:
@@ -167,6 +168,57 @@ class Controller(object):
                 p["client-id"] = proc.id
             procs.append(p)
         return procs
+
+    def get_cpu_usage(self):
+        """Get cpu usage from each of status of SPP processes.
+
+        If process returns invalid message or cannot connect, remove
+        it from `self.procs` as in _update_procs().
+        """
+
+        removed_ids = []
+        cpus = []
+        for idx, proc in self.procs.items():
+            try:
+                # Check the process can be accessed. If not, go
+                # to except block.
+                stat = proc.get_status()
+                if proc.id == spp_proc.ID_PRIMARY:
+                    cpus.append(
+                            {'proc-type': proc.type,
+                                'master-lcore': stat['lcores'][0],
+                                'lcores': stat['lcores']})
+                elif proc.type == 'nfv':
+                    cpus.append(
+                            {'proc-type': proc.type,
+                                'client-id': proc.id,
+                                'master-lcore': stat['master-lcore'],
+                                'lcores': stat['lcores']})
+                elif proc.type in ['vf', 'mirror', 'pcap']:
+                    master_lcore = stat['info']['master-lcore']
+                    lcores = [stat['info']['master-lcore']]
+                    # TODO(yasufum) revise tag name 'core'.
+                    for val in stat['info']['core']:
+                        lcores.append(val['core'])
+                    cpus.append(
+                            {'proc-type': proc.type,
+                                'client-id': proc.id,
+                                'master-lcore': master_lcore,
+                                'lcores': lcores})
+                else:
+                    LOG.debug('No supported proc type: {}'.format(
+                        roc.type))
+
+            except Exception as e:
+                LOG.error("get_cpu_usage: {}".format(e))
+                removed_ids.append(idx)
+
+        for idx in removed_ids:
+            LOG.info("Remove no existing {}:{}.".format(
+                self.procs[idx].type, self.procs[idx].id))
+            del self.procs[idx]
+
+        return cpus
 
     def get_cpu_layout(self):
         """Get cpu layout with helper tool 'cpu_layout.py'."""
