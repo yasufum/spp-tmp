@@ -561,12 +561,12 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 /* Iterate classifier_table to create response to status command */
 #ifdef SPP_VF_MODULE
 static int
-spp_iterate_classifier_table(
+add_classifier_table(
 		struct spp_iterate_classifier_table_params *params)
 {
 	int ret;
 
-	ret = spp_classifier_mac_iterate_table(params);
+	ret = add_classifier_table_val(params);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, WK_CMD_RUNNER, "Cannot iterate classifier_mac_table.\n");
 		return SPP_RET_NG;
@@ -1219,7 +1219,10 @@ append_core_value(const char *name, char **output,
 	return ret;
 }
 
-/* append one element of classifier table for JSON format */
+/**
+ * Operator function called in iterator for getting each of entries of
+ * classifier table named as iterate_adding_mac_entry().
+ */
 #ifdef SPP_VF_MODULE
 static int
 append_classifier_element_value(
@@ -1276,10 +1279,18 @@ append_classifier_element_value(
 }
 #endif /* SPP_VF_MODULE */
 
-/* append a list of classifier table for JSON format */
+/**
+ * Append entries of classifier table in JSON. Before iterating the entries,
+ * this function calls several nested functions.
+ *   append_classifier_table()  // This function.
+ *     -> add_classifier_table()  // Wrapper and doesn't almost nothing.
+ *       -> add_classifier_table_val()  // Setup data and call iterator.
+ *         -> iterate_adding_mac_entry()
+ *
+ */
 #ifdef SPP_VF_MODULE
 static int
-append_classifier_table_value(const char *name, char **output,
+append_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPP_RET_NG;
@@ -1296,7 +1307,7 @@ append_classifier_table_value(const char *name, char **output,
 	itr_params.output = tmp_buff;
 	itr_params.element_proc = append_classifier_element_value;
 
-	ret = spp_iterate_classifier_table(&itr_params);
+	ret = add_classifier_table(&itr_params);
 	if (unlikely(ret != SPP_RET_OK)) {
 		spp_strbuf_free(itr_params.output);
 		return SPP_RET_NG;
@@ -1388,7 +1399,7 @@ struct cmd_response response_info_list[] = {
 	{ "master-lcore", append_master_lcore_value },
 	{ "core", append_core_value },
 #ifdef SPP_VF_MODULE
-	{ "classifier_table", append_classifier_table_value },
+	{ "classifier_table", append_classifier_table},
 #endif /* SPP_VF_MODULE */
 	{ "", NULL }
 };

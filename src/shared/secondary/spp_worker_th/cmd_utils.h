@@ -47,7 +47,7 @@
 #define SPP_CORE_STATUS_CHECK_MAX 5
 
 /** Character sting for default port of classifier */
-#define SPP_DEFAULT_CLASSIFIED_SPEC_STR     "default"
+#define SPPWK_TERM_DEFAULT "default"
 
 /** Value for default MAC address of classifier */
 #define SPP_DEFAULT_CLASSIFIED_DMY_ADDR     0x010000000000

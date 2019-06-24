@@ -56,7 +56,7 @@ int spp_classifier_mac_do(int id);
  * @retval SPP_RET_OK succeeded.
  * @retval SPP_RET_NG failed.
  */
-int spp_classifier_mac_iterate_table(
+int add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params);
 
 #endif /* _CLASSIFIER_MAC_H_ */

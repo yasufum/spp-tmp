@@ -224,6 +224,7 @@ log_classification(
 		log_classification(clsd_idx, pkt, cmp_info, clsd_data, \
 				__func__, __LINE__)
 
+/* Log DEBUG message for classified MAC and VLAN info. */
 static void
 log_entry(
 		long clsd_idx,
@@ -852,13 +853,17 @@ get_classifier_status(unsigned int lcore_id, int id,
 	return SPP_RET_OK;
 }
 
+/**
+ * For setting up a response for `status` command, iterate adding each of
+ * entries in MAC address table to the result message.
+ */
 static void
-mac_classification_iterate_table(
+iterate_adding_mac_entry(
 		struct spp_iterate_classifier_table_params *params,
 		uint16_t vid,
 		struct mac_classifier *mac_cls,
 		__rte_unused struct cls_comp_info *cmp_info,
-		struct cls_port_info *clsd_data)
+		struct cls_port_info *port_info)
 {
 	int ret;
 	const void *key;
@@ -873,18 +878,20 @@ mac_classification_iterate_table(
 		type = SPP_CLASSIFIER_TYPE_MAC;
 
 	if (mac_cls->default_cls_idx >= 0) {
-		port.iface_type = (clsd_data +
+		port.iface_type = (port_info +
 				mac_cls->default_cls_idx)->iface_type;
-		port.iface_no   = (clsd_data +
+		port.iface_no = (port_info +
 				mac_cls->default_cls_idx)->iface_no_global;
 
-		LOG_ENT((long)mac_cls->default_cls_idx,
-				vid,
-				SPP_DEFAULT_CLASSIFIED_SPEC_STR,
-				cmp_info, clsd_data);
-
-		(*params->element_proc)(params, type, vid,
-				SPP_DEFAULT_CLASSIFIED_SPEC_STR, &port);
+		/* Logging DEBUG message. */
+		LOG_ENT((long)mac_cls->default_cls_idx, vid,
+				SPPWK_TERM_DEFAULT, cmp_info, port_info);
+		/**
+		 * Append "default" entry. `element_proc` is a funciton
+		 * pointer to append_classifier_element_value().
+		 */
+		(*params->element_proc)(params, type, vid, SPPWK_TERM_DEFAULT,
+				&port);
 	}
 
 	next = 0;
@@ -897,25 +904,32 @@ mac_classification_iterate_table(
 		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
 				(const struct ether_addr *)key);
 
-		port.iface_type = (clsd_data + (long)data)->iface_type;
-		port.iface_no   = (clsd_data + (long)data)->iface_no_global;
+		port.iface_type = (port_info + (long)data)->iface_type;
+		port.iface_no = (port_info + (long)data)->iface_no_global;
 
-		LOG_ENT((long)data, vid, mac_addr_str, cmp_info, clsd_data);
+		LOG_ENT((long)data, vid, mac_addr_str, cmp_info, port_info);
 
+		/**
+		 * Append each entry of MAC address. `element_proc` is a
+		 * funciton pointer to append_classifier_element_value().
+		 */
 		(*params->element_proc)(params, type, vid, mac_addr_str,
 				&port);
 	}
 }
 
-/* classifier(mac address) iterate classifier table. */
+/**
+ * Setup data of classifier table and call iterator function for getting
+ * each of entries.
+ */
 int
-spp_classifier_mac_iterate_table(
+add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params)
 {
-	int i, n;
+	int i, vlan_id;
 	struct management_info *mng_info;
 	struct cls_comp_info *cmp_info;
-	struct cls_port_info *clsd_data;
+	struct cls_port_info *port_info;
 
 	for (i = 0; i < RTE_MAX_LCORE; i++) {
 		mng_info = g_mng_infos + i;
@@ -923,18 +937,18 @@ spp_classifier_mac_iterate_table(
 			continue;
 
 		cmp_info = mng_info->cmp_infos + mng_info->ref_index;
-		clsd_data = cmp_info->tx_ports_i;
+		port_info = cmp_info->tx_ports_i;
 
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-			"Core[%u] Start iterate classifier table.\n", i);
+			"Start iterate classifier table on lcore %u.\n", i);
 
-		for (n = 0; n < NOF_VLAN; ++n) {
-			if (cmp_info->mac_clfs[n] == NULL)
+		for (vlan_id = 0; vlan_id < NOF_VLAN; ++vlan_id) {
+			if (cmp_info->mac_clfs[vlan_id] == NULL)
 				continue;
 
-			mac_classification_iterate_table(params, (uint16_t) n,
-					cmp_info->mac_clfs[n], cmp_info,
-					clsd_data);
+			iterate_adding_mac_entry(params, (uint16_t) vlan_id,
+					cmp_info->mac_clfs[vlan_id], cmp_info,
+					port_info);
 		}
 	}
 

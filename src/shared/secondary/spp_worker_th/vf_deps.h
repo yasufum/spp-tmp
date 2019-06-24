@@ -75,7 +75,13 @@ void init_classifier_info(int component_id);
 
 void uninit_component_info(struct cls_comp_info *cmp_info);
 
-int spp_classifier_mac_iterate_table(
+/**
+ * Setup data of classifier table and call iterator function for getting
+ * each of entries.
+ *
+ * @params[in] params Object which has pointer of operator func and attrs.
+ */
+int add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params);
 
 /**
