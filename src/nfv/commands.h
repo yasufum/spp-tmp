@@ -152,6 +152,7 @@ static int
 parse_command(char *str)
 {
 	char *token_list[MAX_PARAMETER] = {NULL};
+	int cli_id;
 	int max_token = 0;
 	int ret = 0;
 
@@ -174,11 +175,11 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, SPP_NFV, "status\n");
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
-			get_sec_stats_json(str, client_id, "running",
+			get_sec_stats_json(str, get_client_id(), "running",
 					lcore_id_used,
 					ports_fwd_array, port_map);
 		else
-			get_sec_stats_json(str, client_id, "idling",
+			get_sec_stats_json(str, get_client_id(), "idling",
 					lcore_id_used,
 					ports_fwd_array, port_map);
 
@@ -186,14 +187,12 @@ parse_command(char *str)
 		memset(str, '\0', MSG_SIZE);
 		sprintf(str, "{%s:%s,%s:%d,%s:%s}",
 				"\"results\"", "[{\"result\":\"success\"}]",
-				"\"client_id\"", client_id,
+				"\"client_id\"", get_client_id(),
 				"\"process_type\"", "\"nfv\"");
 
 	} else if (!strcmp(token_list[0], "_set_client_id")) {
-		int id;
-
-		if (spp_atoi(token_list[1], &id) >= 0)
-			client_id = id;
+		if (spp_atoi(token_list[1], &cli_id) >= 0)
+			set_client_id(cli_id);
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, SPP_NFV, "exit\n");

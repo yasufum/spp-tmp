@@ -6,7 +6,7 @@
 #define _NFV_STATUS_H_
 
 /* Get status of spp_nfv or spp_vm as JSON format. */
-void get_sec_stats_json(char *str, uint16_t client_id,
+void get_sec_stats_json(char *str, int client_id,
 		const char *running_stat,
 		uint8_t lcore_id_used[RTE_MAX_LCORE],
 		struct port *ports_fwd_array,

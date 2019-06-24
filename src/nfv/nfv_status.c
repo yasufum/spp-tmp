@@ -26,13 +26,13 @@
  *   }
  */
 void
-get_sec_stats_json(char *str, uint16_t client_id,
+get_sec_stats_json(char *str, int cli_id,
 		const char *running_stat,
 		uint8_t lcore_id_used[RTE_MAX_LCORE],
 		struct port *ports_fwd_array,
 		struct port_map *port_map)
 {
-	sprintf(str, "{\"client-id\":%d,", client_id);
+	sprintf(str, "{\"client-id\":%d,", cli_id);
 
 	sprintf(str + strlen(str), "\"status\":");
 	sprintf(str + strlen(str), "\"%s\",", running_stat);

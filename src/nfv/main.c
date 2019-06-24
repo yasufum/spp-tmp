@@ -12,6 +12,7 @@
 #include <rte_log.h>
 
 #include "shared/common.h"
+#include "shared/secondary/utils.h"
 #include "shared/secondary/add_port.h"
 
 #include "params.h"
@@ -61,6 +62,7 @@ static int
 parse_app_args(int argc, char *argv[])
 {
 	int option_index, opt;
+	int cli_id;
 	char **argvopt = argv;
 	const char *progname = argv[0];
 	int ret;
@@ -72,10 +74,11 @@ parse_app_args(int argc, char *argv[])
 			g_enable_vhost_cli = 1;
 			break;
 		case 'n':
-			if (parse_num_clients(&client_id, optarg) != 0) {
+			if (parse_client_id(&cli_id, optarg) != 0) {
 				usage(progname);
 				return -1;
 			}
+			set_client_id(cli_id);
 			break;
 		case 's':
 			ret = parse_server(&server_ip, &server_port, optarg);
@@ -259,7 +262,8 @@ main(int argc, char *argv[])
 		rte_eal_remote_launch(main_loop, NULL, lcore_id);
 	}
 
-	RTE_LOG(INFO, SPP_NFV, "My ID %d start handling message\n", client_id);
+	RTE_LOG(INFO, SPP_NFV, "My ID %d start handling message\n",
+			get_client_id());
 	RTE_LOG(INFO, SPP_NFV, "[Press Ctrl-C to quit ...]\n");
 
 	/* send and receive msg loop */

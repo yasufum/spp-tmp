@@ -23,8 +23,6 @@ struct porttype_map portmap[] = {
 
 static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
 
-static uint16_t client_id;
-
 /* the port details */
 struct port_info *ports;
 
