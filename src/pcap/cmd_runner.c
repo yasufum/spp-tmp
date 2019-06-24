@@ -47,7 +47,7 @@ struct cmd_result {
 
 /* command response list control structure */
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_runner.c */
-struct cmd_response {
+struct cmd_res_formatter_ops {
 	char tag_name[SPPWK_NAME_BUFSZ];  /* JSON Tag name */
 	int (*func)(const char *name, char **output, void *tmp);
 };
@@ -548,7 +548,7 @@ append_core_value(const char *name, char **output,
 /* append string of command response list for JSON format */
 static int
 append_response_list_value(char **output,
-		struct cmd_response *list,
+		struct cmd_res_formatter_ops *list,
 		void *tmp)
 {
 	int ret = SPPWK_RET_NG;
@@ -607,14 +607,14 @@ append_response_list_value(char **output,
 #define COMMAND_RESP_TAG_LIST_EMPTY { "", NULL }
 
 /* command response result string list */
-struct cmd_response response_result_list[] = {
+struct cmd_res_formatter_ops response_result_list[] = {
 	{ "result",        append_result_value },
 	{ "error_details", append_error_details_value },
 	COMMAND_RESP_TAG_LIST_EMPTY
 };
 
 /* command response status information string list */
-struct cmd_response response_info_list[] = {
+struct cmd_res_formatter_ops response_info_list[] = {
 	{ "client-id",        append_client_id_value },
 	{ "status",           append_capture_status_value },
 	{ "master-lcore",     append_master_lcore_value },
