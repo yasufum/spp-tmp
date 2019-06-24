@@ -342,7 +342,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_rx->iface_no = 0;
 		clsd_data_rx->iface_no_global = 0;
 		clsd_data_rx->port = 0;
-		clsd_data_rx->num_pkt = 0;
+		clsd_data_rx->nof_pkts = 0;
 	} else {
 		clsd_data_rx->iface_type =
 			component_info->rx_ports[0]->iface_type;
@@ -351,7 +351,7 @@ init_component_info(struct component_info *cmp_info,
 			component_info->rx_ports[0]->iface_no;
 		clsd_data_rx->port =
 			component_info->rx_ports[0]->ethdev_port_id;
-		clsd_data_rx->num_pkt = 0;
+		clsd_data_rx->nof_pkts = 0;
 	}
 
 	/* set tx */
@@ -366,7 +366,7 @@ init_component_info(struct component_info *cmp_info,
 		clsd_data_tx[i].iface_no        = i;
 		clsd_data_tx[i].iface_no_global = tx_port->iface_no;
 		clsd_data_tx[i].port            = tx_port->ethdev_port_id;
-		clsd_data_tx[i].num_pkt         = 0;
+		clsd_data_tx[i].nof_pkts = 0;
 
 		if (tx_port->cls_attrs.mac_addr == 0)
 			continue;
@@ -457,19 +457,19 @@ transmit_packet(struct classified_data *clsd_data)
 
 	/* transmit packets */
 	n_tx = spp_eth_tx_burst(clsd_data->port, 0,
-			clsd_data->pkts, clsd_data->num_pkt);
+			clsd_data->pkts, clsd_data->nof_pkts);
 
 	/* free cannot transmit packets */
-	if (unlikely(n_tx != clsd_data->num_pkt)) {
-		for (i = n_tx; i < clsd_data->num_pkt; i++)
+	if (unlikely(n_tx != clsd_data->nof_pkts)) {
+		for (i = n_tx; i < clsd_data->nof_pkts; i++)
 			rte_pktmbuf_free(clsd_data->pkts[i]);
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"drop packets(tx). num=%hu, ethdev_port_id=%hu\n",
-				(uint16_t)(clsd_data->num_pkt - n_tx),
+				(uint16_t)(clsd_data->nof_pkts - n_tx),
 				clsd_data->port);
 	}
 
-	clsd_data->num_pkt = 0;
+	clsd_data->nof_pkts = 0;
 }
 
 /* transmit packet to one destination. */
@@ -480,13 +480,13 @@ transmit_all_packet(struct component_info *cmp_info)
 	struct classified_data *clsd_data_tx = cmp_info->classified_data_tx;
 
 	for (i = 0; i < cmp_info->n_classified_data_tx; i++) {
-		if (unlikely(clsd_data_tx[i].num_pkt != 0)) {
+		if (unlikely(clsd_data_tx[i].nof_pkts != 0)) {
 			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 					"transmit all packets (drain). "
 					"index=%d, "
-					"num_pkt=%hu\n",
+					"nof_pkts=%hu\n",
 					i,
-					clsd_data_tx[i].num_pkt);
+					clsd_data_tx[i].nof_pkts);
 			transmit_packet(&clsd_data_tx[i]);
 		}
 	}
@@ -496,19 +496,19 @@ transmit_all_packet(struct component_info *cmp_info)
 static inline void
 push_packet(struct rte_mbuf *pkt, struct classified_data *clsd_data)
 {
-	clsd_data->pkts[clsd_data->num_pkt++] = pkt;
+	clsd_data->pkts[clsd_data->nof_pkts++] = pkt;
 
 	/* transmit packet, if buffer is filled */
-	if (unlikely(clsd_data->num_pkt == MAX_PKT_BURST)) {
+	if (unlikely(clsd_data->nof_pkts == MAX_PKT_BURST)) {
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"transmit packets (buffer is filled). "
 				"iface_type=%d, iface_no={%d,%d}, "
-				"tx_port=%hu, num_pkt=%hu\n",
+				"tx_port=%hu, nof_pkts=%hu\n",
 				clsd_data->iface_type,
 				clsd_data->iface_no_global,
 				clsd_data->iface_no,
 				clsd_data->port,
-				clsd_data->num_pkt);
+				clsd_data->nof_pkts);
 		transmit_packet(clsd_data);
 	}
 }
@@ -679,14 +679,12 @@ change_classifier_index(struct management_info *mng_info, int id)
 									0, 0);
 
 		/* Transmit all packets for switching the using data. */
-		transmit_all_packet(mng_info->cmp_infos +
-				mng_info->ref_index);
+		transmit_all_packet(mng_info->cmp_infos + mng_info->ref_index);
 
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"Core[%u] Change update index.\n", id);
 		mng_info->ref_index =
-				(mng_info->upd_index + 1) %
-				NOF_CLS_INFO;
+				(mng_info->upd_index + 1) % NOF_CLS_INFO;
 	}
 }
 
@@ -695,7 +693,6 @@ int
 spp_classifier_mac_init(void)
 {
 	memset(g_mng_infos, 0, sizeof(g_mng_infos));
-
 	return 0;
 }
 
@@ -778,13 +775,13 @@ spp_classifier_mac_do(int id)
 	cur_tsc = rte_rdtsc();
 	if (unlikely(cur_tsc - prev_tsc > drain_tsc)) {
 		for (i = 0; i < cmp_info->n_classified_data_tx; i++) {
-			if (likely(clsd_data_tx[i].num_pkt == 0))
+			if (likely(clsd_data_tx[i].nof_pkts == 0))
 				continue;
 
 			RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 					"transmit packets (drain). index=%d, "
-					"num_pkt=%hu, interval=%lu\n",
-					i, clsd_data_tx[i].num_pkt,
+					"nof_pkts=%hu, interval=%lu\n",
+					i, clsd_data_tx[i].nof_pkts,
 					cur_tsc - prev_tsc);
 				transmit_packet(&clsd_data_tx[i]);
 		}
@@ -889,18 +886,13 @@ mac_classification_iterate_table(
 				SPP_DEFAULT_CLASSIFIED_SPEC_STR,
 				cmp_info, clsd_data);
 
-		(*params->element_proc)(
-				params,
-				type,
-				vid,
-				SPP_DEFAULT_CLASSIFIED_SPEC_STR,
-				&port);
+		(*params->element_proc)(params, type, vid,
+				SPP_DEFAULT_CLASSIFIED_SPEC_STR, &port);
 	}
 
 	next = 0;
 	while (1) {
-		ret = rte_hash_iterate(mac_cls->cls_tbl,
-				&key, &data, &next);
+		ret = rte_hash_iterate(mac_cls->cls_tbl, &key, &data, &next);
 
 		if (unlikely(ret < 0))
 			break;
@@ -913,11 +905,7 @@ mac_classification_iterate_table(
 
 		LOG_ENT((long)data, vid, mac_addr_str, cmp_info, clsd_data);
 
-		(*params->element_proc)(
-				params,
-				type,
-				vid,
-				mac_addr_str,
+		(*params->element_proc)(params, type, vid, mac_addr_str,
 				&port);
 	}
 }
@@ -947,12 +935,9 @@ spp_classifier_mac_iterate_table(
 			if (cmp_info->mac_classifications[n] == NULL)
 				continue;
 
-			mac_classification_iterate_table(
-					params,
-					(uint16_t)n,
+			mac_classification_iterate_table(params, (uint16_t) n,
 					cmp_info->mac_classifications[n],
-					cmp_info,
-					clsd_data);
+					cmp_info, clsd_data);
 		}
 	}
 
