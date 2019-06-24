@@ -34,10 +34,12 @@ int
 flush_cmd(void)
 {
 	int ret;
-	struct cancel_backup_info *backup_info = NULL;
+	int *p_change_comp;
+	struct sppwk_comp_info *p_comp_info;
+	struct cancel_backup_info *backup_info;
 
-	sppwk_get_mng_data(NULL, NULL, NULL,
-				NULL, NULL, NULL, &backup_info);
+	sppwk_get_mng_data(NULL, NULL, &p_comp_info,
+				NULL, NULL, &p_change_comp, &backup_info);
 
 	ret = update_port_info();
 	if (ret < SPP_RET_OK)
@@ -47,7 +49,7 @@ flush_cmd(void)
 	update_lcore_info();
 
 	/* TODO(yasufum) confirm why no checking for returned value. */
-	ret = update_comp_info();
+	ret = update_comp_info(p_comp_info, p_change_comp);
 
 	backup_mng_info(backup_info);
 	return ret;

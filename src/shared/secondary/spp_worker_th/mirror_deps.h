@@ -22,4 +22,14 @@ int add_core(const char *name, char **output,
  */
 int update_mirror(struct sppwk_comp_info *wk_comp_info);
 
+/**
+ * Activate temporarily stored component info while flushing.
+ *
+ * @param[in] p_comp_info Info of component.
+ * @param[in] p_change_comp Pointer to a set of Flags for udpated component.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
+ */
+int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
+
 #endif  /* __SPP_WORKER_TH_MIRROR_DEPS_H__ */

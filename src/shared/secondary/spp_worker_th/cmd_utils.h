@@ -522,14 +522,6 @@ int update_port_info(void);
 void update_lcore_info(void);
 
 /**
- * Activate temporarily stored component info while flushing.
- *
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
- */
-int update_comp_info(void);
-
-/**
  * Port type to string.
  *
  * @param port String of port type to be converted.

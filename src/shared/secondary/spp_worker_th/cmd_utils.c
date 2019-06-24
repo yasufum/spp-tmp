@@ -25,13 +25,14 @@
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
 /* A set of pointers of management data */
+/* TODO(yasufum) change names start with `p_change` because it wrong meanig. */
 struct mng_data_info {
 	struct startup_param *p_startup_param;
 	struct iface_info *p_iface_info;
 	struct sppwk_comp_info *p_component_info;
 	struct core_mng_info *p_core_info;
 	int *p_change_core;
-	int *p_change_component;
+	int *p_change_component;  /* Set of flags for udpated components */
 	struct cancel_backup_info *p_backup_info;
 	unsigned int main_lcore_id;
 };
@@ -872,45 +873,6 @@ update_lcore_info(void)
 					sizeof(struct core_info));
 		}
 	}
-}
-
-/* Activate temporarily stored component info while flushing. */
-int
-update_comp_info(void)
-{
-	int ret = 0;
-	int cnt = 0;
-	struct sppwk_comp_info *comp_info = NULL;
-	int *p_change_comp = g_mng_data.p_change_component;
-	struct sppwk_comp_info *p_comp_info = g_mng_data.p_component_info;
-
-	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
-		if (*(p_change_comp + cnt) == 0)
-			continue;
-
-		comp_info = (p_comp_info + cnt);
-		spp_port_ability_update(comp_info);
-
-#ifdef SPP_VF_MODULE
-		if (comp_info->wk_type == SPPWK_TYPE_CLS)
-			ret = update_classifier(comp_info);
-		else
-			ret = update_forwarder(comp_info);
-#endif /* SPP_VF_MODULE */
-
-#ifdef SPP_MIRROR_MODULE
-		ret = update_mirror(comp_info);
-#endif /* SPP_MIRROR_MODULE */
-
-		if (unlikely(ret < 0)) {
-			RTE_LOG(ERR, APP, "Flush error. "
-					"( component = %s, type = %d)\n",
-					comp_info->name,
-					comp_info->wk_type);
-			return SPP_RET_NG;
-		}
-	}
-	return SPP_RET_OK;
 }
 
 /**

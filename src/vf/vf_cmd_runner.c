@@ -501,3 +501,37 @@ add_core(const char *name, char **output,
 	spp_strbuf_free(itr_params.output);
 	return ret;
 }
+
+/* Activate temporarily stored component info while flushing. */
+int
+update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
+{
+	int ret = 0;
+	int cnt = 0;
+	struct sppwk_comp_info *comp_info = NULL;
+
+	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
+		if (*(p_change_comp + cnt) == 0)
+			continue;
+
+		comp_info = (p_comp_info + cnt);
+		spp_port_ability_update(comp_info);
+
+		if (comp_info->wk_type == SPPWK_TYPE_CLS) {
+			ret = update_classifier(comp_info);
+			RTE_LOG(DEBUG, VF_CMD_RUNNER, "Update classifier.\n");
+		} else {
+			ret = update_forwarder(comp_info);
+			RTE_LOG(DEBUG, VF_CMD_RUNNER, "Update forwarder.\n");
+		}
+
+		if (unlikely(ret < 0)) {
+			RTE_LOG(ERR, VF_CMD_RUNNER, "Flush error. "
+					"( component = %s, type = %d)\n",
+					comp_info->name,
+					comp_info->wk_type);
+			return SPP_RET_NG;
+		}
+	}
+	return SPP_RET_OK;
+}

@@ -372,3 +372,32 @@ add_core(const char *name, char **output,
 	spp_strbuf_free(itr_params.output);
 	return ret;
 }
+
+/* Activate temporarily stored component info while flushing. */
+int
+update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
+{
+	int ret = 0;
+	int cnt = 0;
+	struct sppwk_comp_info *comp_info = NULL;
+
+	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
+		if (*(p_change_comp + cnt) == 0)
+			continue;
+
+		comp_info = (p_comp_info + cnt);
+		spp_port_ability_update(comp_info);
+
+		ret = update_mirror(comp_info);
+		RTE_LOG(DEBUG, MIR_CMD_RUNNER, "Update mirror.\n");
+
+		if (unlikely(ret < 0)) {
+			RTE_LOG(ERR, MIR_CMD_RUNNER, "Flush error. "
+					"( component = %s, type = %d)\n",
+					comp_info->name,
+					comp_info->wk_type);
+			return SPP_RET_NG;
+		}
+	}
+	return SPP_RET_OK;
+}
