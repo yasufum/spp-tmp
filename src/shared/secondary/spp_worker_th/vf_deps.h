@@ -8,6 +8,7 @@
 #include <rte_malloc.h>
 #include <rte_hash.h>
 #include "cmd_utils.h"
+#include "cmd_parser.h"
 
 /** Number of VLAN ID */
 #define NOF_VLAN 4096
@@ -52,6 +53,8 @@ free_mac_classifier(struct mac_classifier *mac_clf)
 		rte_hash_free(mac_clf->cls_tbl);
 	rte_free(mac_clf);
 }
+
+int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
 
 /**
  * Update classifier info.

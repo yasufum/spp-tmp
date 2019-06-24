@@ -16,6 +16,10 @@
 #include "cmd_utils.h"
 
 /**
+ */
+int flush_cmd(void);
+
+/**
  * Setup connection for accepting commands from spp-ctl.
  *
  * @param ctl_ipaddr

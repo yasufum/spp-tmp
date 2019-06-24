@@ -6,6 +6,9 @@
 #define __SPP_WORKER_TH_MIRROR_DEPS_H__
 
 #include "cmd_utils.h"
+#include "cmd_parser.h"
+
+int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
 
 /**
  * Update mirror info.

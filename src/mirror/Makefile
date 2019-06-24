@@ -15,7 +15,7 @@ SPP_SEC_DIR = ../shared/secondary
 SPP_WKT_DIR = ../shared/secondary/spp_worker_th
 
 # all source are stored in SRCS-y
-SRCS-y := spp_mirror.c
+SRCS-y := spp_mirror.c mir_cmd_runner.c
 SRCS-y += ../shared/common.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c
 SRCS-y += $(SPP_SEC_DIR)/json_helper.c
