@@ -4,7 +4,7 @@
 
 #include <rte_cycles.h>
 
-#include "spp_forward.h"
+#include "forwarder.h"
 #include "spp_vf.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
@@ -20,12 +20,11 @@ struct forward_rxtx {
 
 /* Information on the path used for forward. */
 struct forward_path {
-	char name[STR_LEN_NAME];    /* component name */
+	char name[STR_LEN_NAME];  /* Component name */
 	volatile enum sppwk_worker_type wk_type;
-	int num_rx;                     /* number of receive ports */
-	int num_tx;                     /* number of trans ports   */
-	struct forward_rxtx ports[RTE_MAX_ETHPORTS];
-					/* port used for transfer  */
+	int nof_rx;  /* Number of RX ports */
+	int nof_tx;  /* Number of TX ports */
+	struct forward_rxtx ports[RTE_MAX_ETHPORTS];  /* Set of RX and TX */
 };
 
 /* Information for forward. */
@@ -38,9 +37,9 @@ struct forward_info {
 
 struct forward_info g_forward_info[RTE_MAX_LCORE];
 
-/* Clear info */
+/* Clear g_forward_info, ref and update indices. */
 void
-spp_forward_init(void)
+init_forwarder(void)
 {
 	int cnt = 0;
 	memset(&g_forward_info, 0x00, sizeof(g_forward_info));
@@ -77,13 +76,13 @@ get_forwarder_status(unsigned int lcore_id, int id,
 		component_type = SPPWK_TYPE_FWD_STR;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
-	for (cnt = 0; cnt < fwd_path->num_rx; cnt++) {
+	for (cnt = 0; cnt < fwd_path->nof_rx; cnt++) {
 		rx_ports[cnt].iface_type = fwd_path->ports[cnt].rx.iface_type;
 		rx_ports[cnt].iface_no = fwd_path->ports[cnt].rx.iface_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
-	for (cnt = 0; cnt < fwd_path->num_tx; cnt++) {
+	for (cnt = 0; cnt < fwd_path->nof_tx; cnt++) {
 		tx_ports[cnt].iface_type = fwd_path->ports[cnt].tx.iface_type;
 		tx_ports[cnt].iface_no = fwd_path->ports[cnt].tx.iface_no;
 	}
@@ -92,7 +91,7 @@ get_forwarder_status(unsigned int lcore_id, int id,
 	ret = (*params->element_proc)(
 		params, lcore_id,
 		fwd_path->name, component_type,
-		fwd_path->num_rx, rx_ports, fwd_path->num_tx, tx_ports);
+		fwd_path->nof_rx, rx_ports, fwd_path->nof_tx, tx_ports);
 	if (unlikely(ret != SPP_RET_OK))
 		return SPP_RET_NG;
 
@@ -140,8 +139,8 @@ update_forwarder(struct sppwk_comp_info *comp_info)
 
 	memcpy(&fwd_path->name, comp_info->name, STR_LEN_NAME);
 	fwd_path->wk_type = comp_info->wk_type;
-	fwd_path->num_rx = comp_info->nof_rx;
-	fwd_path->num_tx = comp_info->nof_tx;
+	fwd_path->nof_rx = comp_info->nof_rx;
+	fwd_path->nof_tx = comp_info->nof_tx;
 	for (cnt = 0; cnt < nof_rx; cnt++)
 		memcpy(&fwd_path->ports[cnt].rx, comp_info->rx_ports[cnt],
 				sizeof(struct sppwk_port_info));
@@ -177,13 +176,13 @@ change_forward_index(int id)
 	}
 }
 /**
- * Forwarding packets as forwarder or merger
+ * Forward packets as forwarder or merger.
  *
  * Behavior of forwarding is defined as core_info->type which is given
  * as an argument of void and typecasted to spp_config_info.
  */
 int
-spp_forward(int id)
+forward_packets(int id)
 {
 	int cnt, buf;
 	int nb_rx = 0;
@@ -200,15 +199,15 @@ spp_forward(int id)
 	/* Practice condition check */
 	if (path->wk_type == SPPWK_TYPE_MRG) {
 		/* merger */
-		if (!(path->num_tx == 1 && path->num_rx >= 1))
+		if (!(path->nof_tx == 1 && path->nof_rx >= 1))
 			return SPP_RET_OK;
 	} else {
 		/* forwarder */
-		if (!(path->num_tx == 1 && path->num_rx == 1))
+		if (!(path->nof_tx == 1 && path->nof_rx == 1))
 			return SPP_RET_OK;
 	}
 
-	for (cnt = 0; cnt < path->num_rx; cnt++) {
+	for (cnt = 0; cnt < path->nof_rx; cnt++) {
 		rx = &path->ports[cnt].rx;
 		tx = &path->ports[cnt].tx;
 

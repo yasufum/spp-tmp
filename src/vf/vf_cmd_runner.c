@@ -3,7 +3,7 @@
  */
 
 #include "classifier_mac.h"
-#include "spp_forward.h"
+#include "forwarder.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/json_helper.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"

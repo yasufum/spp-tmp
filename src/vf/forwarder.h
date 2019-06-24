@@ -23,19 +23,20 @@
  * is specified by port command.
  */
 
-/** Clear info */
-void spp_forward_init(void);
+/* Clear g_forward_info, ref and update indices. */
+void init_forwarder(void);
 
 /**
- * Merge/Forward
+ * Forward packets as forwarder or merger.
  *
- * @param id
- *  The unique component ID.
+ * Behavior of forwarding is defined as core_info->type which is given
+ * as an argument of void and typecasted to spp_config_info.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @param[in] id Unique component ID.
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
  */
-int spp_forward(int id);
+int forward_packets(int id);
 
 /**
  * Get forwarder status.

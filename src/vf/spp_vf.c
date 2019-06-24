@@ -9,7 +9,7 @@
 #include "spp_vf.h"
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "classifier_mac.h"
-#include "spp_forward.h"
+#include "forwarder.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
@@ -221,7 +221,7 @@ slave_main(void *arg __attribute__ ((unused)))
 					break;
 			} else {
 				/* Component type for forward or merge. */
-				ret = spp_forward(core->id[cnt]);
+				ret = forward_packets(core->id[cnt]);
 				if (unlikely(ret != 0))
 					break;
 			}
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 		if (unlikely(ret_classifier_mac_init != SPP_RET_OK))
 			break;
 
-		spp_forward_init();
+		init_forwarder();
 		spp_port_ability_init();
 
 		/* Setup connection for accepting commands from controller */
