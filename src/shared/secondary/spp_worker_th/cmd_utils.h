@@ -95,11 +95,8 @@ enum spp_classifier_type {
 	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
 };
 
-/**
- * Port type (rx or tx) to indicate which direction packet goes
- * (e.g. receiving or transmitting)
- */
-enum spp_port_rxtx {
+/* Direction of RX or TX on a port. */
+enum sppwk_port_dir {
 	SPP_PORT_RXTX_NONE, /**< none */
 	SPP_PORT_RXTX_RX,   /**< rx port */
 	SPP_PORT_RXTX_TX,   /**< tx port */
@@ -155,9 +152,9 @@ union spp_ability_data {
 
 /* Port ability information. */
 struct spp_port_ability {
-	enum sppwk_port_abl_ops ops;  /**< Port ability Operations */
-	enum spp_port_rxtx rxtx;      /**< rx/tx identifier */
-	union spp_ability_data data;  /**< Port ability data */
+	enum sppwk_port_abl_ops ops;   /**< Port ability Operations */
+	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both */
+	union spp_ability_data data;   /**< Port ability data */
 };
 
 /* Attributes for classifying. */
@@ -436,7 +433,7 @@ int spp_check_core_update(unsigned int lcore_id);
 int spp_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
-		enum spp_port_rxtx rxtx);
+		enum sppwk_port_dir dir);
 
 /**
  * Set component update flag for given port.
@@ -448,8 +445,8 @@ int spp_check_used_port(
  *
  */
 void
-set_component_change_port(
-		struct sppwk_port_info *port, enum spp_port_rxtx rxtx);
+set_component_change_port(struct sppwk_port_info *port,
+		enum sppwk_port_dir dir);
 
 /**
  * Get ID of unused lcore.

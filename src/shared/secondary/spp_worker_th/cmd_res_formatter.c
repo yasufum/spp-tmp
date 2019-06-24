@@ -164,7 +164,7 @@ append_vlan_value(char **output, const int ope, const int vid, const int pcp)
 /* append a block of vlan for JSON format */
 int
 append_vlan_block(const char *name, char **output,
-		const int port_id, const enum spp_port_rxtx rxtx)
+		const int port_id, const enum sppwk_port_dir dir)
 {
 	int ret = SPP_RET_NG;
 	int i = 0;
@@ -178,7 +178,7 @@ append_vlan_block(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	spp_port_ability_get_info(port_id, rxtx, &info);
+	spp_port_ability_get_info(port_id, dir, &info);
 	for (i = 0; i < SPP_PORT_ABILITY_MAX; i++) {
 		switch (info[i].ops) {
 		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
@@ -239,7 +239,7 @@ get_ethdev_port_id(enum port_type iface_type, int iface_no)
 /* append a block of port numbers for JSON format */
 int
 append_port_block(char **output, const struct sppwk_port_idx *port,
-		const enum spp_port_rxtx rxtx)
+		const enum sppwk_port_dir dir)
 {
 	int ret = SPP_RET_NG;
 	char port_str[CMD_TAG_APPEND_SIZE];
@@ -259,7 +259,7 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 	ret = append_vlan_block("vlan", &tmp_buff,
 			get_ethdev_port_id(
 				port->iface_type, port->iface_no),
-			rxtx);
+			dir);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
 
@@ -272,7 +272,7 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 int
 append_port_array(const char *name, char **output, const int num,
 		const struct sppwk_port_idx *ports,
-		const enum spp_port_rxtx rxtx)
+		const enum sppwk_port_dir dir)
 {
 	int ret = SPP_RET_NG;
 	int i = 0;
@@ -286,7 +286,7 @@ append_port_array(const char *name, char **output, const int num,
 	}
 
 	for (i = 0; i < num; i++) {
-		ret = append_port_block(&tmp_buff, &ports[i], rxtx);
+		ret = append_port_block(&tmp_buff, &ports[i], dir);
 		if (unlikely(ret < SPP_RET_OK))
 			return SPP_RET_NG;
 	}

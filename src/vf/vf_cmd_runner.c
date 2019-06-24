@@ -209,32 +209,32 @@ update_comp(enum sppwk_action wk_action, const char *name,
 
 /* Check if over the maximum num of rx and tx ports of component. */
 static int
-check_vf_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
-								int num_tx)
+check_vf_port_count(int component_type, enum sppwk_port_dir dir,
+		int nof_rx, int nof_tx)
 {
 	RTE_LOG(INFO, VF_CMD_RUNNER, "port count, port_type=%d,"
-				" rx=%d, tx=%d\n", rxtx, num_rx, num_tx);
-	if (rxtx == SPP_PORT_RXTX_RX)
-		num_rx++;
+				" rx=%d, tx=%d\n", dir, nof_rx, nof_tx);
+	if (dir == SPP_PORT_RXTX_RX)
+		nof_rx++;
 	else
-		num_tx++;
+		nof_tx++;
 	/* Add rx or tx port appointed in port_type. */
 	RTE_LOG(INFO, VF_CMD_RUNNER, "Num of ports after count up,"
 				" port_type=%d, rx=%d, tx=%d\n",
-				rxtx, num_rx, num_tx);
+				dir, nof_rx, nof_tx);
 	switch (component_type) {
 	case SPPWK_TYPE_FWD:
-		if (num_rx > 1 || num_tx > 1)
+		if (nof_rx > 1 || nof_tx > 1)
 			return SPP_RET_NG;
 		break;
 
 	case SPPWK_TYPE_MRG:
-		if (num_tx > 1)
+		if (nof_tx > 1)
 			return SPP_RET_NG;
 		break;
 
 	case SPPWK_TYPE_CLS:
-		if (num_rx > 1)
+		if (nof_rx > 1)
 			return SPP_RET_NG;
 		break;
 
@@ -250,7 +250,7 @@ check_vf_port_count(int component_type, enum spp_port_rxtx rxtx, int num_rx,
 static int
 update_port(enum sppwk_action wk_action,
 		const struct sppwk_port_idx *port,
-		enum spp_port_rxtx rxtx,
+		enum sppwk_port_dir dir,
 		const char *name,
 		const struct spp_port_ability *ability)
 {
@@ -276,7 +276,7 @@ update_port(enum sppwk_action wk_action,
 			&comp_info_base, NULL, NULL, &change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
-	if (rxtx == SPP_PORT_RXTX_RX) {
+	if (dir == SPP_PORT_RXTX_RX) {
 		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;
 	} else {
@@ -287,7 +287,7 @@ update_port(enum sppwk_action wk_action,
 	switch (wk_action) {
 	case SPPWK_ACT_ADD:
 		/* Check if over the maximum num of ports of component. */
-		if (check_vf_port_count(comp_info->wk_type, rxtx,
+		if (check_vf_port_count(comp_info->wk_type, dir,
 				comp_info->nof_rx,
 				comp_info->nof_tx) != SPP_RET_OK)
 			return SPP_RET_NG;
@@ -349,7 +349,7 @@ update_port(enum sppwk_action wk_action,
 					SPPWK_PORT_ABL_OPS_NONE)
 				continue;
 
-			if (port_info->ability[cnt].rxtx == rxtx)
+			if (port_info->ability[cnt].dir == dir)
 				memset(&port_info->ability[cnt], 0x00,
 					sizeof(struct spp_port_ability));
 		}
@@ -408,7 +408,7 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 		RTE_LOG(INFO, VF_CMD_RUNNER, "with action `%s`.\n",
 				sppwk_action_str(cmd->spec.port.wk_action));
 		ret = update_port(cmd->spec.port.wk_action,
-				&cmd->spec.port.port, cmd->spec.port.rxtx,
+				&cmd->spec.port.port, cmd->spec.port.dir,
 				cmd->spec.port.name, &cmd->spec.port.ability);
 		if (ret == 0) {
 			RTE_LOG(INFO, VF_CMD_RUNNER, "Exec flush.\n");

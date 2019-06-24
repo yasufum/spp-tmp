@@ -40,7 +40,7 @@ void spp_port_ability_init(void);
  *  Port ability information.
  */
 void spp_port_ability_get_info(
-		int port_id, enum spp_port_rxtx rxtx,
+		int port_id, enum sppwk_port_dir dir,
 		struct spp_port_ability **info);
 
 /**
@@ -55,7 +55,7 @@ void spp_port_ability_get_info(
  */
 void spp_port_ability_change_index(
 		enum port_ability_chg_index_type type,
-		int port_id, enum spp_port_rxtx rxtx);
+		int port_id, enum sppwk_port_dir dir);
 
 /**
  * Update port capability.

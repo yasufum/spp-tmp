@@ -480,14 +480,14 @@ parse_port(void *output, const char *arg_val, int allow_override)
 
 /* Parse port rx and tx value. */
 static int
-parse_port_rxtx(void *output, const char *arg_val, int allow_override)
+parse_port_direction(void *output, const char *arg_val, int allow_override)
 {
-	int ret = SPP_RET_OK;
+	int ret;
 	struct sppwk_cmd_port *port = output;
 
 	ret = get_list_idx(arg_val, PORT_DIR_LIST);
 	if (unlikely(ret <= 0)) {
-		RTE_LOG(ERR, WK_CMD_PARSER, "Unknown port rxtx. val=%s\n",
+		RTE_LOG(ERR, WK_CMD_PARSER, "Unknown port direction. val=%s\n",
 				arg_val);
 		return SPP_RET_NG;
 	}
@@ -504,7 +504,7 @@ parse_port_rxtx(void *output, const char *arg_val, int allow_override)
 		}
 	}
 
-	port->rxtx = ret;
+	port->dir = ret;
 	return SPP_RET_OK;
 }
 
@@ -551,8 +551,8 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 					arg_val);
 			return SPP_RET_NG;
 		}
-		ability->ops  = ret;
-		ability->rxtx = port->rxtx;
+		ability->ops = ret;
+		ability->dir = port->dir;
 		break;
 	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		/* Nothing to do. */
@@ -875,7 +875,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "port rxtx",
 			.offset = offsetof(struct sppwk_cmd_attrs, spec.port),
-			.func = parse_port_rxtx
+			.func = parse_port_direction
 		},
 		{
 			.name = "component name",

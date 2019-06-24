@@ -60,12 +60,12 @@ spp_port_ability_init(void)
 /* Get information of port ability. */
 void
 spp_port_ability_get_info(
-		int port_id, enum spp_port_rxtx rxtx,
+		int port_id, enum sppwk_port_dir dir,
 		struct spp_port_ability **info)
 {
 	struct port_ability_mng_info *mng = NULL;
 
-	switch (rxtx) {
+	switch (dir) {
 	case SPP_PORT_RXTX_RX:
 		mng = &g_port_mng_info[port_id].rx;
 		break;
@@ -202,7 +202,7 @@ del_vlantag_all_packets(
 void
 spp_port_ability_change_index(
 		enum port_ability_chg_index_type type,
-		int port_id, enum spp_port_rxtx rxtx)
+		int port_id, enum sppwk_port_dir dir)
 {
 	int cnt;
 	static int num_rx;
@@ -212,7 +212,7 @@ spp_port_ability_change_index(
 	struct port_ability_mng_info *mng = NULL;
 
 	if (type == PORT_ABILITY_CHG_INDEX_UPD) {
-		switch (rxtx) {
+		switch (dir) {
 		case SPP_PORT_RXTX_RX:
 			mng = &g_port_mng_info[port_id].rx;
 			mng->upd_index = mng->ref_index;
@@ -249,7 +249,7 @@ spp_port_ability_change_index(
 static void
 port_ability_set_ability(
 		struct sppwk_port_info *port,
-		enum spp_port_rxtx rxtx)
+		enum sppwk_port_dir dir)
 {
 	int in_cnt, out_cnt = 0;
 	int port_id = port->ethdev_port_id;
@@ -263,7 +263,7 @@ port_ability_set_ability(
 	port_mng->iface_type = port->iface_type;
 	port_mng->iface_no   = port->iface_no;
 
-	switch (rxtx) {
+	switch (dir) {
 	case SPP_PORT_RXTX_RX:
 		mng = &port_mng->rx;
 		break;
@@ -279,7 +279,7 @@ port_ability_set_ability(
 	memset(out_ability, 0x00, sizeof(struct spp_port_ability)
 			* SPP_PORT_ABILITY_MAX);
 	for (in_cnt = 0; in_cnt < SPP_PORT_ABILITY_MAX; in_cnt++) {
-		if (in_ability[in_cnt].rxtx != rxtx)
+		if (in_ability[in_cnt].dir != dir)
 			continue;
 
 		memcpy(&out_ability[out_cnt], &in_ability[in_cnt],
@@ -301,7 +301,7 @@ port_ability_set_ability(
 	}
 
 	spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_UPD,
-			port_id, rxtx);
+			port_id, dir);
 }
 
 /* Update port capability. */
@@ -338,13 +338,13 @@ port_ability_func port_ability_function_list[] = {
 static inline int
 port_ability_each_operation(uint16_t port_id,
 		struct rte_mbuf **pkts, const uint16_t nb_pkts,
-		enum spp_port_rxtx rxtx)
+		enum sppwk_port_dir dir)
 {
 	int cnt, buf;
 	int ok_pkts = nb_pkts;
 	struct spp_port_ability *info = NULL;
 
-	spp_port_ability_get_info(port_id, rxtx, &info);
+	spp_port_ability_get_info(port_id, dir, &info);
 	if (unlikely(info[0].ops == SPPWK_PORT_ABL_OPS_NONE))
 		return nb_pkts;
 

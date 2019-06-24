@@ -40,14 +40,14 @@ int append_vlan_value(char **output, const int ope, const int vid,
 		const int pcp);
 
 int append_vlan_block(const char *name, char **output,
-		const int port_id, const enum spp_port_rxtx rxtx);
+		const int port_id, const enum sppwk_port_dir dir);
 
 int append_port_block(char **output, const struct sppwk_port_idx *port,
-		const enum spp_port_rxtx rxtx);
+		const enum sppwk_port_dir dir);
 
 int append_port_array(const char *name, char **output, const int num,
 		const struct sppwk_port_idx *ports,
-		const enum spp_port_rxtx rxtx);
+		const enum sppwk_port_dir dir);
 
 int append_core_element_value(struct spp_iterate_core_params *params,
 		const unsigned int lcore_id,

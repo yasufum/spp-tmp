@@ -661,7 +661,7 @@ int
 spp_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
-		enum spp_port_rxtx rxtx)
+		enum sppwk_port_dir dir)
 {
 	int cnt, port_cnt, max = 0;
 	struct sppwk_comp_info *component = NULL;
@@ -678,10 +678,10 @@ spp_check_used_port(
 		if (component->wk_type == SPPWK_TYPE_NONE)
 			continue;
 
-		if (rxtx == SPP_PORT_RXTX_RX) {
+		if (dir == SPP_PORT_RXTX_RX) {
 			max = component->nof_rx;
 			port_array = component->rx_ports;
-		} else if (rxtx == SPP_PORT_RXTX_TX) {
+		} else if (dir == SPP_PORT_RXTX_TX) {
 			max = component->nof_tx;
 			port_array = component->tx_ports;
 		}
@@ -696,17 +696,18 @@ spp_check_used_port(
 
 /* Set component update flag for given port */
 void
-set_component_change_port(struct sppwk_port_info *port, enum spp_port_rxtx rxtx)
+set_component_change_port(struct sppwk_port_info *port,
+		enum sppwk_port_dir dir)
 {
 	int ret = 0;
-	if ((rxtx == SPP_PORT_RXTX_RX) || (rxtx == SPP_PORT_RXTX_ALL)) {
+	if ((dir == SPP_PORT_RXTX_RX) || (dir == SPP_PORT_RXTX_ALL)) {
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_RX);
 		if (ret >= 0)
 			*(g_mng_data.p_change_component + ret) = 1;
 	}
 
-	if ((rxtx == SPP_PORT_RXTX_TX) || (rxtx == SPP_PORT_RXTX_ALL)) {
+	if ((dir == SPP_PORT_RXTX_TX) || (dir == SPP_PORT_RXTX_ALL)) {
 		ret = spp_check_used_port(port->iface_type, port->iface_no,
 				SPP_PORT_RXTX_TX);
 		if (ret >= 0)

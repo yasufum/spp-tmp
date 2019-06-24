@@ -102,8 +102,8 @@ struct sppwk_cmd_comp {
 /* `port` command parameters. */
 struct sppwk_cmd_port {
 	enum sppwk_action wk_action;  /**< add or del */
-	struct sppwk_port_idx port;  /**< port type and number */
-	enum spp_port_rxtx rxtx;  /**< rx or tx identifier */
+	struct sppwk_port_idx port;   /**< port type and number */
+	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both. */
 	char name[SPPWK_NAME_BUFSZ];  /**<  component name */
 	struct spp_port_ability ability;  /**< port ability */
 };
