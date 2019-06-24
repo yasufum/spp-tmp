@@ -356,3 +356,39 @@ class SppMirror(object):
                         if kw.startswith(sub_tokens[4]):
                             res.append(kw)
             return res
+
+    @classmethod
+    def help(cls):
+        msg = """Send a command to spp_mirror.
+
+        spp_mirror is a secondary process for duplicating incoming
+        packets to be used as similar to TaaS in OpenStack. This
+        command has four sub commands.
+          * status
+          * component
+          * port
+
+        Each of sub commands other than 'status' takes several parameters
+        for detailed operations. Notice that 'start' for launching a worker
+        is replaced with 'stop' for terminating. 'add' is also replaced with
+        'del' for deleting.
+
+        Examples:
+
+        # (1) show status of worker threads and resources
+        spp > mirror 1; status
+
+        # (2) launch or terminate a worker thread with arbitrary name
+        #   NAME: arbitrary name used as identifier
+        #   CORE_ID: one of unused cores referred from status
+        spp > mirror 1; component start NAME CORE_ID mirror
+        spp > mirror 1; component stop NAME CORE_ID mirror
+
+        # (3) add or delete a port to worker of NAME
+        #   RES_UID: resource UID such as 'ring:0' or 'vhost:1'
+        #   DIR: 'rx' or 'tx'
+        spp > mirror 1; port add RES_UID DIR NAME
+        spp > mirror 1; port del RES_UID DIR NAME
+        """
+
+        print(msg)
