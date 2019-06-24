@@ -278,22 +278,7 @@ class Shell(cmd.Cmd, object):
         self.print_status()
 
     def do_pri(self, command):
-        """Send a command to primary process.
-
-        Show resources and statistics, or clear it.
-
-            spp > pri; status  # show status
-
-            spp > pri; clear   # clear statistics
-
-        Launch secondary process..
-
-            # Launch nfv:1
-            spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 192.168....
-
-            # Launch vf:2
-            spp > pri; launch vf 2 -l 1,4-7 -m 512 -- --client-id 2 -s ...
-        """
+        """Send a command to primary process."""
 
         # Remove unwanted spaces and first char ';'
         command = self.clean_cmd(command)[1:]
@@ -302,6 +287,10 @@ class Shell(cmd.Cmd, object):
             logger.info("Receive pri command: '%s'" % command)
 
         self.primary.run(command, self.cli_config)
+
+    def help_pri(self):
+        """Print help message of pri command."""
+        pri.SppPrimary.help()
 
     def complete_pri(self, text, line, begidx, endidx):
         """Completion for primary process commands."""
@@ -381,15 +370,7 @@ class Shell(cmd.Cmd, object):
                 return res
 
     def do_vf(self, cmd):
-        """Send a command to spp_vf.
-
-        spp_vf is a secondary process for pseudo SR-IOV features. This
-        command has four sub commands.
-          * status
-          * component
-          * port
-          * classifier_table
-        """
+        """Send a command to spp_vf."""
 
         # remove unwanted spaces to avoid invalid command error
         tmparg = self.clean_cmd(cmd)
@@ -404,7 +385,7 @@ class Shell(cmd.Cmd, object):
             print('Invalid command: %s' % tmparg)
 
     def help_vf(self):
-        """Print help message of spp_vf."""
+        """Print help message of vf command."""
         vf.SppVf.help()
 
     def complete_vf(self, text, line, begidx, endidx):
