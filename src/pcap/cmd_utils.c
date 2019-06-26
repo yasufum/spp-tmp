@@ -138,8 +138,8 @@ stop_process(int signal)
 
 	master_lcore = rte_get_master_lcore();
 	(g_mng_data_addr.p_core_info + master_lcore)->status =
-							SPP_CORE_STOP_REQUEST;
-	set_all_core_status(SPP_CORE_STOP_REQUEST);
+							SPPWK_LCORE_REQ_STOP;
+	set_all_core_status(SPPWK_LCORE_REQ_STOP);
 }
 
 /**
@@ -194,7 +194,7 @@ init_core_info(void)
 	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
 	memset(p_core_info, 0x00,
 			sizeof(struct core_mng_info)*RTE_MAX_LCORE);
-	set_all_core_status(SPP_CORE_STOP);
+	set_all_core_status(SPPWK_LCORE_STOPPED);
 	*g_mng_data_addr.p_capture_request = SPP_CAPTURE_IDLE;
 	*g_mng_data_addr.p_capture_status = SPP_CAPTURE_IDLE;
 }

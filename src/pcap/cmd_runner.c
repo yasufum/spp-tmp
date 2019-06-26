@@ -71,7 +71,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 	int lcore_id;
 
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		if (sppwk_get_lcore_status(lcore_id) == SPP_CORE_UNUSE)
+		if (sppwk_get_lcore_status(lcore_id) == SPPWK_LCORE_UNUSED)
 			continue;
 
 		ret = spp_pcap_get_core_status(lcore_id, params);

@@ -80,7 +80,7 @@ enum sppwk_lcore_status {
 	SPPWK_LCORE_STOPPED,
 	SPPWK_LCORE_IDLING,
 	SPPWK_LCORE_RUNNING,
-	SPPWK_LCORE_REQ_STOP  /**< Request stopping */
+	SPPWK_LCORE_REQ_STOP  /**< Request for stopping. */
 };
 
 /* Type of SPP worker thread. */

@@ -12,10 +12,9 @@
 #define _SPPWK_CMD_UTILS_H_
 
 /**
- * @file
- * SPP process
+ * @file cmd_utils.h
  *
- * SPP component common function.
+ * Command utility functions for SPP worker thread.
  */
 
 #include <netinet/in.h>
@@ -34,14 +33,13 @@
 #define SPP_CORE_STATUS_CHECK_MAX 5
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
-/* State on core */
+/* Status of a component on lcore. */
 enum sppwk_lcore_status {
-	SPP_CORE_UNUSE,        /**< Not used */
-	SPP_CORE_STOP,         /**< Stopped */
-	SPP_CORE_IDLE,         /**< Idling */
-	SPP_CORE_FORWARD,      /**< Forwarding  */
-	SPP_CORE_STOP_REQUEST, /**< Request stopping */
-	SPP_CORE_IDLE_REQUEST  /**< Request idling */
+	SPPWK_LCORE_UNUSED,
+	SPPWK_LCORE_STOPPED,
+	SPPWK_LCORE_IDLING,
+	SPPWK_LCORE_RUNNING,
+	SPPWK_LCORE_REQ_STOP  /**< Request for stopping. */
 };
 
 /* State on capture */

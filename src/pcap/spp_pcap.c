@@ -860,10 +860,10 @@ slave_main(void *arg __attribute__ ((unused)))
 					pcap_info->thread_no, lcore_id);
 		pcap_info->type = PCAP_WRITE;
 	}
-	set_core_status(lcore_id, SPP_CORE_IDLE);
+	set_core_status(lcore_id, SPPWK_LCORE_IDLING);
 
 	while (1) {
-		if (sppwk_get_lcore_status(lcore_id) == SPP_CORE_STOP_REQUEST) {
+		if (sppwk_get_lcore_status(lcore_id) == SPPWK_LCORE_REQ_STOP) {
 			if (pcap_info->status == SPP_CAPTURE_IDLE)
 				break;
 			if (pcap_info->type == PCAP_RECEIVE)
@@ -882,7 +882,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		}
 	}
 
-	set_core_status(lcore_id, SPP_CORE_STOP);
+	set_core_status(lcore_id, SPPWK_LCORE_STOPPED);
 	RTE_LOG(INFO, SPP_PCAP,
 			"Terminated slave on lcore %d.\n", lcore_id);
 	return ret;
@@ -1024,19 +1024,19 @@ main(int argc, char *argv[])
 
 		/* Set the status of main thread to idle */
 		master_lcore = rte_get_master_lcore();
-		g_core_info[master_lcore].status = SPP_CORE_IDLE;
-		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
+		g_core_info[master_lcore].status = SPPWK_LCORE_IDLING;
+		int ret_wait = check_core_status_wait(SPPWK_LCORE_IDLING);
 		if (unlikely(ret_wait != 0))
 			break;
 
 		/* Start secondary */
-		set_all_core_status(SPP_CORE_FORWARD);
+		set_all_core_status(SPPWK_LCORE_RUNNING);
 		RTE_LOG(INFO, SPP_PCAP, "[Press Ctrl-C to quit ...]\n");
 
 		/* Enter loop for accepting commands */
 		int ret_do = 0;
 		while (likely(g_core_info[master_lcore].status !=
-				SPP_CORE_STOP_REQUEST)) {
+				SPPWK_LCORE_REQ_STOP)) {
 			/* Receive command */
 			ret_do = spp_command_proc_do();
 			if (unlikely(ret_do != SPPWK_RET_OK))
@@ -1049,7 +1049,7 @@ main(int argc, char *argv[])
 		}
 
 		if (unlikely(ret_do != SPPWK_RET_OK)) {
-			set_all_core_status(SPP_CORE_STOP_REQUEST);
+			set_all_core_status(SPPWK_LCORE_REQ_STOP);
 			break;
 		}
 
@@ -1058,8 +1058,8 @@ main(int argc, char *argv[])
 	}
 
 	/* Finalize to exit */
-	g_core_info[master_lcore].status = SPP_CORE_STOP;
-	int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
+	g_core_info[master_lcore].status = SPPWK_LCORE_STOPPED;
+	int ret_core_end = check_core_status_wait(SPPWK_LCORE_STOPPED);
 	if (unlikely(ret_core_end != 0))
 		RTE_LOG(ERR, SPP_PCAP, "Failed to terminate master thread.\n");
 
