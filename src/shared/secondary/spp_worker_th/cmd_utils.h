@@ -532,7 +532,6 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
  * @param change_core_p Pointer to g_change_core address.
  * @param change_component_p Pointer to g_change_component address.
  * @param backup_info_p Pointer to g_backup_info address.
- * @param main_lcore_id Lcore ID of main thread.
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
@@ -541,8 +540,7 @@ int sppwk_set_mng_data(struct iface_info *iface_p,
 		struct core_mng_info *core_mng_p,
 		int *change_core_p,
 		int *change_component_p,
-		struct cancel_backup_info *backup_info_p,
-		unsigned int main_lcore_id);
+		struct cancel_backup_info *backup_info_p);
 
 /**
  * Get mange data address.

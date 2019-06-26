@@ -40,7 +40,6 @@ struct mng_data_info {
 	int *p_change_core;
 	int *p_change_component;  /* Set of flags for udpated components */
 	struct cancel_backup_info *p_backup_info;
-	unsigned int main_lcore_id;
 };
 
 /* Logical core ID for main process */
@@ -137,13 +136,15 @@ set_all_core_status(enum sppwk_lcore_status status)
 void
 stop_process(int signal)
 {
+	unsigned int master_lcore;
 	if (unlikely(signal != SIGTERM) &&
 			unlikely(signal != SIGINT)) {
 		return;
 	}
 
-	(g_mng_data.p_core_info + g_mng_data.main_lcore_id)->status =
-							SPP_CORE_STOP_REQUEST;
+	master_lcore = rte_get_master_lcore();
+	(g_mng_data.p_core_info + master_lcore)->status =
+		SPP_CORE_STOP_REQUEST;
 	set_all_core_status(SPP_CORE_STOP_REQUEST);
 }
 
@@ -843,8 +844,7 @@ int sppwk_set_mng_data(
 		struct core_mng_info *core_mng_p,
 		int *change_core_p,
 		int *change_component_p,
-		struct cancel_backup_info *backup_info_p,
-		unsigned int main_lcore_id)
+		struct cancel_backup_info *backup_info_p)
 {
 	/**
 	 * TODO(yasufum) confirm why the last `0xffffffff` is same as NULL,
@@ -852,7 +852,7 @@ int sppwk_set_mng_data(
 	 */
 	if (iface_p == NULL || component_p == NULL || core_mng_p == NULL ||
 			change_core_p == NULL || change_component_p == NULL ||
-			backup_info_p == NULL || main_lcore_id == 0xffffffff)
+			backup_info_p == NULL)
 		return SPP_RET_NG;
 
 	g_mng_data.p_iface_info = iface_p;
@@ -861,7 +861,6 @@ int sppwk_set_mng_data(
 	g_mng_data.p_change_core = change_core_p;
 	g_mng_data.p_change_component = change_component_p;
 	g_mng_data.p_backup_info = backup_info_p;
-	g_mng_data.main_lcore_id = main_lcore_id;
 
 	return SPP_RET_OK;
 }

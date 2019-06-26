@@ -18,9 +18,6 @@
 #include "shared/secondary/spp_worker_th/spp_port.h"
 
 /* Declare global variables */
-/* Logical core ID for main process */
-static unsigned int g_main_lcore_id = 0xffffffff;
-
 /* Interface management information */
 static struct iface_info g_iface_info;
 
@@ -147,7 +144,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	struct core_mng_info *info = &g_core_info[lcore_id];
 	struct core_info *core = get_core_info(lcore_id);
 
-	RTE_LOG(INFO, APP, "Core[%d] Start.\n", lcore_id);
+	RTE_LOG(INFO, APP, "Slave started on lcore %d.\n", lcore_id);
 	set_core_status(lcore_id, SPP_CORE_IDLE);
 
 	while ((status = spp_get_core_status(lcore_id)) !=
@@ -178,15 +175,15 @@ slave_main(void *arg __attribute__ ((unused)))
 			}
 		}
 		if (unlikely(ret != 0)) {
-			RTE_LOG(ERR, APP, "Core[%d] Component Error. "
-					"(id = %d)\n",
+			RTE_LOG(ERR, APP, "Failed to forward on lcore %d. "
+					"(id = %d).\n",
 					lcore_id, core->id[cnt]);
 			break;
 		}
 	}
 
 	set_core_status(lcore_id, SPP_CORE_STOP);
-	RTE_LOG(INFO, APP, "Core[%d] End.\n", lcore_id);
+	RTE_LOG(INFO, APP, "Terminated slave on lcore %d.\n", lcore_id);
 	return ret;
 }
 
@@ -202,7 +199,8 @@ main(int argc, char *argv[])
 	char ctl_ip[IPADDR_LEN] = { 0 };
 	int ctl_port;
 	int ret_cmd_init;
-	unsigned int lcore_id = 0;
+	unsigned int master_lcore;
+	unsigned int lcore_id;
 
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
@@ -231,14 +229,10 @@ main(int argc, char *argv[])
 		if (unlikely(ret_parse != SPP_RET_OK))
 			break;
 
-		/* Get lcore id of main thread to set its status after */
-		g_main_lcore_id = rte_lcore_id();
-
-		if (sppwk_set_mng_data(&g_iface_info,
-					g_component_info, g_core_info,
-					g_change_core, g_change_component,
-					&g_backup_info,
-					g_main_lcore_id) < SPP_RET_OK) {
+		if (sppwk_set_mng_data(&g_iface_info, g_component_info,
+					g_core_info, g_change_core,
+					g_change_component,
+					&g_backup_info) < SPP_RET_OK) {
 			RTE_LOG(ERR, APP,
 				"Failed to set management data.\n");
 			break;
@@ -276,7 +270,8 @@ main(int argc, char *argv[])
 		}
 
 		/* Set the status of main thread to idle */
-		g_core_info[g_main_lcore_id].status = SPP_CORE_IDLE;
+		master_lcore = rte_get_master_lcore();
+		g_core_info[master_lcore].status = SPP_CORE_IDLE;
 		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
 		if (unlikely(ret_wait != SPP_RET_OK))
 			break;
@@ -292,7 +287,7 @@ main(int argc, char *argv[])
 		/* Enter loop for accepting commands */
 		int ret_do = SPP_RET_OK;
 #ifndef USE_UT_SPP_VF
-		while (likely(g_core_info[g_main_lcore_id].status !=
+		while (likely(g_core_info[master_lcore].status !=
 				SPP_CORE_STOP_REQUEST)) {
 #else
 		{
@@ -322,23 +317,21 @@ main(int argc, char *argv[])
 	}
 
 	/* Finalize to exit */
-	if (g_main_lcore_id == rte_lcore_id()) {
-		g_core_info[g_main_lcore_id].status = SPP_CORE_STOP;
-		int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
-		if (unlikely(ret_core_end != SPP_RET_OK))
-			RTE_LOG(ERR, APP, "Core did not stop.\n");
+	g_core_info[master_lcore].status = SPP_CORE_STOP;
+	int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
+	if (unlikely(ret_core_end != SPP_RET_OK))
+		RTE_LOG(ERR, APP, "Failed to terminate master thread.\n");
 
-		/*
-		 * Remove vhost sock file if it is not running
-		 *  in vhost-client mode
-		 */
-		del_vhost_sockfile(g_iface_info.vhost);
-	}
+	/*
+	 * Remove vhost sock file if it is not running
+	 *  in vhost-client mode
+	 */
+	del_vhost_sockfile(g_iface_info.vhost);
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 	spp_ringlatencystats_uninit();
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
-	RTE_LOG(INFO, APP, "spp_vf exit.\n");
+	RTE_LOG(INFO, APP, "Exit spp_vf.\n");
 	return ret;
 }
