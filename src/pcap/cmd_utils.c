@@ -18,7 +18,6 @@ struct mng_data_info {
 	struct core_mng_info	  *p_core_info;
 	int			  *p_capture_request;
 	int			  *p_capture_status;
-	unsigned int		  main_lcore_id;
 };
 
 /* Declare global variables */
@@ -130,12 +129,15 @@ set_all_core_status(enum sppwk_lcore_status status)
 void
 stop_process(int signal)
 {
+	unsigned int master_lcore;
+
 	if (unlikely(signal != SIGTERM) &&
 			unlikely(signal != SIGINT)) {
 		return;
 	}
 
-	(g_mng_data_addr.p_core_info + g_mng_data_addr.main_lcore_id)->status =
+	master_lcore = rte_get_master_lcore();
+	(g_mng_data_addr.p_core_info + master_lcore)->status =
 							SPP_CORE_STOP_REQUEST;
 	set_all_core_status(SPP_CORE_STOP_REQUEST);
 }
@@ -260,20 +262,17 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 int spp_set_mng_data_addr(struct iface_info *iface_p,
 			  struct core_mng_info *core_mng_p,
 			  int *capture_request_p,
-			  int *capture_status_p,
-			  unsigned int main_lcore_id)
+			  int *capture_status_p)
 {
 	if (iface_p == NULL || core_mng_p == NULL ||
 			capture_request_p == NULL ||
-			capture_status_p == NULL ||
-			main_lcore_id == 0xffffffff)
+			capture_status_p == NULL)
 		return SPPWK_RET_NG;
 
 	g_mng_data_addr.p_iface_info = iface_p;
 	g_mng_data_addr.p_core_info = core_mng_p;
 	g_mng_data_addr.p_capture_request = capture_request_p;
 	g_mng_data_addr.p_capture_status = capture_status_p;
-	g_mng_data_addr.main_lcore_id = main_lcore_id;
 
 	return SPPWK_RET_OK;
 }

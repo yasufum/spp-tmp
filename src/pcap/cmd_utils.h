@@ -324,15 +324,13 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @param core_mng_p Pointer to g_core_info address.
  * @param capture_status_p Pointer to status of pcap.
  * @param capture_request_p Pointer to req of pcap.
- * @param main_lcore_id Lcore ID of main thread.
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
 int spp_set_mng_data_addr(struct iface_info *iface_p,
 			  struct core_mng_info *core_mng_p,
 			  int *capture_request_p,
-			  int *capture_status_p,
-			  unsigned int main_lcore_id);
+			  int *capture_status_p);
 
 /**
  * Get mange data address

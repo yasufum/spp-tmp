@@ -129,9 +129,6 @@ struct pcap_status_info {
 	int start_up_cnt;  /* thread start up count */
 };
 
-/* Lcore ID of main thread. */
-static unsigned int g_main_lcore_id = 0xffffffff;
-
 /* Interface management information */
 static struct iface_info g_iface_info;
 
@@ -855,11 +852,12 @@ slave_main(void *arg __attribute__ ((unused)))
 	struct pcap_mng_info *pcap_info = &g_pcap_info[lcore_id];
 
 	if (pcap_info->thread_no == 0) {
-		RTE_LOG(INFO, SPP_PCAP, "Core[%d] Start recive.\n", lcore_id);
+		RTE_LOG(INFO, SPP_PCAP, "Receiver started on lcore %d.\n",
+				lcore_id);
 		pcap_info->type = PCAP_RECEIVE;
 	} else {
-		RTE_LOG(INFO, SPP_PCAP, "Core[%d] Start write(%d).\n",
-					lcore_id, pcap_info->thread_no);
+		RTE_LOG(INFO, SPP_PCAP, "Writer %d started on lcore %d.\n",
+					pcap_info->thread_no, lcore_id);
 		pcap_info->type = PCAP_WRITE;
 	}
 	set_core_status(lcore_id, SPP_CORE_IDLE);
@@ -877,14 +875,16 @@ slave_main(void *arg __attribute__ ((unused)))
 		else
 			ret = pcap_proc_write(lcore_id);
 		if (unlikely(ret != SPPWK_RET_OK)) {
-			RTE_LOG(ERR, SPP_PCAP, "Core[%d] Thread Error.\n",
-								lcore_id);
+			RTE_LOG(ERR, SPP_PCAP,
+					"Failed to capture on lcore %d.\n",
+					lcore_id);
 			break;
 		}
 	}
 
 	set_core_status(lcore_id, SPP_CORE_STOP);
-	RTE_LOG(INFO, SPP_PCAP, "Core[%d] End.\n", lcore_id);
+	RTE_LOG(INFO, SPP_PCAP,
+			"Terminated slave on lcore %d.\n", lcore_id);
 	return ret;
 }
 
@@ -900,6 +900,7 @@ main(int argc, char *argv[])
 	char ctl_ip[IPADDR_LEN] = { 0 };
 	int ctl_port;
 	int ret_cmd_init;
+	unsigned int master_lcore;
 	unsigned int lcore_id;
 	unsigned int thread_no;
 
@@ -930,13 +931,10 @@ main(int argc, char *argv[])
 		if (unlikely(ret_parse != 0))
 			break;
 
-		/* Get lcore id of main thread to set its status after */
-		g_main_lcore_id = rte_lcore_id();
-
 		/* set manage address */
 		if (spp_set_mng_data_addr(&g_iface_info, g_core_info,
-					&g_capture_request, &g_capture_status,
-					g_main_lcore_id) < 0) {
+					&g_capture_request,
+					&g_capture_status) < 0) {
 			RTE_LOG(ERR, SPP_PCAP,
 				"manage address set is failed.\n");
 			break;
@@ -1025,7 +1023,8 @@ main(int argc, char *argv[])
 		}
 
 		/* Set the status of main thread to idle */
-		g_core_info[g_main_lcore_id].status = SPP_CORE_IDLE;
+		master_lcore = rte_get_master_lcore();
+		g_core_info[master_lcore].status = SPP_CORE_IDLE;
 		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
 		if (unlikely(ret_wait != 0))
 			break;
@@ -1036,7 +1035,7 @@ main(int argc, char *argv[])
 
 		/* Enter loop for accepting commands */
 		int ret_do = 0;
-		while (likely(g_core_info[g_main_lcore_id].status !=
+		while (likely(g_core_info[master_lcore].status !=
 				SPP_CORE_STOP_REQUEST)) {
 			/* Receive command */
 			ret_do = spp_command_proc_do();
@@ -1059,18 +1058,16 @@ main(int argc, char *argv[])
 	}
 
 	/* Finalize to exit */
-	if (g_main_lcore_id == rte_lcore_id()) {
-		g_core_info[g_main_lcore_id].status = SPP_CORE_STOP;
-		int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
-		if (unlikely(ret_core_end != 0))
-			RTE_LOG(ERR, SPP_PCAP, "Core did not stop.\n");
+	g_core_info[master_lcore].status = SPP_CORE_STOP;
+	int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
+	if (unlikely(ret_core_end != 0))
+		RTE_LOG(ERR, SPP_PCAP, "Failed to terminate master thread.\n");
 
-		/* capture write ring free */
-		if (g_pcap_option.cap_ring != NULL)
-			rte_ring_free(g_pcap_option.cap_ring);
-	}
+	/* capture write ring free */
+	if (g_pcap_option.cap_ring != NULL)
+		rte_ring_free(g_pcap_option.cap_ring);
 
 
-	RTE_LOG(INFO, SPP_PCAP, "spp_pcap exit.\n");
+	RTE_LOG(INFO, SPP_PCAP, "Exit spp_pcap.\n");
 	return ret;
 }
