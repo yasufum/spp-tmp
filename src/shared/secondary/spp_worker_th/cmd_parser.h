@@ -105,7 +105,7 @@ struct sppwk_cmd_port {
 	struct sppwk_port_idx port;   /**< port type and number */
 	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both. */
 	char name[SPPWK_NAME_BUFSZ];  /**<  component name */
-	struct spp_port_ability ability;  /**< port ability */
+	struct sppwk_port_attrs port_attrs;  /**< port attrs for spp_vf. */
 };
 
 /* TODO(yasufum) Add usage and desc for members. What's command descriptors? */

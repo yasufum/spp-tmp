@@ -540,19 +540,19 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 {
 	int ret;
 	struct sppwk_cmd_port *port = output;
-	struct spp_port_ability *ability = &port->ability;
+	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
-	switch (ability->ops) {
+	switch (port_attrs->ops) {
 	case SPPWK_PORT_ABL_OPS_NONE:
 		ret = get_list_idx(arg_val, PORT_ABILITY_LIST);
 		if (unlikely(ret <= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
-					"Unknown port ability. val=%s\n",
+					"Unknown port attribute. val=%s\n",
 					arg_val);
 			return SPP_RET_NG;
 		}
-		ability->ops = ret;
-		ability->dir = port->dir;
+		port_attrs->ops = ret;
+		port_attrs->dir = port->dir;
 		break;
 	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		/* Nothing to do. */
@@ -572,11 +572,11 @@ parse_port_vid(void *output, const char *arg_val,
 {
 	int vlan_id;
 	struct sppwk_cmd_port *port = output;
-	struct spp_port_ability *ability = &port->ability;
+	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
-	switch (ability->ops) {
+	switch (port_attrs->ops) {
 	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
-		vlan_id = get_int_in_range(&ability->data.vlantag.vid,
+		vlan_id = get_int_in_range(&port_attrs->capability.vlantag.vid,
 			arg_val, 0, ETH_VLAN_ID_MAX);
 		if (unlikely(vlan_id < SPP_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
@@ -584,7 +584,7 @@ parse_port_vid(void *output, const char *arg_val,
 					arg_val);
 			return SPP_RET_NG;
 		}
-		ability->data.vlantag.pcp = -1;
+		port_attrs->capability.vlantag.pcp = -1;
 		break;
 	default:
 		/* Not used. */
@@ -601,11 +601,11 @@ parse_port_pcp(void *output, const char *arg_val,
 {
 	int pcp;
 	struct sppwk_cmd_port *port = output;
-	struct spp_port_ability *ability = &port->ability;
+	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
-	switch (ability->ops) {
+	switch (port_attrs->ops) {
 	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
-		pcp = get_int_in_range(&ability->data.vlantag.pcp,
+		pcp = get_int_in_range(&port_attrs->capability.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
 		if (unlikely(pcp < SPP_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,

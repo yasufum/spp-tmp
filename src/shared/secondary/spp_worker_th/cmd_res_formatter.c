@@ -145,24 +145,23 @@ append_vlan_block(const char *name, char **output,
 {
 	int ret = SPP_RET_NG;
 	int i = 0;
-	struct spp_port_ability *info = NULL;
+	struct sppwk_port_attrs *port_attrs = NULL;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s)\n",
+				"Failed to allocate buffer (name = %s).\n",
 				name);
 		return SPP_RET_NG;
 	}
 
-	spp_port_ability_get_info(port_id, dir, &info);
+	spp_port_ability_get_info(port_id, dir, &port_attrs);
 	for (i = 0; i < PORT_ABL_MAX; i++) {
-		switch (info[i].ops) {
+		switch (port_attrs[i].ops) {
 		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
 		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
-			ret = append_vlan_value(&tmp_buff, info[i].ops,
-					info[i].data.vlantag.vid,
-					info[i].data.vlantag.pcp);
+			ret = append_vlan_value(&tmp_buff, port_attrs[i].ops,
+					port_attrs[i].capability.vlantag.vid,
+					port_attrs[i].capability.vlantag.pcp);
 			if (unlikely(ret < SPP_RET_OK))
 				return SPP_RET_NG;
 

@@ -75,10 +75,10 @@ enum sppwk_worker_type {
  * Port ability operation which indicates vlan tag operation on the port
  * (e.g. add vlan tag or delete vlan tag)
  */
-enum spp_port_ability_ope {
-	SPP_PORT_ABILITY_OPE_NONE,        /**< none */
-	SPP_PORT_ABILITY_OPE_ADD_VLANTAG, /**< add VLAN tag */
-	SPP_PORT_ABILITY_OPE_DEL_VLANTAG, /**< delete VLAN tag */
+enum sppwk_port_ops {
+	SPPWK_PORT_ABL_OPS_NONE,
+	SPPWK_PORT_ABL_OPS_ADD_VLANTAG,
+	SPPWK_PORT_ABL_OPS_DEL_VLANTAG,
 };
 
 /* getopt_long return value for long option */
@@ -95,26 +95,23 @@ enum SPP_LONGOPT_RETVAL {
 };
 
 /** VLAN tag information */
-struct spp_vlantag_info {
+struct sppwk_vlan_tag {
 	int vid; /**< VLAN ID */
 	int pcp; /**< Priority Code Point */
 	int tci; /**< Tag Control Information */
 };
 
-/**
- * Data for each port ability which indicates vlantag related information
- * for the port
- */
-union spp_ability_data {
+/* Ability for vlantag for a port. */
+union sppwk_port_capability {
 	/** VLAN tag information */
-	struct spp_vlantag_info vlantag;
+	struct sppwk_vlan_tag vlantag;
 };
 
-/** Port ability information */
-struct spp_port_ability {
-	enum spp_port_ability_ope ope; /**< Operation */
+/* Port attributes of SPP worker processes. */
+struct sppwk_port_attrs {
+	enum sppwk_port_ops ops;  /**< Port capability Operations */
 	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both */
-	union spp_ability_data data;   /**< Port ability data */
+	union sppwk_port_capability capability;   /**< Port capability */
 };
 
 /* TODO(yasufum) confirm why vlantag is required for spp_pcap. */
@@ -122,7 +119,7 @@ struct spp_port_ability {
 struct sppwk_cls_attrs {
 	uint64_t mac_addr;  /**< Mac address (binary) */
 	char mac_addr_str[STR_LEN_SHORT];  /**< Mac address (text) */
-	struct spp_vlantag_info vlantag;   /**< VLAN tag information */
+	struct sppwk_vlan_tag vlantag;   /**< VLAN tag information */
 };
 
 /* Interface information structure */
@@ -137,7 +134,7 @@ struct sppwk_port_info {
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct sppwk_cls_attrs cls_attrs;
-	struct spp_port_ability ability[PORT_ABL_MAX];
+	struct sppwk_port_attrs port_attrs[PORT_ABL_MAX];
 };
 
 /* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */

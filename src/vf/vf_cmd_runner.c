@@ -253,7 +253,7 @@ update_port(enum sppwk_action wk_action,
 		const struct sppwk_port_idx *port,
 		enum sppwk_port_dir dir,
 		const char *name,
-		const struct spp_port_ability *ability)
+		const struct sppwk_port_attrs *port_attrs)
 {
 	int ret = SPP_RET_NG;
 	int port_idx;
@@ -297,9 +297,9 @@ update_port(enum sppwk_action wk_action,
 		port_idx = get_idx_port_info(port_info, *nof_ports, ports);
 		if (port_idx >= SPP_RET_OK) {
 			/* registered */
-			if (ability->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
+			if (port_attrs->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
 				while ((cnt < PORT_ABL_MAX) &&
-					    (port_info->ability[cnt].ops !=
+					    (port_info->port_attrs[cnt].ops !=
 					    SPPWK_PORT_ABL_OPS_ADD_VLANTAG))
 					cnt++;
 				if (cnt >= PORT_ABL_MAX) {
@@ -307,8 +307,8 @@ update_port(enum sppwk_action wk_action,
 						"Non-registratio\n");
 					return SPP_RET_NG;
 				}
-				memcpy(&port_info->ability[cnt], ability,
-					sizeof(struct spp_port_ability));
+				memcpy(&port_info->port_attrs[cnt], port_attrs,
+					sizeof(struct sppwk_port_attrs));
 
 				ret = SPP_RET_OK;
 				break;
@@ -322,9 +322,9 @@ update_port(enum sppwk_action wk_action,
 			return SPP_RET_NG;
 		}
 
-		if (ability->ops != SPPWK_PORT_ABL_OPS_NONE) {
+		if (port_attrs->ops != SPPWK_PORT_ABL_OPS_NONE) {
 			while ((cnt < PORT_ABL_MAX) &&
-					(port_info->ability[cnt].ops !=
+					(port_info->port_attrs[cnt].ops !=
 					SPPWK_PORT_ABL_OPS_NONE)) {
 				cnt++;
 			}
@@ -333,8 +333,8 @@ update_port(enum sppwk_action wk_action,
 						"No space of port ability.\n");
 				return SPP_RET_NG;
 			}
-			memcpy(&port_info->ability[cnt], ability,
-					sizeof(struct spp_port_ability));
+			memcpy(&port_info->port_attrs[cnt], port_attrs,
+					sizeof(struct sppwk_port_attrs));
 		}
 
 		port_info->iface_type = port->iface_type;
@@ -346,13 +346,13 @@ update_port(enum sppwk_action wk_action,
 
 	case SPPWK_ACT_DEL:
 		for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
-			if (port_info->ability[cnt].ops ==
+			if (port_info->port_attrs[cnt].ops ==
 					SPPWK_PORT_ABL_OPS_NONE)
 				continue;
 
-			if (port_info->ability[cnt].dir == dir)
-				memset(&port_info->ability[cnt], 0x00,
-					sizeof(struct spp_port_ability));
+			if (port_info->port_attrs[cnt].dir == dir)
+				memset(&port_info->port_attrs[cnt], 0x00,
+					sizeof(struct sppwk_port_attrs));
 		}
 
 		ret_del = delete_port_info(port_info, *nof_ports, ports);
@@ -410,7 +410,8 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 				sppwk_action_str(cmd->spec.port.wk_action));
 		ret = update_port(cmd->spec.port.wk_action,
 				&cmd->spec.port.port, cmd->spec.port.dir,
-				cmd->spec.port.name, &cmd->spec.port.ability);
+				cmd->spec.port.name,
+				&cmd->spec.port.port_attrs);
 		if (ret == 0) {
 			RTE_LOG(INFO, VF_CMD_RUNNER, "Exec flush.\n");
 			ret = flush_cmd();

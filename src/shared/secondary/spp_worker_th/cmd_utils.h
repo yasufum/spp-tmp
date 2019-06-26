@@ -84,6 +84,7 @@ enum sppwk_lcore_status {
 };
 
 /* Type of SPP worker thread. */
+/* TODO(yasufum) it should be separated into each process. */
 enum sppwk_worker_type {
 	SPPWK_TYPE_NONE,  /**< Not used */
 	SPPWK_TYPE_CLS,  /**< Classifier_mac */
@@ -111,7 +112,7 @@ enum sppwk_port_dir {
  * Port ability operation which indicates vlan tag operation on the port
  * (e.g. add vlan tag or delete vlan tag)
  */
-enum sppwk_port_abl_ops {
+enum sppwk_port_ops {
 	SPPWK_PORT_ABL_OPS_NONE,
 	SPPWK_PORT_ABL_OPS_ADD_VLANTAG,
 	SPPWK_PORT_ABL_OPS_DEL_VLANTAG,
@@ -127,6 +128,7 @@ enum SPP_LONGOPT_RETVAL {
 };
 
 /* Flag of processing type to copy management information */
+/* TODO(yasufum) add comments for each of members. */
 enum copy_mng_flg {
 	COPY_MNG_FLG_NONE,
 	COPY_MNG_FLG_UPDCOPY,
@@ -141,16 +143,16 @@ struct sppwk_vlan_tag {
 };
 
 /* Ability for vlantag for a port. */
-union spp_ability_data {
+union sppwk_port_capability {
 	/** VLAN tag information */
 	struct sppwk_vlan_tag vlantag;
 };
 
-/* Port ability information. */
-struct spp_port_ability {
-	enum sppwk_port_abl_ops ops;   /**< Port ability Operations */
+/* Port attributes of SPP worker processes. */
+struct sppwk_port_attrs {
+	enum sppwk_port_ops ops;  /**< Port capability Operations */
 	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both */
-	union spp_ability_data data;   /**< Port ability data */
+	union sppwk_port_capability capability;   /**< Port capability */
 };
 
 /* Attributes for classifying. */
@@ -175,7 +177,7 @@ struct sppwk_port_info {
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
 	struct sppwk_cls_attrs cls_attrs;
-	struct spp_port_ability ability[PORT_ABL_MAX];
+	struct sppwk_port_attrs port_attrs[PORT_ABL_MAX];
 };
 
 /* Attributes of SPP worker thread named as `component`. */

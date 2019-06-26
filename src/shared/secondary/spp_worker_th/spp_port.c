@@ -16,8 +16,8 @@
 struct port_abl_info {
 	volatile int ref_index; /* Index to reference area. */
 	volatile int upd_index; /* Index to update area. */
-	struct spp_port_ability ability[TWO_SIDES][PORT_ABL_MAX];
-				/* Port ability information. */
+	struct sppwk_port_attrs port_attrs[TWO_SIDES][PORT_ABL_MAX];
+				/* Port attributes for spp_vf. */
 };
 
 /* Port ability port information */
@@ -53,7 +53,7 @@ spp_port_ability_init(void)
 void
 spp_port_ability_get_info(
 		int port_id, enum sppwk_port_dir dir,
-		struct spp_port_ability **info)
+		struct sppwk_port_attrs **info)
 {
 	struct port_abl_info *mng = NULL;
 
@@ -68,7 +68,7 @@ spp_port_ability_get_info(
 		/* Not used. */
 		break;
 	}
-	*info = mng->ability[mng->ref_index];
+	*info = mng->port_attrs[mng->ref_index];
 }
 
 /* Calculation and Setting of FCS. */
@@ -85,12 +85,12 @@ set_fcs_packet(struct rte_mbuf *pkt)
 static inline int
 add_vlantag_packet(
 		struct rte_mbuf *pkt,
-		const union spp_ability_data *data)
+		const union sppwk_port_capability *capability)
 {
 	struct ether_hdr *old_ether = NULL;
 	struct ether_hdr *new_ether = NULL;
 	struct vlan_hdr  *vlan      = NULL;
-	const struct sppwk_vlan_tag *vlantag = &data->vlantag;
+	const struct sppwk_vlan_tag *vlantag = &capability->vlantag;
 
 	old_ether = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
 	if (old_ether->ether_type == g_vlan_tpid) {
@@ -122,12 +122,12 @@ add_vlantag_packet(
 static inline int
 add_vlantag_all_packets(
 		struct rte_mbuf **pkts, int nb_pkts,
-		const union spp_ability_data *data)
+		const union sppwk_port_capability *capability)
 {
 	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
-		ret = add_vlantag_packet(pkts[cnt], data);
+		ret = add_vlantag_packet(pkts[cnt], capability);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
 					"Failed to add VLAN tag."
@@ -142,7 +142,7 @@ add_vlantag_all_packets(
 static inline int
 del_vlantag_packet(
 		struct rte_mbuf *pkt,
-		const union spp_ability_data *data __attribute__ ((unused)))
+		const union sppwk_port_capability *cbl __attribute__ ((unused)))
 {
 	struct ether_hdr *old_ether = NULL;
 	struct ether_hdr *new_ether = NULL;
@@ -174,12 +174,12 @@ del_vlantag_packet(
 static inline int
 del_vlantag_all_packets(
 		struct rte_mbuf **pkts, int nb_pkts,
-		const union spp_ability_data *data)
+		const union sppwk_port_capability *capability)
 {
 	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
-		ret = del_vlantag_packet(pkts[cnt], data);
+		ret = del_vlantag_packet(pkts[cnt], capability);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
 					"Failed to del VLAN tag."
@@ -246,8 +246,8 @@ port_ability_set_ability(struct sppwk_port_info *port,
 	int port_id = port->ethdev_port_id;
 	struct port_mng_info *port_mng = &g_port_mng_info[port_id];
 	struct port_abl_info *mng = NULL;
-	struct spp_port_ability *in_ability = port->ability;
-	struct spp_port_ability *out_ability = NULL;
+	struct sppwk_port_attrs *port_attrs_in = port->port_attrs;
+	struct sppwk_port_attrs *port_attrs_out = NULL;
 	struct sppwk_vlan_tag *tag = NULL;
 
 	port_mng->iface_type = port->iface_type;
@@ -265,19 +265,19 @@ port_ability_set_ability(struct sppwk_port_info *port,
 		break;
 	}
 
-	out_ability = mng->ability[mng->upd_index];
-	memset(out_ability, 0x00, sizeof(struct spp_port_ability)
+	port_attrs_out = mng->port_attrs[mng->upd_index];
+	memset(port_attrs_out, 0x00, sizeof(struct sppwk_port_attrs)
 			* PORT_ABL_MAX);
 	for (in_cnt = 0; in_cnt < PORT_ABL_MAX; in_cnt++) {
-		if (in_ability[in_cnt].dir != dir)
+		if (port_attrs_in[in_cnt].dir != dir)
 			continue;
 
-		memcpy(&out_ability[out_cnt], &in_ability[in_cnt],
-				sizeof(struct spp_port_ability));
+		memcpy(&port_attrs_out[out_cnt], &port_attrs_in[in_cnt],
+				sizeof(struct sppwk_port_attrs));
 
-		switch (out_ability[out_cnt].ops) {
+		switch (port_attrs_out[out_cnt].ops) {
 		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
-			tag = &out_ability[out_cnt].data.vlantag;
+			tag = &port_attrs_out[out_cnt].capability.vlantag;
 			tag->tci = rte_cpu_to_be_16(SPP_VLANTAG_CALC_TCI(
 					tag->vid, tag->pcp));
 			break;
@@ -314,7 +314,7 @@ spp_port_ability_update(const struct sppwk_comp_info *component)
 /* Definition of functions that operate port abilities. */
 typedef int (*port_ability_func)(
 		struct rte_mbuf **pkts, int nb_pkts,
-		const union spp_ability_data *data);
+		const union sppwk_port_capability *capability);
 
 /* List of functions per port ability. */
 port_ability_func port_ability_function_list[] = {
@@ -332,18 +332,18 @@ port_ability_each_operation(uint16_t port_id,
 {
 	int cnt, buf;
 	int ok_pkts = nb_pkts;
-	struct spp_port_ability *info = NULL;
+	struct sppwk_port_attrs *port_attrs = NULL;
 
-	spp_port_ability_get_info(port_id, dir, &info);
-	if (unlikely(info[0].ops == SPPWK_PORT_ABL_OPS_NONE))
+	spp_port_ability_get_info(port_id, dir, &port_attrs);
+	if (unlikely(port_attrs[0].ops == SPPWK_PORT_ABL_OPS_NONE))
 		return nb_pkts;
 
 	for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
-		if (info[cnt].ops == SPPWK_PORT_ABL_OPS_NONE)
+		if (port_attrs[cnt].ops == SPPWK_PORT_ABL_OPS_NONE)
 			break;
 
-		ok_pkts = port_ability_function_list[info[cnt].ops](
-				pkts, ok_pkts, &info->data);
+		ok_pkts = port_ability_function_list[port_attrs[cnt].ops](
+				pkts, ok_pkts, &port_attrs->capability);
 	}
 
 	/* Discard remained packets to release mbuf. */

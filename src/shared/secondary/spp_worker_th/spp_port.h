@@ -35,7 +35,7 @@ void spp_port_ability_init(void);
  */
 void spp_port_ability_get_info(
 		int port_id, enum sppwk_port_dir dir,
-		struct spp_port_ability **info);
+		struct sppwk_port_attrs **info);
 
 /**
  * Change index of management information.
