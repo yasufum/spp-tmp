@@ -159,13 +159,14 @@ class SppPrimary(object):
         """Get lcore usage from spp-ctl for making launch options.
 
         Return value is a double dimension list of unsed lcores.
-          [[2,3,...], [16,17,...]]
+          [[0, 2, 4, ...], [1, 3, 5, ...]]
 
         To get the result, get CPU layout as an list first, then remove
         used lcores from the list.
         """
 
         sockets = []  # A set of CPU sockets.
+
         # Get list of CPU layout
         res = self.spp_ctl_cli.get('cpu_layout')
         if res is not None:
@@ -173,13 +174,14 @@ class SppPrimary(object):
                 try:
                     # Get layout of each of sockets as an array.
                     # [[0,1,2,3,..., 15], [16,17,18],...]]
-                    socket = []
                     for sock in res.json():
+                        socket = []
                         for ent in sock['cores']:
                             socket.append(ent['lcores'])
-                    socket.sort()
-                    socket = sum(socket, [])
-                    sockets.append(socket)
+
+                        socket = sum(socket, [])
+                        socket.sort()
+                        sockets.append(socket)
 
                 except KeyError as e:
                     print('Error: {} is not defined!'.format(e))
