@@ -12,8 +12,6 @@
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
 
-int g_enable_vhost_cli;
-
 char *
 get_vhost_backend_name(unsigned int id)
 {
@@ -164,7 +162,7 @@ add_vhost_pmd(int index)
 	iface = get_vhost_iface_name(index);
 
 	sprintf(devargs, "%s,iface=%s,queues=%d,client=%d",
-			name, iface, nr_queues, g_enable_vhost_cli);
+			name, iface, nr_queues, get_vhost_cli_mode());
 	RTE_LOG(DEBUG, SHARED, "Devargs for vhost: '%s'.\n", devargs);
 	ret = dev_attach_by_devargs(devargs, &vhost_port_id);
 	if (ret < 0) {

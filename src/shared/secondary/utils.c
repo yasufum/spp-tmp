@@ -9,6 +9,7 @@
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
 int client_id;
+int vhost_cli;
 
 int set_client_id(int cid)
 {
@@ -23,6 +24,26 @@ int get_client_id(void)
 		return -1;
 	}
 	return client_id;
+}
+
+int set_vhost_cli_mode(int mode)
+{
+	if (mode == 0 || mode == 1)
+		vhost_cli = mode;
+	else {
+		RTE_LOG(ERR, SHARED, "Invalid value of vhost client\n");
+		return -1;
+	}
+	return 0;
+}
+
+int get_vhost_cli_mode(void)
+{
+	if (vhost_cli < 0) {
+		RTE_LOG(ERR, SHARED, "Vhost client is not initialized.\n");
+		return -1;
+	}
+	return vhost_cli;
 }
 
 /* Parse client ID from given value of string. */

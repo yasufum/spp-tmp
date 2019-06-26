@@ -9,8 +9,35 @@ int parse_resource_uid(char *str, char **port_type, int *port_id);
 
 int spp_atoi(const char *str, int *val);
 
+/**
+ * Set client ID from given command argment.
+ *
+ * @params[in] cid Client ID.
+ * @return 0 if succeeded, or -1 if failed.
+ */
 int set_client_id(int cid);
+
+/**
+ * Get client ID.
+ *
+ * @return int value of client ID if succeeded, or -1 if failed.
+ */
 int get_client_id(void);
+
+/**
+ * Set vhost client mode from given command argument.
+ *
+ * @params[in] vhost_cli Enabled if 1, or disabled if 0.
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int set_vhost_cli_mode(int vhost_cli);
+
+/**
+ * Get vhost client mode.
+ *
+ * @return 1 if vhost client is enabled, or 0 if disabled.
+ */
+int get_vhost_cli_mode(void);
 
 /**
  * Parse client ID from given value of string.

@@ -69,11 +69,14 @@ parse_app_args(int argc, char *argv[])
 	int ctl_port;  /* Port num to connect spp_ctl. */
 	int ret;
 
+	/* vhost_cli is disabled as default. */
+	set_vhost_cli_mode(0);
+
 	while ((opt = getopt_long(argc, argvopt, "n:s:", lgopts,
 			&option_index)) != EOF) {
 		switch (opt) {
 		case CMD_OPT_ENABLE_VHOST_CLI:
-			g_enable_vhost_cli = 1;
+			set_vhost_cli_mode(1);
 			break;
 		case 'n':
 			if (parse_client_id(&cli_id, optarg) != 0) {
@@ -203,7 +206,7 @@ main(int argc, char *argv[])
 	if (parse_app_args(argc, argv) < 0)
 		rte_exit(EXIT_FAILURE, "Invalid command-line arguments\n");
 
-	if (g_enable_vhost_cli == 1)
+	if (get_vhost_cli_mode() == 1)
 		RTE_LOG(INFO, SPP_NFV, "vhost client mode is enabled.\n");
 
 	/* initialize port forward array*/

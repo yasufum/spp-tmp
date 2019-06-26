@@ -488,7 +488,7 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 	int cnt;
 
 	/* Do not remove for if it is running in vhost-client mode. */
-	if (g_enable_vhost_cli != 0)
+	if (get_vhost_cli_mode() != 0)
 		return;
 
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {

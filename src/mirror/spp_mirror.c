@@ -137,6 +137,9 @@ parse_app_args(int argc, char *argv[])
 	/* Clear startup parameters */
 	memset(&g_startup_param, 0x00, sizeof(g_startup_param));
 
+	/* vhost_cli is disabled as default. */
+	set_vhost_cli_mode(0);
+
 	/* Check options of application */
 	optind = 0;
 	opterr = 0;
@@ -153,7 +156,7 @@ parse_app_args(int argc, char *argv[])
 			proc_flg = 1;
 			break;
 		case SPP_LONGOPT_RETVAL_VHOST_CLIENT:
-			g_enable_vhost_cli = 1;
+			set_vhost_cli_mode(1);
 			break;
 		case 's':
 			ret = parse_server(&ctl_ip, &ctl_port, optarg);
@@ -178,8 +181,8 @@ parse_app_args(int argc, char *argv[])
 	}
 	RTE_LOG(INFO, MIRROR,
 			"Parsed app args (client_id=%d, server=%s:%d, "
-			"vhost_client=%d,)\n",
-			cli_id, ctl_ip, ctl_port, g_enable_vhost_cli);
+			"vhost_client=%d)\n",
+			cli_id, ctl_ip, ctl_port, get_vhost_cli_mode());
 	return SPP_RET_OK;
 }
 
