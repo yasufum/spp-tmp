@@ -131,8 +131,8 @@ update_comp(enum sppwk_action wk_action, const char *name,
 	int *change_core = NULL;
 	int *change_component = NULL;
 
-	sppwk_get_mng_data(NULL, NULL, &comp_info_base, &core_info,
-				&change_core, &change_component, NULL);
+	sppwk_get_mng_data(NULL, &comp_info_base, &core_info, &change_core,
+			&change_component, NULL);
 
 	switch (wk_action) {
 	case SPPWK_ACT_START:
@@ -272,8 +272,8 @@ update_port(enum sppwk_action wk_action,
 				"(component = %s)\n", name);
 		return SPP_RET_NG;
 	}
-	sppwk_get_mng_data(NULL, NULL,
-			&comp_info_base, NULL, NULL, &change_component, NULL);
+	sppwk_get_mng_data(NULL, &comp_info_base, NULL, NULL,
+			&change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
 	port_info = get_sppwk_port(port->iface_type, port->iface_no);
 	if (dir == SPPWK_PORT_DIR_RX) {
@@ -457,8 +457,8 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 		}
 
 		for (cnt = 0; cnt < core->num; cnt++) {
-			sppwk_get_mng_data(NULL, NULL, &comp_info_base,
-							NULL, NULL, NULL, NULL);
+			sppwk_get_mng_data(NULL, &comp_info_base, NULL, NULL,
+					NULL, NULL);
 			comp_info = (comp_info_base + core->id[cnt]);
 
 			if (comp_info->wk_type == SPPWK_TYPE_CLS) {

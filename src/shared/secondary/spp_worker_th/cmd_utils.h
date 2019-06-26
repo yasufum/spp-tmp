@@ -191,12 +191,6 @@ struct sppwk_comp_info {
 	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
 };
 
-/* Manage cmd arg as global variable, used for spp_vf and spp_mirror. */
-struct startup_param {
-	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
-	int server_port;   /* Port Number of spp-ctl */
-};
-
 /* Manage number of interfaces  and port information as global variable. */
 struct iface_info {
 	int nof_phys;    /* Number of phy ports */
@@ -532,7 +526,6 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 /**
  * Set mange data address.
  *
- * @param startup_param_p Pointer to g_startup_param address.
  * @param iface_p Pointer to g_iface_info address.
  * @param component_p Pointer to g_component_info address.
  * @param core_mng_p Pointer to g_core_info address.
@@ -543,8 +536,7 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
-int sppwk_set_mng_data(struct startup_param *startup_param_p,
-		struct iface_info *iface_p,
+int sppwk_set_mng_data(struct iface_info *iface_p,
 		struct sppwk_comp_info *component_p,
 		struct core_mng_info *core_mng_p,
 		int *change_core_p,
@@ -555,7 +547,6 @@ int sppwk_set_mng_data(struct startup_param *startup_param_p,
 /**
  * Get mange data address.
  *
- * @param startup_param_p Pointer to startup params.
  * @param iface_p Pointer to g_iface_info.
  * @param component_p Pointer to g_component_info.
  * @param core_mng_p Pointer to g_core_mng_info.
@@ -563,8 +554,7 @@ int sppwk_set_mng_data(struct startup_param *startup_param_p,
  * @param change_component_p Pointer to g_change_component.
  * @param backup_info_p Pointer to g_backup_info.
  */
-void sppwk_get_mng_data(struct startup_param **startup_param_p,
-		struct iface_info **iface_p,
+void sppwk_get_mng_data(struct iface_info **iface_p,
 		struct sppwk_comp_info **component_p,
 		struct core_mng_info **core_mng_p,
 		int **change_core_p,

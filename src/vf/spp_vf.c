@@ -21,9 +21,6 @@
 /* Logical core ID for main process */
 static unsigned int g_main_lcore_id = 0xffffffff;
 
-/* Execution parameter of spp_vf */
-static struct startup_param g_startup_param;
-
 /* Interface management information */
 static struct iface_info g_iface_info;
 
@@ -89,9 +86,6 @@ parse_app_args(int argc, char *argv[])
 	 */
 	for (cnt = 0; cnt < argcopt; cnt++)
 		argvopt[cnt] = argv[cnt];
-
-	/* Clear startup parameters */
-	memset(&g_startup_param, 0x00, sizeof(g_startup_param));
 
 	/* vhost_cli is disabled as default. */
 	set_vhost_cli_mode(0);
@@ -240,7 +234,7 @@ main(int argc, char *argv[])
 		/* Get lcore id of main thread to set its status after */
 		g_main_lcore_id = rte_lcore_id();
 
-		if (sppwk_set_mng_data(&g_startup_param, &g_iface_info,
+		if (sppwk_set_mng_data(&g_iface_info,
 					g_component_info, g_core_info,
 					g_change_core, g_change_component,
 					&g_backup_info,

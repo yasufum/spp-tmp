@@ -34,7 +34,6 @@
 /* A set of pointers of management data */
 /* TODO(yasufum) change names start with `p_change` because it wrong meanig. */
 struct mng_data_info {
-	struct startup_param *p_startup_param;
 	struct iface_info *p_iface_info;
 	struct sppwk_comp_info *p_component_info;
 	struct core_mng_info *p_core_info;
@@ -839,7 +838,6 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 
 /* Set management data of global var for given non-NULL args. */
 int sppwk_set_mng_data(
-		struct startup_param *startup_param_p,
 		struct iface_info *iface_p,
 		struct sppwk_comp_info *component_p,
 		struct core_mng_info *core_mng_p,
@@ -852,13 +850,11 @@ int sppwk_set_mng_data(
 	 * TODO(yasufum) confirm why the last `0xffffffff` is same as NULL,
 	 * although it is reserved for meaning as invalid.
 	 */
-	if (startup_param_p == NULL || iface_p == NULL ||
-			component_p == NULL || core_mng_p == NULL ||
+	if (iface_p == NULL || component_p == NULL || core_mng_p == NULL ||
 			change_core_p == NULL || change_component_p == NULL ||
 			backup_info_p == NULL || main_lcore_id == 0xffffffff)
 		return SPP_RET_NG;
 
-	g_mng_data.p_startup_param = startup_param_p;
 	g_mng_data.p_iface_info = iface_p;
 	g_mng_data.p_component_info = component_p;
 	g_mng_data.p_core_info = core_mng_p;
@@ -872,7 +868,6 @@ int sppwk_set_mng_data(
 
 /* Get management data from global var for given non-NULL args. */
 void sppwk_get_mng_data(
-		struct startup_param **startup_param_p,
 		struct iface_info **iface_p,
 		struct sppwk_comp_info **component_p,
 		struct core_mng_info **core_mng_p,
@@ -881,8 +876,6 @@ void sppwk_get_mng_data(
 		struct cancel_backup_info **backup_info_p)
 {
 
-	if (startup_param_p != NULL)
-		*startup_param_p = g_mng_data.p_startup_param;
 	if (iface_p != NULL)
 		*iface_p = g_mng_data.p_iface_info;
 	if (component_p != NULL)

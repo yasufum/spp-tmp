@@ -44,8 +44,8 @@ flush_cmd(void)
 	struct sppwk_comp_info *p_comp_info;
 	struct cancel_backup_info *backup_info;
 
-	sppwk_get_mng_data(NULL, NULL, &p_comp_info,
-				NULL, NULL, &p_change_comp, &backup_info);
+	sppwk_get_mng_data(NULL, &p_comp_info, NULL, NULL, &p_change_comp,
+			&backup_info);
 
 	ret = update_port_info();
 	if (ret < SPP_RET_OK)

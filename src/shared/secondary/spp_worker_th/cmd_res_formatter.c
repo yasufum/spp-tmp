@@ -199,8 +199,7 @@ get_ethdev_port_id(enum port_type iface_type, int iface_no)
 {
 	struct iface_info *iface_info = NULL;
 
-	sppwk_get_mng_data(NULL, &iface_info,
-				NULL, NULL, NULL, NULL, NULL);
+	sppwk_get_mng_data(&iface_info, NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:
 		return iface_info->nic[iface_no].ethdev_port_id;
