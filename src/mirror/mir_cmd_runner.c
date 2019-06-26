@@ -39,9 +39,10 @@ update_comp(enum sppwk_action wk_action, const char *name,
 	switch (wk_action) {
 	case SPPWK_ACT_START:
 		info = (core_info + lcore_id);
-		if (info->status == SPP_CORE_UNUSE) {
-			RTE_LOG(ERR, MIR_CMD_RUNNER, "Core %d is not available because "
-				"it is in SPP_CORE_UNUSE state.\n", lcore_id);
+		if (info->status == SPPWK_LCORE_UNUSED) {
+			RTE_LOG(ERR, MIR_CMD_RUNNER,
+					"Not available lcore %d for %s.\n",
+					lcore_id, "SPPWK_LCORE_UNUSED");
 			return SPP_RET_NG;
 		}
 
@@ -302,7 +303,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 	struct sppwk_comp_info *comp_info = NULL;
 
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		if (spp_get_core_status(lcore_id) == SPP_CORE_UNUSE)
+		if (spp_get_core_status(lcore_id) == SPPWK_LCORE_UNUSED)
 			continue;
 
 		core = get_core_info(lcore_id);

@@ -74,14 +74,13 @@
 #define CORE_TYPE_FORWARD_STR	     "forward"
 #define CORE_TYPE_MIRROR_STR	     "mirror"
 
-/* State on component */
+/* Status of a component on lcore. */
 enum sppwk_lcore_status {
-	SPP_CORE_UNUSE,        /**< Not used */
-	SPP_CORE_STOP,         /**< Stopped */
-	SPP_CORE_IDLE,         /**< Idling */
-	SPP_CORE_FORWARD,      /**< Forwarding  */
-	SPP_CORE_STOP_REQUEST, /**< Request stopping */
-	SPP_CORE_IDLE_REQUEST /**< Request idling */
+	SPPWK_LCORE_UNUSED,
+	SPPWK_LCORE_STOPPED,
+	SPPWK_LCORE_IDLING,
+	SPPWK_LCORE_RUNNING,
+	SPPWK_LCORE_REQ_STOP  /**< Request stopping */
 };
 
 /* Type of SPP worker thread. */
@@ -336,7 +335,7 @@ void set_core_status(unsigned int lcore_id, enum sppwk_lcore_status status);
 void set_all_core_status(enum sppwk_lcore_status status);
 
 /**
- * Set all comp status to SPP_CORE_STOP_REQUEST if received SIGTERM or SIGINT.
+ * Set all comp status to SPPWK_LCORE_REQ_STOP if received SIGTERM or SIGINT.
  *
  * @param[in] signal Received signal.
  */

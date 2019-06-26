@@ -140,16 +140,16 @@ slave_main(void *arg __attribute__ ((unused)))
 	int ret = 0;
 	int cnt = 0;
 	unsigned int lcore_id = rte_lcore_id();
-	enum sppwk_lcore_status status = SPP_CORE_STOP;
+	enum sppwk_lcore_status status = SPPWK_LCORE_STOPPED;
 	struct core_mng_info *info = &g_core_info[lcore_id];
 	struct core_info *core = get_core_info(lcore_id);
 
 	RTE_LOG(INFO, APP, "Slave started on lcore %d.\n", lcore_id);
-	set_core_status(lcore_id, SPP_CORE_IDLE);
+	set_core_status(lcore_id, SPPWK_LCORE_IDLING);
 
 	while ((status = spp_get_core_status(lcore_id)) !=
-			SPP_CORE_STOP_REQUEST) {
-		if (status != SPP_CORE_FORWARD)
+			SPPWK_LCORE_REQ_STOP) {
+		if (status != SPPWK_LCORE_RUNNING)
 			continue;
 
 		if (spp_check_core_update(lcore_id) == SPP_RET_OK) {
@@ -182,7 +182,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		}
 	}
 
-	set_core_status(lcore_id, SPP_CORE_STOP);
+	set_core_status(lcore_id, SPPWK_LCORE_STOPPED);
 	RTE_LOG(INFO, APP, "Terminated slave on lcore %d.\n", lcore_id);
 	return ret;
 }
@@ -271,13 +271,13 @@ main(int argc, char *argv[])
 
 		/* Set the status of main thread to idle */
 		master_lcore = rte_get_master_lcore();
-		g_core_info[master_lcore].status = SPP_CORE_IDLE;
-		int ret_wait = check_core_status_wait(SPP_CORE_IDLE);
+		g_core_info[master_lcore].status = SPPWK_LCORE_IDLING;
+		int ret_wait = check_core_status_wait(SPPWK_LCORE_IDLING);
 		if (unlikely(ret_wait != SPP_RET_OK))
 			break;
 
 		/* Start forwarding */
-		set_all_core_status(SPP_CORE_FORWARD);
+		set_all_core_status(SPPWK_LCORE_RUNNING);
 		RTE_LOG(INFO, APP, "My ID %d start handling message\n", 0);
 		RTE_LOG(INFO, APP, "[Press Ctrl-C to quit ...]\n");
 
@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 		int ret_do = SPP_RET_OK;
 #ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[master_lcore].status !=
-				SPP_CORE_STOP_REQUEST)) {
+				SPPWK_LCORE_REQ_STOP)) {
 #else
 		{
 #endif
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 		}
 
 		if (unlikely(ret_do != SPP_RET_OK)) {
-			set_all_core_status(SPP_CORE_STOP_REQUEST);
+			set_all_core_status(SPPWK_LCORE_REQ_STOP);
 			break;
 		}
 
@@ -317,8 +317,8 @@ main(int argc, char *argv[])
 	}
 
 	/* Finalize to exit */
-	g_core_info[master_lcore].status = SPP_CORE_STOP;
-	int ret_core_end = check_core_status_wait(SPP_CORE_STOP);
+	g_core_info[master_lcore].status = SPPWK_LCORE_STOPPED;
+	int ret_core_end = check_core_status_wait(SPPWK_LCORE_STOPPED);
 	if (unlikely(ret_core_end != SPP_RET_OK))
 		RTE_LOG(ERR, APP, "Failed to terminate master thread.\n");
 

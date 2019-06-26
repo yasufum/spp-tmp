@@ -130,7 +130,7 @@ set_all_core_status(enum sppwk_lcore_status status)
 }
 
 /**
- * Set all of component status to SPP_CORE_STOP_REQUEST if received signal
+ * Set all of component status to SPPWK_LCORE_REQ_STOP if received signal
  * is SIGTERM or SIGINT
  */
 void
@@ -144,8 +144,8 @@ stop_process(int signal)
 
 	master_lcore = rte_get_master_lcore();
 	(g_mng_data.p_core_info + master_lcore)->status =
-		SPP_CORE_STOP_REQUEST;
-	set_all_core_status(SPP_CORE_STOP_REQUEST);
+		SPPWK_LCORE_REQ_STOP;
+	set_all_core_status(SPPWK_LCORE_REQ_STOP);
 }
 
 /**
@@ -397,7 +397,7 @@ init_core_info(void)
 	struct core_mng_info *p_core_info = g_mng_data.p_core_info;
 	memset(p_core_info, 0x00,
 			sizeof(struct core_mng_info)*RTE_MAX_LCORE);
-	set_all_core_status(SPP_CORE_STOP);
+	set_all_core_status(SPPWK_LCORE_STOPPED);
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		(p_core_info + cnt)->ref_index = 0;
 		(p_core_info + cnt)->upd_index = 1;
