@@ -373,7 +373,7 @@ append_capture_status_value(const char *name, char **output,
 {
 	int *capture_status = NULL;
 
-	spp_get_mng_data_addr(NULL, NULL, NULL, NULL, &capture_status);
+	spp_get_mng_data_addr(NULL, NULL, NULL, &capture_status);
 
 	return append_json_str_value(name, output,
 			CAPTURE_STATUS_STRINGS[*capture_status]);
@@ -797,15 +797,13 @@ send_command_result_response(int *sock,
 
 	/* pcap start command */
 	if (request->is_requested_start) {
-		spp_get_mng_data_addr(NULL, NULL, NULL,
-				      &capture_request, NULL);
+		spp_get_mng_data_addr(NULL, NULL, &capture_request, NULL);
 		*capture_request = SPP_CAPTURE_RUNNING;
 	}
 
 	/* pcap stop command */
 	if (request->is_requested_stop) {
-		spp_get_mng_data_addr(NULL, NULL, NULL,
-					&capture_request, NULL);
+		spp_get_mng_data_addr(NULL, NULL, &capture_request, NULL);
 		*capture_request = SPP_CAPTURE_IDLE;
 	}
 

@@ -132,9 +132,6 @@ struct pcap_status_info {
 /* Lcore ID of main thread. */
 static unsigned int g_main_lcore_id = 0xffffffff;
 
-/* Arguments for spp_pcap process. */
-static struct startup_param g_startup_param;
-
 /* Interface management information */
 static struct iface_info g_iface_info;
 
@@ -272,9 +269,6 @@ parse_app_args(int argc, char *argv[])
 	 */
 	for (cnt = 0; cnt < argcopt; cnt++)
 		argvopt[cnt] = argv[cnt];
-
-	/* Clear startup parameters */
-	memset(&g_startup_param, 0x00, sizeof(g_startup_param));
 
 	/* option parameters init */
 	memset(&g_pcap_option, 0x00, sizeof(g_pcap_option));
@@ -940,12 +934,9 @@ main(int argc, char *argv[])
 		g_main_lcore_id = rte_lcore_id();
 
 		/* set manage address */
-		if (spp_set_mng_data_addr(&g_startup_param,
-					  &g_iface_info,
-					  g_core_info,
-					  &g_capture_request,
-					  &g_capture_status,
-					  g_main_lcore_id) < 0) {
+		if (spp_set_mng_data_addr(&g_iface_info, g_core_info,
+					&g_capture_request, &g_capture_status,
+					g_main_lcore_id) < 0) {
 			RTE_LOG(ERR, SPP_PCAP,
 				"manage address set is failed.\n");
 			break;

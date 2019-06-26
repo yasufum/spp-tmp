@@ -155,13 +155,6 @@ struct sppwk_comp_info {
 	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
 };
 
-/* Manage given options as global variable */
-struct startup_param {
-	//int client_id;  /* Client ID */
-	char server_ip[INET_ADDRSTRLEN];  /* IP address of spp-ctl */
-	int server_port;  /* Port Number of spp-ctl */
-};
-
 /* Manage interfaces and port information as global variable */
 /* TODO(yasufum) confirm why nof_rings is required not used in anywhere. */
 struct iface_info {
@@ -327,7 +320,6 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
 /**
  * Set mange data address
  *
- * @param startup_param_p Pointer to g_startup_param address.
  * @param iface_p Pointer to g_iface_info address.
  * @param core_mng_p Pointer to g_core_info address.
  * @param capture_status_p Pointer to status of pcap.
@@ -336,8 +328,7 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @retval SPP_RET_OK If succeeded.
  * @retval SPP_RET_NG If failed.
  */
-int spp_set_mng_data_addr(struct startup_param *startup_param_p,
-			  struct iface_info *iface_p,
+int spp_set_mng_data_addr(struct iface_info *iface_p,
 			  struct core_mng_info *core_mng_p,
 			  int *capture_request_p,
 			  int *capture_status_p,
@@ -346,14 +337,12 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_p,
 /**
  * Get mange data address
  *
- * @param startup_param_p Pointer to startup params.
  * @param iface_p Pointer to g_iface_info.
  * @param core_mng_p Pointer to g_core_mng_info.
  * @param capture_request_p Pointer to status of pcap.
  * @param capture_status_p Pointer to req of pcap.
  */
-void spp_get_mng_data_addr(struct startup_param **startup_param_p,
-			   struct iface_info **iface_p,
+void spp_get_mng_data_addr(struct iface_info **iface_p,
 			   struct core_mng_info **core_mng_p,
 			   int **capture_request_p,
 			   int **capture_status_p);

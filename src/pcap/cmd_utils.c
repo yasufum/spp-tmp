@@ -14,7 +14,6 @@
 
 /* Manage data to addoress */
 struct mng_data_info {
-	struct startup_param	  *p_startup_param;
 	struct iface_info	  *p_iface_info;
 	struct core_mng_info	  *p_core_info;
 	int			  *p_capture_request;
@@ -258,21 +257,18 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 }
 
 /* Set mange data address */
-int spp_set_mng_data_addr(struct startup_param *startup_param_p,
-			  struct iface_info *iface_p,
+int spp_set_mng_data_addr(struct iface_info *iface_p,
 			  struct core_mng_info *core_mng_p,
 			  int *capture_request_p,
 			  int *capture_status_p,
 			  unsigned int main_lcore_id)
 {
-	if (startup_param_p == NULL || iface_p == NULL ||
-			core_mng_p == NULL ||
+	if (iface_p == NULL || core_mng_p == NULL ||
 			capture_request_p == NULL ||
 			capture_status_p == NULL ||
 			main_lcore_id == 0xffffffff)
 		return SPPWK_RET_NG;
 
-	g_mng_data_addr.p_startup_param = startup_param_p;
 	g_mng_data_addr.p_iface_info = iface_p;
 	g_mng_data_addr.p_core_info = core_mng_p;
 	g_mng_data_addr.p_capture_request = capture_request_p;
@@ -283,15 +279,12 @@ int spp_set_mng_data_addr(struct startup_param *startup_param_p,
 }
 
 /* Get manage data address */
-void spp_get_mng_data_addr(struct startup_param **startup_param_p,
-			   struct iface_info **iface_p,
+void spp_get_mng_data_addr(struct iface_info **iface_p,
 			   struct core_mng_info **core_mng_p,
 			   int **capture_request_p,
 			   int **capture_status_p)
 {
 
-	if (startup_param_p != NULL)
-		*startup_param_p = g_mng_data_addr.p_startup_param;
 	if (iface_p != NULL)
 		*iface_p = g_mng_data_addr.p_iface_info;
 	if (core_mng_p != NULL)
