@@ -405,3 +405,29 @@ sppwk_run_cmd(void)
 
 	return ret;
 }
+
+/* Delete component information */
+int
+del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
+{
+	int idx = 0;  /* The index of comp_ary to be deleted. */
+	int cnt;
+
+	/* Find the index. */
+	for (cnt = 0; cnt < nof_comps; cnt++) {
+		if (lcore_id == comp_ary[cnt])
+			idx = cnt;
+	}
+	if (idx < 0)
+		return SPP_RET_NG;
+
+	/* Overwrite the deleted entry, and shift the remained. */
+	nof_comps--;
+	for (cnt = idx; cnt < nof_comps; cnt++)
+		comp_ary[cnt] = comp_ary[cnt + 1];
+
+	/* Clean the unused last entry. */
+	comp_ary[cnt] = 0;
+
+	return SPP_RET_OK;
+}

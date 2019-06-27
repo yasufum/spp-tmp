@@ -43,4 +43,17 @@ sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port);
 int
 sppwk_run_cmd(void);
 
+/**
+ *  Delete component information.
+ *
+ * @param[in] lcore_id The lcore ID of deleted comp.
+ * @param[in] nof_comps The num of elements in comp_ary.
+ * @param[in] *comp_ary Set of comps from which an comp is deleted.
+ *
+ * @retval SPP_RET_OK If succeeded.
+ * @retval SPP_RET_NG If failed.
+ */
+int
+del_comp_info(int lcore_id, int nof_comps, int *comp_ary);
+
 #endif  /* _SPPWK_CMD_RUNNER_H_ */

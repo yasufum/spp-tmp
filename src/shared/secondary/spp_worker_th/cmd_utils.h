@@ -384,7 +384,7 @@ void print_ring_latency_stats(void);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 /* Remove sock file if spp is not running */
-void  del_vhost_sockfile(struct sppwk_port_info *vhost);
+void del_vhost_sockfile(struct sppwk_port_info *vhost);
 
 /**
  * Get core ID of target component
@@ -423,11 +423,8 @@ int spp_check_used_port(
 /**
  * Set component update flag for given port.
  *
- * @param port
- *  sppwk_port_info address
- * @param rxtx
- *  enum spp_port_rxtx
- *
+ * @param port Pointer of sppwk_port_info.
+ * @param rxtx Enum spp_port_rxtx.
  */
 void
 set_component_change_port(struct sppwk_port_info *port,
@@ -449,23 +446,6 @@ int get_free_lcore_id(void);
  * @retval SPP_RET_NG if failed.
  */
 int sppwk_get_lcore_id(const char *comp_name);
-
-/**
- *  Delete component information.
- *
- * @param[in] lcore_id The lcore ID of deleted comp.
- * @param[in] nof_comps The num of elements in comp_ary.
- * @param[in] *comp_ary Set of comps from which an comp is deleted.
- *
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
- */
-/**
- * TODO(yasufum) consider to move to cmd_runner because this func is only
- * used in.
- */
-int
-del_comp_info(int lcore_id, int nof_comps, int *comp_ary);
 
 /**
  * Get index of given entry in given port info array. It returns the index,

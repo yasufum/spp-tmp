@@ -628,36 +628,6 @@ sppwk_get_lcore_id(const char *comp_name)
 	return SPP_RET_NG;
 }
 
-/* Delete component information */
-/**
- * TODO(yasufum) consider to move to cmd_runner because this func is only
- * used in.
- */
-int
-del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
-{
-	int idx = 0;  /* The index of comp_ary to be deleted. */
-	int cnt;
-
-	/* Find the index. */
-	for (cnt = 0; cnt < nof_comps; cnt++) {
-		if (lcore_id == comp_ary[cnt])
-			idx = cnt;
-	}
-	if (idx < 0)
-		return SPP_RET_NG;
-
-	/* Overwrite the deleted entry, and shift the remained. */
-	nof_comps--;
-	for (cnt = idx; cnt < nof_comps; cnt++)
-		comp_ary[cnt] = comp_ary[cnt + 1];
-
-	/* Clean the unused last entry. */
-	comp_ary[cnt] = 0;
-
-	return SPP_RET_OK;
-}
-
 /**
  * Get index of given entry in given port info array. It returns the index,
  * or NG code if the entry is not found.
