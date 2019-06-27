@@ -186,9 +186,8 @@ All of options can be referred with help option ``-h``.
     optional arguments:
       -h, --help            show this help message and exit
       -b BIND_ADDR, --bind-addr BIND_ADDR
-                            bind address, default=127.0.0.1
-      -a API_PORT, --api-port API_PORT
-                        bind address, default=777
+                            bind address, default=127.0.0.1:7777
+
 
 All of SPP CLI commands are described in :doc:`../../commands/index`.
 
