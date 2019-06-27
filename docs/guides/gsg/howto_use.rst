@@ -409,7 +409,7 @@ and options are same as ``spp_vf``.
       -- \
       --client-id 1 \
       -s 192.168.1.100:6666 \
-      -vhost-client
+      --vhost-client
 
 EAL options are the same as primary process. Here is a list of application
 options of ``spp_mirror``.
