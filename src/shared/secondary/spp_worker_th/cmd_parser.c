@@ -152,18 +152,18 @@ parse_resource_uid(const char *res_uid,
 	 * TODO(yasufum) consider this checking of zero value is recommended
 	 * way, or should be changed.
 	 */
-	if (strncmp(res_uid, SPP_IFTYPE_NIC_STR ":",
-			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
+	if (strncmp(res_uid, SPPWK_PHY_STR ":",
+			strlen(SPPWK_PHY_STR)+1) == 0) {
 		ptype = PHY;
-		iface_no_str = &res_uid[strlen(SPP_IFTYPE_NIC_STR)+1];
-	} else if (strncmp(res_uid, SPP_IFTYPE_VHOST_STR ":",
-			strlen(SPP_IFTYPE_VHOST_STR)+1) == 0) {
+		iface_no_str = &res_uid[strlen(SPPWK_PHY_STR)+1];
+	} else if (strncmp(res_uid, SPPWK_VHOST_STR ":",
+			strlen(SPPWK_VHOST_STR)+1) == 0) {
 		ptype = VHOST;
-		iface_no_str = &res_uid[strlen(SPP_IFTYPE_VHOST_STR)+1];
-	} else if (strncmp(res_uid, SPP_IFTYPE_RING_STR ":",
-			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
+		iface_no_str = &res_uid[strlen(SPPWK_VHOST_STR)+1];
+	} else if (strncmp(res_uid, SPPWK_RING_STR ":",
+			strlen(SPPWK_RING_STR)+1) == 0) {
 		ptype = RING;
-		iface_no_str = &res_uid[strlen(SPP_IFTYPE_RING_STR)+1];
+		iface_no_str = &res_uid[strlen(SPPWK_RING_STR)+1];
 	} else {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Unexpected port type in '%s'.\n",
 				res_uid);

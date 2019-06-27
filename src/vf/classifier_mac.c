@@ -211,7 +211,7 @@ log_classification(
 	if (clsd_idx < 0)
 		snprintf(iface_str, sizeof(iface_str), "%ld", clsd_idx);
 	else
-		spp_format_port_string(iface_str,
+		sppwk_port_uid(iface_str,
 				clsd_data[clsd_idx].iface_type,
 				clsd_data[clsd_idx].iface_no_global);
 
@@ -248,8 +248,7 @@ log_entry(
 	if (clsd_idx < 0)
 		snprintf(iface_str, sizeof(iface_str), "%ld", clsd_idx);
 	else
-		spp_format_port_string(
-				iface_str,
+		sppwk_port_uid(iface_str,
 				clsd_data[clsd_idx].iface_type,
 				clsd_data[clsd_idx].iface_no_global);
 

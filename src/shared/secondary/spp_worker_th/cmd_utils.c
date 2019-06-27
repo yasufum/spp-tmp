@@ -733,29 +733,26 @@ update_lcore_info(void)
 	}
 }
 
-/**
- * Generate a formatted string of combination from interface type and
- * number and assign to given 'port'
- */
-int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
+/* Return port uid such as `phy:0`, `ring:1` or so. */
+int sppwk_port_uid(char *port_uid, enum port_type p_type, int iface_no)
 {
-	const char *iface_type_str;
+	const char *p_type_str;
 
-	switch (iface_type) {
+	switch (p_type) {
 	case PHY:
-		iface_type_str = SPP_IFTYPE_NIC_STR;
+		p_type_str = SPPWK_PHY_STR;
 		break;
 	case RING:
-		iface_type_str = SPP_IFTYPE_RING_STR;
+		p_type_str = SPPWK_RING_STR;
 		break;
 	case VHOST:
-		iface_type_str = SPP_IFTYPE_VHOST_STR;
+		p_type_str = SPPWK_VHOST_STR;
 		break;
 	default:
 		return SPP_RET_NG;
 	}
 
-	sprintf(port, "%s:%d", iface_type_str, iface_no);
+	sprintf(port_uid, "%s:%d", p_type_str, iface_no);
 
 	return SPP_RET_OK;
 }

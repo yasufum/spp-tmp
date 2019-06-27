@@ -572,7 +572,7 @@ append_classifier_element_value(
 		return ret;
 	}
 
-	spp_format_port_string(port_str, port->iface_type, port->iface_no);
+	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
 
 	ret = append_json_str_value(&tmp_buff, "type",
 			CLS_TYPE_A_LIST[cls_type]);

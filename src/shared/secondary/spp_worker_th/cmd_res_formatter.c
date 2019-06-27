@@ -226,7 +226,7 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 		return SPP_RET_NG;
 	}
 
-	spp_format_port_string(port_str, port->iface_type, port->iface_no);
+	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
 	ret = append_json_str_value(&tmp_buff, "port", port_str);
 	if (unlikely(ret < SPP_RET_OK))
 		return SPP_RET_NG;
@@ -534,13 +534,13 @@ add_interface(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	if (strcmp(name, SPP_IFTYPE_NIC_STR) == 0)
+	if (strcmp(name, SPPWK_PHY_STR) == 0)
 		ret = append_interface_array(&tmp_buff, PHY);
 
-	else if (strcmp(name, SPP_IFTYPE_VHOST_STR) == 0)
+	else if (strcmp(name, SPPWK_VHOST_STR) == 0)
 		ret = append_interface_array(&tmp_buff, VHOST);
 
-	else if (strcmp(name, SPP_IFTYPE_RING_STR) == 0)
+	else if (strcmp(name, SPPWK_RING_STR) == 0)
 		ret = append_interface_array(&tmp_buff, RING);
 
 	if (unlikely(ret < SPP_RET_OK)) {

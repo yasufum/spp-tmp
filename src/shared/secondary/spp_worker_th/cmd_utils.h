@@ -27,9 +27,9 @@
 #define SPPWK_TYPE_NONE_STR "unuse"
 
 /** Identifier string for each interface */
-#define SPP_IFTYPE_NIC_STR   "phy"
-#define SPP_IFTYPE_VHOST_STR "vhost"
-#define SPP_IFTYPE_RING_STR  "ring"
+#define SPPWK_PHY_STR "phy"
+#define SPPWK_VHOST_STR "vhost"
+#define SPPWK_RING_STR "ring"
 
 /** Waiting time for checking update (not used for spp_pcap). */
 #define SPP_CHANGE_UPDATE_INTERVAL 10  /* micro sec */
@@ -484,16 +484,15 @@ int update_port_info(void);
 void update_lcore_info(void);
 
 /**
- * Port type to string.
+ * Return port uid such as `phy:0`, `ring:1` or so.
  *
- * @param port String of port type to be converted.
- * @param iface_type Interface type.
- * @param iface_no Interface number.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @param[in,out] port_uid String of port type to be converted.
+ * @param[in] iface_type Interface type such as PHY or so.
+ * @param[in] iface_no Interface number.
+ * @return SPP_RET_OK If succeeded, or SPP_RET_NG if failed.
  */
 int
-spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
+sppwk_port_uid(char *port_uid, enum port_type iface_type, int iface_no);
 
 /**
  * Change string of MAC address to int64.
