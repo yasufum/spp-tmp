@@ -96,9 +96,9 @@ set_fcs_packet(struct rte_mbuf *pkt)
 			pkt->data_len, RTE_NET_CRC32_ETH);
 }
 
-/* Add VLAN tag to packet. */
+/* Add VLAN tag to a packet. It is called from add_vlan_tag_all(). */
 static inline int
-add_vlantag_packet(
+add_vlan_tag_one(
 		struct rte_mbuf *pkt,
 		const union sppwk_port_capability *capability)
 {
@@ -135,14 +135,14 @@ add_vlantag_packet(
 
 /* Add VLAN tag to all packets. */
 static inline int
-add_vlantag_all_packets(
+add_vlan_tag_all(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union sppwk_port_capability *capability)
 {
 	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
-		ret = add_vlantag_packet(pkts[cnt], capability);
+		ret = add_vlan_tag_one(pkts[cnt], capability);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
 					"Failed to add VLAN tag."
@@ -153,9 +153,9 @@ add_vlantag_all_packets(
 	return cnt;
 }
 
-/* Delete VLAN tag to packet. */
+/* Delete VLAN tag from a packet. It is called from del_vlan_tag_all(). */
 static inline int
-del_vlantag_packet(
+del_vlan_tag_one(
 		struct rte_mbuf *pkt,
 		const union sppwk_port_capability *cbl __attribute__ ((unused)))
 {
@@ -185,16 +185,16 @@ del_vlantag_packet(
 	return SPP_RET_OK;
 }
 
-/* Delete VLAN tag to all packets. */
+/* Delete VLAN tag from all packets. */
 static inline int
-del_vlantag_all_packets(
+del_vlan_tag_all(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union sppwk_port_capability *capability)
 {
 	int ret = SPP_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
-		ret = del_vlantag_packet(pkts[cnt], capability);
+		ret = del_vlan_tag_one(pkts[cnt], capability);
 		if (unlikely(ret < 0)) {
 			RTE_LOG(ERR, PORT,
 					"Failed to del VLAN tag."
@@ -251,9 +251,9 @@ sppwk_swap_two_sides(
 	}
 }
 
-/* Set ability data of port ability. */
+/* Update port attributes of given direction. */
 static void
-port_ability_set_ability(struct sppwk_port_info *port,
+update_port_attrs(struct sppwk_port_info *port,
 		enum sppwk_port_dir dir)
 {
 	int in_cnt, out_cnt = 0;
@@ -316,32 +316,33 @@ sppwk_update_port_dir(const struct sppwk_comp_info *comp)
 
 	for (cnt = 0; cnt < comp->nof_rx; cnt++) {
 		port_info = comp->rx_ports[cnt];
-		port_ability_set_ability(port_info, SPPWK_PORT_DIR_RX);
+		update_port_attrs(port_info, SPPWK_PORT_DIR_RX);
 	}
 
 	for (cnt = 0; cnt < comp->nof_tx; cnt++) {
 		port_info = comp->tx_ports[cnt];
-		port_ability_set_ability(port_info, SPPWK_PORT_DIR_TX);
+		update_port_attrs(port_info, SPPWK_PORT_DIR_TX);
 	}
 }
 
-/* Definition of functions that operate port abilities. */
-typedef int (*port_ability_func)(
+/**
+ * Define list of VLAN opeartion functions. It is only used in
+ * vlan_operation().
+ */
+typedef int (*vlan_f)(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union sppwk_port_capability *capability);
 
-/* List of functions per port ability. */
-port_ability_func port_ability_function_list[] = {
-	NULL,                    /* None */
-	add_vlantag_all_packets, /* Add VLAN tag */
-	del_vlantag_all_packets, /* Del VLAN tag */
-	NULL                     /* Termination */
+vlan_f vlan_ops[] = {
+	NULL,              /* None */
+	add_vlan_tag_all,  /* Add VLAN tag */
+	del_vlan_tag_all,  /* Del VLAN tag */
+	NULL               /* Termination */
 };
 
-/* Each packet operation of port capability. */
+/* Add or delete VLAN tag. */
 static inline int
-port_ability_each_operation(uint16_t port_id,
-		struct rte_mbuf **pkts, const uint16_t nb_pkts,
+vlan_operation(uint16_t port_id, struct rte_mbuf **pkts, const uint16_t nb_pkts,
 		enum sppwk_port_dir dir)
 {
 	int cnt, buf;
@@ -358,7 +359,7 @@ port_ability_each_operation(uint16_t port_id,
 			break;
 
 		/* Add or delete VLAN tag with operation function. */
-		ok_pkts = port_ability_function_list[port_attrs[cnt].ops](
+		ok_pkts = vlan_ops[port_attrs[cnt].ops](
 				pkts, ok_pkts, &port_attrs->capability);
 	}
 
@@ -391,8 +392,7 @@ sppwk_eth_vlan_rx_burst(uint16_t port_id,
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 	/* Add or delete VLAN tag. */
-	return port_ability_each_operation(port_id, rx_pkts, nb_rx,
-			SPPWK_PORT_DIR_RX);
+	return vlan_operation(port_id, rx_pkts, nb_rx, SPPWK_PORT_DIR_RX);
 }
 
 
@@ -406,8 +406,7 @@ sppwk_eth_vlan_tx_burst(uint16_t port_id,
 	uint16_t nb_tx;
 
 	/* Add or delete VLAN tag. */
-	nb_tx = port_ability_each_operation(port_id, tx_pkts, nb_pkts,
-			SPPWK_PORT_DIR_TX);
+	nb_tx = vlan_operation(port_id, tx_pkts, nb_pkts, SPPWK_PORT_DIR_TX);
 
 	if (unlikely(nb_tx == 0))
 		return SPP_RET_OK;
