@@ -9,6 +9,7 @@
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
 #include "shared/secondary/spp_worker_th/cmd_res_formatter.h"
+#include "shared/secondary/spp_worker_th/port_capability.h"
 #include "shared/secondary/spp_worker_th/mirror_deps.h"
 
 #define RTE_LOGTYPE_MIR_CMD_RUNNER RTE_LOGTYPE_USER1

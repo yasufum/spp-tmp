@@ -19,6 +19,7 @@
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
+#include "shared/secondary/spp_worker_th/port_capability.h"
 
 /* Declare global variables */
 #define RTE_LOGTYPE_MIRROR RTE_LOGTYPE_USER1
@@ -323,7 +324,7 @@ mirror_proc(int id)
 
 	rx = &path->ports[0].rx;
 	/* Receive packets */
-	nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
+	nb_rx = sppwk_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
@@ -378,14 +379,14 @@ mirror_proc(int id)
 #endif /* SPP_MIRROR_SHALLOWCOPY */
 		}
 		if (cnt != 0)
-			nb_tx2 = spp_eth_tx_burst(
+			nb_tx2 = sppwk_eth_tx_burst(
 					tx->ethdev_port_id, 0, copybufs, cnt);
 	}
 
 	/* orginal */
 	tx = &path->ports[0].tx;
 	if (tx->ethdev_port_id >= 0)
-		nb_tx1 = spp_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
+		nb_tx1 = sppwk_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
 	nb_tx = nb_tx1;
 
 	if (nb_tx1 != nb_tx2)
