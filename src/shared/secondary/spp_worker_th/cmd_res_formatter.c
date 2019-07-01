@@ -3,6 +3,8 @@
  */
 
 #include "cmd_res_formatter.h"
+#include "spp_port.h"
+#include "port_capability.h"
 #include "cmd_utils.h"
 #include "shared/secondary/json_helper.h"
 

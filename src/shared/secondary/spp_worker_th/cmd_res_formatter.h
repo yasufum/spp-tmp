@@ -6,7 +6,6 @@
 #define _SPPWK_CMD_RES_FORMATTER_H_
 
 #include "cmd_utils.h"
-#include "spp_port.h"
 #include "shared/common.h"
 
 #define CMD_RES_LEN  32  /* Size of message including null char. */
