@@ -1,3 +1,0 @@
-# Register MAC address to classifier
-sec 1;classifier_table add mac 52:54:00:12:34:56 ring:0
-sec 1;classifier_table add mac 52:54:00:12:34:58 ring:1
