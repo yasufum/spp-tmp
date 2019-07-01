@@ -9,6 +9,7 @@
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
+#include "shared/secondary/spp_worker_th/port_capability.h"
 
 #define RTE_LOGTYPE_FORWARD RTE_LOGTYPE_USER1
 
@@ -212,14 +213,14 @@ forward_packets(int id)
 		tx = &path->ports[cnt].tx;
 
 		/* Receive packets */
-		nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0,
+		nb_rx = sppwk_eth_vlan_rx_burst(rx->ethdev_port_id, 0,
 				bufs, MAX_PKT_BURST);
 		if (unlikely(nb_rx == 0))
 			continue;
 
 		/* Send packets */
 		if (tx->ethdev_port_id >= 0)
-			nb_tx = spp_eth_tx_burst(tx->ethdev_port_id,
+			nb_tx = sppwk_eth_vlan_tx_burst(tx->ethdev_port_id,
 					0, bufs, nb_rx);
 
 		/* Discard remained packets to release mbuf */

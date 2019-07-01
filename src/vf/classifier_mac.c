@@ -28,7 +28,7 @@
 #include "shared/secondary/json_helper.h"
 #include "shared/secondary/spp_worker_th/cmd_res_formatter.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
-#include "shared/secondary/spp_worker_th/spp_port.h"
+#include "shared/secondary/spp_worker_th/port_capability.h"
 
 #define RTE_LOGTYPE_SPP_CLASSIFIER_MAC RTE_LOGTYPE_USER1
 
@@ -460,7 +460,7 @@ transmit_packet(struct cls_port_info *clsd_data)
 	uint16_t n_tx;
 
 	/* transmit packets */
-	n_tx = spp_eth_tx_burst(clsd_data->ethdev_port_id, 0,
+	n_tx = sppwk_eth_vlan_tx_burst(clsd_data->ethdev_port_id, 0,
 			clsd_data->pkts, clsd_data->nof_pkts);
 
 	/* free cannot transmit packets */
@@ -797,8 +797,8 @@ spp_classifier_mac_do(int id)
 		return SPP_RET_OK;
 
 	/* retrieve packets */
-	n_rx = spp_eth_rx_burst(clsd_data_rx->ethdev_port_id, 0, rx_pkts,
-			MAX_PKT_BURST);
+	n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id, 0,
+			rx_pkts, MAX_PKT_BURST);
 	if (unlikely(n_rx == 0))
 		return SPP_RET_OK;
 
