@@ -21,6 +21,10 @@
 #include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#endif
+
 /* Declare global variables */
 #define RTE_LOGTYPE_MIRROR RTE_LOGTYPE_USER1
 
@@ -323,8 +327,14 @@ mirror_proc(int id)
 		return SPP_RET_OK;
 
 	rx = &path->ports[0].rx;
-	/* Receive packets */
-	nb_rx = sppwk_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
+
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+	nb_rx = sppwk_eth_ring_stats_rx_burst(rx->ethdev_port_id,
+			rx->iface_type, rx->iface_no, 0, bufs, MAX_PKT_BURST);
+#else
+	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
+#endif
+
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
@@ -378,15 +388,27 @@ mirror_proc(int id)
 
 #endif /* SPP_MIRROR_SHALLOWCOPY */
 		}
+
 		if (cnt != 0)
-			nb_tx2 = sppwk_eth_tx_burst(
-					tx->ethdev_port_id, 0, copybufs, cnt);
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+			nb_tx2 = sppwk_eth_ring_stats_tx_burst(
+					tx->ethdev_port_id, tx->iface_type,
+					tx->iface_no, 0, copybufs, cnt);
+#else
+			nb_tx2 = rte_eth_tx_burst(tx->ethdev_port_id, 0,
+					copybufs, cnt);
+#endif
 	}
 
 	/* orginal */
 	tx = &path->ports[0].tx;
 	if (tx->ethdev_port_id >= 0)
-		nb_tx1 = sppwk_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+		nb_tx1 = sppwk_eth_ring_stats_tx_burst(tx->ethdev_port_id,
+				tx->iface_type, tx->iface_no, 0, bufs, nb_rx);
+#else
+		nb_tx1 = rte_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
+#endif
 	nb_tx = nb_tx1;
 
 	if (nb_tx1 != nb_tx2)
@@ -533,7 +555,7 @@ main(int argc, char *argv[])
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				g_iface_info.num_ring);
+				g_iface_info.nof_rings);
 		if (unlikely(ret_ringlatency != SPP_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
@@ -583,7 +605,7 @@ main(int argc, char *argv[])
 			usleep(100);
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-			print_ring_latency_stats();
+			print_ring_latency_stats(&g_iface_info);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 

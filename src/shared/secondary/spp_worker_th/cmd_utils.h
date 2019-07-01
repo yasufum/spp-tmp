@@ -378,11 +378,6 @@ void backup_mng_info(struct cancel_backup_info *backup);
 /* Setup management info for spp_vf */
 int init_mng_data(void);
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-/* Print statistics of time for packet processing in ring interface */
-void print_ring_latency_stats(void);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
-
 /* Remove sock file if spp is not running */
 void del_vhost_sockfile(struct sppwk_port_info *vhost);
 

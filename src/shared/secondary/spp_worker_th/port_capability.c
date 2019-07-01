@@ -10,7 +10,10 @@
 
 #include "port_capability.h"
 #include "shared/secondary/return_codes.h"
+
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
 #include "ringlatencystats.h"
+#endif
 
 /**
  * TODO(yasufum) This `port capability` is intended to be used mainly for VLAN
@@ -372,7 +375,6 @@ vlan_operation(uint16_t port_id, struct rte_mbuf **pkts, const uint16_t nb_pkts,
 	return ok_pkts;
 }
 
-/* TODO(yasufum) move to outside of this file. */
 /* Wrapper function for rte_eth_rx_burst() with VLAN feature. */
 uint16_t
 sppwk_eth_vlan_rx_burst(uint16_t port_id,
@@ -384,19 +386,10 @@ sppwk_eth_vlan_rx_burst(uint16_t port_id,
 	if (unlikely(nb_rx == 0))
 		return SPP_RET_OK;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	if (g_port_mng_info[port_id].iface_type == RING)
-		spp_ringlatencystats_calculate_latency(
-				g_port_mng_info[port_id].iface_no,
-				rx_pkts, nb_pkts);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
-
 	/* Add or delete VLAN tag. */
 	return vlan_operation(port_id, rx_pkts, nb_rx, SPPWK_PORT_DIR_RX);
 }
 
-
-/* TODO(yasufum) move to outside of this file. */
 /* Wrapper function for rte_eth_tx_burst() with VLAN feature. */
 uint16_t
 sppwk_eth_vlan_tx_burst(uint16_t port_id,
@@ -411,12 +404,51 @@ sppwk_eth_vlan_tx_burst(uint16_t port_id,
 	if (unlikely(nb_tx == 0))
 		return SPP_RET_OK;
 
+	return rte_eth_tx_burst(port_id, 0, tx_pkts, nb_tx);
+}
+
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-	if (g_port_mng_info[port_id].iface_type == RING)
-		spp_ringlatencystats_add_time_stamp(
-				g_port_mng_info[port_id].iface_no,
-				tx_pkts, nb_pkts);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
+
+/* Wrapper function for rte_eth_rx_burst() with VLAN feature. */
+uint16_t
+sppwk_eth_vlan_ring_stats_rx_burst(uint16_t port_id,
+		enum port_type iface_type, int iface_no,
+		uint16_t queue_id __attribute__ ((unused)),
+		struct rte_mbuf **rx_pkts, const uint16_t nb_pkts)
+{
+	uint16_t nb_rx;
+	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
+	if (unlikely(nb_rx == 0))
+		return SPP_RET_OK;
+
+	if (iface_type == RING)
+		spp_ringlatencystats_calculate_latency(iface_no,
+				rx_pkts, nb_pkts);
+
+	/* Add or delete VLAN tag. */
+	return vlan_operation(port_id, rx_pkts, nb_rx, SPPWK_PORT_DIR_RX);
+}
+
+/* Wrapper function for rte_eth_tx_burst() with VLAN feature. */
+uint16_t
+sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
+		enum port_type iface_type, int iface_no,
+		uint16_t queue_id __attribute__ ((unused)),
+		struct rte_mbuf **tx_pkts, uint16_t nb_pkts)
+{
+	uint16_t nb_tx;
+
+	/* Add or delete VLAN tag. */
+	nb_tx = vlan_operation(port_id, tx_pkts, nb_pkts, SPPWK_PORT_DIR_TX);
+
+	if (unlikely(nb_tx == 0))
+		return SPP_RET_OK;
+
+	if (iface_type == RING) {
+		spp_ringlatencystats_add_time_stamp(iface_no, tx_pkts, nb_pkts);
+	}
 
 	return rte_eth_tx_burst(port_id, 0, tx_pkts, nb_tx);
 }
+
+#endif /* SPP_RINGLATENCYSTATS_ENABLE */

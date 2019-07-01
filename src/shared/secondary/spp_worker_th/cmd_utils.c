@@ -441,46 +441,6 @@ init_mng_data(void)
 	return SPP_RET_OK;
 }
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-/* Print statistics of time for packet processing in ring interface */
-static void
-print_ring_latency_stats(void)
-{
-	/* Clear screen and move cursor to top left */
-	const char topLeft[] = { 27, '[', '1', ';', '1', 'H', '\0' };
-	const char clr[] = { 27, '[', '2', 'J', '\0' };
-	printf("%s%s", clr, topLeft);
-
-	int ring_cnt, stats_cnt;
-	struct spp_ringlatencystats_ring_latency_stats stats[RTE_MAX_ETHPORTS];
-	memset(&stats, 0x00, sizeof(stats));
-
-	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
-	printf("RING Latency\n");
-	printf(" RING");
-	for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-		if (p_iface_info->ring[ring_cnt].iface_type == UNDEF)
-			continue;
-
-		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
-		printf(", %-18d", ring_cnt);
-	}
-	printf("\n");
-
-	for (stats_cnt = 0; stats_cnt < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT;
-			stats_cnt++) {
-		printf("%3dns", stats_cnt);
-		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
-			if (p_iface_info->ring[ring_cnt].iface_type == UNDEF)
-				continue;
-
-			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
-		}
-		printf("\n");
-	}
-}
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
-
 /* Remove sock file if spp is not running */
 void
 del_vhost_sockfile(struct sppwk_port_info *vhost)

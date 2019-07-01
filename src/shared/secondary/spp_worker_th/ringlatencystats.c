@@ -16,6 +16,8 @@
 
 #include "ringlatencystats.h"
 #include "cmd_utils.h"
+#include "port_capability.h"
+#include "../return_codes.h"
 
 #define NS_PER_SEC 1E9
 
@@ -158,6 +160,85 @@ spp_ringlatencystats_get_stats(int ring_id,
 
 	rte_memcpy(stats, &stats_info->stats,
 			sizeof(struct spp_ringlatencystats_ring_latency_stats));
+}
+
+/* Print statistics of time for packet processing in ring interface */
+void
+print_ring_latency_stats(struct iface_info *if_info)
+{
+	/* Clear screen and move cursor to top left */
+	const char topLeft[] = { 27, '[', '1', ';', '1', 'H', '\0' };
+	const char clr[] = { 27, '[', '2', 'J', '\0' };
+	printf("%s%s", clr, topLeft);
+
+	int ring_cnt, stats_cnt;
+	struct spp_ringlatencystats_ring_latency_stats stats[RTE_MAX_ETHPORTS];
+	memset(&stats, 0x00, sizeof(stats));
+
+	printf("RING Latency\n");
+	printf(" RING");
+	for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
+		if (if_info->ring[ring_cnt].iface_type == UNDEF)
+			continue;
+
+		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
+		printf(", %-18d", ring_cnt);
+	}
+	printf("\n");
+
+	for (stats_cnt = 0; stats_cnt < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT;
+			stats_cnt++) {
+		printf("%3dns", stats_cnt);
+		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
+			if (if_info->ring[ring_cnt].iface_type == UNDEF)
+				continue;
+
+			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
+		}
+		printf("\n");
+	}
+}
+
+/* Wrapper function for rte_eth_rx_burst() with ring latency feature. */
+uint16_t
+sppwk_eth_ring_stats_rx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no,
+		uint16_t queue_id  __attribute__ ((unused)),
+		struct rte_mbuf **rx_pkts, const uint16_t nb_pkts)
+{
+	uint16_t nb_rx;
+
+	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
+
+	/* TODO(yasufum) confirm why it returns SPP_RET_OK. */
+	if (unlikely(nb_rx == 0))
+		return SPP_RET_OK;
+
+	if (iface_type == RING)
+		spp_ringlatencystats_calculate_latency(
+				iface_no,
+				rx_pkts, nb_pkts);
+	return nb_rx;
+}
+
+/* Wrapper function for rte_eth_tx_burst() with ring latency feature. */
+uint16_t
+sppwk_eth_ring_stats_tx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no,
+		uint16_t queue_id __attribute__ ((unused)),
+		struct rte_mbuf **tx_pkts, uint16_t nb_pkts)
+{
+	uint16_t nb_tx;
+
+	nb_tx = rte_eth_tx_burst(port_id, 0, tx_pkts, nb_pkts);
+
+	if (iface_type == RING)
+		spp_ringlatencystats_add_time_stamp(
+				iface_no,
+				tx_pkts, nb_pkts);
+	return nb_tx;
 }
 
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */

@@ -19,14 +19,15 @@ SRCS-y := spp_vf.c classifier_mac.c forwarder.c
 SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_SEC_DIR)/json_helper.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c
+SRCS-y += $(SPP_WKT_DIR)/spp_port.c
 SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
 SRCS-y += $(SPP_WKT_DIR)/port_capability.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
-SRCS-y += ../shared/common.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_utils.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_res_formatter.c
+SRCS-y += ../shared/common.c
 SRCS-y += vf_cmd_runner.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API

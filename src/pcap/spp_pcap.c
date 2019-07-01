@@ -21,6 +21,10 @@
 #include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#endif
+
 /* Declare global variables */
 #define RTE_LOGTYPE_SPP_PCAP RTE_LOGTYPE_USER2
 
@@ -750,8 +754,12 @@ static int pcap_proc_receive(int lcore_id)
 
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
-	nb_rx = sppwk_eth_rx_burst(rx->ethdev_port_id, 0, bufs,
-			MAX_PCAP_BURST);
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+	nb_rx = sppwk_eth_ring_stats_rx_burst(rx->ethdev_port_id,
+			rx->iface_type, rx->iface_no, 0, bufs, MAX_PCAP_BURST);
+#else
+	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
+#endif
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
 

@@ -13,6 +13,7 @@
  */
 
 #include <rte_mbuf.h>
+#include "cmd_utils.h"
 
 /** number of slots to save latency. 0ns~99ns and 100ns over */
 #define SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT 101
@@ -93,6 +94,65 @@ int spp_ringlatencystats_get_count(void);
 void spp_ringlatencystats_get_stats(int ring_id,
 		struct spp_ringlatencystats_ring_latency_stats *stats);
 
+/* Print statistics of time for packet processing in ring interface */
+void print_ring_latency_stats(struct iface_info *if_info);
+
+/**
+ * Wrapper function for rte_eth_rx_burst() with ring latency feature.
+ *
+ * @param[in] port_id Etherdev ID.
+ * @param[in] queue_id RX queue ID, but fixed value 0 in SPP.
+ * @param[in] rx_pkts Pointers to mbuf should be enough to store nb_pkts.
+ * @param nb_pkts Maximum number of RX packets.
+ * @return Number of RX packets as number of pointers to mbuf.
+ */
+uint16_t sppwk_eth_ring_stats_rx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no, uint16_t queue_id,
+		struct rte_mbuf **rx_pkts, const uint16_t nb_pkts);
+
+/**
+ * Wrapper function for rte_eth_tx_burst() with ring latency feature.
+ *
+ * @param port_id Etherdev ID.
+ * @param[in] queue_id TX queue ID, but fixed value 0 in SPP.
+ * @param[in] tx_pkts Pointers to mbuf should be enough to store nb_pkts.
+ * @param nb_pkts Maximum number of TX packets.
+ * @return Number of TX packets as number of pointers to mbuf.
+ */
+uint16_t sppwk_eth_ring_stats_tx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no, uint16_t queue_id,
+		struct rte_mbuf **tx_pkts, uint16_t nb_pkts);
+
+/**
+ * Wrapper function for rte_eth_rx_burst() with VLAN and ring latency feature.
+ *
+ * @param[in] port_id Etherdev ID.
+ * @param[in] queue_id RX queue ID, but fixed value 0 in SPP.
+ * @param[in] rx_pkts Pointers to mbuf should be enough to store nb_pkts.
+ * @param nb_pkts Maximum number of RX packets.
+ * @return Number of RX packets as number of pointers to mbuf.
+ */
+uint16_t sppwk_eth_vlan_ring_stats_rx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no, uint16_t queue_id,
+		struct rte_mbuf **rx_pkts, const uint16_t nb_pkts);
+
+/**
+ * Wrapper function for rte_eth_tx_burst() with VLAN and ring latency feature.
+ *
+ * @param port_id Etherdev ID.
+ * @param[in] queue_id TX queue ID, but fixed value 0 in SPP.
+ * @param[in] tx_pkts Pointers to mbuf should be enough to store nb_pkts.
+ * @param nb_pkts Maximum number of TX packets.
+ * @return Number of TX packets as number of pointers to mbuf.
+ */
+uint16_t sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
+		enum port_type iface_type,
+		int iface_no, uint16_t queue_id,
+		struct rte_mbuf **tx_pkts, uint16_t nb_pkts);
+
 #else
 
 #define spp_ringlatencystats_init(arg1, arg2) 0
@@ -101,6 +161,11 @@ void spp_ringlatencystats_get_stats(int ring_id,
 #define spp_ringlatencystats_calculate_latency(arg1, arg2, arg3)
 #define spp_ringlatencystats_get_count() 0
 #define spp_ringlatencystats_get_stats(arg1, arg2)
+#define print_ringlatencystats_stats(arg)
+#define sppwk_eth_ring_stats_rx_burst(arg1, arg2, arg3, arg4, arg5, arg6)
+#define sppwk_eth_ring_stats_tx_burst(arg1, arg2, arg3, arg4, arg5, arg6)
+#define sppwk_eth_vlan_ring_stats_rx_burst(arg1, arg2, arg3, arg4, arg5, arg6)
+#define sppwk_eth_vlan_ring_stats_tx_burst(arg1, arg2, arg3, arg4, arg5, arg6)
 
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 

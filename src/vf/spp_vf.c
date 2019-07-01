@@ -18,6 +18,10 @@
 #include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#endif
+
 /* Declare global variables */
 /* Interface management information */
 static struct iface_info g_iface_info;
@@ -260,7 +264,7 @@ main(int argc, char *argv[])
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				g_iface_info.num_ring);
+				g_iface_info.nof_rings);
 		if (unlikely(ret_ringlatency != SPP_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
@@ -304,7 +308,7 @@ main(int argc, char *argv[])
 			usleep(100);
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-			print_ring_latency_stats();
+			print_ring_latency_stats(&g_iface_info);
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 

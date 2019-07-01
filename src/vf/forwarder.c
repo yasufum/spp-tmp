@@ -11,6 +11,10 @@
 #include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#endif
+
 #define RTE_LOGTYPE_FORWARD RTE_LOGTYPE_USER1
 
 /* A set of port info of rx and tx */
@@ -211,16 +215,27 @@ forward_packets(int id)
 		rx = &path->ports[cnt].rx;
 		tx = &path->ports[cnt].tx;
 
-		/* Receive packets */
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+		nb_rx = sppwk_eth_vlan_ring_stats_rx_burst(rx->ethdev_port_id,
+				rx->iface_type, rx->iface_no, 0,
+				bufs, MAX_PKT_BURST);
+#else
 		nb_rx = sppwk_eth_vlan_rx_burst(rx->ethdev_port_id, 0,
 				bufs, MAX_PKT_BURST);
+#endif
 		if (unlikely(nb_rx == 0))
 			continue;
 
 		/* Send packets */
 		if (tx->ethdev_port_id >= 0)
+#ifdef SPP_RINGLATENCYSTATS_ENABLE
+			nb_tx = sppwk_eth_vlan_ring_stats_tx_burst(
+					tx->ethdev_port_id, tx->iface_type,
+					tx->iface_no, 0, bufs, nb_rx);
+#else
 			nb_tx = sppwk_eth_vlan_tx_burst(tx->ethdev_port_id,
 					0, bufs, nb_rx);
+#endif
 
 		/* Discard remained packets to release mbuf */
 		if (unlikely(nb_tx < nb_rx)) {
