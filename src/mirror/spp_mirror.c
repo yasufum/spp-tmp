@@ -288,7 +288,7 @@ change_mirror_index(int id)
 	struct mirror_info *info = &g_mirror_info[id];
 	if (info->ref_index == info->upd_index) {
 	/* Change reference index of port ability. */
-		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF, 0, 0);
+		sppwk_swap_two_sides(SPPWK_SWAP_REF, 0, 0);
 		info->ref_index = (info->upd_index+1) % TWO_SIDES;
 	}
 }
@@ -521,7 +521,7 @@ main(int argc, char *argv[])
 			break;
 
 		mirror_proc_init();
-		spp_port_ability_init();
+		sppwk_port_capability_init();
 
 		/* Setup connection for accepting commands from controller */
 		get_spp_ctl_ip(ctl_ip);

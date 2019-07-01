@@ -17,45 +17,46 @@
 /** Calculate TCI of VLAN tag. */
 #define SPP_VLANTAG_CALC_TCI(id, pcp) (((pcp & 0x07) << 13) | (id & 0x0fff))
 
-/** Type for changing index. */
-enum port_ability_chg_index_type {
-	PORT_ABILITY_CHG_INDEX_REF,  /** To change index to reference area. */
-	PORT_ABILITY_CHG_INDEX_UPD,  /** To change index to update area. */
+/** Type for swaping sides . */
+enum sppwk_swap_type {
+	SPPWK_SWAP_REF,  /** Swap to reference area. */
+	SPPWK_SWAP_UPD,  /** Swap to update area. */
 };
 
-/** Initialize port ability. */
-void spp_port_ability_init(void);
-
 /**
- * Get information of port ability.
- *
- * @param port_id Etherdev ID.
- * @param rxtx RX/TX ID of port_id.
- * @param info Port ability information.
+ * Initialize global variable g_port_mng_info, and set ref side to 0 and
+ * update side to 1.
  */
-void spp_port_ability_get_info(
-		int port_id, enum sppwk_port_dir dir,
-		struct sppwk_port_attrs **info);
+void sppwk_port_capability_init(void);
 
 /**
- * Change index of management information.
+ * Get port attributes of given ID and direction from global g_port_mng_info.
+ *
+ * @param[in,out] p_attrs Port attributes.
+ * @param[in] port_id Etherdev ID.
+ * @param[in] dir Direction of teh port of sppwk_port_dir.
+ */
+void sppwk_get_port_attrs(
+		struct sppwk_port_attrs **p_attrs,
+		int port_id, enum sppwk_port_dir dir);
+
+/**
+ * Swap ref side and update side.
  *
  * @param port_id Etherdev ID.
  * @param rxtx RX/TX ID of port_id.
  * @param type Type for changing index.
  */
-void spp_port_ability_change_index(
-		enum port_ability_chg_index_type type,
+void sppwk_swap_two_sides(
+		enum sppwk_swap_type swap_type,
 		int port_id, enum sppwk_port_dir dir);
 
 /**
- * Update port capability.
+ * Update port direction of given component.
  *
- * @param component_info
- *  The pointer to struct sppwk_comp_info.@n
- *  The data for updating the internal data of port ability.
+ * @param comp Pointer to sppwk_comp_info.
  */
-void spp_port_ability_update(const struct sppwk_comp_info *component);
+void sppwk_update_port_dir(const struct sppwk_comp_info *comp);
 
 /**
  * Wrapper function for rte_eth_rx_burst() with ring latency feature.

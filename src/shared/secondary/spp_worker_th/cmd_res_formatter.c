@@ -156,7 +156,7 @@ append_vlan_block(const char *name, char **output,
 		return SPP_RET_NG;
 	}
 
-	spp_port_ability_get_info(port_id, dir, &port_attrs);
+	sppwk_get_port_attrs(&port_attrs, port_id, dir);
 	for (i = 0; i < PORT_ABL_MAX; i++) {
 		switch (port_attrs[i].ops) {
 		case SPPWK_PORT_OPS_ADD_VLAN:

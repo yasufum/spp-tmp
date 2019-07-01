@@ -12,20 +12,35 @@
 #include "shared/secondary/return_codes.h"
 #include "ringlatencystats.h"
 
-/* Port ability management information */
-struct port_abl_info {
-	volatile int ref_index; /* Index to reference area. */
-	volatile int upd_index; /* Index to update area. */
+/**
+ * TODO(yasufum) This `port capability` is intended to be used mainly for VLAN
+ * features. However, other features, such as two sides structure of
+ * management info or port direction, are also included this capability.
+ * For the reason, SPP worker processes other spp_vf should include the
+ * capability even if it is not using VLAN. It is a bad design because of
+ * tightly coupled for dependency and it is so confusing.
+ *
+ * This problem should be fixed in a future update.
+ */
+
+/* Port capability management information used as a member of port_mng_info. */
+struct port_capabl_mng_info {
+	/* TODO(yasufum) rename ref_index and upd_index because flag. */
+	/* TODO(yasufum) consider to not use two flags for (0,1) and (1,0). */
+	volatile int ref_index; /* Flag to indicate using reference side. */
+	volatile int upd_index; /* Flag to indicate using update side. */
+
+	/* A set of attrs including sppwk_port_capability. */
+	/* TODO(yasufum) confirm why using PORT_ABL_MAX. */
 	struct sppwk_port_attrs port_attrs[TWO_SIDES][PORT_ABL_MAX];
-				/* Port attributes for spp_vf. */
 };
 
 /* Port ability port information */
 struct port_mng_info {
 	enum port_type iface_type;  /* Interface type (phy, vhost or so). */
 	int iface_no;  /* Interface number. */
-	struct port_abl_info rx;  /* Mng data of port ability for RX. */
-	struct port_abl_info tx;  /* Mng data of port ability for Tx. */
+	struct port_capabl_mng_info rx;  /* Mng data of capability for RX. */
+	struct port_capabl_mng_info tx;  /* Mng data of capability for Tx. */
 };
 
 /* Information for VLAN tag management. */
@@ -34,9 +49,9 @@ struct port_mng_info g_port_mng_info[RTE_MAX_ETHPORTS];
 /* TPID of VLAN. */
 static uint16_t g_vlan_tpid;
 
-/* Initialize port ability. */
+/* Initialize g_port_mng_info, and set ref side to 0 and update side to 1. */
 void
-spp_port_ability_init(void)
+sppwk_port_capability_init(void)
 {
 	int cnt = 0;
 	g_vlan_tpid = rte_cpu_to_be_16(ETHER_TYPE_VLAN);
@@ -49,13 +64,12 @@ spp_port_ability_init(void)
 	}
 }
 
-/* Get information of port ability. */
+/* Get port attributes of given ID and direction from g_port_mng_info. */
 void
-spp_port_ability_get_info(
-		int port_id, enum sppwk_port_dir dir,
-		struct sppwk_port_attrs **info)
+sppwk_get_port_attrs(struct sppwk_port_attrs **p_attrs,
+		int port_id, enum sppwk_port_dir dir)
 {
-	struct port_abl_info *mng = NULL;
+	struct port_capabl_mng_info *mng = NULL;
 
 	switch (dir) {
 	case SPPWK_PORT_DIR_RX:
@@ -68,7 +82,8 @@ spp_port_ability_get_info(
 		/* Not used. */
 		break;
 	}
-	*info = mng->port_attrs[mng->ref_index];
+
+	*p_attrs = mng->port_attrs[mng->ref_index];
 }
 
 /* Calculation and Setting of FCS. */
@@ -190,20 +205,21 @@ del_vlantag_all_packets(
 	return cnt;
 }
 
-/* Change index of management information. */
+/* Swap ref side and update side. */
+/* TODO(yasufum) add desc for this function. */
 void
-spp_port_ability_change_index(
-		enum port_ability_chg_index_type type,
+sppwk_swap_two_sides(
+		enum sppwk_swap_type swap_type,
 		int port_id, enum sppwk_port_dir dir)
 {
 	int cnt;
 	static int num_rx;
-	static int rx_list[RTE_MAX_ETHPORTS];
 	static int num_tx;
+	static int rx_list[RTE_MAX_ETHPORTS];
 	static int tx_list[RTE_MAX_ETHPORTS];
-	struct port_abl_info *mng = NULL;
+	struct port_capabl_mng_info *mng = NULL;
 
-	if (type == PORT_ABILITY_CHG_INDEX_UPD) {
+	if (swap_type == SPPWK_SWAP_UPD) {
 		switch (dir) {
 		case SPPWK_PORT_DIR_RX:
 			mng = &g_port_mng_info[port_id].rx;
@@ -227,14 +243,12 @@ spp_port_ability_change_index(
 		mng->ref_index = (mng->upd_index+1) % TWO_SIDES;
 		rx_list[cnt] = 0;
 	}
+
 	for (cnt = 0; cnt < num_tx; cnt++) {
 		mng = &g_port_mng_info[tx_list[cnt]].tx;
 		mng->ref_index = (mng->upd_index+1) % TWO_SIDES;
 		tx_list[cnt] = 0;
 	}
-
-	num_rx = 0;
-	num_tx = 0;
 }
 
 /* Set ability data of port ability. */
@@ -245,7 +259,7 @@ port_ability_set_ability(struct sppwk_port_info *port,
 	int in_cnt, out_cnt = 0;
 	int port_id = port->ethdev_port_id;
 	struct port_mng_info *port_mng = &g_port_mng_info[port_id];
-	struct port_abl_info *mng = NULL;
+	struct port_capabl_mng_info *mng = NULL;
 	struct sppwk_port_attrs *port_attrs_in = port->port_attrs;
 	struct sppwk_port_attrs *port_attrs_out = NULL;
 	struct sppwk_vlan_tag *tag = NULL;
@@ -290,24 +304,24 @@ port_ability_set_ability(struct sppwk_port_info *port,
 		out_cnt++;
 	}
 
-	spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_UPD,
-			port_id, dir);
+	sppwk_swap_two_sides(SPPWK_SWAP_UPD, port_id, dir);
 }
 
-/* Update port capability. */
+/* Update port direction of given component. */
 void
-spp_port_ability_update(const struct sppwk_comp_info *component)
+sppwk_update_port_dir(const struct sppwk_comp_info *comp)
 {
 	int cnt;
-	struct sppwk_port_info *port = NULL;
-	for (cnt = 0; cnt < component->nof_rx; cnt++) {
-		port = component->rx_ports[cnt];
-		port_ability_set_ability(port, SPPWK_PORT_DIR_RX);
+	struct sppwk_port_info *port_info = NULL;
+
+	for (cnt = 0; cnt < comp->nof_rx; cnt++) {
+		port_info = comp->rx_ports[cnt];
+		port_ability_set_ability(port_info, SPPWK_PORT_DIR_RX);
 	}
 
-	for (cnt = 0; cnt < component->nof_tx; cnt++) {
-		port = component->tx_ports[cnt];
-		port_ability_set_ability(port, SPPWK_PORT_DIR_TX);
+	for (cnt = 0; cnt < comp->nof_tx; cnt++) {
+		port_info = comp->tx_ports[cnt];
+		port_ability_set_ability(port_info, SPPWK_PORT_DIR_TX);
 	}
 }
 
@@ -334,7 +348,7 @@ port_ability_each_operation(uint16_t port_id,
 	int ok_pkts = nb_pkts;
 	struct sppwk_port_attrs *port_attrs = NULL;
 
-	spp_port_ability_get_info(port_id, dir, &port_attrs);
+	sppwk_get_port_attrs(&port_attrs, port_id, dir);
 	if (unlikely(port_attrs[0].ops == SPPWK_PORT_OPS_NONE))
 		return nb_pkts;
 

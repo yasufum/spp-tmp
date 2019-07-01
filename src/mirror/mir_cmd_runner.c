@@ -389,7 +389,7 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 			continue;
 
 		comp_info = (p_comp_info + cnt);
-		spp_port_ability_update(comp_info);
+		sppwk_update_port_dir(comp_info);
 
 		ret = update_mirror(comp_info);
 		RTE_LOG(DEBUG, MIR_CMD_RUNNER, "Update mirror.\n");

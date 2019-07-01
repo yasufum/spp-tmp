@@ -946,7 +946,7 @@ main(int argc, char *argv[])
 		if (unlikely(ret_mng != 0))
 			break;
 
-		spp_port_ability_init();
+		sppwk_port_capability_init();
 
 		/* Setup connection for accepting commands from controller */
 		get_spp_ctl_ip(ctl_ip);

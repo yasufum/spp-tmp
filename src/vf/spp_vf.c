@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 			break;
 
 		init_forwarder();
-		spp_port_ability_init();
+		sppwk_port_capability_init();
 
 		/* Setup connection for accepting commands from controller */
 		get_spp_ctl_ip(ctl_ip);

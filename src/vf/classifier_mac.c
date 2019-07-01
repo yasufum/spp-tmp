@@ -679,8 +679,7 @@ change_classifier_index(struct management_info *mng_info, int id)
 	if (unlikely(mng_info->ref_index ==
 			mng_info->upd_index)) {
 		/* Change reference index of port ability. */
-		spp_port_ability_change_index(PORT_ABILITY_CHG_INDEX_REF,
-									0, 0);
+		sppwk_swap_two_sides(SPPWK_SWAP_REF, 0, 0);
 
 		/* Transmit all packets for switching the using data. */
 		transmit_all_packet(mng_info->cmp_infos + mng_info->ref_index);

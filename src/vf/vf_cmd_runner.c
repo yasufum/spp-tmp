@@ -529,7 +529,7 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 			continue;
 
 		comp_info = (p_comp_info + cnt);
-		spp_port_ability_update(comp_info);
+		sppwk_update_port_dir(comp_info);
 
 		if (comp_info->wk_type == SPPWK_TYPE_CLS) {
 			ret = update_classifier(comp_info);
