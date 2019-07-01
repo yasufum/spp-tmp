@@ -1,6 +1,5 @@
-# Uni-directional with vhost
-sec 1;patch phy:0 vhost:0
-sec 1;patch vhost:0 phy:1
-sec 2;patch phy:0 phy:0
-sec 1;forward
-sec 2;forward
+# Single spp_nfv with Vhost PMD
+nfv 1; add vhost:0
+nfv 1; patch phy:0 vhost:0
+nfv 1; patch vhost:1 phy:1
+nfv 1; forward

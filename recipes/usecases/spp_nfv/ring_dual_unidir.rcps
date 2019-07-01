@@ -1,9 +1,7 @@
-# Uni-directional with ring
-sec 1;add ring 0
-sec 2;add ring 0
-
-sec 1;patch phy:0 ring:0
-sec 2;patch ring:0 phy:1
-
-sec 1;forward
-sec 2;forward
+# Uni-Directional L2fwd with ring
+nfv 1; add ring:0
+nfv 2; add ring:0
+nfv 1; patch phy:0 ring:0
+nfv 2; patch ring:0 phy:1
+nfv 1; forward
+nfv 2; forward

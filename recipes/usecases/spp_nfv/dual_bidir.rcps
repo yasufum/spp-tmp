@@ -1,5 +1,5 @@
-# Patch port 0 and 1 as bi-directioonal
-sec 1;patch phy:0 phy:1
-sec 2;patch phy:1 phy:0
-sec 1;forward
-sec 2;forward
+# Configure Two spp_nfv as L2fwd
+nfv 1; patch phy:0 phy:1
+nfv 2; patch phy:1 phy:0
+nfv 1; forward
+nfv 2; forward
