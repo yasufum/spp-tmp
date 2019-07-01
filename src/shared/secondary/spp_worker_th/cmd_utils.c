@@ -12,7 +12,6 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_utils.h"
-#include "spp_port.h"
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/return_codes.h"
 

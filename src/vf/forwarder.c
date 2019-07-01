@@ -8,7 +8,6 @@
 #include "spp_vf.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
-#include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE

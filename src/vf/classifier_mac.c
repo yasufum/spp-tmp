@@ -28,7 +28,6 @@
 #include "shared/secondary/json_helper.h"
 #include "shared/secondary/spp_worker_th/cmd_res_formatter.h"
 #include "shared/secondary/spp_worker_th/vf_deps.h"
-#include "shared/secondary/spp_worker_th/spp_port.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE

@@ -9,7 +9,6 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_runner.h"
-#include "spp_port.h"
 #include "cmd_res_formatter.h"
 #include "conn_spp_ctl.h"
 #include "cmd_parser.h"
