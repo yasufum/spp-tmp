@@ -19,6 +19,7 @@
 #include "cmd_parser.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/spp_port.h"
+#include "shared/secondary/spp_worker_th/port_capability.h"
 
 /* Declare global variables */
 #define RTE_LOGTYPE_SPP_PCAP RTE_LOGTYPE_USER2
@@ -749,7 +750,8 @@ static int pcap_proc_receive(int lcore_id)
 
 	/* Receive packets */
 	rx = &g_pcap_option.port_cap;
-	nb_rx = spp_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
+	nb_rx = sppwk_eth_rx_burst(rx->ethdev_port_id, 0, bufs,
+			MAX_PCAP_BURST);
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
 
