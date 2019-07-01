@@ -157,8 +157,8 @@ append_vlan_block(const char *name, char **output,
 	spp_port_ability_get_info(port_id, dir, &port_attrs);
 	for (i = 0; i < PORT_ABL_MAX; i++) {
 		switch (port_attrs[i].ops) {
-		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
-		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
+		case SPPWK_PORT_OPS_ADD_VLAN:
+		case SPPWK_PORT_OPS_DEL_VLAN:
 			ret = append_vlan_value(&tmp_buff, port_attrs[i].ops,
 					port_attrs[i].capability.vlantag.vid,
 					port_attrs[i].capability.vlantag.pcp);
@@ -178,7 +178,7 @@ append_vlan_block(const char *name, char **output,
 		}
 	}
 	if (i == PORT_ABL_MAX) {
-		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_ABL_OPS_NONE,
+		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_OPS_NONE,
 				0, 0);
 		if (unlikely(ret < SPP_RET_OK))
 			return SPP_RET_NG;

@@ -297,10 +297,10 @@ update_port(enum sppwk_action wk_action,
 		port_idx = get_idx_port_info(port_info, *nof_ports, ports);
 		if (port_idx >= SPP_RET_OK) {
 			/* registered */
-			if (port_attrs->ops == SPPWK_PORT_ABL_OPS_ADD_VLANTAG) {
+			if (port_attrs->ops == SPPWK_PORT_OPS_ADD_VLAN) {
 				while ((cnt < PORT_ABL_MAX) &&
 					    (port_info->port_attrs[cnt].ops !=
-					    SPPWK_PORT_ABL_OPS_ADD_VLANTAG))
+					    SPPWK_PORT_OPS_ADD_VLAN))
 					cnt++;
 				if (cnt >= PORT_ABL_MAX) {
 					RTE_LOG(ERR, VF_CMD_RUNNER, "update VLAN tag "
@@ -322,10 +322,10 @@ update_port(enum sppwk_action wk_action,
 			return SPP_RET_NG;
 		}
 
-		if (port_attrs->ops != SPPWK_PORT_ABL_OPS_NONE) {
+		if (port_attrs->ops != SPPWK_PORT_OPS_NONE) {
 			while ((cnt < PORT_ABL_MAX) &&
 					(port_info->port_attrs[cnt].ops !=
-					SPPWK_PORT_ABL_OPS_NONE)) {
+					SPPWK_PORT_OPS_NONE)) {
 				cnt++;
 			}
 			if (cnt >= PORT_ABL_MAX) {
@@ -347,7 +347,7 @@ update_port(enum sppwk_action wk_action,
 	case SPPWK_ACT_DEL:
 		for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
 			if (port_info->port_attrs[cnt].ops ==
-					SPPWK_PORT_ABL_OPS_NONE)
+					SPPWK_PORT_OPS_NONE)
 				continue;
 
 			if (port_info->port_attrs[cnt].dir == dir)

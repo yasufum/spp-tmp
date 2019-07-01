@@ -276,12 +276,12 @@ port_ability_set_ability(struct sppwk_port_info *port,
 				sizeof(struct sppwk_port_attrs));
 
 		switch (port_attrs_out[out_cnt].ops) {
-		case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
+		case SPPWK_PORT_OPS_ADD_VLAN:
 			tag = &port_attrs_out[out_cnt].capability.vlantag;
 			tag->tci = rte_cpu_to_be_16(SPP_VLANTAG_CALC_TCI(
 					tag->vid, tag->pcp));
 			break;
-		case SPPWK_PORT_ABL_OPS_DEL_VLANTAG:
+		case SPPWK_PORT_OPS_DEL_VLAN:
 		default:
 			/* Nothing to do. */
 			break;
@@ -335,11 +335,11 @@ port_ability_each_operation(uint16_t port_id,
 	struct sppwk_port_attrs *port_attrs = NULL;
 
 	spp_port_ability_get_info(port_id, dir, &port_attrs);
-	if (unlikely(port_attrs[0].ops == SPPWK_PORT_ABL_OPS_NONE))
+	if (unlikely(port_attrs[0].ops == SPPWK_PORT_OPS_NONE))
 		return nb_pkts;
 
 	for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
-		if (port_attrs[cnt].ops == SPPWK_PORT_ABL_OPS_NONE)
+		if (port_attrs[cnt].ops == SPPWK_PORT_OPS_NONE)
 			break;
 
 		ok_pkts = port_ability_function_list[port_attrs[cnt].ops](

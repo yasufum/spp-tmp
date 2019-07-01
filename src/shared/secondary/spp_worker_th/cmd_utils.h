@@ -113,9 +113,9 @@ enum sppwk_port_dir {
  * (e.g. add vlan tag or delete vlan tag)
  */
 enum sppwk_port_ops {
-	SPPWK_PORT_ABL_OPS_NONE,
-	SPPWK_PORT_ABL_OPS_ADD_VLANTAG,
-	SPPWK_PORT_ABL_OPS_DEL_VLANTAG,
+	SPPWK_PORT_OPS_NONE,
+	SPPWK_PORT_OPS_ADD_VLAN,  /* Add vlan tag. */
+	SPPWK_PORT_OPS_DEL_VLAN,  /* Delete vlan tag. */
 };
 
 /* getopt_long return value for long option */

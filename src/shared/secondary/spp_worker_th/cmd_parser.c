@@ -543,7 +543,7 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
 	switch (port_attrs->ops) {
-	case SPPWK_PORT_ABL_OPS_NONE:
+	case SPPWK_PORT_OPS_NONE:
 		ret = get_list_idx(arg_val, PORT_ABILITY_LIST);
 		if (unlikely(ret <= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
@@ -554,7 +554,7 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 		port_attrs->ops = ret;
 		port_attrs->dir = port->dir;
 		break;
-	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
+	case SPPWK_PORT_OPS_ADD_VLAN:
 		/* Nothing to do. */
 		break;
 	default:
@@ -575,7 +575,7 @@ parse_port_vid(void *output, const char *arg_val,
 	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
 	switch (port_attrs->ops) {
-	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
+	case SPPWK_PORT_OPS_ADD_VLAN:
 		vlan_id = get_int_in_range(&port_attrs->capability.vlantag.vid,
 			arg_val, 0, ETH_VLAN_ID_MAX);
 		if (unlikely(vlan_id < SPP_RET_OK)) {
@@ -604,7 +604,7 @@ parse_port_pcp(void *output, const char *arg_val,
 	struct sppwk_port_attrs *port_attrs = &port->port_attrs;
 
 	switch (port_attrs->ops) {
-	case SPPWK_PORT_ABL_OPS_ADD_VLANTAG:
+	case SPPWK_PORT_OPS_ADD_VLAN:
 		pcp = get_int_in_range(&port_attrs->capability.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
 		if (unlikely(pcp < SPP_RET_OK)) {
