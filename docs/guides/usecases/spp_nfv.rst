@@ -30,6 +30,9 @@ First of all, Check the status of ``spp_nfv`` from SPP CLI.
 
     spp > nfv 1; status
     - status: idling
+    - lcore_ids:
+      - master: 1
+      - slave: 2
     - ports:
       - phy:0
       - phy:1
@@ -61,6 +64,9 @@ patches as you defined.
 
     spp > nfv 1; status
     - status: running
+    - lcore_ids:
+      - master: 1
+      - slave: 2
     - ports:
       - phy:0 -> phy:1
       - phy:1 -> phy:0
@@ -192,6 +198,9 @@ All of ring PMDs is showed with ``status`` subcommand.
     Add ring:0.
     spp > nfv 1; status
     - status: idling
+    - lcore_ids:
+      - master: 1
+      - slave: 2
     - ports:
       - phy:0
       - phy:1
@@ -207,6 +216,9 @@ use it anymore.
     Delete ring:0.
     spp > nfv 1; status
     - status: idling
+    - lcore_ids:
+      - master: 1
+      - slave: 2
     - ports:
       - phy:0
       - phy:1
@@ -260,6 +272,9 @@ First, add ``ring:0`` and ``ring:1`` to ``nfv 1``.
     Add ring:1.
     spp > nfv 1; status
     - status: idling
+    - lcore_ids:
+      - master: 1
+      - slave: 2
     - ports:
       - phy:0
       - phy:1
@@ -276,6 +291,9 @@ Then, add ``ring:0`` and ``ring:1`` to ``nfv 2``.
     Add ring:1.
     spp > nfv 2; status
     - status: idling
+    - lcore_ids:
+      - master: 1
+      - slave: 3
     - ports:
       - phy:0
       - phy:1

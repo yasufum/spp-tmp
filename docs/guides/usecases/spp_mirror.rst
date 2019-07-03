@@ -168,6 +168,9 @@ Next, stop components.
    Basic Information:
      - client-id: 1
      - ports: [phy:0, phy:1]
+     - lcore_ids:
+       - master: 0
+       - slave: 2
    Components:
      - core:2 '' (type: unuse)
 

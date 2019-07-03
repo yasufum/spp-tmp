@@ -86,8 +86,13 @@ You can confirm lcores and worker threads running on from ``status`` command.
 
     # terminal 2
     spp > pcap 1; status
+    Basic Information:
       - client-id: 1
       - status: idle
+      - lcore_ids:
+        - master: 1
+        - slaves: [2, 3, 4, 5, 6]
+    Components:
       - core:2 receive
         - rx: phy:0
       - core:3 write
@@ -121,8 +126,13 @@ As you run ``start`` command, PCAP files are generated for each of
 
     # terminal 2
     spp > pcap 1; status
+    Basic Information:
       - client-id: 1
       - status: running
+      - lcore_ids:
+        - master: 1
+        - slaves: [2, 3, 4, 5, 6]
+    Components:
       - core:2 receive
         - rx: phy:0
       - core:3 write

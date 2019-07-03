@@ -221,6 +221,9 @@ You can confirm that worker threads are cleaned from ``status``.
     Basic Information:
       - client-id: 1
       - ports: [phy:0, phy:1]
+      - lcore_ids:
+        - master: 2
+        - slaves: [3, 4, 5, 6]
     Classifier Table:
       No entries.
     Components:
