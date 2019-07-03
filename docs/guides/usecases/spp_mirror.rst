@@ -316,24 +316,6 @@ Add classifier table entries.
    spp > vf 1; classifier_table add mac 52:54:00:12:34:58 ring:1
 
 
-To capture incoming packets on ``VM1``, use tcpdump for the interface,
-``ens4`` in this case.
-
-.. code-block:: console
-
-    # terminal 5
-    # capture on ens4 of VM1
-    $ tcpdump -i ens4
-
-You send packets from the remote ``host1`` and confirm packets are received.
-IP address is the same as :ref:`Usecase of spp_vf<spp_usecases_vf>`.
-
-.. code-block:: console
-
-    # Send packets from host1
-    $ ping 192.168.140.21
-
-
 Launch spp_mirror
 ~~~~~~~~~~~~~~~~~
 
@@ -370,20 +352,30 @@ Add ``ring:0`` as rx port, ``ring:4`` and ``ring:5`` as tx ports.
 Receive Packet on VM3
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can capture incoming packets on ``VM3``.
-If you capture packet on ``VM1``, the same packet would be captured.
+You can capture incoming packets on ``VM3`` and compare it with on ``VM1``.
+To capture incoming packets , use tcpdump for the interface,
+``ens4`` in this case.
 
 .. code-block:: console
 
-   # capture on ens4 fo VM1 and VM3
-   $ tcpdump -i ens4
-
-Now, you can send packet from the remote host1.
+    # terminal 5
+    # capture on ens4 of VM1
+    $ tcpdump -i ens4
 
 .. code-block:: console
 
-   # spp-vm1 via NIC0 from host1
-   $ ping 192.168.140.21
+    # terminal 7
+    # capture on ens4 of VM3
+    $ tcpdump -i ens4
+
+You send packets from the remote ``host1`` and confirm packets are received.
+IP address is the same as :ref:`Usecase of spp_vf<spp_usecases_vf>`.
+
+.. code-block:: console
+
+    # Send packets from host1
+    $ ping 192.168.140.21
+
 
 
 Stop Mirroring
