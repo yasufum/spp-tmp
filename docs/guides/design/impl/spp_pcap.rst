@@ -41,10 +41,10 @@ and sending the packets to the writer thread via ring memory by using
     /* spp_pcap.c */
 
     rx = &g_pcap_option.port_cap;
-	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
+    nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
 
-	/* Forward to ring for writer thread */
-	nb_tx = rte_ring_enqueue_burst(write_ring, (void *)bufs, nb_rx, NULL);
+    /* Forward to ring for writer thread */
+    nb_tx = rte_ring_enqueue_burst(write_ring, (void *)bufs, nb_rx, NULL);
 
 
 Writing Packet

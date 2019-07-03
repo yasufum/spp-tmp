@@ -19,12 +19,12 @@ for duplicating packets is ``mirror_proc()`` on each of lcores.
 
 .. code-block:: c
 
-		for (cnt = 0; cnt < core->num; cnt++) {
+    for (cnt = 0; cnt < core->num; cnt++) {
 
-			ret = mirror_proc(core->id[cnt]);
-			if (unlikely(ret != 0))
-				break;
-		}
+        ret = mirror_proc(core->id[cnt]);
+        if (unlikely(ret != 0))
+            break;
+    }
 
 
 Mirroring Packets
@@ -58,7 +58,7 @@ packet if in deep copy mode.
                         rte_prefetch0(rte_pktmbuf_mtod(org_mbuf, void *));
    #ifdef SPP_MIRROR_SHALLOWCOPY
                         /* Shallow Copy */
-			copybufs[cnt] = rte_pktmbuf_clone(org_mbuf,
+            copybufs[cnt] = rte_pktmbuf_clone(org_mbuf,
                                                         g_mirror_pool);
 
    #else
@@ -87,10 +87,10 @@ packet if in deep copy mode.
                                 *mirror_mbufs = copy_mbuf;
                                 mirror_mbufs = &copy_mbuf->next;
                         } while ((org_mbuf = org_mbuf->next) != NULL);
-			copybufs[cnt] = mirror_mbuf;
+            copybufs[cnt] = mirror_mbuf;
 
    #endif /* SPP_MIRROR_SHALLOWCOPY */
                 }
-		if (cnt != 0)
+        if (cnt != 0)
                         nb_tx2 = spp_eth_tx_burst(tx->dpdk_port, 0,
-								copybufs, cnt);
+                                copybufs, cnt);

@@ -58,8 +58,8 @@ or simply forwards packets.
 
     while ((status = spp_get_core_status(lcore_id)) !=
         SPPWK_LCORE_REQ_STOP) {
-    	if (status != SPPWK_LCORE_RUNNING)
-    	    continue;
+        if (status != SPPWK_LCORE_RUNNING)
+            continue;
 
         // skipping lines ...
 
@@ -68,9 +68,9 @@ or simply forwards packets.
         /* Component classification to call a function. */
         if (spp_get_component_type(core->id[cnt]) ==
             SPPWK_TYPE_CLS) {
-           	/* Component type for classifier. */
-           	ret = spp_classifier_mac_do(core->id[cnt]);
-           	if (unlikely(ret != 0))
+            /* Component type for classifier. */
+            ret = spp_classifier_mac_do(core->id[cnt]);
+            if (unlikely(ret != 0))
             break;
         } else {
             /* Component type for forward or merge. */
