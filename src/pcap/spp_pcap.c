@@ -927,6 +927,12 @@ main(int argc, char *argv[])
 	signal(SIGTERM, stop_process);
 	signal(SIGINT,  stop_process);
 
+	/**
+	 * It should be initialized outside of while loop, or failed to
+	 * compile because it is referred when finalize `g_core_info`.
+	 */
+	master_lcore = rte_get_master_lcore();
+
 	while (1) {
 		int ret_eal = rte_eal_init(argc, argv);
 		if (unlikely(ret_eal < 0))
@@ -1032,7 +1038,6 @@ main(int argc, char *argv[])
 		}
 
 		/* Set the status of main thread to idle */
-		master_lcore = rte_get_master_lcore();
 		g_core_info[master_lcore].status = SPPWK_LCORE_IDLING;
 		int ret_wait = check_core_status_wait(SPPWK_LCORE_IDLING);
 		if (unlikely(ret_wait != 0))

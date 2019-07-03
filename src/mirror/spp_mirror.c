@@ -505,6 +505,12 @@ main(int argc, char *argv[])
 	signal(SIGTERM, stop_process);
 	signal(SIGINT,  stop_process);
 
+	/**
+	 * It should be initialized outside of while loop, or failed to
+	 * compile because it is referred when finalize `g_core_info`.
+	 */
+	master_lcore = rte_get_master_lcore();
+
 	while (1) {
 		int ret_dpdk = rte_eal_init(argc, argv);
 		if (unlikely(ret_dpdk < 0))
@@ -517,8 +523,6 @@ main(int argc, char *argv[])
 		int ret_parse = parse_app_args(argc, argv);
 		if (unlikely(ret_parse != 0))
 			break;
-
-		master_lcore = rte_get_master_lcore();
 
 		if (sppwk_set_mng_data(&g_iface_info, g_component_info,
 					g_core_info, g_change_core,
