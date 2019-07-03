@@ -728,7 +728,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		return SPP_RET_NG;
 	}
 
-	if (cls_attrs->type == SPP_CLASSIFIER_TYPE_MAC)
+	if (cls_attrs->cls_type == SPPWK_CLS_TYPE_MAC)
 		cls_attrs->vid = ETH_VLAN_ID_MAX;
 
 	if (unlikely(cls_attrs->wk_action == SPPWK_ACT_ADD)) {
@@ -783,7 +783,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "type",
 			.offset = offsetof(struct sppwk_cmd_attrs,
-					spec.cls_table.type),
+					spec.cls_table.cls_type),
 			.func = parse_cls_type
 		},
 		{
@@ -810,7 +810,7 @@ cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 		{
 			.name = "type",
 			.offset = offsetof(struct sppwk_cmd_attrs,
-					spec.cls_table.type),
+					spec.cls_table.cls_type),
 			.func = parse_cls_type
 		},
 		{

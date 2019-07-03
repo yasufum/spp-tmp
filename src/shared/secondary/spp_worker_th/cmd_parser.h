@@ -80,7 +80,7 @@ const char *sppwk_cmd_type_str(enum sppwk_cmd_type ctype);
 /* `classifier_table` command specific parameters. */
 struct sppwk_cls_cmd_attrs {
 	enum sppwk_action wk_action;  /**< add or del */
-	enum spp_classifier_type type;  /**< currently only for mac */
+	enum sppwk_cls_type cls_type;  /**< currently only for MAC. */
 	int vid;  /**< VLAN ID  */
 	char mac[SPPWK_VAL_BUFSZ];  /**< MAC address  */
 	struct sppwk_port_idx port;/**< Destination port type and number */

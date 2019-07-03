@@ -93,10 +93,10 @@ enum sppwk_worker_type {
 };
 
 /* Classifier Type */
-enum spp_classifier_type {
-	SPP_CLASSIFIER_TYPE_NONE, /**< Type none */
-	SPP_CLASSIFIER_TYPE_MAC,  /**< MAC address */
-	SPP_CLASSIFIER_TYPE_VLAN  /**< VLAN ID */
+enum sppwk_cls_type {
+	SPPWK_CLS_TYPE_NONE,
+	SPPWK_CLS_TYPE_MAC,
+	SPPWK_CLS_TYPE_VLAN
 };
 
 /* Direction of RX or TX on a port. */
@@ -258,7 +258,7 @@ struct spp_iterate_classifier_table_params;
  */
 typedef int (*spp_iterate_classifier_element_proc)(
 		struct spp_iterate_classifier_table_params *params,
-		enum spp_classifier_type type,
+		enum sppwk_cls_type cls_type,
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port);
 

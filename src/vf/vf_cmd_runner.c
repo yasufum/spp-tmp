@@ -28,7 +28,7 @@ const char *CLS_TYPE_A_LIST[] = {
 /* Update classifier table with given action, add or del. */
 static int
 update_cls_table(enum sppwk_action wk_action,
-		enum spp_classifier_type type __attribute__ ((unused)),
+		enum sppwk_cls_type cls_type __attribute__ ((unused)),
 		int vid, const char *mac_str,
 		const struct sppwk_port_idx *port)
 {
@@ -383,7 +383,7 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 	case SPPWK_CMDTYPE_CLS_MAC:
 	case SPPWK_CMDTYPE_CLS_VLAN:
 		ret = update_cls_table(cmd->spec.cls_table.wk_action,
-				cmd->spec.cls_table.type,
+				cmd->spec.cls_table.cls_type,
 				cmd->spec.cls_table.vid,
 				cmd->spec.cls_table.mac,
 				&cmd->spec.cls_table.port);
@@ -555,7 +555,7 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 int
 append_classifier_element_value(
 		struct spp_iterate_classifier_table_params *params,
-		enum spp_classifier_type type,
+		enum sppwk_cls_type cls_type,
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port)
 {
@@ -567,23 +567,23 @@ append_classifier_element_value(
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, VF_CMD_RUNNER,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = classifier_table)\n");
+				"Failed to allocate buffer.\n");
 		return ret;
 	}
 
 	spp_format_port_string(port_str, port->iface_type, port->iface_no);
 
-	ret = append_json_str_value(&tmp_buff, "type", CLS_TYPE_A_LIST[type]);
+	ret = append_json_str_value(&tmp_buff, "type",
+			CLS_TYPE_A_LIST[cls_type]);
 	if (unlikely(ret < SPP_RET_OK))
 		return ret;
 
 	memset(value_str, 0x00, STR_LEN_SHORT);
-	switch (type) {
-	case SPP_CLASSIFIER_TYPE_MAC:
+	switch (cls_type) {
+	case SPPWK_CLS_TYPE_MAC:
 		sprintf(value_str, "%s", mac);
 		break;
-	case SPP_CLASSIFIER_TYPE_VLAN:
+	case SPPWK_CLS_TYPE_VLAN:
 		sprintf(value_str, "%d/%s", vid, mac);
 		break;
 	default:

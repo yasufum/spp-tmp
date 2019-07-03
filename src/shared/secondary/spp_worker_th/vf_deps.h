@@ -108,7 +108,7 @@ int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
 int append_classifier_element_value(
 		struct spp_iterate_classifier_table_params *params,
-		enum spp_classifier_type type,
+		enum sppwk_cls_type cls_type,
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port);
 

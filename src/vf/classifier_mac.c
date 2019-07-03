@@ -878,11 +878,11 @@ iterate_adding_mac_entry(
 	uint32_t next;
 	struct sppwk_port_idx port;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
-	enum spp_classifier_type type;
+	enum sppwk_cls_type cls_type;
 
-	type = SPP_CLASSIFIER_TYPE_VLAN;
+	cls_type = SPPWK_CLS_TYPE_VLAN;
 	if (unlikely(vid == VLAN_UNTAGGED_VID))
-		type = SPP_CLASSIFIER_TYPE_MAC;
+		cls_type = SPPWK_CLS_TYPE_MAC;
 
 	if (mac_cls->default_cls_idx >= 0) {
 		port.iface_type = (port_info +
@@ -897,8 +897,8 @@ iterate_adding_mac_entry(
 		 * Append "default" entry. `element_proc` is a funciton
 		 * pointer to append_classifier_element_value().
 		 */
-		(*params->element_proc)(params, type, vid, SPPWK_TERM_DEFAULT,
-				&port);
+		(*params->element_proc)(params, cls_type, vid,
+				SPPWK_TERM_DEFAULT, &port);
 	}
 
 	next = 0;
@@ -920,8 +920,8 @@ iterate_adding_mac_entry(
 		 * Append each entry of MAC address. `element_proc` is a
 		 * funciton pointer to append_classifier_element_value().
 		 */
-		(*params->element_proc)(params, type, vid, mac_addr_str,
-				&port);
+		(*params->element_proc)(params, cls_type, vid,
+				mac_addr_str, &port);
 	}
 }
 
