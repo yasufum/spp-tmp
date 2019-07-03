@@ -11,8 +11,101 @@ primary process for managing resources, secondary processes for
 forwarding packet, and SPP controller to accept user commands and
 send it to SPP processes.
 
-You should keep in mind the order of launching processes.
-Primary process must be launched before secondary processes.
+You should keep in mind the order of launching processes if you do it
+manually, or you can use startup script. This start script is for launching
+``spp-ctl``, ``spp_primary`` and SPP CLI.
+
+
+.. _spp_gsg_howto_quick_start:
+
+Quick Start
+-----------
+
+Run ``bin/start.sh`` with configuration file ``bin/config.sh``.
+First time you run the script, it does not lanch processes but create a
+template configuration file and asks you to edit this file.
+After that, you can run the startup script for launching processes. All of
+options for the processes are defined in the configuration.
+
+.. code-block:: console
+
+    # launch with default URL http://127.0.0.1:7777
+    $ bin/start.sh
+    Start spp-ctl
+    Start spp_primary
+    Waiting for spp-ctl is ready ...
+    Welcome to the SPP CLI. Type `help` or `?` to list commands.
+
+    spp >
+
+Check status of ``spp_primary`` because it takes several seconds to be ready.
+Confirm that the status is ``running``.
+
+.. code-block:: none
+
+    spp > status
+    - spp-ctl:
+      - address: 127.0.0.1:7777
+    - primary:
+      - status: running
+    - secondary:
+      - processes:
+
+Now you are ready to launch secondary processes from ``pri; launch``
+command, or another terminal. Here is an example for launching ``spp_nfv``
+with options from ``pri; launch``. Log file of this process is created as
+``log/spp_nfv1.log``.
+
+.. code-block:: none
+
+    spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 127.0.0.1:6666
+
+This ``launch`` command supports TAB completion. Parameters for ``spp_nfv``
+are completed after secondary ID ``1``.
+
+.. code-block:: none
+
+    spp > pri; launch nfv 1
+
+    # Press TAB
+    spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 127.0.0.1:6666
+
+
+It is same as following options launching from terminal.
+
+.. code-block:: console
+
+    $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
+        -l 1,2 -n 4 -m 512 \
+        --proc-type secondary \
+        -- \
+        -n 1 \
+        -s 127.0.0.1:6666
+
+Parameters for completion are defined in SPP CLI, and you can find
+parameters with ``config`` command.
+
+.. code-block:: none
+
+    spp > config
+    - max_secondary: "16"   # The maximum number of secondary processes
+    - prompt: "spp > "  # Command prompt
+    - topo_size: "60%"  # Percentage or ratio of topo
+    - sec_mem: "-m 512" # Mem size
+    ...
+
+You can launch consequence secondary processes from CLI for your usage.
+If you just patch two DPDK applications on host, it is enough to use one
+``spp_nfv``, or use ``spp_vf`` if you need to classify packets.
+
+.. code-block:: none
+
+    spp > pri; launch nfv 2 -l 1,3 -m 512 -- -n 2 -s 127.0.0.1:6666
+    spp > pri; launch vf 3 -l 1,4,5,6 -m 512 -- -n 3 -s 127.0.0.1:6666
+    ...
+
+If you launch processes by yourself, ``spp_primary`` must be launched
+before secondary processes.
 ``spp-ctl`` need to be launched before SPP CLI, but no need to be launched
 before other processes. SPP CLI is launched from ``spp.py``.
 If ``spp-ctl`` is not running after primary and
@@ -21,9 +114,13 @@ secondary processes are launched, processes wait ``spp-ctl`` is launched.
 In general, ``spp-ctl`` should be launched first, then SPP CLI and
 ``spp_primary`` in each of terminals without running as background process.
 After ``spp_primary``, you launch secondary processes for your usage.
-If you just patch two DPDK applications on host, it is enough to use one
-``spp_nfv``, or use ``spp_vf`` if you need to classify packets.
-How to use of these secondary processes is described in next chapters.
+
+In the rest of this chapter is for explaining how to launch each of processes
+options and usages for the all of processes.
+How to connect to VMs is also described in this chapter.
+
+How to use of these secondary processes is described as usecases
+in the next chapter.
 
 
 .. _spp_gsg_howto_controller:
