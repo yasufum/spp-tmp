@@ -89,8 +89,13 @@ and its resources.
 .. code-block:: none
 
     spp > pcap 1; status
+    Basic Information:
       - client-id: 1
       - status: idling
+      - lcore_ids:
+        - master: 1
+        - slaves: [2, 3, 4, 5, 6]
+    Components:
       - core:2 receive
         - rx: phy:0
       - core:3 write

@@ -111,6 +111,9 @@ consists of three parts.
     Basic Information:
       - client-id: 3
       - ports: [phy:0, phy:1, ring:0, ring:1, ring:2, ring:3, ring:4]
+      - lcore_ids:
+        - master: 2
+        - slaves: [3, 4, 5, 6]
     Classifier Table:
       - C0:8E:CD:38:EA:A8, ring:4
       - C0:8E:CD:38:BC:E6, ring:3

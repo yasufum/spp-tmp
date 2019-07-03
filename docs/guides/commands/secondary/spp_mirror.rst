@@ -110,6 +110,9 @@ consists of three parts.
     Basic Information:
       - client-id: 3
       - ports: [phy:0, phy:1, ring:0, ring:1, ring:2, ring:3, ring:4]
+     - lcore_ids:
+       - master: 1
+       - slaves: [2, 3, 4]
     Components:
       - core:5 'mr1' (type: mirror)
         - rx: ring:0
