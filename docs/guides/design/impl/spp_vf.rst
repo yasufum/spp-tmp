@@ -6,20 +6,33 @@
 spp_vf
 ======
 
-The following sections provide some explanation of the code.
+This section describes implementation of key features of ``spp_vf``.
 
-Initializing
-------------
+``spp_vf`` consists of master thread and several worker threads,
+``forwarder``, ``classifier`` or ``merger``, as slaves.
+For classifying packets, ``spp_vf`` has a worker thread named ``classifier``
+and a table for registering MAC address entries.
 
-A manager thread of ``spp_vf`` initialize eal by ``rte_eal_init()``.
-Then each of component threads are launched by
-``rte_eal_remote_launch()``.
 
+Initialization
+--------------
+
+In master thread, data of classifier and VLAN features are initialized
+after ``rte_eal_init()`` is called.
+Port capability is a set of data for describing VLAN features.
+Then, each of worker threads are launched with ``rte_eal_remote_launch()``
+on assigned lcores..
 
 .. code-block:: c
 
     /* spp_vf.c */
+
     int ret_dpdk = rte_eal_init(argc, argv);
+
+    int ret_classifier_mac_init = spp_classifier_mac_init();
+
+    init_forwarder();
+    sppwk_port_capability_init();
 
     /* Start worker threads of classifier and forwarder */
     unsigned int lcore_id = 0;
@@ -28,260 +41,118 @@ Then each of component threads are launched by
     }
 
 
-Main function of slave thread
------------------------------
+Slave Main
+----------
 
-``slave_main()`` is called from ``rte_eal_remote_launch()``.
-It call ``spp_classifier_mac_do()`` or ``spp_forward()`` depending
-on the component command setting.
-``spp_classifier_mac_do()`` provides function for classifier,
-and ``spp_forward()`` provides forwarder and merger.
+Main function of worker thread is defined as ``slave_main()`` which is called
+from ``rte_eal_remote_launch()``.
+Behavior of worker thread is decided in while loop in this function.
+If lcore status is not ``SPPWK_LCORE_RUNNING``, worker thread does nothing.
+On the other hand, it does packet forwarding with or without classifying.
+It classifies incoming packets if component type is ``SPPWK_TYPE_CLS``,
+or simply forwards packets.
 
 .. code-block:: c
 
     /* spp_vf.c */
-    RTE_LOG(INFO, APP, "Core[%d] Start.\n", lcore_id);
-    set_core_status(lcore_id, SPP_CORE_IDLE);
 
     while ((status = spp_get_core_status(lcore_id)) !=
-            SPP_CORE_STOP_REQUEST) {
-            if (status != SPP_CORE_FORWARD)
-                    continue;
+        SPPWK_LCORE_REQ_STOP) {
+    	if (status != SPPWK_LCORE_RUNNING)
+    	    continue;
 
-            if (spp_check_core_index(lcore_id)) {
-                    /* Setting with the flush command trigger. */
-                    info->ref_index = (info->upd_index+1) %
-                            SPP_INFO_AREA_MAX;
-                    core = get_core_info(lcore_id);
-            }
+        // skipping lines ...
 
-            for (cnt = 0; cnt < core->num; cnt++) {
-                    if (spp_get_component_type(lcore_id) ==
-                                    SPP_COMPONENT_CLASSIFIER_MAC) {
-                            /* Classifier loops inside the function. */
-                            ret = spp_classifier_mac_do(core->id[cnt]);
-                            break;
-                    }
-
-                    /*
-                     * Forward / Merge returns at once.
-                     * It is for processing multiple components.
-                     */
-                    ret = spp_forward(core->id[cnt]);
-                    if (unlikely(ret != 0))
-                            break;
-            }
-            if (unlikely(ret != 0)) {
-                    RTE_LOG(ERR, APP,
-                            "Core[%d] Component Error. (id = %d)\n",
-                            lcore_id, core->id[cnt]);
+        /* It is for processing multiple components. */
+        for (cnt = 0; cnt < core->num; cnt++) {
+        /* Component classification to call a function. */
+        if (spp_get_component_type(core->id[cnt]) ==
+            SPPWK_TYPE_CLS) {
+           	/* Component type for classifier. */
+           	ret = spp_classifier_mac_do(core->id[cnt]);
+           	if (unlikely(ret != 0))
+            break;
+        } else {
+            /* Component type for forward or merge. */
+                ret = forward_packets(core->id[cnt]);
+                if (unlikely(ret != 0))
                     break;
             }
-    }
-
-    set_core_status(lcore_id, SPP_CORE_STOP);
-    RTE_LOG(INFO, APP, "Core[%d] End.\n", lcore_id);
-
-Data structure of classifier table
-----------------------------------
-
-``spp_classifier_mac_do()`` lookup following data defined in
-``classifier_mac.c``,
-when it process the packets.
-Configuration of classifier is stored in the structure of
-``classified_data``, ``classifier_mac_info`` and
-``classifier_mac_mng_info``.
-The ``classified_data`` has member variables for expressing the port
-to be classified, ``classifier_mac_info`` has member variables
-for determining the direction of packets such as hash tables.
-Classifier manages two ``classifier_mac_info``, one is for updating by
-commands, the other is for looking up to process packets.
-Then the ``classifier_mac_mng_info`` has
-two(``NUM_CLASSIFIER_MAC_INFO``) ``classifier_mac_info``
-and index number for updating or reference.
-
-.. code-block:: c
-
-    /* classifier_mac.c */
-    /* classified data (destination port, target packets, etc) */
-    struct classified_data {
-            /* interface type (see "enum port_type") */
-            enum port_type  iface_type;
-
-            /* index of ports handled by classifier */
-            int             iface_no;
-
-            /* id for interface generated by spp_vf */
-            int             iface_no_global;
-
-            /* port id generated by DPDK */
-            uint16_t        port;
-
-            /* the number of packets in pkts[] */
-            uint16_t        num_pkt;
-
-            /* packet array to be classified */
-            struct rte_mbuf *pkts[MAX_PKT_BURST];
-    };
-
-    /* classifier information */
-    struct classifier_mac_info {
-            /* component name */
-            char name[SPP_NAME_STR_LEN];
-
-            /* hash table keeps classifier_table */
-            struct rte_hash *classifier_table;
-
-            /* number of valid classification */
-            int num_active_classified;
-
-            /* index of valid classification */
-            int active_classifieds[RTE_MAX_ETHPORTS];
-
-            /* index of default classification */
-            int default_classified;
-
-            /* number of transmission ports */
-            int n_classified_data_tx;
-
-            /* receive port handled by classifier */
-            struct classified_data classified_data_rx;
-
-            /* transmission ports handled by classifier */
-            struct classified_data classified_data_tx[RTE_MAX_ETHPORTS];
-    };
-
-    /* classifier management information */
-    struct classifier_mac_mng_info {
-            /* classifier information */
-            struct classifier_mac_info info[NUM_CLASSIFIER_MAC_INFO];
-
-            /* Reference index number for classifier information */
-            volatile int ref_index;
-
-            /* Update index number for classifier information */
-            volatile int upd_index;
-    };
-
-
-Packet processing in classifier
--------------------------------
-
-In ``spp_classifier_mac_do()``, it receives packets from rx port and
-send them to destinations with ``classify_packet()``.
-``classifier_info`` is an argument of ``classify_packet()`` and is used
-to decide the destinations.
-
-.. code-block:: c
-
-    /* classifier_mac.c */
-        while (likely(spp_get_core_status(lcore_id) == SPP_CORE_FORWARD) &&
-                        likely(spp_check_core_index(lcore_id) == 0)) {
-                /* change index of update side */
-                change_update_index(classifier_mng_info, id);
-
-                /* decide classifier information of the current cycle */
-                classifier_info = classifier_mng_info->info +
-                                classifier_mng_info->ref_index;
-                classified_data_rx = &classifier_info->classified_data_rx;
-                classified_data_tx = classifier_info->classified_data_tx;
-
-                /* drain tx packets, if buffer is not filled for interval */
-                cur_tsc = rte_rdtsc();
-                if (unlikely(cur_tsc - prev_tsc > drain_tsc)) {
-                        for (i = 0; i < classifier_info->n_classified_data_tx;
-                                        i++) {
-                                if (likely(classified_data_tx[i].num_pkt == 0))
-                                        continue;
-
-                                RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-                                                "transmit packets (drain). "
-                                                "index=%d, "
-                                                "num_pkt=%hu, "
-                                                "interval=%lu\n",
-                                                i,
-                                                classified_data_tx[i].num_pkt,
-                                                cur_tsc - prev_tsc);
-                                transmit_packet(&classified_data_tx[i]);
-                        }
-                        prev_tsc = cur_tsc;
-                }
-
-                if (classified_data_rx->iface_type == UNDEF)
-                        continue;
-
-                /* retrieve packets */
-                n_rx = rte_eth_rx_burst(classified_data_rx->port, 0,
-                                rx_pkts, MAX_PKT_BURST);
-                if (unlikely(n_rx == 0))
-                        continue;
-
-    #ifdef SPP_RINGLATENCYSTATS_ENABLE
-                    if (classified_data_rx->iface_type == RING)
-                            spp_ringlatencystats_calculate_latency(
-                                            classified_data_rx->iface_no,
-                                            rx_pkts, n_rx);
-    #endif
-
-                /* classify and transmit (filled) */
-                classify_packet(rx_pkts, n_rx, classifier_info,
-                                classified_data_tx);
         }
 
-Classifying the packets
------------------------
 
-``classify_packet()`` uses hash function of DPDK to determine
-destination.
-Hash has MAC address as Key, it retrieves destination information
-from destination MAC address in the packet.
+Data structure of classifier
+----------------------------
+
+Classifier has a set of attributes for classification as
+struct ``mac_classifier``, which consists of a table of MAC addresses,
+number of classifying ports, indices of ports
+and default index of port.
+Clasifier table is implemented as hash of struct ``rte_hash``.
 
 .. code-block:: c
 
-    for (i = 0; i < n_rx; i++) {
-            eth = rte_pktmbuf_mtod(rx_pkts[i], struct ether_hdr *);
+    /* shared/secondary/spp_worker_th/vf_deps.h */
 
-            /* find in table (by destination mac address)*/
-            ret = rte_hash_lookup_data(classifier_info->classifier_table,
-                            (const void *)&eth->d_addr, &lookup_data);
-            if (ret < 0) {
-                    /* L2 multicast(include broadcast) ? */
-                    if (unlikely(is_multicast_ether_addr(&eth->d_addr))) {
-                            RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-                                            "multicast mac address.\n");
-                            handle_l2multicast_packet(rx_pkts[i],
-                                            classifier_info,
-                                            classified_data);
-                            continue;
-                    }
+    /* Classifier for MAC addresses. */
+    struct mac_classifier {
+        struct rte_hash *cls_tbl;  /* Hash table for MAC classification. */
+        int nof_cls_ports;  /* Num of ports classified validly. */
+        int cls_ports[RTE_MAX_ETHPORTS];  /* Ports for classification. */
+        int default_cls_idx;  /* Default index for classification. */
+    };
 
-                    /* if no default, drop packet */
-                    if (unlikely(classifier_info->default_classified ==
-                                    -1)) {
-                            ether_format_addr(mac_addr_str,
-                                            sizeof(mac_addr_str),
-                                            &eth->d_addr);
-                            RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-                                            "unknown mac address. "
-                                            "ret=%d, mac_addr=%s\n",
-                                            ret, mac_addr_str);
-                            rte_pktmbuf_free(rx_pkts[i]);
-                            continue;
-                    }
+Classifier itself is defined as a struct ``cls_comp_info``.
+There are several attributes in this struct including ``mac_classifier``
+or ``cls_port_info`` or so.
+``cls_port_info`` is for defining a set of attributes of ports, such as
+interface type, device ID or packet data.
 
-                    /* to default classified */
-                    RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-                                    "to default classified.\n");
-                    lookup_data = (void *)(long)classifier_info->
-                                    default_classified;
-            }
+.. code-block:: c
 
-            /*
-             * set mbuf pointer to tx buffer
-             * and transmit packet, if buffer is filled
-             */
-            push_packet(rx_pkts[i], classified_data + (long)lookup_data);
-    }
+    /* shared/secondary/spp_worker_th/vf_deps.h */
+
+    /* classifier component information */
+    struct cls_comp_info {
+        char name[STR_LEN_NAME];  /* component name */
+        int mac_addr_entry;  /* mac address entry flag */
+        struct mac_classifier *mac_clfs[NOF_VLAN];  /* classifiers per VLAN. */
+        int nof_tx_ports;  /* Number of TX ports info entries. */
+        /* Classifier has one RX port and several TX ports. */
+        struct cls_port_info rx_port_i;  /* RX port info classified. */
+        struct cls_port_info tx_ports_i[RTE_MAX_ETHPORTS];  /* TX info. */
+    };
+
+    /* Attirbutes of port for classification. */
+    struct cls_port_info {
+        enum port_type iface_type;
+        int iface_no;   /* Index of ports handled by classifier. */
+        int iface_no_global;  /* ID for interface generated by spp_vf */
+        uint16_t ethdev_port_id;  /* Ethdev port ID. */
+        uint16_t nof_pkts;  /* Number of packets in pkts[]. */
+        struct rte_mbuf *pkts[MAX_PKT_BURST];  /* packets to be classified. */
+    };
+
+
+Classifying the packet
+----------------------
+
+If component type is ``SPPWK_TYPE_CLS``, worker thread behaves as a classifier,
+so component calls ``spp_classifier_mac_do()``. In this function, packets
+from RX port are received with ``sppwk_eth_vlan_rx_burst()`` which is derived
+from ``rte_eth_rx_burst()`` for adding or deleting VLAN tags.
+Received packets are classified with ``classify_packet()``.
+
+.. code-block:: c
+
+    /* classifier_mac.c */
+
+    n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id, 0,
+        rx_pkts, MAX_PKT_BURST);
+
+    // skipping lines ...
+
+    classify_packet(rx_pkts, n_rx, cmp_info, clsd_data_tx);
 
 
 Packet processing in forwarder and merger
@@ -325,78 +196,34 @@ packets.
     };
 
 
-Forward and merge the packets
------------------------------
-
-``spp_forward()`` defined in ``spp_forward.c`` is a main function
-for both forwarder and merger.
-``spp_forward()`` simply passes packet received from rx port to
-tx port of the pair.
-
-.. code-block:: c
-
-    /* spp_forward.c */
-            for (cnt = 0; cnt < num; cnt++) {
-                    rx = &path->ports[cnt].rx;
-                    tx = &path->ports[cnt].tx;
-
-                    /* Receive packets */
-                    nb_rx = rte_eth_rx_burst(
-                            rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
-                    if (unlikely(nb_rx == 0))
-                            continue;
-
-    #ifdef SPP_RINGLATENCYSTATS_ENABLE
-                    if (rx->iface_type == RING)
-                            spp_ringlatencystats_calculate_latency(
-                                            rx->iface_no,
-                                            bufs, nb_rx);
-
-                    if (tx->iface_type == RING)
-                            spp_ringlatencystats_add_time_stamp(
-                                            tx->iface_no,
-                                            bufs, nb_rx);
-    #endif /* SPP_RINGLATENCYSTATS_ENABLE */
-
-                    /* Send packets */
-                    if (tx->dpdk_port >= 0)
-                            nb_tx = rte_eth_tx_burst(
-                                    tx->dpdk_port, 0, bufs, nb_rx);
-
-                    /* Discard remained packets to release mbuf */
-                    if (unlikely(nb_tx < nb_rx)) {
-                            for (buf = nb_tx; buf < nb_rx; buf++)
-                                    rte_pktmbuf_free(bufs[buf]);
-                    }
-            }
-
-
 L2 Multicast Support
 --------------------
 
-SPP_VF also supports multicast for resolving ARP requests.
+``spp_vf`` supports multicast for resolving ARP requests.
 It is implemented as ``handle_l2multicast_packet()`` and called from
 ``classify_packet()`` for incoming multicast packets.
 
 .. code-block:: c
 
-  /* classify_packet() in classifier_mac.c */
-               /* L2 multicast(include broadcast) ? */
-               if (unlikely(is_multicast_ether_addr(&eth->d_addr))) {
-                       RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-                                       "multicast mac address.\n");
-                       handle_l2multicast_packet(rx_pkts[i],
-                                       classifier_info,
-                                       classified_data);
-                       continue;
-               }
+    /* classify_packet() in classifier_mac.c */
 
-For distributing multicast packet, it is cloned with
-``rte_mbuf_refcnt_update()``.
+    /* L2 multicast(include broadcast) ? */
+    if (unlikely(is_multicast_ether_addr(&eth->d_addr))) {
+            RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+                            "multicast mac address.\n");
+            handle_l2multicast_packet(rx_pkts[i],
+                            classifier_info,
+                            classified_data);
+            continue;
+    }
+
+Packets are cloned with ``rte_mbuf_refcnt_update()`` for distributing
+multicast packets.
 
 .. code-block:: c
 
     /* classifier_mac.c */
+
     /* handle L2 multicast(include broadcast) packet */
     static inline void
     handle_l2multicast_packet(struct rte_mbuf *pkt,
@@ -422,10 +249,11 @@ For distributing multicast packet, it is cloned with
             }
     }
 
+
 Two phase update for forwarding
 -------------------------------
 
-Updating netowrk configuration in ``spp_vf`` is done in a short period of
+Update of netowrk configuration in ``spp_vf`` is done in a short period of
 time, but not so short considering the time scale of packet forwarding.
 It might forward packets before the updating is completed possibly.
 To avoid such kind of situation, ``spp_vf`` has two phase update mechanism.
@@ -433,25 +261,25 @@ Status info is referred from forwarding process after the update is completed.
 
 .. code-block:: c
 
-        spp_flush(void)
-        {
-                int ret = SPP_RET_NG;
-                struct cancel_backup_info *backup_info = NULL;
+    int
+    flush_cmd(void)
+    {
+        int ret;
+        int *p_change_comp;
+        struct sppwk_comp_info *p_comp_info;
+        struct cancel_backup_info *backup_info;
 
-                spp_get_mng_data_addr(NULL, NULL, NULL,
-                                        NULL, NULL, NULL, &backup_info);
+        sppwk_get_mng_data(NULL, &p_comp_info, NULL, NULL, &p_change_comp,
+                &backup_info);
 
-                /* Initial setting of each interface. */
-                ret = flush_port();
-                        if (ret < SPP_RET_OK)
-                        return ret;
+        ret = update_port_info();
+        if (ret < SPP_RET_OK)
+            return ret;
 
-                /* Flush of core index. */
-                flush_core();
+        update_lcore_info();
 
-                /* Flush of component */
-                ret = flush_component();
+        ret = update_comp_info(p_comp_info, p_change_comp);
 
-                backup_mng_info(backup_info);
-                return ret;
-        }
+        backup_mng_info(backup_info);
+        return ret;
+    }

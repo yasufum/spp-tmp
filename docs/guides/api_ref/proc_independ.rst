@@ -100,7 +100,7 @@ logical cores if hyper threading is enabled.
     +-------+-----------------------+
 
 
-.. _table_spp_ctl_cpu_layout:
+.. _table_spp_ctl_cpu_layout_params:
 
 .. table:: Response params of getting CPU layout.
 
@@ -144,10 +144,13 @@ Response
             "core_id": 0,
             "lcores": [0, 1]
           },
-          ...
           {
             "core_id": 2,
             "lcores": [4, 5]
+          }
+          {
+            "core_id": 3,
+            "lcores": [6, 7]
           }
         ],
         "socket_id": 0
@@ -167,7 +170,7 @@ Response
 An array of CPU usage of each of SPP processes. This usage consists of
 two params, master lcore and lcore set including master and slaves.
 
-.. _table_spp_ctl_cpu_layout_codes:
+.. _table_spp_ctl_cpu_usage_codes:
 
 .. table:: Response code of CPU layout.
 
@@ -179,7 +182,7 @@ two params, master lcore and lcore set including master and slaves.
     +-------+-----------------------+
 
 
-.. _table_spp_ctl_cpu_layout:
+.. _table_spp_ctl_cpu_usage_params:
 
 .. table:: Response params of getting CPU layout.
 
