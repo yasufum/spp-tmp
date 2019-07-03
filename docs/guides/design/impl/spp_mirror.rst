@@ -6,81 +6,50 @@
 spp_mirror
 ==========
 
-Initializing
-------------
-
-A main thread of ``spp_mirror`` initialize eal by ``rte_eal_init()``.
-Then each of worker threads is launched from ``rte_eal_remote_launch()``
-by giving a function ``slave_main()`` for forwarding.
-
-.. code-block:: c
-
-    /* spp_mirror.c */
-    int ret_dpdk = rte_eal_init(argc, argv);
-
-    /* Start worker threads of classifier and forwarder */
-    unsigned int lcore_id = 0;
-    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-            rte_eal_remote_launch(slave_main, NULL, lcore_id);
-    }
+This section describes implementation of ``spp_mirror``.
+It consists of master thread and several worker threads for duplicating
+packets.
 
 
-Main function of slave thread
------------------------------
+Slave Main
+----------
 
-In ``slave_main()``, it calls ``mirror_proc()`` in which packet processing for
-duplicating is defined after finding a core on which running the duplicating.
+Main function of worker thread is defined as ``slave_main()`` in which
+for duplicating packets is ``mirror_proc()`` on each of lcores.
 
 .. code-block:: c
-
-	RTE_LOG(INFO, MIRROR, "Core[%d] Start.\n", lcore_id);
-	set_core_status(lcore_id, SPP_CORE_IDLE);
-
-	while ((status = spp_get_core_status(lcore_id)) !=
-			SPP_CORE_STOP_REQUEST) {
-		if (status != SPP_CORE_FORWARD)
-			continue;
-
-		if (spp_check_core_index(lcore_id)) {
-			/* Setting with the flush command trigger. */
-			info->ref_index = (info->upd_index+1) %
-					SPP_INFO_AREA_MAX;
-			core = get_core_info(lcore_id);
-		}
 
 		for (cnt = 0; cnt < core->num; cnt++) {
-			/*
-			 * mirror returns at once.
-			 * It is for processing multiple components.
-			 */
+
 			ret = mirror_proc(core->id[cnt]);
 			if (unlikely(ret != 0))
 				break;
 		}
-		if (unlikely(ret != 0)) {
-			RTE_LOG(ERR, MIRROR,
-				"Core[%d] Component Error. (id = %d)\n",
-					lcore_id, core->id[cnt]);
-			break;
-		}
-	}
 
-	set_core_status(lcore_id, SPP_CORE_STOP);
-	RTE_LOG(INFO, MIRROR, "Core[%d] End.\n", lcore_id);
 
-Packet mirroring
-----------------
+Mirroring Packets
+-----------------
 
-In ``mirror_proc()``, it receives packets from rx port.
+Worker thread receives and duplicate packets. There are two modes of copying
+packets, ``shallowcopy`` and ``deepcopy``.
+Deep copy is for duplicating whole of packet data, but less performance than
+shallow copy. Shallow copy duplicates only packet header and body is not shared
+among original packet and duplicated packet. So, changing packet data affects
+both of original and copied packet.
 
-.. code-block:: c
+You can configure using which of modes in Makefile. Default mode is
+``shallowcopy``. If you change the mode to ``deepcopy``, comment out this
+line of CFLAGS.
 
-        /* Receive packets */
-        nb_rx = spp_eth_rx_burst(rx->dpdk_port, 0, bufs, MAX_PKT_BURST);
+.. code-block:: makefile
 
-Each of received packet is copied with ``rte_pktmbuf_clone()`` if you use
-``shallowcopy`` defined as default in Makefile.
-If you use ``deepcopy``, several mbuf objects are allocated for copying.
+    # Default mode is shallow copy.
+    CFLAGS += -DSPP_MIRROR_SHALLOWCOPY
+
+This code is a part of ``mirror_proc()``. In this function,
+``rte_pktmbuf_clone()`` is just called if in shallow copy
+mode, or create a new packet with ``rte_pktmbuf_alloc()`` for duplicated
+packet if in deep copy mode.
 
 .. code-block:: c
 
