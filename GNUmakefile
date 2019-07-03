@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-VERSION := 18.08.2
+VERSION := 18.08.3
 
 ifneq ($(RTE_SDK),)
 # Default target, can be overriden by command line or environment
