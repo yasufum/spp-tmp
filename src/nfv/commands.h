@@ -188,7 +188,7 @@ parse_command(char *str)
 		RTE_ETH_FOREACH_DEV(dev_id) {
 			rte_eth_dev_get_name_by_port(dev_id, dev_name);
 			if (strlen(dev_name) > 0)
-				RTE_LOG(DEBUG, SPP_NFV, "Eth devs: %d\t%s\n",
+				RTE_LOG(DEBUG, SPP_NFV, "ethdevs:%2d %s\n",
 						dev_id, dev_name);
 		}
 

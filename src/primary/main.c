@@ -17,6 +17,9 @@
 #include "init.h"
 #include "primary.h"
 
+#include "shared/secondary/add_port.h"
+#include "shared/secondary/utils.h"
+
 /*
  * Buffer sizes of status message of primary. Total number of size
  * must be equal to MSG_SIZE 2048 defined in `shared/common.h`.
@@ -38,10 +41,19 @@
 
 #define POLL_TIMEOUT_MS 100
 
+/**
+ * Set of port id and type of resource UID, such as `vhost:1`. It is intended
+ * to be used for mapping to ethdev ID. as port_id_list.
+ */
+struct port_id_map {
+	int port_id;
+	enum port_type type;
+};
+
+struct port_id_map port_id_list[RTE_MAX_ETHPORTS];
+
 static sig_atomic_t on = 1;
-
 static enum cmd_type cmd = STOP;
-
 static struct pollfd pfd;
 
 /* global var - extern in header */
@@ -170,7 +182,7 @@ do_send(int *connected, int *sock, char *str)
 
 	ret = send(*sock, str, MSG_SIZE, 0);
 	if (ret == -1) {
-		RTE_LOG(ERR, PRIMARY, "send failed");
+		RTE_LOG(ERR, PRIMARY, "Failed to send\n");
 		*connected = 0;
 		return -1;
 	}
@@ -221,8 +233,6 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 		/* Tokenize path of spp_primary */
 		token_list[i] = strtok(path_spp_pri, "/");
 		while (token_list[i] != NULL) {
-			// RTE_LOG(DEBUG, PRIMARY, "token: %s\n",
-			//		token_list[i]);
 			i++;
 			num_token++;
 			token_list[i] = strtok(NULL, "/");
@@ -437,6 +447,128 @@ get_status_json(char *str)
 	return 0;
 }
 
+/**
+ * Add a port to spp_primary. Port is given as a resource UID which is a
+ * combination of port type and ID like as 'ring:0'.
+ */
+static int
+add_port(char *res_uid)
+{
+	uint16_t dev_id;
+	char *p_type;
+	int p_id;
+	int res;
+	uint16_t cnt = 0;
+
+	res = parse_resource_uid(res_uid, &p_type, &p_id);
+	if (res < 0)
+		return -1;
+
+	for (dev_id = 0; dev_id < RTE_MAX_ETHPORTS; dev_id++) {
+		if (port_id_list[dev_id].port_id == PORT_RESET)
+			break;
+		cnt += 1;
+	}
+
+	if (!strcmp(p_type, "vhost")) {
+		res = add_vhost_pmd(p_id);
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = VHOST;
+
+	} else if (!strcmp(p_type, "ring")) {
+		res = add_ring_pmd(p_id);
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = RING;
+
+	} else if (!strcmp(p_type, "pcap")) {
+		res = add_pcap_pmd(p_id);
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = PCAP;
+
+	} else if (!strcmp(p_type, "nullpmd")) {
+		res = add_null_pmd(p_id);
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = NULLPMD;
+	}
+
+	if (res < 0)
+		return -1;
+
+	return 0;
+}
+
+/* Find ethdev ID from resource UID to delete. */
+static uint16_t
+find_ethdev_id(int p_id, enum port_type ptype)
+{
+	int cnt;
+	struct port_id_map *p_map;
+
+	RTE_LOG(DEBUG, PRIMARY, "Finding ethdev_id, p_id: %d, ptype: %d\n",
+			p_id, ptype);
+
+	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
+		p_map = &port_id_list[cnt];
+		if (p_map == NULL)
+			RTE_LOG(ERR, PRIMARY, "Failed to find port_id.\n");
+		else {
+			if (p_map->port_id == p_id &&
+					p_map->type == ptype)
+				return cnt;
+		}
+	}
+
+	return PORT_RESET;
+}
+
+/* Delete port. */
+static int
+del_port(char *res_uid)
+{
+	uint16_t dev_id = 0;
+	char *p_type;
+	int p_id;
+	int res;
+
+	res = parse_resource_uid(res_uid, &p_type, &p_id);
+	if (res < 0) {
+		RTE_LOG(ERR, PRIMARY,
+			"Failed to parse resource UID\n");
+		return -1;
+	}
+
+	if (!strcmp(p_type, "vhost")) {
+		dev_id = find_ethdev_id(p_id, VHOST);
+		if (dev_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(dev_id);
+
+	} else if (!strcmp(p_type, "ring")) {
+		dev_id = find_ethdev_id(p_id, RING);
+		if (dev_id == PORT_RESET)
+			return -1;
+		rte_eth_dev_stop(dev_id);
+		rte_eth_dev_close(dev_id);
+
+	} else if (!strcmp(p_type, "pcap")) {
+		dev_id = find_ethdev_id(p_id, PCAP);
+		if (dev_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(dev_id);
+
+	} else if (!strcmp(p_type, "nullpmd")) {
+		dev_id = find_ethdev_id(p_id, NULLPMD);
+		if (dev_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(dev_id);
+	}
+
+	port_id_list[dev_id].port_id = PORT_RESET;
+	port_id_list[dev_id].type = UNDEF;
+
+	return 0;
+}
+
 static int
 parse_command(char *str)
 {
@@ -445,6 +577,8 @@ parse_command(char *str)
 	char *sec_args[NOF_TOKENS] = {NULL};
 	int ret = 0;
 	int i = 0;
+	uint16_t dev_id;
+	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 
 	memset(sec_name, '\0', 16);
 
@@ -469,12 +603,32 @@ parse_command(char *str)
 		memset(str, '\0', MSG_SIZE);
 		ret = get_status_json(str);
 
+		RTE_ETH_FOREACH_DEV(dev_id) {
+			rte_eth_dev_get_name_by_port(dev_id, dev_name);
+			if (strlen(dev_name) > 0)
+				RTE_LOG(DEBUG, PRIMARY, "Port list: %d\t%s\n",
+						dev_id, dev_name);
+		}
+
 	} else if (!strcmp(token_list[0], "launch")) {
 		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
 				token_list[0]);
 
 		ret = launch_sec_proc(sec_name,
 				strtod(token_list[1], NULL), sec_args);
+
+	} else if (!strcmp(token_list[0], "add")) {
+		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
+				token_list[0]);
+
+		if (add_port(token_list[1]) < 0)
+			RTE_LOG(ERR, PRIMARY, "Failed to add_port()\n");
+
+	} else if (!strcmp(token_list[0], "del")) {
+		RTE_LOG(DEBUG, PRIMARY, "Received del command\n");
+		cmd = STOP;
+		if (del_port(token_list[1]) < 0)
+			RTE_LOG(ERR, PRIMARY, "Failed to del_port()\n");
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, PRIMARY, "'exit' command received.\n");
@@ -568,6 +722,8 @@ int
 main(int argc, char *argv[])
 {
 	int sock = SOCK_RESET;
+	uint16_t dev_id;
+	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	int connected = 0;
 	char str[MSG_SIZE];
 	int flg_exit;  // used as res of parse_command() to exit if -1
@@ -586,6 +742,19 @@ main(int argc, char *argv[])
 
 	/* clear statistics */
 	clear_stats();
+
+	memset(port_id_list, 0x00,
+			sizeof(struct port_id_map) * RTE_MAX_ETHPORTS);
+	for (dev_id = 0; dev_id < RTE_MAX_ETHPORTS; dev_id++) {
+		ret = rte_eth_dev_get_name_by_port(dev_id, dev_name);
+		if (ret > -1) {
+			port_id_list[dev_id].port_id = dev_id;
+			port_id_list[dev_id].type = PHY;
+		} else {
+			port_id_list[dev_id].port_id = PORT_RESET;
+			port_id_list[dev_id].type = UNDEF;
+		}
+	}
 
 	/* put all other cores to sleep bar master */
 	rte_eal_mp_remote_launch(sleep_lcore, NULL, SKIP_MASTER);
