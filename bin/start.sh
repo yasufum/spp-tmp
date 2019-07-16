@@ -31,7 +31,9 @@ python3 ${SPP_DIR}/src/spp-ctl/spp-ctl -b ${SPP_HOST_IP} \
 echo "Start spp_primary"
 . ${SPP_DIR}/bin/spp_pri.sh
 clean_sock_files  # remove /tmp/sock* as initialization
-setup_vdevs  # you use vdevs if you have no phy ports
+setup_vhost_vdevs  # you use vdevs if you have no phy ports
+setup_ring_vdevs  # you use vdevs if you have no phy ports
+setup_tap_vdevs  # you use vdevs if you have no phy ports
 spp_pri  # launch spp_primary
 
 echo "Waiting for spp-ctl is ready ..."
