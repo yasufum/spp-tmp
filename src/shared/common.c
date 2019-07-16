@@ -163,3 +163,69 @@ int set_spp_ctl_port(int s_port)
 	spp_ctl_port = s_port;
 	return 0;
 }
+
+/**
+ * Get port type and port ID from ethdev name, such as `eth_vhost1` which
+ * can be retrieved with rte_eth_dev_get_name_by_port().
+ * In this case of `eth_vhost1`, port type is `VHOST` and port ID is `1`.
+ */
+int parse_dev_name(char *dev_name, int *port_type, int *port_id)
+{
+	char pid_str[12] = { 0 };
+	int pid_len;
+	int dev_name_len = strlen(dev_name);
+	int dev_str_len;
+
+	if (strncmp(dev_name, VDEV_PREFIX_RING,
+			strlen(VDEV_PREFIX_RING)) == 0) {
+		dev_str_len = strlen(VDEV_PREFIX_RING);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_PREFIX_RING),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = RING;
+
+	} else if (strncmp(dev_name, VDEV_PREFIX_VHOST,
+			strlen(VDEV_PREFIX_VHOST)) == 0) {
+		dev_str_len = strlen(VDEV_PREFIX_VHOST);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_PREFIX_VHOST),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = VHOST;
+
+	} else if (strncmp(dev_name, VDEV_PREFIX_PCAP,
+			strlen(VDEV_PREFIX_PCAP)) == 0) {
+		dev_str_len = strlen(VDEV_PREFIX_PCAP);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_PREFIX_PCAP),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = PCAP;
+
+	} else if (strncmp(dev_name, VDEV_PREFIX_TAP,
+			strlen(VDEV_PREFIX_TAP)) == 0) {
+		dev_str_len = strlen(VDEV_PREFIX_TAP);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_PREFIX_TAP),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = TAP;
+
+	} else if (strncmp(dev_name, VDEV_PREFIX_NULL,
+			strlen(VDEV_PREFIX_NULL)) == 0) {
+		dev_str_len = strlen(VDEV_PREFIX_NULL);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_PREFIX_NULL),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = PCAP;
+
+	/* TODO(yasufum) add checking invalid port type and return -1 */
+	} else {
+		*port_id = 0;
+		*port_type = PHY;
+	}
+
+	return 0;
+}

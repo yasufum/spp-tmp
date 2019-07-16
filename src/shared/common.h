@@ -43,6 +43,13 @@
 #define RTE_MP_RX_DESC_DEFAULT 512
 #define RTE_MP_TX_DESC_DEFAULT 512
 
+#define VDEV_PREFIX_RING  "net_ring"
+#define VDEV_PREFIX_VHOST "eth_vhost"
+#define VDEV_PREFIX_PCAP  "net_pcap"
+#define VDEV_PREFIX_TAP   "net_tap"
+#define VDEV_PREFIX_NULL  "eth_null"
+
+
 /* Command. */
 enum cmd_type {
 	STOP,
@@ -82,6 +89,7 @@ enum port_type {
 	VHOST,
 	PCAP,
 	NULLPMD,
+	TAP,
 	UNDEF,
 };
 
@@ -171,5 +179,14 @@ int get_spp_ctl_port(void);
  * @return 0 if succeeded, or -1 if failed.
  */
 int set_spp_ctl_port(int s_port);
+
+/**
+ * Get port type and port ID from ethdev name, such as `eth_vhost1` which
+ * can be retrieved with rte_eth_dev_get_name_by_port().
+ * In this case of `eth_vhost1`, port type is `VHOST` and port ID is `1`.
+ *
+ * @return 0 if succeeded, or -1 if failed.
+ */
+int parse_dev_name(char *dev_name, int *port_type, int *port_id);
 
 #endif
