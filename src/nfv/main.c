@@ -194,7 +194,10 @@ main(int argc, char *argv[])
 	unsigned int i;
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;
-	char log_msg[1024] = {'\0'};  /* temporary log message */
+	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
+	int port_type;
+	int nof_phy_port = 0;
+	char log_msg[1024] = { 0 };  /* temporary log message */
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
@@ -246,11 +249,26 @@ main(int argc, char *argv[])
 		if (!rte_eth_dev_is_valid_port(i))
 			continue;
 
+		int port_id;
+		rte_eth_dev_get_name_by_port(i, dev_name);
+		ret = parse_dev_name(dev_name, &port_type, &port_id);
+		if (ret < 0)
+			RTE_LOG(ERR, SPP_NFV, "Failed to parse dev_name.");
+		if (port_type == PHY) {
+			port_id = nof_phy_port;
+			nof_phy_port++;
+		}
+
 		/* Update ports_fwd_array with phy port. */
 		ports_fwd_array[i].in_port_id = i;
-		port_map[i].port_type = PHY;
-		port_map[i].id = i;
+		port_map[i].port_type = port_type;
+		port_map[i].id = port_id;
 		port_map[i].stats = &ports->port_stats[i];
+
+		/* TODO(yasufum) convert from int of port_type to char */
+		RTE_LOG(DEBUG, SPP_NFV, "Add port, type: %d, id: %d\n",
+				port_type, port_id);
+
 	}
 
 	/* Inspect lcores in use. */

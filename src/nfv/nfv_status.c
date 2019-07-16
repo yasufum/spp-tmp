@@ -111,6 +111,10 @@ append_port_info_json(char *str,
 			sprintf(str + strlen(str), "\"nullpmd:%u\",",
 					port_map[i].id);
 			break;
+		case TAP:
+			sprintf(str + strlen(str), "\"tap:%u\",",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			/* TODO(yasufum) Need to remove print for undefined ? */
 			sprintf(str + strlen(str), "\"udf\",");
@@ -191,6 +195,12 @@ append_patch_info_json(char *str,
 					"\"nullpmd:%u\",",
 					port_map[i].id);
 			break;
+		case TAP:
+			RTE_LOG(INFO, SHARED, "Type: TAP\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"tap:%u\",",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			RTE_LOG(INFO, SHARED, "Type: UDF\n");
 			/* TODO(yasufum) Need to remove print for undefined ? */
@@ -239,6 +249,12 @@ append_patch_info_json(char *str,
 				RTE_LOG(INFO, SHARED, "Type: NULLPMD\n");
 				sprintf(patch_str + strlen(patch_str),
 						"\"nullpmd:%u\"",
+						port_map[j].id);
+				break;
+			case TAP:
+				RTE_LOG(INFO, SHARED, "Type: TAP\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"tap:%u\"",
 						port_map[j].id);
 				break;
 			case UNDEF:

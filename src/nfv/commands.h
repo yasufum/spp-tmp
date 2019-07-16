@@ -151,7 +151,7 @@ static int
 parse_command(char *str)
 {
 	uint16_t dev_id;
-	char dev_name[RTE_DEV_NAME_MAX_LEN];
+	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 
 	char *token_list[MAX_PARAMETER] = {NULL};
 	int cli_id;
