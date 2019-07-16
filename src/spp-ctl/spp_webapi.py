@@ -452,6 +452,8 @@ class V1PrimaryHandler(BaseHandler):
     def set_route(self):
         self.route('/status', 'GET', callback=self.get_status)
         self.route('/status', 'DELETE', callback=self.clear_status)
+        self.route('/ports', 'PUT',
+                   callback=self.primary_port)
         self.route('/launch', 'PUT',
                    callback=self.launch_sec_proc)
         self.route('/', 'DELETE', callback=self.pri_exit)
@@ -477,6 +479,24 @@ class V1PrimaryHandler(BaseHandler):
     def clear_status(self):
         proc = self._get_proc()
         proc.clear()
+
+    # TODO(yasufum) change name and make it to shared method
+    def _validate_nfv_port(self, body):
+        for key in ['action', 'port']:
+            if key not in body:
+                raise KeyRequired(key)
+        if body['action'] not in ["add", "del"]:
+            raise KeyInvalid('action', body['action'])
+        self._validate_port(body['port'])
+
+    def primary_port(self, body):
+        self._validate_nfv_port(body)
+        proc = self._get_proc()
+
+        if body['action'] == "add":
+            proc.port_add(body['port'])
+        else:
+            proc.port_del(body['port'])
 
     def launch_sec_proc(self, body):  # the arg should be "body"
         for key in ['client_id', 'proc_name', 'eal', 'app']:

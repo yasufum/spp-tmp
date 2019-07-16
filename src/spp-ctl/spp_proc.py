@@ -293,6 +293,14 @@ class PrimaryProc(SppProc):
         return "clear"
 
     @exec_command
+    def port_add(self, port):
+        return "add {port}".format(**locals())
+
+    @exec_command
+    def port_del(self, port):
+        return "del {port}".format(**locals())
+
+    @exec_command
     def do_launch_sec_proc(self, args):
         proc_name = args['proc_name']
         sec_id = args['client_id']
