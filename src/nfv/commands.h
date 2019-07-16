@@ -31,13 +31,12 @@ do_del(char *res_uid)
 		port_id = find_port_id(p_id, VHOST);
 		if (port_id == PORT_RESET)
 			return -1;
+		dev_detach_by_port_id(port_id);
 
 	} else if (!strcmp(p_type, "ring")) {
-		RTE_LOG(DEBUG, SPP_NFV, "Del ring id %d\n", p_id);
 		port_id = find_port_id(p_id, RING);
 		if (port_id == PORT_RESET)
 			return -1;
-
 		rte_eth_dev_stop(port_id);
 		rte_eth_dev_close(port_id);
 
@@ -45,14 +44,12 @@ do_del(char *res_uid)
 		port_id = find_port_id(p_id, PCAP);
 		if (port_id == PORT_RESET)
 			return -1;
-
 		dev_detach_by_port_id(port_id);
 
 	} else if (!strcmp(p_type, "nullpmd")) {
 		port_id = find_port_id(p_id, NULLPMD);
 		if (port_id == PORT_RESET)
 			return -1;
-
 		dev_detach_by_port_id(port_id);
 
 	}
@@ -153,6 +150,9 @@ do_connection(int *connected, int *sock)
 static int
 parse_command(char *str)
 {
+	uint16_t dev_id;
+	char dev_name[RTE_DEV_NAME_MAX_LEN];
+
 	char *token_list[MAX_PARAMETER] = {NULL};
 	int cli_id;
 	int max_token = 0;
@@ -184,6 +184,13 @@ parse_command(char *str)
 			get_sec_stats_json(str, get_client_id(), "idling",
 					lcore_id_used,
 					ports_fwd_array, port_map);
+
+		RTE_ETH_FOREACH_DEV(dev_id) {
+			rte_eth_dev_get_name_by_port(dev_id, dev_name);
+			if (strlen(dev_name) > 0)
+				RTE_LOG(DEBUG, SPP_NFV, "Eth devs: %d\t%s\n",
+						dev_id, dev_name);
+		}
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
