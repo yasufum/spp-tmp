@@ -556,9 +556,20 @@ main(int argc, char *argv[])
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
+		int port_type, port_id;
+		char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
+		int nof_rings = 0;
+		for (int i = 0; i < RTE_MAX_ETHPORTS; i++) {
+			if (!rte_eth_dev_is_valid_port(i))
+				continue;
+			rte_eth_dev_get_name_by_port(i, dev_name);
+			ret = parse_dev_name(dev_name, &port_type, &port_id);
+			if (port_type == RING)
+				nof_rings++;
+		}
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				g_iface_info.nof_rings);
+				nof_rings);
 		if (unlikely(ret_ringlatency != SPP_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */

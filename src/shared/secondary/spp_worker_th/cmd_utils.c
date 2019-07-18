@@ -226,10 +226,6 @@ log_interface_info(const struct iface_info *iface_info)
 {
 	const struct sppwk_port_info *port = NULL;
 	int cnt = 0;
-	RTE_LOG(DEBUG, APP, "interface phy=%d, vhost=%d, ring=%d\n",
-			iface_info->nof_phys,
-			iface_info->nof_vhosts,
-			iface_info->nof_rings);
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->phy[cnt];
 		if (port->iface_type == UNDEF)
