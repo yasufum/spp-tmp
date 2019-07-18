@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
-		return -1;
+		rte_exit(EXIT_FAILURE, "Invalid EAL arguments\n");
 
 	argc -= ret;
 	argv += ret;
