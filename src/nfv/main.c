@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 		rte_eth_dev_get_name_by_port(i, dev_name);
 		ret = parse_dev_name(dev_name, &port_type, &port_id);
 		if (ret < 0)
-			RTE_LOG(ERR, SPP_NFV, "Failed to parse dev_name.");
+			RTE_LOG(ERR, SPP_NFV, "Failed to parse dev_name.\n");
 		if (port_type == PHY) {
 			port_id = nof_phy_port;
 			nof_phy_port++;

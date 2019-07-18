@@ -193,11 +193,18 @@ struct sppwk_comp_info {
 };
 
 /* Manage number of interfaces  and port information as global variable. */
+/**
+ * TODO(yasufum) confirm why nof_phys, nof_vhosts and nof_rings are required
+ * not used in anywhere.
+ *
+ * TODO(yasufum) confirm why having arrays of types. it seems OK having
+ * just one array.
+ */
 struct iface_info {
 	int nof_phys;    /* Number of phy ports */
 	int nof_vhosts;  /* Number of vhost ports */
 	int nof_rings;   /* Number of ring ports */
-	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info phy[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info vhost[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 };

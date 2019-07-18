@@ -202,7 +202,7 @@ get_ethdev_port_id(enum port_type iface_type, int iface_no)
 	sppwk_get_mng_data(&iface_info, NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:
-		return iface_info->nic[iface_no].ethdev_port_id;
+		return iface_info->phy[iface_no].ethdev_port_id;
 	case RING:
 		return iface_info->ring[iface_no].ethdev_port_id;
 	case VHOST:
