@@ -484,7 +484,7 @@ slave_main(void *arg __attribute__ ((unused)))
 int
 main(int argc, char *argv[])
 {
-	int ret = SPP_RET_NG;
+	int ret;
 	char ctl_ip[IPADDR_LEN] = { 0 };
 	int ctl_port;
 	int ret_cmd_init;
@@ -505,20 +505,24 @@ main(int argc, char *argv[])
 	signal(SIGTERM, stop_process);
 	signal(SIGINT,  stop_process);
 
+	ret = rte_eal_init(argc, argv);
+	if (unlikely(ret < 0))
+		rte_exit(EXIT_FAILURE, "Invalid EAL arguments.\n");
+
+	argc -= ret;
+	argv += ret;
+
 	/**
 	 * It should be initialized outside of while loop, or failed to
 	 * compile because it is referred when finalize `g_core_info`.
 	 */
 	master_lcore = rte_get_master_lcore();
 
+	/**
+	 * If any failure is occured in the while block, break to go the end
+	 * of the block to finalize.
+	 */
 	while (1) {
-		int ret_dpdk = rte_eal_init(argc, argv);
-		if (unlikely(ret_dpdk < 0))
-			break;
-
-		argc -= ret_dpdk;
-		argv += ret_dpdk;
-
 		/* Parse spp_mirror specific parameters */
 		int ret_parse = parse_app_args(argc, argv);
 		if (unlikely(ret_parse != 0))
