@@ -151,11 +151,8 @@ struct sppwk_comp_info {
 };
 
 /* Manage interfaces and port information as global variable */
-/* TODO(yasufum) confirm why nof_rings is required not used in anywhere. */
 struct iface_info {
-	int nof_phys;    /* Number of phy ports */
-	int nof_rings;   /* Number of ring ports */
-	struct sppwk_port_info nic[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info phy[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 };
 

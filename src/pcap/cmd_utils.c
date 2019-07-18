@@ -154,7 +154,7 @@ get_iface_info(enum port_type iface_type, int iface_no)
 
 	switch (iface_type) {
 	case PHY:
-		return &iface_info->nic[iface_no];
+		return &iface_info->phy[iface_no];
 	case RING:
 		return &iface_info->ring[iface_no];
 	default:
@@ -174,10 +174,10 @@ init_iface_info(void)
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		p_iface_info->nic[port_cnt].iface_type = UNDEF;
-		p_iface_info->nic[port_cnt].iface_no   = port_cnt;
-		p_iface_info->nic[port_cnt].ethdev_port_id  = -1;
-		p_iface_info->nic[port_cnt].cls_attrs.vlantag.vid =
+		p_iface_info->phy[port_cnt].iface_type = UNDEF;
+		p_iface_info->phy[port_cnt].iface_no   = port_cnt;
+		p_iface_info->phy[port_cnt].ethdev_port_id  = -1;
+		p_iface_info->phy[port_cnt].cls_attrs.vlantag.vid =
 				ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
@@ -199,21 +199,44 @@ init_core_info(void)
 	*g_mng_data_addr.p_capture_status = SPP_CAPTURE_IDLE;
 }
 
-/* Setup port info of port on host */
+/* Initialize mng data of ports on host */
 static int
-set_nic_interface(void)
+init_host_port_info(void)
 {
-	int nic_cnt = 0;
+	int port_type, port_id;
+	int i, ret;
+	int nof_phys = 0;
+	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 
-	/* NIC Setting */
-	p_iface_info->nof_phys = rte_eth_dev_count_avail();
-	if (p_iface_info->nof_phys > RTE_MAX_ETHPORTS)
-		p_iface_info->nof_phys = RTE_MAX_ETHPORTS;
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+		if (!rte_eth_dev_is_valid_port(i))
+			continue;
 
-	for (nic_cnt = 0; nic_cnt < p_iface_info->nof_phys; nic_cnt++) {
-		p_iface_info->nic[nic_cnt].iface_type   = PHY;
-		p_iface_info->nic[nic_cnt].ethdev_port_id = nic_cnt;
+		rte_eth_dev_get_name_by_port(i, dev_name);
+		ret = parse_dev_name(dev_name, &port_type, &port_id);
+		if (ret < 0)
+			RTE_LOG(ERR, PCAP_UTILS, "Failed to parse dev_name.\n");
+
+		if (port_type == PHY) {
+			port_id = nof_phys;
+			nof_phys++;
+		}
+
+		switch (port_type) {
+		case PHY:
+			p_iface_info->phy[port_id].iface_type = port_type;
+			p_iface_info->phy[port_id].ethdev_port_id = port_id;
+			break;
+		case RING:
+			p_iface_info->ring[port_id].iface_type = port_type;
+			p_iface_info->ring[port_id].ethdev_port_id = port_id;
+			break;
+		default:
+			RTE_LOG(ERR, PCAP_UTILS, "Unsupported port on host, "
+				"type:%d, id:%d.\n",
+				port_type, port_id);
+		}
 	}
 
 	return SPPWK_RET_OK;
@@ -227,8 +250,8 @@ init_mng_data(void)
 	init_iface_info();
 	init_core_info();
 
-	int ret_nic = set_nic_interface();
-	if (unlikely(ret_nic != SPPWK_RET_OK))
+	int ret = init_host_port_info();
+	if (unlikely(ret != SPPWK_RET_OK))
 		return SPPWK_RET_NG;
 
 	return SPPWK_RET_OK;
