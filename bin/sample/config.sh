@@ -11,9 +11,9 @@ PRI_MEM=1024
 PRI_MEMCHAN=4  # change for your memory channels.
 NUM_RINGS=8
 PRI_PORTMASK=0x03  # total num of ports of spp_primary.
-#PRI_VHOST_IDS=(11 12)  # you use if you have no phy ports.
-#PRI_RING_IDS=(1 2)  # you use if you have no phy ports.
-#PRI_TAP_IDS=(1 2)  # you use if you have no phy ports.
+#PRI_VHOST_VDEVS=(11 12)  # you use if you have no phy ports.
+#PRI_RING_VDEVS=(1 2)  # you use if you have no phy ports.
+#PRI_TAP_VDEVS=(1 2)  # you use if you have no phy ports.
 
 # You do not need to change usually.
 # Log files created in 'spp/log/'.
