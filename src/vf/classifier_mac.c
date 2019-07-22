@@ -337,7 +337,7 @@ static int
 init_component_info(struct cls_comp_info *cmp_info,
 		const struct sppwk_comp_info *wk_comp_info)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	struct mac_classifier *mac_cls;
 	struct ether_addr eth_addr;
@@ -391,7 +391,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 			cmp_info->mac_clfs[vid] =
 					create_mac_classification();
 			if (unlikely(cmp_info->mac_clfs[vid] == NULL))
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 		}
 		mac_cls = cmp_info->mac_clfs[vid];
 
@@ -429,7 +429,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 					"table. ret=%d, vid=%hu, "
 					"mac_addr=%s\n",
 					ret, vid, mac_addr_str);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
@@ -443,7 +443,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 				tx_port->ethdev_port_id);
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* uninitialize classifier information. */
@@ -537,7 +537,7 @@ get_general_default_classified_index(struct cls_comp_info *cmp_info)
 	if (unlikely(mac_cls == NULL)) {
 		LOG_DBG(cmp_info->name, "Untagged's default is not set. "
 				"vid=%d\n", (int)VLAN_UNTAGGED_VID);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	return mac_cls->default_cls_idx;
@@ -726,7 +726,7 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 
 	/* initialize update side classifier information */
 	ret = init_component_info(cls_info, wk_comp_info);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Cannot update classifier, ret=%d.\n", ret);
 		return ret;
@@ -748,7 +748,7 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 			"Done update classifier, id=%u.\n", wk_id);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* classifier(mac address) thread function. */
@@ -783,7 +783,7 @@ spp_classifier_mac_do(int id)
 	if (!(clsd_data_rx->iface_type != UNDEF &&
 			cmp_info->nof_tx_ports >= 1 &&
 			cmp_info->mac_addr_entry == 1))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* drain tx packets, if buffer is not filled for interval */
 	cur_tsc = rte_rdtsc();
@@ -803,7 +803,7 @@ spp_classifier_mac_do(int id)
 	}
 
 	if (clsd_data_rx->iface_type == UNDEF)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* retrieve packets */
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -815,12 +815,12 @@ spp_classifier_mac_do(int id)
 			rx_pkts, MAX_PKT_BURST);
 #endif
 	if (unlikely(n_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* classify and interval that transmit burst packet */
 	classify_packet(rx_pkts, n_rx, cmp_info, clsd_data_tx);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* classifier iterate component information */
@@ -828,7 +828,7 @@ int
 get_classifier_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	int nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
 	struct management_info *mng_info;
@@ -843,7 +843,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 				"Classifier is not used "
 				"(comp_id=%d, lcore_id=%d, type=%d).\n",
 				id, lcore_id, SPPWK_TYPE_CLS);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
@@ -868,10 +868,10 @@ get_classifier_status(unsigned int lcore_id, int id,
 	ret = (*params->element_proc)(
 		params, lcore_id, cmp_info->name, SPPWK_TYPE_CLS_STR,
 		nof_rx, rx_ports, nof_tx, tx_ports);
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret != SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -973,7 +973,7 @@ add_classifier_table_val(
 		}
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Iterate classifier_table to create response to status command */
@@ -987,10 +987,10 @@ _add_classifier_table(
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Cannot iterate classifier_mac_table.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -1005,7 +1005,7 @@ int
 add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	struct spp_iterate_classifier_table_params itr_params;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -1013,16 +1013,16 @@ add_classifier_table(const char *name, char **output,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	itr_params.output = tmp_buff;
 	itr_params.element_proc = append_classifier_element_value;
 
 	ret = _add_classifier_table(&itr_params);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		spp_strbuf_free(itr_params.output);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(output, name, itr_params.output);

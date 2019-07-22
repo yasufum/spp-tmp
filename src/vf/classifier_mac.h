@@ -22,8 +22,8 @@ struct spp_iterate_classifier_table_params;
 /**
  * classifier(mac address) initialize globals.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int spp_classifier_mac_init(void);
 
@@ -43,8 +43,8 @@ void init_classifier_info(int component_id);
  * @param id
  *  The unique component ID.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int spp_classifier_mac_do(int id);
 
@@ -55,8 +55,8 @@ int spp_classifier_mac_do(int id);
  *  Point to struct spp_iterate_classifier_table_params.@n
  *  Detailed data of classifier table.
  *
- * @retval SPP_RET_OK succeeded.
- * @retval SPP_RET_NG failed.
+ * @retval SPPWK_RET_OK succeeded.
+ * @retval SPPWK_RET_NG failed.
  */
 int add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params);
@@ -67,8 +67,8 @@ int add_classifier_table_val(
  * @param[in] lcore_id Lcore ID for classifier.
  * @param[in] id Unique component ID.
  * @param[in,out] params Pointer to detailed data of classifier status.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 /**
  * TODO(yasufum) Consider to move this function to `vf_cmd_runner.c`.

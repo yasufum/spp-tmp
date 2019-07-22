@@ -50,7 +50,7 @@ update_cls_table(enum sppwk_action wk_action,
 	if (unlikely(mac_int64 == -1)) {
 		RTE_LOG(ERR, VF_CMD_RUNNER, "Invalid MAC address `%s`.\n",
 				mac_str);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	mac_uint64 = (uint64_t)mac_int64;
 
@@ -58,12 +58,12 @@ update_cls_table(enum sppwk_action wk_action,
 	if (unlikely(port_info == NULL)) {
 		RTE_LOG(ERR, VF_CMD_RUNNER, "Failed to get port %d:%d.\n",
 				port->iface_type, port->iface_no);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	if (unlikely(port_info->iface_type == UNDEF)) {
 		RTE_LOG(ERR, VF_CMD_RUNNER, "Port %d:%d doesn't exist.\n",
 				port->iface_type, port->iface_no);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (wk_action == SPPWK_ACT_DEL) {
@@ -71,13 +71,13 @@ update_cls_table(enum sppwk_action wk_action,
 				port_info->cls_attrs.vlantag.vid != vid) {
 			RTE_LOG(ERR, VF_CMD_RUNNER,
 					"Unexpected VLAN ID `%d`.\n", vid);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		if ((port_info->cls_attrs.mac_addr != 0) &&
 				port_info->cls_attrs.mac_addr != mac_uint64) {
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Unexpected MAC %s.\n",
 					mac_str);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		/* Initialize deleted attributes again. */
@@ -91,7 +91,7 @@ update_cls_table(enum sppwk_action wk_action,
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Used port %d:%d, vid %d != %d.\n",
 					port->iface_type, port->iface_no,
 					port_info->cls_attrs.vlantag.vid, vid);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		if (unlikely(port_info->cls_attrs.mac_addr != 0)) {
 			/* TODO(yasufum) why two macs are required in msg ? */
@@ -99,7 +99,7 @@ update_cls_table(enum sppwk_action wk_action,
 					port->iface_type, port->iface_no,
 					port_info->cls_attrs.mac_addr_str,
 					mac_str);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		/* Update attrs with validated params. */
@@ -109,7 +109,7 @@ update_cls_table(enum sppwk_action wk_action,
 	}
 
 	set_component_change_port(port_info, SPPWK_PORT_DIR_TX);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Assign worker thread or remove on specified lcore. */
@@ -142,21 +142,21 @@ update_comp(enum sppwk_action wk_action, const char *name,
 			RTE_LOG(ERR, VF_CMD_RUNNER,
 					"Not available lcore %d for %s.\n",
 					lcore_id, "SPPWK_LCORE_UNUSED");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		comp_lcore_id = sppwk_get_lcore_id(name);
 		if (comp_lcore_id >= 0) {
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Component name '%s' is already "
 				"used.\n", name);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		comp_lcore_id = get_free_lcore_id();
 		if (comp_lcore_id < 0) {
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Cannot assign component over the "
 				"maximum number.\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		core = &info->core[info->upd_index];
@@ -170,7 +170,7 @@ update_comp(enum sppwk_action wk_action, const char *name,
 
 		core->id[core->num] = comp_lcore_id;
 		core->num++;
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		tmp_lcore_id = lcore_id;
 		*(change_component + comp_lcore_id) = 1;
 		break;
@@ -178,7 +178,7 @@ update_comp(enum sppwk_action wk_action, const char *name,
 	case SPPWK_ACT_STOP:
 		comp_lcore_id = sppwk_get_lcore_id(name);
 		if (comp_lcore_id < 0)
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 
 		comp_info = (comp_info_base + comp_lcore_id);
 		tmp_lcore_id = comp_info->lcore_id;
@@ -196,12 +196,12 @@ update_comp(enum sppwk_action wk_action, const char *name,
 		if (ret_del >= 0)
 			core->num--;
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		*(change_component + comp_lcore_id) = 0;
 		break;
 
 	default:  /* Unexpected case. */
-		ret = SPP_RET_NG;
+		ret = SPPWK_RET_NG;
 		break;
 	}
 
@@ -227,25 +227,25 @@ check_vf_port_count(int component_type, enum sppwk_port_dir dir,
 	switch (component_type) {
 	case SPPWK_TYPE_FWD:
 		if (nof_rx > 1 || nof_tx > 1)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		break;
 
 	case SPPWK_TYPE_MRG:
 		if (nof_tx > 1)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		break;
 
 	case SPPWK_TYPE_CLS:
 		if (nof_rx > 1)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		break;
 
 	default:
 		/* Illegal component type. */
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Port add or del to execute it */
@@ -256,7 +256,7 @@ update_port(enum sppwk_action wk_action,
 		const char *name,
 		const struct sppwk_port_attrs *port_attrs)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int port_idx;
 	int ret_del = -1;
 	int comp_lcore_id = 0;
@@ -272,7 +272,7 @@ update_port(enum sppwk_action wk_action,
 	if (comp_lcore_id < 0) {
 		RTE_LOG(ERR, VF_CMD_RUNNER, "Unknown component by port command. "
 				"(component = %s)\n", name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	sppwk_get_mng_data(NULL, &comp_info_base, NULL, NULL,
 			&change_component, NULL);
@@ -291,12 +291,12 @@ update_port(enum sppwk_action wk_action,
 		/* Check if over the maximum num of ports of component. */
 		if (check_vf_port_count(comp_info->wk_type, dir,
 				comp_info->nof_rx,
-				comp_info->nof_tx) != SPP_RET_OK)
-			return SPP_RET_NG;
+				comp_info->nof_tx) != SPPWK_RET_OK)
+			return SPPWK_RET_NG;
 
 		/* Check if the port_info is included in array `ports`. */
 		port_idx = get_idx_port_info(port_info, *nof_ports, ports);
-		if (port_idx >= SPP_RET_OK) {
+		if (port_idx >= SPPWK_RET_OK) {
 			/* registered */
 			if (port_attrs->ops == SPPWK_PORT_OPS_ADD_VLAN) {
 				while ((cnt < PORT_ABL_MAX) &&
@@ -306,21 +306,21 @@ update_port(enum sppwk_action wk_action,
 				if (cnt >= PORT_ABL_MAX) {
 					RTE_LOG(ERR, VF_CMD_RUNNER, "update VLAN tag "
 						"Non-registratio\n");
-					return SPP_RET_NG;
+					return SPPWK_RET_NG;
 				}
 				memcpy(&port_info->port_attrs[cnt], port_attrs,
 					sizeof(struct sppwk_port_attrs));
 
-				ret = SPP_RET_OK;
+				ret = SPPWK_RET_OK;
 				break;
 			}
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		}
 
 		if (*nof_ports >= RTE_MAX_ETHPORTS) {
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Cannot assign port over the "
 				"maximum number.\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		if (port_attrs->ops != SPPWK_PORT_OPS_NONE) {
@@ -332,7 +332,7 @@ update_port(enum sppwk_action wk_action,
 			if (cnt >= PORT_ABL_MAX) {
 				RTE_LOG(ERR, VF_CMD_RUNNER,
 						"No space of port ability.\n");
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			memcpy(&port_info->port_attrs[cnt], port_attrs,
 					sizeof(struct sppwk_port_attrs));
@@ -342,7 +342,7 @@ update_port(enum sppwk_action wk_action,
 		ports[*nof_ports] = port_info;
 		(*nof_ports)++;
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 
 	case SPPWK_ACT_DEL:
@@ -360,11 +360,11 @@ update_port(enum sppwk_action wk_action,
 		if (ret_del == 0)
 			(*nof_ports)--; /* If deleted, decrement number. */
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 
 	default:  /* This case cannot be happend without invlid wk_action. */
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*(change_component + comp_lcore_id) = 1;
@@ -421,7 +421,7 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 
 	default:
 		/* Do nothing. */
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 	}
 
@@ -454,7 +454,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 						"information. "
 						"(core = %d, type = %d)\n",
 						lcore_id, SPPWK_TYPE_NONE);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			continue;
 		}
@@ -478,12 +478,12 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 						"information. "
 						"(core = %d, type = %d)\n",
 						lcore_id, comp_info->wk_type);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 		}
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Add entry of core info of worker to a response in JSON such as "core:0". */
@@ -491,7 +491,7 @@ int
 add_core(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	struct spp_iterate_core_params itr_params;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -499,16 +499,16 @@ add_core(const char *name, char **output,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	itr_params.output = tmp_buff;
 	itr_params.element_proc = append_core_element_value;
 
 	ret = spp_iterate_core_info(&itr_params);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		spp_strbuf_free(itr_params.output);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(output, name, itr_params.output);
@@ -544,10 +544,10 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 					"( component = %s, type = %d)\n",
 					comp_info->name,
 					comp_info->wk_type);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -561,7 +561,7 @@ append_classifier_element_value(
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *buff, *tmp_buff;
 	char port_str[CMD_TAG_APPEND_SIZE];
 	char value_str[STR_LEN_SHORT];
@@ -577,7 +577,7 @@ append_classifier_element_value(
 
 	ret = append_json_str_value(&tmp_buff, "type",
 			CLS_TYPE_A_LIST[cls_type]);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	memset(value_str, 0x00, STR_LEN_SHORT);
@@ -598,7 +598,7 @@ append_classifier_element_value(
 		return ret;
 
 	ret = append_json_str_value(&tmp_buff, "port", port_str);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	ret = append_json_block_brackets(&buff, "", tmp_buff);

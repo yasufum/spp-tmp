@@ -58,7 +58,7 @@ int
 get_forwarder_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int cnt;
 	const char *component_type = NULL;
 	struct forward_info *fwd_info = &g_forward_info[id];
@@ -71,7 +71,7 @@ get_forwarder_status(unsigned int lcore_id, int id,
 				"Forwarder is not used. "
 				"(id=%d, lcore=%d, type=%d).\n",
 				id, lcore_id, fwd_path->wk_type);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (fwd_path->wk_type == SPPWK_TYPE_MRG)
@@ -96,10 +96,10 @@ get_forwarder_status(unsigned int lcore_id, int id,
 		params, lcore_id,
 		fwd_path->name, component_type,
 		fwd_path->nof_rx, rx_ports, fwd_path->nof_tx, tx_ports);
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret != SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Update forward info */
@@ -124,14 +124,14 @@ update_forwarder(struct sppwk_comp_info *comp_info)
 			"Invalid forwarder type or num of RX ports "
 			"(id=%d, type=%d, nof_rx=%d).\n",
 			comp_info->comp_id, comp_info->wk_type, nof_rx);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	if (unlikely(nof_tx != 0) && unlikely(nof_tx != 1)) {
 		RTE_LOG(ERR, FORWARD,
 			"Invalid forwarder type or num of TX ports "
 			"(id=%d, type=%d, nof_tx=%d).\n",
 			comp_info->comp_id, comp_info->wk_type, nof_tx);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	memset(fwd_path, 0x00, sizeof(struct forward_path));
@@ -163,7 +163,7 @@ update_forwarder(struct sppwk_comp_info *comp_info)
 			comp_info->comp_id, comp_info->name,
 			comp_info->wk_type);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Change index of forward info */
@@ -203,11 +203,11 @@ forward_packets(int id)
 	if (path->wk_type == SPPWK_TYPE_MRG) {
 		/* merger */
 		if (!(path->nof_tx == 1 && path->nof_rx >= 1))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 	} else {
 		/* forwarder */
 		if (!(path->nof_tx == 1 && path->nof_rx == 1))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 	}
 
 	for (cnt = 0; cnt < path->nof_rx; cnt++) {
@@ -242,5 +242,5 @@ forward_packets(int id)
 				rte_pktmbuf_free(bufs[buf]);
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }

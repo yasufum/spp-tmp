@@ -98,9 +98,9 @@ parse_app_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (parse_client_id(&cli_id, optarg) != SPP_RET_OK) {
+			if (parse_client_id(&cli_id, optarg) != SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			set_client_id(cli_id);
 
@@ -113,28 +113,28 @@ parse_app_args(int argc, char *argv[])
 			ret = parse_server(&ctl_ip, &ctl_port, optarg);
 			set_spp_ctl_ip(ctl_ip);
 			set_spp_ctl_port(ctl_port);
-			if (ret != SPP_RET_OK) {
+			if (ret != SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			server_flg = 1;
 			break;
 		default:
 			usage(progname);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	/* Check mandatory parameters */
 	if ((proc_flg == 0) || (server_flg == 0)) {
 		usage(progname);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	RTE_LOG(INFO, APP,
 			"Parsed app args (client_id=%d,server=%s:%d,"
 			"vhost_client=%d)\n",
 			cli_id, ctl_ip, ctl_port, get_vhost_cli_mode());
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Main process of slave core */
@@ -156,7 +156,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		if (status != SPPWK_LCORE_RUNNING)
 			continue;
 
-		if (spp_check_core_update(lcore_id) == SPP_RET_OK) {
+		if (spp_check_core_update(lcore_id) == SPPWK_RET_OK) {
 			/* Setting with the flush command trigger. */
 			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);
@@ -194,7 +194,7 @@ slave_main(void *arg __attribute__ ((unused)))
 /**
  * Main function
  *
- * Return SPP_RET_NG explicitly if error is occurred.
+ * Return SPPWK_RET_NG explicitly if error is occurred.
  */
 int
 main(int argc, char *argv[])
@@ -240,24 +240,24 @@ main(int argc, char *argv[])
 	while (1) {
 		/* Parse spp_vf specific parameters */
 		int ret_parse = parse_app_args(argc, argv);
-		if (unlikely(ret_parse != SPP_RET_OK))
+		if (unlikely(ret_parse != SPPWK_RET_OK))
 			break;
 
 		if (sppwk_set_mng_data(&g_iface_info, g_component_info,
 					g_core_info, g_change_core,
 					g_change_component,
-					&g_backup_info) < SPP_RET_OK) {
+					&g_backup_info) < SPPWK_RET_OK) {
 			RTE_LOG(ERR, APP,
 				"Failed to set management data.\n");
 			break;
 		}
 
 		int ret_mng = init_mng_data();
-		if (unlikely(ret_mng != SPP_RET_OK))
+		if (unlikely(ret_mng != SPPWK_RET_OK))
 			break;
 
 		int ret_classifier_mac_init = spp_classifier_mac_init();
-		if (unlikely(ret_classifier_mac_init != SPP_RET_OK))
+		if (unlikely(ret_classifier_mac_init != SPPWK_RET_OK))
 			break;
 
 		init_forwarder();
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 		get_spp_ctl_ip(ctl_ip);
 		ctl_port = get_spp_ctl_port();
 		ret_cmd_init = sppwk_cmd_runner_conn(ctl_ip, ctl_port);
-		if (unlikely(ret_cmd_init != SPP_RET_OK))
+		if (unlikely(ret_cmd_init != SPPWK_RET_OK))
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
 				nof_rings);
-		if (unlikely(ret_ringlatency != SPP_RET_OK))
+		if (unlikely(ret_ringlatency != SPPWK_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 		/* Set the status of main thread to idle */
 		g_core_info[master_lcore].status = SPPWK_LCORE_IDLING;
 		int ret_wait = check_core_status_wait(SPPWK_LCORE_IDLING);
-		if (unlikely(ret_wait != SPP_RET_OK))
+		if (unlikely(ret_wait != SPPWK_RET_OK))
 			break;
 
 		/* Start forwarding */
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 		backup_mng_info(&g_backup_info);
 
 		/* Enter loop for accepting commands */
-		int ret_do = SPP_RET_OK;
+		int ret_do = SPPWK_RET_OK;
 #ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[master_lcore].status !=
 				SPPWK_LCORE_REQ_STOP)) {
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 #endif
 			/* Receive command */
 			ret_do = sppwk_run_cmd();
-			if (unlikely(ret_do != SPP_RET_OK))
+			if (unlikely(ret_do != SPPWK_RET_OK))
 				break;
 
 		       /*
@@ -331,19 +331,19 @@ main(int argc, char *argv[])
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
-		if (unlikely(ret_do != SPP_RET_OK)) {
+		if (unlikely(ret_do != SPPWK_RET_OK)) {
 			set_all_core_status(SPPWK_LCORE_REQ_STOP);
 			break;
 		}
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 	}
 
 	/* Finalize to exit */
 	g_core_info[master_lcore].status = SPPWK_LCORE_STOPPED;
 	int ret_core_end = check_core_status_wait(SPPWK_LCORE_STOPPED);
-	if (unlikely(ret_core_end != SPP_RET_OK))
+	if (unlikely(ret_core_end != SPPWK_RET_OK))
 		RTE_LOG(ERR, APP, "Failed to terminate master thread.\n");
 
 	/*

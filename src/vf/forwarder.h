@@ -33,8 +33,8 @@ void init_forwarder(void);
  * as an argument of void and typecasted to spp_config_info.
  *
  * @param[in] id Unique component ID.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int forward_packets(int id);
 
@@ -44,8 +44,8 @@ int forward_packets(int id);
  * @param lcore_id Lcore ID for forwarder and merger.
  * @param id Unique component ID.
  * @param params Pointer detailed data of forwarder and merger status.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 /**
  * TODO(yasufum) Consider to move this function to `vf_cmd_runner.c`.
