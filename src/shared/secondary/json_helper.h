@@ -40,8 +40,8 @@ int append_json_comma(char **output);
  * @param[in,out] output Placeholder of JSON msg.
  * @param[in] name Name as a key.
  * @param[in] val Uint value of the key.
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int append_json_uint_value(char **output, const char *name, unsigned int val);
 
@@ -51,8 +51,8 @@ int append_json_uint_value(char **output, const char *name, unsigned int val);
  * @param[in,out] output Placeholder of JSON msg.
  * @param[in] name Name as a key.
  * @param[in] val Int value of the key.
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int append_json_int_value(char **output, const char *name, int val);
 
@@ -62,8 +62,8 @@ int append_json_int_value(char **output, const char *name, int val);
  * @param[in,out] output Placeholder of JSON msg.
  * @param[in] name Name as a key.
  * @param[in] val String value of the key.
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int append_json_str_value(char **output, const char *name, const char *val);
 
@@ -75,8 +75,8 @@ int append_json_str_value(char **output, const char *name, const char *val);
  * @param[in,out] output Placeholder of JSON msg.
  * @param[in] name Name as a key.
  * @param[in] val String value of the key.
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int append_json_array_brackets(char **output, const char *name,
 		const char *val);
@@ -92,8 +92,8 @@ int append_json_array_brackets(char **output, const char *name,
  * @param[in,out] output Placeholder of JSON msg.
  * @param[in] name Name as a key.
  * @param[in] val String value of the key.
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int append_json_block_brackets(char **output, const char *name,
 		const char *val);

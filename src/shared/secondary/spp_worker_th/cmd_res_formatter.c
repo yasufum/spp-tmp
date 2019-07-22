@@ -52,24 +52,24 @@ append_result_value(const char *name, char **output, void *tmp)
 static int
 append_error_details_value(const char *name, char **output, void *tmp)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	const struct cmd_result *result = tmp;
 	char *tmp_buff;
 	/* string is empty, except for errors */
 	if (result->err_msg[0] == '\0')
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Fail to alloc buf for `%s`.\n", name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_str_value(&tmp_buff, "message", result->err_msg);
 	if (unlikely(ret < 0)) {
 		spp_strbuf_free(tmp_buff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_block_brackets(output, name, tmp_buff);
@@ -103,11 +103,11 @@ append_interface_array(char **output, const enum port_type type)
 			RTE_LOG(ERR, WK_CMD_RES_FMT,
 				/* TODO(yasufum) replace %d to string. */
 				"Failed to add index for type `%d`.\n", type);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		port_cnt++;
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* append a secondary process type for JSON format */
@@ -122,21 +122,21 @@ append_process_type_value(const char *name, char **output,
 int
 append_vlan_value(char **output, const int ope, const int vid, const int pcp)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	ret = append_json_str_value(output, "operation",
 			PORT_ABILITY_STAT_LIST[ope]);
-	if (unlikely(ret < SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret < SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
 	ret = append_json_int_value(output, "id", vid);
 	if (unlikely(ret < 0))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	ret = append_json_int_value(output, "pcp", pcp);
 	if (unlikely(ret < 0))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* append a block of vlan for JSON format */
@@ -144,7 +144,7 @@ int
 append_vlan_block(const char *name, char **output,
 		const int port_id, const enum sppwk_port_dir dir)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i = 0;
 	struct sppwk_port_attrs *port_attrs = NULL;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -152,7 +152,7 @@ append_vlan_block(const char *name, char **output,
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Failed to allocate buffer (name = %s).\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sppwk_get_port_attrs(&port_attrs, port_id, dir);
@@ -163,8 +163,8 @@ append_vlan_block(const char *name, char **output,
 			ret = append_vlan_value(&tmp_buff, port_attrs[i].ops,
 					port_attrs[i].capability.vlantag.vid,
 					port_attrs[i].capability.vlantag.pcp);
-			if (unlikely(ret < SPP_RET_OK))
-				return SPP_RET_NG;
+			if (unlikely(ret < SPPWK_RET_OK))
+				return SPPWK_RET_NG;
 
 			/*
 			 * Change counter to "maximum+1" for exit the loop.
@@ -181,8 +181,8 @@ append_vlan_block(const char *name, char **output,
 	if (i == PORT_ABL_MAX) {
 		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_OPS_NONE,
 				0, 0);
-		if (unlikely(ret < SPP_RET_OK))
-			return SPP_RET_NG;
+		if (unlikely(ret < SPPWK_RET_OK))
+			return SPPWK_RET_NG;
 	}
 
 	ret = append_json_block_brackets(output, name, tmp_buff);
@@ -208,7 +208,7 @@ get_ethdev_port_id(enum port_type iface_type, int iface_no)
 	case VHOST:
 		return iface_info->vhost[iface_no].ethdev_port_id;
 	default:
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 }
 
@@ -217,27 +217,27 @@ int
 append_port_block(char **output, const struct sppwk_port_idx *port,
 		const enum sppwk_port_dir dir)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char port_str[CMD_TAG_APPEND_SIZE];
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = port_block)\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
 	ret = append_json_str_value(&tmp_buff, "port", port_str);
-	if (unlikely(ret < SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret < SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
 	ret = append_vlan_block("vlan", &tmp_buff,
 			get_ethdev_port_id(
 				port->iface_type, port->iface_no),
 			dir);
-	if (unlikely(ret < SPP_RET_OK))
-		return SPP_RET_NG;
+	if (unlikely(ret < SPPWK_RET_OK))
+		return SPPWK_RET_NG;
 
 	ret = append_json_block_brackets(output, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
@@ -250,7 +250,7 @@ append_port_array(const char *name, char **output, const int num,
 		const struct sppwk_port_idx *ports,
 		const enum sppwk_port_dir dir)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i = 0;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -258,13 +258,13 @@ append_port_array(const char *name, char **output, const int num,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; i < num; i++) {
 		ret = append_port_block(&tmp_buff, &ports[i], dir);
-		if (unlikely(ret < SPP_RET_OK))
-			return SPP_RET_NG;
+		if (unlikely(ret < SPPWK_RET_OK))
+			return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(output, name, tmp_buff);
@@ -285,7 +285,7 @@ append_core_element_value(
 		const int num_rx, const struct sppwk_port_idx *rx_ports,
 		const int num_tx, const struct sppwk_port_idx *tx_ports)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int unuse_flg = 0;
 	char *buff, *tmp_buff;
 	buff = params->output;
@@ -306,7 +306,7 @@ append_core_element_value(
 	 * "worker-lcores" or "slave-lcores".
 	 */
 	ret = append_json_uint_value(&tmp_buff, "core", lcore_id);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	if (unuse_flg) {
@@ -316,7 +316,7 @@ append_core_element_value(
 	}
 
 	ret = append_json_str_value(&tmp_buff, "type", type);
-	if (unlikely(ret < SPP_RET_OK))
+	if (unlikely(ret < SPPWK_RET_OK))
 		return ret;
 
 	if (unuse_flg) {
@@ -327,7 +327,7 @@ append_core_element_value(
 
 		ret = append_port_array("tx_port", &tmp_buff,
 				num_tx, tx_ports, SPPWK_PORT_DIR_TX);
-		if (unlikely(ret < SPP_RET_OK))
+		if (unlikely(ret < SPPWK_RET_OK))
 			return ret;
 	}
 
@@ -342,7 +342,7 @@ int
 append_response_list_value(char **output,
 		struct cmd_res_formatter_ops *responses, void *tmp)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	char *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
@@ -350,18 +350,18 @@ append_response_list_value(char **output,
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = response_list)\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; responses[i].tag_name[0] != '\0'; i++) {
 		tmp_buff[0] = '\0';
 		ret = responses[i].func(responses[i].tag_name, &tmp_buff, tmp);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, WK_CMD_RES_FMT,
 					"Failed to get reply string. "
 					"(tag = %s)\n", responses[i].tag_name);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		if (tmp_buff[0] == '\0')
@@ -369,13 +369,13 @@ append_response_list_value(char **output,
 
 		if ((*output)[0] != '\0') {
 			ret = append_json_comma(output);
-			if (unlikely(ret < SPP_RET_OK)) {
+			if (unlikely(ret < SPPWK_RET_OK)) {
 				spp_strbuf_free(tmp_buff);
 				RTE_LOG(ERR, WK_CMD_RES_FMT,
 						"Failed to add commas. "
 						"(tag = %s)\n",
 						responses[i].tag_name);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 		}
 
@@ -387,12 +387,12 @@ append_response_list_value(char **output,
 					"Failed to add reply string. "
 					"(tag = %s)\n",
 					responses[i].tag_name);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	spp_strbuf_free(tmp_buff);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -403,7 +403,7 @@ int
 append_command_results_value(const char *name, char **output,
 		int num, struct cmd_result *results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 	char *tmp_buff1, *tmp_buff2;
 
@@ -412,14 +412,14 @@ append_command_results_value(const char *name, char **output,
 	if (unlikely(tmp_buff1 == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Faield to alloc 1st buf for `%s`.\n", name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	tmp_buff2 = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff2 == NULL)) {
 		spp_strbuf_free(tmp_buff1);
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Faield to alloc 2nd buf for `%s`.\n", name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -431,7 +431,7 @@ append_command_results_value(const char *name, char **output,
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		/* Surround key-val pair such as `{ "result": "success" }`. */
@@ -439,7 +439,7 @@ append_command_results_value(const char *name, char **output,
 		if (unlikely(ret < 0)) {
 			spp_strbuf_free(tmp_buff1);
 			spp_strbuf_free(tmp_buff2);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
@@ -472,7 +472,7 @@ append_command_results_value(const char *name, char **output,
 int
 append_info_value(const char *name, char **output)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	struct cmd_res_formatter_ops ops_list[NOF_STAT_OPS];
 
@@ -480,7 +480,7 @@ append_info_value(const char *name, char **output)
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Failed to get empty buf for append `%s`.\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	memset(ops_list, 0x00,
@@ -490,14 +490,14 @@ append_info_value(const char *name, char **output)
 	if (unlikely(is_got_ops < 0)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				"Failed to get ops_list.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* Setup JSON msg in value of `info` key. */
 	ret = append_response_list_value(&tmp_buff, ops_list, NULL);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* Setup response of JSON msg. */
@@ -525,14 +525,14 @@ int
 add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, WK_CMD_RES_FMT,
 				/* TODO(yasufum) refactor no meaning err msg */
 				"allocate error. (name = %s)\n",
 				name);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (strcmp(name, SPPWK_PHY_STR) == 0)
@@ -544,9 +544,9 @@ add_interface(const char *name, char **output,
 	else if (strcmp(name, SPPWK_RING_STR) == 0)
 		ret = append_interface_array(&tmp_buff, RING);
 
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	ret = append_json_array_brackets(output, name, tmp_buff);
@@ -559,7 +559,7 @@ int
 add_master_lcore(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	ret = append_json_int_value(output, name, rte_get_master_lcore());
 	return ret;
 }

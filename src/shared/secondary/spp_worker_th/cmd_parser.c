@@ -167,14 +167,14 @@ parse_resource_uid(const char *res_uid,
 	} else {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Unexpected port type in '%s'.\n",
 				res_uid);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	int port_id = strtol(iface_no_str, &endptr, 0);
 	if (unlikely(iface_no_str == endptr) || unlikely(*endptr != '\0')) {
 		RTE_LOG(ERR, WK_CMD_PARSER, "No interface number in '%s'.\n",
 				res_uid);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*iface_type = ptype;
@@ -182,7 +182,7 @@ parse_resource_uid(const char *res_uid,
 
 	RTE_LOG(DEBUG, WK_CMD_PARSER, "Parsed '%s' to '%d' and '%d'.\n",
 			res_uid, *iface_type, *iface_no);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Format error message object and return error code for an error case. */
@@ -227,14 +227,14 @@ split_cmd_params(char *string, int max, int *argc, char *argv[])
 	argv_tok = strtok_r(string, delim, &saveptr);
 	while (argv_tok != NULL) {
 		if (cnt >= max)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		argv[cnt] = argv_tok;
 		cnt++;
 		argv_tok = strtok_r(NULL, delim, &saveptr);
 	}
 	*argc = cnt;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Get index of given str from list. */
@@ -246,7 +246,7 @@ get_list_idx(const char *str, const char *list[])
 		if (strcmp(list[i], str) == 0)
 			return i;
 	}
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /**
@@ -260,11 +260,11 @@ get_int_in_range(int *output, const char *arg_val, int min, int max)
 	char *endptr = NULL;
 	ret = strtol(arg_val, &endptr, 0);
 	if (unlikely(endptr == arg_val) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	if (unlikely(ret < min) || unlikely(ret > max))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	*output = ret;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -279,13 +279,13 @@ get_uint_in_range(unsigned int *output, const char *arg_val, unsigned int min,
 	char *endptr = NULL;
 	ret = strtoul(arg_val, &endptr, 0);
 	if (unlikely(endptr == arg_val) || unlikely(*endptr != '\0'))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	if (unlikely(ret < min) || unlikely(ret > max))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	*output = ret;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given res UID of port and init object of struct sppwk_port_idx. */
@@ -303,9 +303,9 @@ parse_port_uid(void *output, const char *arg_val)
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Invalid resource UID '%s'.\n", arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given lcore ID. */
@@ -317,9 +317,9 @@ parse_lcore_id(void *output, const char *arg_val)
 	if (unlikely(ret < 0)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Invalid lcore id '%s'.\n", arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given action in `component` command. */
@@ -334,7 +334,7 @@ parse_comp_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Given invalid cmd `%s`.\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (unlikely(ret != SPPWK_ACT_START) &&
@@ -342,11 +342,11 @@ parse_comp_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown component action. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*(int *)output = ret;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given name of `arg_val` in `component` command. */
@@ -365,15 +365,15 @@ parse_comp_name(void *output, const char *arg_val,
 			RTE_LOG(ERR, WK_CMD_PARSER,
 					"Comp name '%s' is already used.\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	strcpy(component->name, arg_val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given lcore ID of `arg_val` in `component` command. */
@@ -385,7 +385,7 @@ parse_comp_lcore_id(void *output, const char *arg_val,
 
 	/* Parsing lcore is required only for action `start`. */
 	if (component->wk_action != SPPWK_ACT_START)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	return parse_lcore_id(&component->core, arg_val);
 }
@@ -403,18 +403,18 @@ parse_comp_type(void *output, const char *arg_val,
 
 	/* Parsing comp type is required only for action `start`. */
 	if (component->wk_action != SPPWK_ACT_START)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	comp_type = get_comp_type_from_str(arg_val);
 	if (unlikely(comp_type <= 0)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown component type '%s'.\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	component->wk_type = comp_type;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given action for port of `arg_val` in `port` command. */
@@ -429,7 +429,7 @@ parse_port_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown port action. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* TODO(yasufum) fix not explicit checking this condition. */
@@ -438,11 +438,11 @@ parse_port_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown port action. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*(int *)output = ret;  /* TODO(yasufum) confirm the statement is OK. */
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse given port uid in port command. */
@@ -454,8 +454,8 @@ parse_port(void *output, const char *arg_val, int allow_override)
 	struct sppwk_cmd_port *port = output;
 
 	ret = parse_port_uid(&tmp_port, arg_val);
-	if (ret < SPP_RET_OK)
-		return SPP_RET_NG;
+	if (ret < SPPWK_RET_OK)
+		return SPPWK_RET_NG;
 
 	/* If action is `add`, check the port is already used for rx and tx. */
 	if (allow_override == 0) {
@@ -469,13 +469,13 @@ parse_port(void *output, const char *arg_val, int allow_override)
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port `%s` is already used.\n",
 				arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	port->port.iface_type = tmp_port.iface_type;
 	port->port.iface_no   = tmp_port.iface_no;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse port rx and tx value. */
@@ -489,7 +489,7 @@ parse_port_direction(void *output, const char *arg_val, int allow_override)
 	if (unlikely(ret <= 0)) {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Unknown port direction. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* add vlantag command check */
@@ -500,12 +500,12 @@ parse_port_direction(void *output, const char *arg_val, int allow_override)
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port in used. (port command) val=%s\n",
 				arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	port->dir = ret;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse comp name for `port` command. */
@@ -514,21 +514,21 @@ static int
 parse_comp_name_portcmd(void *output, const char *arg_val,
 				int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 
 	/* Check if lcore is already used. */
 	ret = sppwk_get_lcore_id(arg_val);  /* Get lcore ID. */
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown component name. val=%s\n", arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (strlen(arg_val) >= SPPWK_VAL_BUFSZ)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	strcpy(output, arg_val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse vlan operation for port command. */
@@ -549,7 +549,7 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 			RTE_LOG(ERR, WK_CMD_PARSER,
 					"Unknown port attribute. val=%s\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		port_attrs->ops = ret;
 		port_attrs->dir = port->dir;
@@ -562,7 +562,7 @@ parse_port_vlan_ops(void *output, const char *arg_val,
 		break;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse VLAN ID  for port command. */
@@ -578,11 +578,11 @@ parse_port_vid(void *output, const char *arg_val,
 	case SPPWK_PORT_OPS_ADD_VLAN:
 		vlan_id = get_int_in_range(&port_attrs->capability.vlantag.vid,
 			arg_val, 0, ETH_VLAN_ID_MAX);
-		if (unlikely(vlan_id < SPP_RET_OK)) {
+		if (unlikely(vlan_id < SPPWK_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 					"Invalid `%s` for parsing VLAN ID.\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		port_attrs->capability.vlantag.pcp = -1;
 		break;
@@ -591,7 +591,7 @@ parse_port_vid(void *output, const char *arg_val,
 		break;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse PCP for port command */
@@ -607,11 +607,11 @@ parse_port_pcp(void *output, const char *arg_val,
 	case SPPWK_PORT_OPS_ADD_VLAN:
 		pcp = get_int_in_range(&port_attrs->capability.vlantag.pcp,
 				arg_val, 0, SPP_VLAN_PCP_MAX);
-		if (unlikely(pcp < SPP_RET_OK)) {
+		if (unlikely(pcp < SPPWK_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 					"Invalid `%s`for parsing PCP.\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 		break;
 	default:
@@ -619,7 +619,7 @@ parse_port_pcp(void *output, const char *arg_val,
 		break;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse mac address string. */
@@ -636,14 +636,14 @@ parse_mac_addr(void *output, const char *arg_val,
 
 	/* Check if the given value is valid. */
 	res = sppwk_convert_mac_str_to_int64(str_val);
-	if (unlikely(res < SPP_RET_OK)) {
+	if (unlikely(res < SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Invalid MAC address `%s`.\n", str_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	strcpy((char *)output, str_val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -660,7 +660,7 @@ parse_cls_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Failed to get index for action `%s`.\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (unlikely(idx != SPPWK_ACT_ADD) &&
@@ -668,11 +668,11 @@ parse_cls_action(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown action `%s` for port.\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*(int *)output = idx;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse cls type and get index for classifier_table command. */
@@ -686,11 +686,11 @@ parse_cls_type(void *output, const char *arg_val,
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Unknown classifier type. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	*(int *)output = idx;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse VLAN ID for classifier_table command. */
@@ -700,12 +700,12 @@ parse_cls_vid(void *output, const char *arg_val,
 {
 	int idx;
 	idx = get_int_in_range(output, arg_val, 0, ETH_VLAN_ID_MAX);
-	if (unlikely(idx < SPP_RET_OK)) {
+	if (unlikely(idx < SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Invalid VLAN ID `%s`.\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Parse port for classifier_table command */
@@ -713,19 +713,19 @@ static int
 parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	struct sppwk_cls_cmd_attrs *cls_attrs = cls_cmd_attr;
 	struct sppwk_port_idx tmp_port;
 	int64_t mac_addr = 0;
 
 	ret = parse_port_uid(&tmp_port, arg_val);
-	if (ret < SPP_RET_OK)
-		return SPP_RET_NG;
+	if (ret < SPPWK_RET_OK)
+		return SPPWK_RET_NG;
 
 	if (is_added_port(tmp_port.iface_type, tmp_port.iface_no) == 0) {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Port not added. val=%s\n",
 				arg_val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (cls_attrs->cls_type == SPPWK_CLS_TYPE_MAC)
@@ -737,12 +737,12 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 			RTE_LOG(ERR, WK_CMD_PARSER, "Port in used. "
 					"(classifier_table command) val=%s\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	} else if (unlikely(cls_attrs->wk_action == SPPWK_ACT_DEL)) {
 		mac_addr = sppwk_convert_mac_str_to_int64(cls_attrs->mac);
 		if (mac_addr < 0)
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 
 		if (!is_used_with_addr(cls_attrs->vid,
 				(uint64_t)mac_addr,
@@ -750,13 +750,13 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 			RTE_LOG(ERR, WK_CMD_PARSER, "Port in used. "
 					"(classifier_table command) val=%s\n",
 					arg_val);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	cls_attrs->port.iface_type = tmp_port.iface_type;
 	cls_attrs->port.iface_no   = tmp_port.iface_no;
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Attributes operator functions of command for parsing. */
@@ -909,7 +909,7 @@ parse_cmd_comp(struct sppwk_cmd_req *request, int argc, char *argv[],
 		struct sppwk_parse_err_msg *wk_err_msg,
 		int maxargc __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
 	struct sppwk_cmd_ops *list = NULL;
@@ -927,7 +927,7 @@ parse_cmd_comp(struct sppwk_cmd_req *request, int argc, char *argv[],
 					list->name, argv[pi]);
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Validate given command for clssfier_table. */
@@ -944,7 +944,7 @@ parse_cmd_cls_table_vlan(struct sppwk_cmd_req *request, int argc, char *argv[],
 		struct sppwk_parse_err_msg *wk_err_msg,
 		int maxargc __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
 	struct sppwk_cmd_ops *list = NULL;
@@ -953,7 +953,7 @@ parse_cmd_cls_table_vlan(struct sppwk_cmd_req *request, int argc, char *argv[],
 		ret = (*list->func)((void *)
 				((char *)&request->commands[0] + list->offset),
 				argv[pi], 0);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
@@ -961,7 +961,7 @@ parse_cmd_cls_table_vlan(struct sppwk_cmd_req *request, int argc, char *argv[],
 					list->name, argv[pi]);
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Validate given command for port. */
@@ -969,7 +969,7 @@ static int
 parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
 		struct sppwk_parse_err_msg *wk_err_msg, int maxargc)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int ci = request->commands[0].type;
 	int pi = 0;
 	struct sppwk_cmd_ops *list = NULL;
@@ -984,7 +984,7 @@ parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
 		ret = (*list->func)((void *)
 				((char *)&request->commands[0] + list->offset),
 				argv[pi], flag);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			RTE_LOG(ERR, WK_CMD_PARSER, "Bad value. "
 				"command=%s, name=%s, index=%d, value=%s\n",
 					argv[0], list->name, pi, argv[pi]);
@@ -992,7 +992,7 @@ parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
 					list->name, argv[pi]);
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -1029,7 +1029,7 @@ parse_wk_cmd(struct sppwk_cmd_req *request,
 		const char *request_str,
 		struct sppwk_parse_err_msg *wk_err_msg)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int is_valid_nof_params = 1;  /* for checking nof params in range. */
 	struct cmd_parse_attrs *list = NULL;
 	int i = 0;
@@ -1053,7 +1053,7 @@ parse_wk_cmd(struct sppwk_cmd_req *request,
 	 * itself is done in the next step as following. No need to do here.
 	 */
 	ret = split_cmd_params(tmp_str, SPPWK_MAX_PARAMS, &argc, argv);
-	if (ret < SPP_RET_OK) {
+	if (ret < SPPWK_RET_OK) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Num of params should be less than %d. "
 				"request_str=%s\n",
@@ -1079,7 +1079,7 @@ parse_wk_cmd(struct sppwk_cmd_req *request,
 			return (*list->func)(request, argc, argv, wk_err_msg,
 							list->nof_params_max);
 
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	/**
@@ -1107,13 +1107,13 @@ sppwk_parse_req(
 		const char *request_str, size_t request_str_len,
 		struct sppwk_parse_err_msg *wk_err_msg)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 
 	/* decode request */
 	request->nof_cmds = 1;
 	ret = parse_wk_cmd(request, request_str, wk_err_msg);
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Cannot decode command request. "
 				"ret=%d, request_str=%.*s\n",

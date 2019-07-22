@@ -60,7 +60,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 	if (unlikely(g_stats_info == NULL)) {
 		RTE_LOG(ERR, SPP_RING_LATENCY_STATS, "Cannot allocate memory "
 				"for ring latency stats info\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* store global information for ring latency statistics */
@@ -73,7 +73,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 			g_samp_intvl, g_stats_count,
 			cycles_per_ns(), NS_PER_SEC);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 void
@@ -211,9 +211,9 @@ sppwk_eth_ring_stats_rx_burst(uint16_t port_id,
 
 	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
 
-	/* TODO(yasufum) confirm why it returns SPP_RET_OK. */
+	/* TODO(yasufum) confirm why it returns SPPWK_RET_OK. */
 	if (unlikely(nb_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	if (iface_type == RING)
 		spp_ringlatencystats_calculate_latency(

@@ -27,8 +27,8 @@ int flush_cmd(void);
  * @param ctl_port
  * Port number of spp-ctl.
  *
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int
 sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port);
@@ -36,9 +36,9 @@ sppwk_cmd_runner_conn(const char *ctl_ipaddr, int ctl_port);
 /**
  * Run command sent from spp-ctl.
  *
- * @retval SPP_RET_OK if succeeded.
+ * @retval SPPWK_RET_OK if succeeded.
  * TODO(yasufum) change exclude case of exit cmd because it is not NG.
- * @retval SPP_RET_NG if connection failure or received exit command.
+ * @retval SPPWK_RET_NG if connection failure or received exit command.
  */
 int
 sppwk_run_cmd(void);
@@ -50,8 +50,8 @@ sppwk_run_cmd(void);
  * @param[in] nof_comps The num of elements in comp_ary.
  * @param[in] *comp_ary Set of comps from which an comp is deleted.
  *
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int
 del_comp_info(int lcore_id, int nof_comps, int *comp_ary);

@@ -23,8 +23,8 @@
  *
  * @param[in] ctl_ipaddr IP address of spp-ctl.
  * @param[in] ctl_port Port num of spp-ctl.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int conn_spp_ctl_init(const char *ctl_ipaddr, int ctl_port);
 
@@ -33,7 +33,7 @@ int conn_spp_ctl_init(const char *ctl_ipaddr, int ctl_port);
  *
  * @note bocking.
  * @param sock Socket number for connecting to controller.
- * @retval SPP_RET_OK If succeeded.
+ * @retval SPPWK_RET_OK If succeeded.
  * @retval SPP_CONNERR_TEMPORARY Temporary error for retry.
  */
 int conn_spp_ctl(int *sock);
@@ -41,7 +41,7 @@ int conn_spp_ctl(int *sock);
 /**
  * Receive message from spp-ctl.
  *
- * This function returns the num of received  msg in bytes, or SPP_RET_OK
+ * This function returns the num of received  msg in bytes, or SPPWK_RET_OK
  * if empty message. Given socket is closed if spp-ctl has terminated the
  * session.
  *
@@ -49,7 +49,7 @@ int conn_spp_ctl(int *sock);
  * @param[in,out] sock Socket.
  * @param[in,out] msgbuf The pointer to command message buffer.
  * @retval NOB_BYTES Num of bytes of received msg if succeeded.
- * @retval SPP_RET_OK No receive message.
+ * @retval SPPWK_RET_OK No receive message.
  * @retval SPP_CONNERR_TEMPORARY Temporary error for retry.
  * @retval SPP_CONNERR_FATAL Fatal error for terminating the process.
  */
@@ -62,7 +62,7 @@ int recv_ctl_msg(int *sock, char **msgbuf);
  * @param[in,out] sock Socket.
  * @param[in] msg Message sent to spp-ctl.
  * @param[in] msg_len Length of given message.
- * @retval SPP_RET_OK If succeeded.
+ * @retval SPPWK_RET_OK If succeeded.
  * @retval SPP_CONNERR_TEMPORARY Temporary error for retry.
  */
 int send_ctl_msg(int *sock, const char *msg, size_t msg_len);

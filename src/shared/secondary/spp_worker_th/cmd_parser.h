@@ -152,7 +152,7 @@ struct sppwk_parse_err_msg {
  *  The pointer to struct sppwk_parse_err_msg.@n
  *  Detailed error information will be stored.
  *
- * @retval SPP_RET_OK succeeded.
+ * @retval SPPWK_RET_OK succeeded.
  * @retval !0 failed.
  */
 int sppwk_parse_req(struct sppwk_cmd_req *request,

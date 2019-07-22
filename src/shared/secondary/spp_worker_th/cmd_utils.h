@@ -397,8 +397,8 @@ struct core_info *get_core_info(unsigned int lcore_id);
  * Check core index change
  *
  * @param lcore_id Lcore ID.
- * @retval SPP_RET_OK If index is updated.
- * @retval SPP_RET_NG If index is not updated.
+ * @retval SPPWK_RET_OK If index is updated.
+ * @retval SPPWK_RET_NG If index is not updated.
  */
 int spp_check_core_update(unsigned int lcore_id);
 
@@ -409,7 +409,7 @@ int spp_check_core_update(unsigned int lcore_id);
  * @param iface_no Interface number to be validated.
  * @param rxtx Value of spp_port_rxtx to be validated.
  * @retval 0~127      If match component ID
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_NG If failed.
  */
 int spp_check_used_port(
 		enum port_type iface_type,
@@ -439,7 +439,7 @@ int get_free_lcore_id(void);
  *
  * @param[in] name Component name.
  * @retval 0~127 Component ID.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_NG if failed.
  */
 int sppwk_get_lcore_id(const char *comp_name);
 
@@ -471,8 +471,8 @@ int delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
 /**
  * Activate temporarily stored port info while flushing.
  *
- * @retval SPP_RET_OK if succeeded.
- * @retval SPP_RET_NG if failed.
+ * @retval SPPWK_RET_OK if succeeded.
+ * @retval SPPWK_RET_NG if failed.
  */
 int update_port_info(void);
 
@@ -485,7 +485,7 @@ void update_lcore_info(void);
  * @param[in,out] port_uid String of port type to be converted.
  * @param[in] iface_type Interface type such as PHY or so.
  * @param[in] iface_no Interface number.
- * @return SPP_RET_OK If succeeded, or SPP_RET_NG if failed.
+ * @return SPPWK_RET_OK If succeeded, or SPPWK_RET_NG if failed.
  */
 int
 sppwk_port_uid(char *port_uid, enum port_type iface_type, int iface_no);
@@ -495,7 +495,7 @@ sppwk_port_uid(char *port_uid, enum port_type iface_type, int iface_no);
  *
  * @param macaddr String of MAC address to be converted.
  * @retval 0~N MAC address in int64 format.
- * @retval SPP_RET_NG if invalid.
+ * @retval SPPWK_RET_NG if invalid.
  */
 int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
 
@@ -508,8 +508,8 @@ int64_t sppwk_convert_mac_str_to_int64(const char *macaddr);
  * @param change_core_p Pointer to g_change_core address.
  * @param change_component_p Pointer to g_change_component address.
  * @param backup_info_p Pointer to g_backup_info address.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int sppwk_set_mng_data(struct iface_info *iface_p,
 		struct sppwk_comp_info *component_p,

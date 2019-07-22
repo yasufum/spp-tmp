@@ -78,7 +78,7 @@ spp_get_core_status(unsigned int lcore_id)
 /**
  * Check status of all of cores is same as given
  *
- * It returns SPP_RET_NG as status mismatch if status is not same.
+ * It returns SPPWK_RET_NG as status mismatch if status is not same.
  * If core is in use, status will be checked.
  */
 static int
@@ -89,10 +89,10 @@ check_core_status(enum sppwk_lcore_status status)
 		if ((g_mng_data.p_core_info + lcore_id)->status !=
 								status) {
 			/* Status is mismatched */
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 int
@@ -103,11 +103,11 @@ check_core_status_wait(enum sppwk_lcore_status status)
 		sleep(1);
 		int ret = check_core_status(status);
 		if (ret == 0)
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 	}
 
 	RTE_LOG(ERR, APP, "Status check time out. (status = %d)\n", status);
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /* Set core status */
@@ -444,7 +444,7 @@ init_host_port_info(void)
 		}
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Setup management info for spp_vf */
@@ -457,9 +457,9 @@ init_mng_data(void)
 	init_component_info();
 
 	int ret = init_host_port_info();
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_NG;
-	return SPP_RET_OK;
+	if (unlikely(ret != SPPWK_RET_OK))
+		return SPPWK_RET_NG;
+	return SPPWK_RET_OK;
 }
 
 /* Remove sock file if spp is not running */
@@ -514,9 +514,9 @@ spp_check_core_update(unsigned int lcore_id)
 {
 	struct core_mng_info *info = (g_mng_data.p_core_info + lcore_id);
 	if (info->ref_index == info->upd_index)
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	else
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 }
 
 /* Check if component is using port. */
@@ -534,7 +534,7 @@ spp_check_used_port(
 					g_mng_data.p_component_info;
 
 	if (port == NULL)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		component = (component_info + cnt);
@@ -554,7 +554,7 @@ spp_check_used_port(
 		}
 	}
 
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /* Set component update flag for given port */
@@ -589,7 +589,7 @@ get_free_lcore_id(void)
 		if ((comp_info + cnt)->wk_type == SPPWK_TYPE_NONE)
 			return cnt;
 	}
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /* Get lcore ID as user-defined component name. */
@@ -600,13 +600,13 @@ sppwk_get_lcore_id(const char *comp_name)
 
 	int cnt = 0;
 	if (comp_name[0] == '\0')
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	for (cnt = 0; cnt < RTE_MAX_LCORE; cnt++) {
 		if (strcmp(comp_name, (comp_info + cnt)->name) == 0)
 			return cnt;
 	}
-	return SPP_RET_NG;
+	return SPPWK_RET_NG;
 }
 
 /**
@@ -618,7 +618,7 @@ get_idx_port_info(struct sppwk_port_info *p_info, int nof_ports,
 		struct sppwk_port_info *p_info_ary[])
 {
 	int cnt = 0;
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	for (cnt = 0; cnt < nof_ports; cnt++) {
 		if (p_info == p_info_ary[cnt])
 			ret = cnt;
@@ -637,7 +637,7 @@ delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
 	/* Find index of target port to be deleted. */
 	target_idx = get_idx_port_info(p_info, nof_ports, p_info_ary);
 	if (target_idx < 0)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	/**
 	 * Overwrite the deleted port by the next one, and shift all of
@@ -647,7 +647,7 @@ delete_port_info(struct sppwk_port_info *p_info, int nof_ports,
 	for (cnt = target_idx; cnt < nof_ports; cnt++)
 		p_info_ary[cnt] = p_info_ary[cnt+1];
 	p_info_ary[cnt] = NULL;  /* Remove old last port. */
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Activate temporarily stored port info while flushing. */
@@ -665,7 +665,7 @@ update_port_info(void)
 		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
 			ret = add_vhost_pmd(port->iface_no);
 			if (ret < 0)
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			port->ethdev_port_id = ret;
 		}
 	}
@@ -676,11 +676,11 @@ update_port_info(void)
 		if ((port->iface_type != UNDEF) && (port->ethdev_port_id < 0)) {
 			ret = add_ring_pmd(port->iface_no);
 			if (ret < 0)
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			port->ethdev_port_id = ret;
 		}
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Activate temporarily stored lcore info while flushing. */
@@ -730,12 +730,12 @@ int sppwk_port_uid(char *port_uid, enum port_type p_type, int iface_no)
 		p_type_str = SPPWK_VHOST_STR;
 		break;
 	default:
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(port_uid, "%s:%d", p_type_str, iface_no);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Convert MAC address of 'aa:bb:cc:dd:ee:ff' to value of int64_t. */
@@ -764,7 +764,7 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 			RTE_LOG(ERR, APP,
 					"Invalid MAC address `%s`.\n",
 					macaddr);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		/* Convert string to hex value */
@@ -801,7 +801,7 @@ int sppwk_set_mng_data(
 	if (iface_p == NULL || component_p == NULL || core_mng_p == NULL ||
 			change_core_p == NULL || change_component_p == NULL ||
 			backup_info_p == NULL)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	g_mng_data.p_iface_info = iface_p;
 	g_mng_data.p_component_info = component_p;
@@ -810,7 +810,7 @@ int sppwk_set_mng_data(
 	g_mng_data.p_change_component = change_component_p;
 	g_mng_data.p_backup_info = backup_info_p;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Get management data from global var for given non-NULL args. */

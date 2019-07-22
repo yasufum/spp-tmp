@@ -6,8 +6,8 @@
 #define _SPP_SEC_RETURN_CODES_H_
 
 enum spp_return_val {
-	SPP_RET_OK = 0,  /**< succeeded */
-	SPP_RET_NG = -1, /**< failed */
+	SPPWK_RET_OK = 0,  /**< succeeded */
+	SPPWK_RET_NG = -1, /**< failed */
 };
 
 #endif

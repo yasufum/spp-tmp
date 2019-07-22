@@ -14,10 +14,10 @@ append_json_comma(char **output)
 	*output = spp_strbuf_append(*output, ", ", strlen(", "));
 	if (unlikely(*output == NULL)) {
 		RTE_LOG(ERR, WK_JSON_HELPER, "Failed to add comma.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Add a uint value to given JSON string. */
@@ -32,12 +32,12 @@ append_json_uint_value(char **output, const char *name, unsigned int value)
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, uint = %u)\n", name, value);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("%u"),
 			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Add an int value to given JSON string. */
@@ -52,12 +52,12 @@ append_json_int_value(char **output, const char *name, int value)
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's numeric format failed to add. "
 				"(name = %s, int = %d)\n", name, value);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("%d"),
 			JSON_APPEND_COMMA(len), name, value);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Add a string value to given JSON string. */
@@ -72,12 +72,12 @@ append_json_str_value(char **output, const char *name, const char *val)
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's string format failed to add. "
 				"(name = %s, val= %s)\n", name, val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_VALUE("\"%s\""),
 			JSON_APPEND_COMMA(len), name, val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -96,12 +96,12 @@ append_json_array_brackets(char **output, const char *name, const char *val)
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's square bracket failed to add. "
 				"(name = %s, val= %s)\n", name, val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	sprintf(&(*output)[len], JSON_APPEND_ARRAY,
 			JSON_APPEND_COMMA(len), name, val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /**
@@ -123,7 +123,7 @@ append_json_block_brackets(char **output, const char *name, const char *val)
 		RTE_LOG(ERR, WK_JSON_HELPER,
 				"JSON's curly bracket failed to add. "
 				"(name = %s, val= %s)\n", name, val);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	if (name[0] == '\0')
@@ -132,5 +132,5 @@ append_json_block_brackets(char **output, const char *name, const char *val)
 	else
 		sprintf(&(*output)[len], JSON_APPEND_BLOCK,
 				JSON_APPEND_COMMA(len), name, val);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }

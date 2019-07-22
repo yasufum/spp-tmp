@@ -35,7 +35,7 @@ conn_spp_ctl_init(const char *ctl_ipaddr, int ctl_port)
 	strcpy(g_controller_ip, ctl_ipaddr);
 	g_controller_port = ctl_port;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* connect to controller */
@@ -43,11 +43,11 @@ int
 conn_spp_ctl(int *sock)
 {
 	static struct sockaddr_in controller_addr;
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int sock_flg = 0;
 
 	if (likely(*sock >= 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* create socket */
 	RTE_LOG(INFO, SPP_COMMAND_PROC, "Creating socket...\n");
@@ -86,14 +86,14 @@ conn_spp_ctl(int *sock)
 	sock_flg = fcntl(*sock, F_GETFL, 0);
 	fcntl(*sock, F_SETFL, sock_flg | O_NONBLOCK);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* receive message */
 int
 recv_ctl_msg(int *sock, char **strbuf)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int n_rx = 0;
 	char *new_strbuf = NULL;
 
@@ -110,7 +110,7 @@ recv_ctl_msg(int *sock, char **strbuf)
 					"Receive failure. errno=%d\n", errno);
 		} else {
 			/* no receive message */
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		}
 
 		RTE_LOG(INFO, SPP_COMMAND_PROC, "Assume Server closed "
@@ -139,7 +139,7 @@ recv_ctl_msg(int *sock, char **strbuf)
 int
 send_ctl_msg(int *sock, const char *msg, size_t msg_len)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 
 	ret = send(*sock, msg, msg_len, 0);
 	if (unlikely(ret == -1)) {
@@ -149,5 +149,5 @@ send_ctl_msg(int *sock, const char *msg, size_t msg_len)
 		return SPP_CONNERR_TEMPORARY;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }

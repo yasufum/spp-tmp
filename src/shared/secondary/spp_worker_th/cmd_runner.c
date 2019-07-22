@@ -47,7 +47,7 @@ flush_cmd(void)
 			&backup_info);
 
 	ret = update_port_info();
-	if (ret < SPP_RET_OK)
+	if (ret < SPPWK_RET_OK)
 		return ret;
 
 	/* TODO(yasufum) confirm why no returned value. */
@@ -156,7 +156,7 @@ send_decode_error_response(int *sock,
 		const struct sppwk_cmd_req *request,
 		struct cmd_result *cmd_results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -169,7 +169,7 @@ send_decode_error_response(int *sock,
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
 			request->nof_cmds, cmd_results);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				"Failed to make command result response.\n");
@@ -186,7 +186,7 @@ send_decode_error_response(int *sock,
 	}
 	ret = append_json_block_brackets(&msg, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				/* TODO(yasufum) refactor no meaning err msg */
@@ -200,7 +200,7 @@ send_decode_error_response(int *sock,
 
 	/* send response to requester */
 	ret = send_ctl_msg(sock, msg, strlen(msg));
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				"Failed to send decode error response.\n");
 		/* not return */
@@ -215,7 +215,7 @@ send_result_spp_ctl(int *sock,
 		const struct sppwk_cmd_req *request,
 		struct cmd_result *cmd_results)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	char *msg, *tmp_buff;
 	tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
@@ -228,7 +228,7 @@ send_result_spp_ctl(int *sock,
 	/* create & append result array */
 	ret = append_command_results_value("results", &tmp_buff,
 			request->nof_cmds, cmd_results);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(tmp_buff);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				"Failed to make command result response.\n");
@@ -238,7 +238,7 @@ send_result_spp_ctl(int *sock,
 	/* append client id information value */
 	if (request->is_requested_client_id) {
 		ret = add_client_id("client_id", &tmp_buff, NULL);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, WK_CMD_RUNNER, "Failed to make "
 					"client id response.\n");
@@ -251,7 +251,7 @@ send_result_spp_ctl(int *sock,
 	/* append info value */
 	if (request->is_requested_status) {
 		ret = append_info_value("info", &tmp_buff);
-		if (unlikely(ret < SPP_RET_OK)) {
+		if (unlikely(ret < SPPWK_RET_OK)) {
 			spp_strbuf_free(tmp_buff);
 			RTE_LOG(ERR, WK_CMD_RUNNER,
 					"Failed to make status response.\n");
@@ -269,7 +269,7 @@ send_result_spp_ctl(int *sock,
 	}
 	ret = append_json_block_brackets(&msg, "", tmp_buff);
 	spp_strbuf_free(tmp_buff);
-	if (unlikely(ret < SPP_RET_OK)) {
+	if (unlikely(ret < SPPWK_RET_OK)) {
 		spp_strbuf_free(msg);
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 				/* TODO(yasufum) refactor no meaning err msg */
@@ -283,7 +283,7 @@ send_result_spp_ctl(int *sock,
 
 	/* send response to requester */
 	ret = send_ctl_msg(sock, msg, strlen(msg));
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		RTE_LOG(ERR, WK_CMD_RUNNER,
 			"Failed to send command result response.\n");
 		/* not return */
@@ -296,7 +296,7 @@ send_result_spp_ctl(int *sock,
 static int
 exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int i;
 
 	struct sppwk_cmd_req cmd_req;
@@ -312,12 +312,12 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 			(int)req_str_len, req_str);
 	ret = sppwk_parse_req(&cmd_req, req_str, req_str_len, &wk_err_msg);
 
-	if (unlikely(ret != SPP_RET_OK)) {
+	if (unlikely(ret != SPPWK_RET_OK)) {
 		/* Setup and send error response. */
 		prepare_parse_err_msg(cmd_results, &cmd_req, &wk_err_msg);
 		send_decode_error_response(sock, &cmd_req, cmd_results);
 		RTE_LOG(DEBUG, WK_CMD_RUNNER, "Failed to parse cmds.\n");
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 	}
 
 	RTE_LOG(DEBUG, WK_CMD_RUNNER,
@@ -327,7 +327,7 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 	/* execute commands */
 	for (i = 0; i < cmd_req.nof_cmds; ++i) {
 		ret = exec_one_cmd(cmd_req.commands + i);
-		if (unlikely(ret != SPP_RET_OK)) {
+		if (unlikely(ret != SPPWK_RET_OK)) {
 			set_cmd_result(&cmd_results[i], CMD_FAILED,
 					"error occur");
 			/* Does not execute remaining commands */
@@ -346,7 +346,7 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 		send_result_spp_ctl(sock, &cmd_req, cmd_results);
 		RTE_LOG(INFO, WK_CMD_RUNNER,
 				"Process is terminated with exit cmd.\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	/* Send response to spp-ctl. */
@@ -354,7 +354,7 @@ exec_cmds(int *sock, const char *req_str, size_t req_str_len)
 
 	RTE_LOG(DEBUG, WK_CMD_RUNNER, "End command request processing.\n");
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Setup connection for accepting commands from spp-ctl. */
@@ -380,23 +380,23 @@ sppwk_run_cmd(void)
 			RTE_LOG(ERR, WK_CMD_RUNNER,
 					"Cannot allocate memory "
 					"for receive data(init).\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	ret = conn_spp_ctl(&sock);
 
-	if (unlikely(ret != SPP_RET_OK))
-		return SPP_RET_OK;
+	if (unlikely(ret != SPPWK_RET_OK))
+		return SPPWK_RET_OK;
 
 	msg_ret = recv_ctl_msg(&sock, &msgbuf);
 	if (unlikely(msg_ret <= 0)) {
 		if (likely(msg_ret == 0))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		else if (unlikely(msg_ret == SPP_CONNERR_TEMPORARY))
-			return SPP_RET_OK;
+			return SPPWK_RET_OK;
 		else
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 	}
 
 	ret = exec_cmds(&sock, msgbuf, msg_ret);
@@ -418,7 +418,7 @@ del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
 			idx = cnt;
 	}
 	if (idx < 0)
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
 	/* Overwrite the deleted entry, and shift the remained. */
 	nof_comps--;
@@ -428,5 +428,5 @@ del_comp_info(int lcore_id, int nof_comps, int *comp_ary)
 	/* Clean the unused last entry. */
 	comp_ary[cnt] = 0;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }

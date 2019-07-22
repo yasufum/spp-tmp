@@ -122,7 +122,7 @@ add_vlan_tag_one(
 		if (unlikely(new_ether == NULL)) {
 			RTE_LOG(ERR, PORT, "Failed to "
 					"get additional header area.\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		rte_memcpy(new_ether, old_ether, sizeof(struct ether_hdr));
@@ -133,7 +133,7 @@ add_vlan_tag_one(
 
 	vlan->vlan_tci = vlantag->tci;
 	set_fcs_packet(pkt);
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Add VLAN tag to all packets. */
@@ -142,7 +142,7 @@ add_vlan_tag_all(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union sppwk_port_capability *capability)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
 		ret = add_vlan_tag_one(pkts[cnt], capability);
@@ -174,7 +174,7 @@ del_vlan_tag_one(
 		if (unlikely(new_ether == NULL)) {
 			RTE_LOG(ERR, PORT, "Failed to "
 					"delete unnecessary header area.\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		old = (uint32_t *)old_ether;
@@ -185,7 +185,7 @@ del_vlan_tag_one(
 		old[0] = 0;
 		set_fcs_packet(pkt);
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Delete VLAN tag from all packets. */
@@ -194,7 +194,7 @@ del_vlan_tag_all(
 		struct rte_mbuf **pkts, int nb_pkts,
 		const union sppwk_port_capability *capability)
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int cnt = 0;
 	for (cnt = 0; cnt < nb_pkts; cnt++) {
 		ret = del_vlan_tag_one(pkts[cnt], capability);
@@ -384,7 +384,7 @@ sppwk_eth_vlan_rx_burst(uint16_t port_id,
 	uint16_t nb_rx;
 	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
 	if (unlikely(nb_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* Add or delete VLAN tag. */
 	return vlan_operation(port_id, rx_pkts, nb_rx, SPPWK_PORT_DIR_RX);
@@ -402,7 +402,7 @@ sppwk_eth_vlan_tx_burst(uint16_t port_id,
 	nb_tx = vlan_operation(port_id, tx_pkts, nb_pkts, SPPWK_PORT_DIR_TX);
 
 	if (unlikely(nb_tx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	return rte_eth_tx_burst(port_id, 0, tx_pkts, nb_tx);
 }
@@ -419,7 +419,7 @@ sppwk_eth_vlan_ring_stats_rx_burst(uint16_t port_id,
 	uint16_t nb_rx;
 	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
 	if (unlikely(nb_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	if (iface_type == RING)
 		spp_ringlatencystats_calculate_latency(iface_no,
@@ -442,7 +442,7 @@ sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
 	nb_tx = vlan_operation(port_id, tx_pkts, nb_pkts, SPPWK_PORT_DIR_TX);
 
 	if (unlikely(nb_tx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	if (iface_type == RING) {
 		spp_ringlatencystats_add_time_stamp(iface_no, tx_pkts, nb_pkts);

@@ -69,8 +69,8 @@ int exec_one_cmd(const struct sppwk_cmd_attrs *cmd);
  * Update classifier info.
  *
  * @param wk_comp_info Pointer to internal data of classifier.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int update_classifier(struct sppwk_comp_info *wk_comp_info);
 
@@ -78,8 +78,8 @@ int update_classifier(struct sppwk_comp_info *wk_comp_info);
  * Update forwarder info.
  *
  * @param component Pointer to data of forwarder and merger.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int update_forwarder(struct sppwk_comp_info *wk_comp_info);
 
@@ -101,8 +101,8 @@ int add_classifier_table_val(
  *
  * @param[in] p_comp_info Info of component.
  * @param[in] p_change_comp Pointer to a set of Flags for udpated component.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
 
