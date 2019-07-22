@@ -142,9 +142,9 @@ parse_app_args(int argc, char *argv[])
 			&option_index)) != EOF) {
 		switch (opt) {
 		case SPP_LONGOPT_RETVAL_CLIENT_ID:
-			if (parse_client_id(&cli_id, optarg) != SPP_RET_OK) {
+			if (parse_client_id(&cli_id, optarg) != SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			set_client_id(cli_id);
 
@@ -155,9 +155,9 @@ parse_app_args(int argc, char *argv[])
 			break;
 		case 's':
 			ret = parse_server(&ctl_ip, &ctl_port, optarg);
-			if (ret != SPP_RET_OK) {
+			if (ret != SPPWK_RET_OK) {
 				usage(progname);
-				return SPP_RET_NG;
+				return SPPWK_RET_NG;
 			}
 			set_spp_ctl_ip(ctl_ip);
 			set_spp_ctl_port(ctl_port);
@@ -165,20 +165,20 @@ parse_app_args(int argc, char *argv[])
 			break;
 		default:
 			usage(progname);
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 	}
 
 	/* Check mandatory parameters */
 	if ((proc_flg == 0) || (server_flg == 0)) {
 		usage(progname);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	RTE_LOG(INFO, MIRROR,
 			"Parsed app args (client_id=%d, server=%s:%d, "
 			"vhost_client=%d)\n",
 			cli_id, ctl_ip, ctl_port, get_vhost_cli_mode());
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* mirror mbuf pool create */
@@ -212,10 +212,10 @@ mirror_pool_create(int id)
 	}
 	if (g_mirror_pool == NULL) {
 		RTE_LOG(ERR, MIRROR, "Cannot init mbuf pool\n");
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Clear info */
@@ -245,13 +245,13 @@ update_mirror(struct sppwk_comp_info *wk_comp)
 		RTE_LOG(ERR, MIRROR,
 			"Invalid num of RX (id=%d, type=%d, nof_rx=%d)\n",
 			wk_comp->comp_id, wk_comp->wk_type, nof_rx);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 	if (unlikely(nof_tx > 2)) {
 		RTE_LOG(ERR, MIRROR,
 			"Invalid num of TX (id=%d, type=%d, nof_tx=%d)\n",
 			wk_comp->comp_id, wk_comp->wk_type, nof_tx);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	memset(path, 0x00, sizeof(struct mirror_path));
@@ -281,7 +281,7 @@ update_mirror(struct sppwk_comp_info *wk_comp)
 			"Done update mirror (id=%d, name=%s, type=%d)\n",
 			wk_comp->comp_id, wk_comp->name, wk_comp->wk_type);
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Change index of mirror info */
@@ -323,7 +323,7 @@ mirror_proc(int id)
 
 	/* Practice condition check */
 	if (!(path->nof_tx == 2 && path->nof_rx == 1))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	rx = &path->ports[0].rx;
 
@@ -335,7 +335,7 @@ mirror_proc(int id)
 #endif
 
 	if (unlikely(nb_rx == 0))
-		return SPP_RET_OK;
+		return SPPWK_RET_OK;
 
 	/* mirror */
 	tx = &path->ports[1].tx;
@@ -426,14 +426,14 @@ mirror_proc(int id)
 		for (buf = nb_tx2; buf < nb_rx; buf++)
 			rte_pktmbuf_free(copybufs[buf]);
 	}
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
 
 /* Main process of slave core */
 static int
 slave_main(void *arg __attribute__ ((unused)))
 {
-	int ret = SPP_RET_OK;
+	int ret = SPPWK_RET_OK;
 	int cnt = 0;
 	unsigned int lcore_id = rte_lcore_id();
 	enum sppwk_lcore_status status = SPPWK_LCORE_STOPPED;
@@ -448,7 +448,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		if (status != SPPWK_LCORE_RUNNING)
 			continue;
 
-		if (spp_check_core_update(lcore_id) == SPP_RET_OK) {
+		if (spp_check_core_update(lcore_id) == SPPWK_RET_OK) {
 			/* Setting with the flush command trigger. */
 			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);
@@ -479,7 +479,7 @@ slave_main(void *arg __attribute__ ((unused)))
 /**
  * Main function
  *
- * Return SPP_RET_NG explicitly if error is occurred.
+ * Return SPPWK_RET_NG explicitly if error is occurred.
  */
 int
 main(int argc, char *argv[])
@@ -539,10 +539,10 @@ main(int argc, char *argv[])
 
 		/* create the mbuf pool */
 		ret = mirror_pool_create(get_client_id());
-		if (ret == SPP_RET_NG) {
+		if (ret == SPPWK_RET_NG) {
 			RTE_LOG(ERR, MIRROR,
 					"Failed to create mbuf pool.\n");
-			return SPP_RET_NG;
+			return SPPWK_RET_NG;
 		}
 
 		int ret_mng = init_mng_data();
@@ -556,7 +556,7 @@ main(int argc, char *argv[])
 		get_spp_ctl_ip(ctl_ip);
 		ctl_port = get_spp_ctl_port();
 		ret_cmd_init = sppwk_cmd_runner_conn(ctl_ip, ctl_port);
-		if (unlikely(ret_cmd_init != SPP_RET_OK))
+		if (unlikely(ret_cmd_init != SPPWK_RET_OK))
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -574,7 +574,7 @@ main(int argc, char *argv[])
 		int ret_ringlatency = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
 				nof_rings);
-		if (unlikely(ret_ringlatency != SPP_RET_OK))
+		if (unlikely(ret_ringlatency != SPPWK_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -614,7 +614,7 @@ main(int argc, char *argv[])
 #endif
 			/* Receive command */
 			ret_do = sppwk_run_cmd();
-			if (unlikely(ret_do != SPP_RET_OK))
+			if (unlikely(ret_do != SPPWK_RET_OK))
 				break;
 			/*
 			 * To avoid making CPU busy, this thread waits
@@ -627,12 +627,12 @@ main(int argc, char *argv[])
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
-		if (unlikely(ret_do != SPP_RET_OK)) {
+		if (unlikely(ret_do != SPPWK_RET_OK)) {
 			set_all_core_status(SPPWK_LCORE_REQ_STOP);
 			break;
 		}
 
-		ret = SPP_RET_OK;
+		ret = SPPWK_RET_OK;
 		break;
 	}
 
@@ -658,7 +658,7 @@ int
 get_mirror_status(unsigned int lcore_id, int id,
 		struct spp_iterate_core_params *params)
 {
-	int ret = SPP_RET_NG;
+	int ret = SPPWK_RET_NG;
 	int cnt;
 	const char *component_type = NULL;
 	struct mirror_info *info = &g_mirror_info[id];
@@ -670,7 +670,7 @@ get_mirror_status(unsigned int lcore_id, int id,
 		RTE_LOG(ERR, MIRROR,
 			"Mirror is not used. (id=%d, lcore=%d, type=%d)\n",
 			id, lcore_id, path->wk_type);
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 	}
 
 	component_type = SPPWK_TYPE_MIR_STR;
@@ -692,7 +692,7 @@ get_mirror_status(unsigned int lcore_id, int id,
 			component_type, path->nof_rx, rx_ports, path->nof_tx,
 			tx_ports);
 	if (unlikely(ret != 0))
-		return SPP_RET_NG;
+		return SPPWK_RET_NG;
 
-	return SPP_RET_OK;
+	return SPPWK_RET_OK;
 }
