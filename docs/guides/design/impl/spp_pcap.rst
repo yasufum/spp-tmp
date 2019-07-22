@@ -65,10 +65,10 @@ speed > 500 MB/s per core.
             mbuf = bufs[buf];
             rte_prefetch0(rte_pktmbuf_mtod(mbuf, void *));
             if (compress_file_packet(&g_pcap_info[lcore_id], mbuf)
-                                                    != SPP_RET_OK) {
+                                                    != SPPWK_RET_OK) {
                     RTE_LOG(ERR, PCAP, "capture file write error: "
                             "%d (%s)\n", errno, strerror(errno));
-                    ret = SPP_RET_NG;
+                    ret = SPPWK_RET_NG;
                     info->status = SPP_CAPTURE_IDLE;
                     compress_file_operation(info, CLOSE_MODE);
                     break;

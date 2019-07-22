@@ -273,7 +273,7 @@ Status info is referred from forwarding process after the update is completed.
                 &backup_info);
 
         ret = update_port_info();
-        if (ret < SPP_RET_OK)
+        if (ret < SPPWK_RET_OK)
             return ret;
 
         update_lcore_info();
