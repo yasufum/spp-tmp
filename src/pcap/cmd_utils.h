@@ -286,8 +286,8 @@ struct core_info *get_core_info(unsigned int lcore_id);
  * @param port String of port type to be converted.
  * @param iface_type Interface type.
  * @param iface_no Interface number.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 /* TODO(yasufum) consider to merge to shared. */
 int
@@ -316,8 +316,8 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @param core_mng_p Pointer to g_core_info address.
  * @param capture_status_p Pointer to status of pcap.
  * @param capture_request_p Pointer to req of pcap.
- * @retval SPP_RET_OK If succeeded.
- * @retval SPP_RET_NG If failed.
+ * @retval SPPWK_RET_OK If succeeded.
+ * @retval SPPWK_RET_NG If failed.
  */
 int spp_set_mng_data_addr(struct iface_info *iface_p,
 			  struct core_mng_info *core_mng_p,

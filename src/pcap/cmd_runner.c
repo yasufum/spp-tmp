@@ -919,10 +919,10 @@ spp_command_proc_init(const char *ctl_ipaddr, int ctl_port)
 
 /* process command from controller. */
 int
-spp_command_proc_do(void)
+sppwk_run_cmd(void)
 {
-	int ret = SPPWK_RET_NG;
-	int msg_ret = -1;
+	int ret;
+	int msg_ret;
 
 	static int sock = -1;
 	static char *msgbuf;
@@ -938,6 +938,7 @@ spp_command_proc_do(void)
 	}
 
 	ret = conn_spp_ctl(&sock);
+
 	if (unlikely(ret != SPPWK_RET_OK))
 		return SPPWK_RET_OK;
 

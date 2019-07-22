@@ -1056,7 +1056,7 @@ main(int argc, char *argv[])
 		while (likely(g_core_info[master_lcore].status !=
 				SPPWK_LCORE_REQ_STOP)) {
 			/* Receive command */
-			ret_do = spp_command_proc_do();
+			ret_do = sppwk_run_cmd();
 			if (unlikely(ret_do != SPPWK_RET_OK))
 				break;
 

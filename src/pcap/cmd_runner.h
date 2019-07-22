@@ -37,6 +37,6 @@ spp_command_proc_init(const char *controller_ip, int controller_port);
  *            (occurred connection failure, or received exit command)
  */
 int
-spp_command_proc_do(void);
+sppwk_run_cmd(void);
 
 #endif /* _SPP_PCAP_CMD_RUNNER_H_ */
