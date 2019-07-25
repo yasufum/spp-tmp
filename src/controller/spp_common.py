@@ -5,13 +5,17 @@
 import logging
 import os
 
+# Type definitions.
 PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
-
 SEC_TYPES = ['nfv', 'vf', 'mirror', 'pcap']
 
 LOGFILE = 'spp_cli.log'  # name of logfile under `/src/controller/log/`
 
+# Current server under management of SPP CLI.
 cur_server_addr = None
+
+# Entry of used secondary IDs to avoid to launch duplicated ID.
+used_sec_ids = []
 
 # Setup logger object
 logger = logging.getLogger(__name__)
