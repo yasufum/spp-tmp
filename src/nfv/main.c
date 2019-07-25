@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 	unsigned int lcore_id;
 	unsigned int nb_ports;
 	int connected = 0;
-	char str[MSG_SIZE];
+	char str[MSG_SIZE] = { 0 };
 	unsigned int i;
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;

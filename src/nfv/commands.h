@@ -13,19 +13,9 @@
 #define RTE_LOGTYPE_SPP_NFV RTE_LOGTYPE_USER1
 
 static int
-do_del(char *res_uid)
+do_del(char *p_type, int p_id)
 {
 	uint16_t port_id = PORT_RESET;
-	char *p_type;
-	int p_id;
-	int res;
-
-	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0) {
-		RTE_LOG(ERR, SPP_NFV,
-			"Failed to parse resource UID\n");
-		return -1;
-	}
 
 	if (!strcmp(p_type, "vhost")) {
 		port_id = find_port_id(p_id, VHOST);
@@ -65,17 +55,11 @@ do_del(char *res_uid)
  * combination of port type and ID like as 'ring:0'.
  */
 static int
-do_add(char *res_uid)
+do_add(char *p_type, int p_id)
 {
 	enum port_type type = UNDEF;
 	uint16_t port_id = PORT_RESET;
-	char *p_type;
-	int p_id;
-	int res;
-
-	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0)
-		return -1;
+	int res = 0;
 
 	if (!strcmp(p_type, "vhost")) {
 		type = VHOST;
@@ -152,11 +136,14 @@ parse_command(char *str)
 {
 	uint16_t dev_id;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
-
-	char *token_list[MAX_PARAMETER] = {NULL};
+	char *token_list[MAX_PARAMETER] = { 0 };
 	int cli_id;
 	int max_token = 0;
 	int ret = 0;
+	char result[16] = { 0 };  /* succeeded or failed. */
+	char port_set[32] = { 0 };
+	char *p_type;
+	int p_id;
 
 	if (!str)
 		return 0;
@@ -194,33 +181,66 @@ parse_command(char *str)
 
 	} else if (!strcmp(token_list[0], "_get_client_id")) {
 		memset(str, '\0', MSG_SIZE);
+		/**
+		 * TODO(yasufum) revise result msg. 1) need both of `results`
+		 * and `result`. 2) change `success` to `succeeded`.
+		 */
 		sprintf(str, "{%s:%s,%s:%d,%s:%s}",
 				"\"results\"", "[{\"result\":\"success\"}]",
 				"\"client_id\"", get_client_id(),
 				"\"process_type\"", "\"nfv\"");
 
 	} else if (!strcmp(token_list[0], "_set_client_id")) {
-		if (spp_atoi(token_list[1], &cli_id) >= 0)
+		if (spp_atoi(token_list[1], &cli_id) >= 0) {
 			set_client_id(cli_id);
+			sprintf(result, "%s", "\"succeeded\"");
+		} else
+			sprintf(result, "%s", "\"failed\"");
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"_set_client_id\"");
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, SPP_NFV, "exit\n");
-		RTE_LOG(DEBUG, SPP_NFV, "stop\n");
 		cmd = STOP;
 		ret = -1;
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"exit\"");
 
 	} else if (!strcmp(token_list[0], "stop")) {
 		RTE_LOG(DEBUG, SPP_NFV, "stop\n");
 		cmd = STOP;
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"stop\"");
 
 	} else if (!strcmp(token_list[0], "forward")) {
 		RTE_LOG(DEBUG, SPP_NFV, "forward\n");
 		cmd = FORWARD;
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"forward\"");
 
 	} else if (!strcmp(token_list[0], "add")) {
 		RTE_LOG(DEBUG, SPP_NFV, "Received add command\n");
-		if (do_add(token_list[1]) < 0)
+
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		if (ret < 0)
+			return ret;
+
+		if (do_add(p_type, p_id) < 0) {
 			RTE_LOG(ERR, SPP_NFV, "Failed to do_add()\n");
+			sprintf(result, "%s", "\"failed\"");
+		} else
+			sprintf(result, "%s", "\"succeeded\"");
+
+		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"add\"",
+				"\"port\"", port_set);
 
 	} else if (!strcmp(token_list[0], "patch")) {
 		RTE_LOG(DEBUG, SPP_NFV, "patch\n");
@@ -276,14 +296,27 @@ parse_command(char *str)
 				RTE_LOG(ERR, SPP_NFV, "%s\n", err_msg);
 			}
 
-			if (add_patch(in_port, out_port) == 0)
+			if (add_patch(in_port, out_port) == 0) {
 				RTE_LOG(INFO, SPP_NFV,
 					"Patched '%s:%d' and '%s:%d'\n",
 					in_p_type, in_p_id,
 					out_p_type, out_p_id);
-
-			else
+				sprintf(result, "%s", "\"succeeded\"");
+			} else {
 				RTE_LOG(ERR, SPP_NFV, "Failed to patch\n");
+				sprintf(result, "%s", "\"failed\"");
+			}
+
+			sprintf(port_set,
+				"{\"src\":\"%s:%d\",\"dst\":\"%s:%d\"}",
+				in_p_type, in_p_id, out_p_type, out_p_id);
+
+			memset(str, '\0', MSG_SIZE);
+			sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+					"\"result\"", result,
+					"\"command\"", "\"patch\"",
+					"\"ports\"", port_set);
+
 			ret = 0;
 		}
 
@@ -292,8 +325,22 @@ parse_command(char *str)
 
 		cmd = STOP;
 
-		if (do_del(token_list[1]) < 0)
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		if (ret < 0)
+			return ret;
+
+		if (do_del(p_type, p_id) < 0) {
 			RTE_LOG(ERR, SPP_NFV, "Failed to do_del()\n");
+			sprintf(result, "%s", "\"failed\"");
+		} else
+			sprintf(result, "%s", "\"succeeded\"");
+
+		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"del\"",
+				"\"port\"", port_set);
 	}
 
 	return ret;
