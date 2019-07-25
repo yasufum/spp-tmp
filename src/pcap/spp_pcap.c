@@ -216,16 +216,16 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 	char *endptr = NULL;
 
 	/* Find out which type of interface from resource UID */
-	if (strncmp(port_str, SPP_IFTYPE_NIC_STR ":",
-			strlen(SPP_IFTYPE_NIC_STR)+1) == 0) {
+	if (strncmp(port_str, SPPWK_PHY_STR ":",
+			strlen(SPPWK_PHY_STR)+1) == 0) {
 		/* NIC */
 		type = PHY;
-		no_str = &port_str[strlen(SPP_IFTYPE_NIC_STR)+1];
-	} else if (strncmp(port_str, SPP_IFTYPE_RING_STR ":",
-			strlen(SPP_IFTYPE_RING_STR)+1) == 0) {
+		no_str = &port_str[strlen(SPPWK_PHY_STR)+1];
+	} else if (strncmp(port_str, SPPWK_RING_STR ":",
+			strlen(SPPWK_RING_STR)+1) == 0) {
 		/* RING */
 		type = RING;
-		no_str = &port_str[strlen(SPP_IFTYPE_RING_STR)+1];
+		no_str = &port_str[strlen(SPPWK_RING_STR)+1];
 	} else {
 		/* OTHER */
 		RTE_LOG(ERR, SPP_PCAP, "The interface that does not suppor. "
@@ -468,9 +468,9 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		info->file_size = 0;
 		info->file_no = 1;
 		if (g_pcap_option.port_cap.iface_type == PHY)
-			iface_type_str = SPP_IFTYPE_NIC_STR;
+			iface_type_str = SPPWK_PHY_STR;
 		else
-			iface_type_str = SPP_IFTYPE_RING_STR;
+			iface_type_str = SPPWK_RING_STR;
 		snprintf(info->compress_file_name,
 					PCAP_FNAME_STRLEN - 1,
 					"spp_pcap.%s.%s%d.%u.%u.pcap.lz4",
@@ -523,9 +523,9 @@ static int file_compression_operation(struct pcap_mng_info *info,
 		info->file_size = 0;
 		info->file_no++;
 		if (g_pcap_option.port_cap.iface_type == PHY)
-			iface_type_str = SPP_IFTYPE_NIC_STR;
+			iface_type_str = SPPWK_PHY_STR;
 		else
-			iface_type_str = SPP_IFTYPE_RING_STR;
+			iface_type_str = SPPWK_RING_STR;
 		snprintf(info->compress_file_name,
 					PCAP_FNAME_STRLEN - 1,
 					"spp_pcap.%s.%s%d.%u.%u.pcap.lz4",

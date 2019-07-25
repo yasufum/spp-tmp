@@ -269,10 +269,10 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 
 	switch (iface_type) {
 	case PHY:
-		iface_type_str = SPP_IFTYPE_NIC_STR;
+		iface_type_str = SPPWK_PHY_STR;
 		break;
 	case RING:
-		iface_type_str = SPP_IFTYPE_RING_STR;
+		iface_type_str = SPPWK_RING_STR;
 		break;
 	default:
 		return SPPWK_RET_NG;

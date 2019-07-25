@@ -22,15 +22,6 @@
 #include <netinet/in.h>
 #include "shared/common.h"
 
-/** Identifier string for each interface */
-#define SPP_IFTYPE_NIC_STR   "phy"
-#define SPP_IFTYPE_RING_STR  "ring"
-
-#define STR_LEN_SHORT 32  /* Size of short string. */
-#define STR_LEN_NAME 128  /* Size of string for names. */
-
-#define PORT_ABL_MAX 4  /* Max num of port abilities. */
-
 /* Max number of core status check */
 #define SPP_CORE_STATUS_CHECK_MAX 5
 
@@ -59,6 +50,7 @@ enum sppwk_lcore_status sppwk_get_lcore_status(unsigned int lcore_id);
  * @retval 0  If succeeded.
  * @retval -1 If failed.
  */
+/* TODO(yasufum) remove it and use in shared because it is same. */
 int check_core_status_wait(enum sppwk_lcore_status status);
 
 /**
