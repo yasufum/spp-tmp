@@ -48,11 +48,6 @@ enum sppwk_capture_status {
 	SPP_CAPTURE_RUNNING     /* Running */
 };
 
-enum sppwk_return_val {
-	SPPWK_RET_OK = 0,  /**< succeeded */
-	SPPWK_RET_NG = -1, /**< failed */
-};
-
 /* Direction of RX or TX on a port. */
 enum sppwk_port_dir {
 	SPPWK_PORT_DIR_NONE,  /**< None */

@@ -10,6 +10,7 @@
 #include <rte_branch_prediction.h>
 
 #include "cmd_parser.h"
+#include "shared/secondary/return_codes.h"
 
 #define RTE_LOGTYPE_PCAP_PARSER RTE_LOGTYPE_USER2
 

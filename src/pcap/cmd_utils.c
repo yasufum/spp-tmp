@@ -9,6 +9,7 @@
 #include <rte_log.h>
 
 #include "cmd_utils.h"
+#include "shared/secondary/return_codes.h"
 
 #define RTE_LOGTYPE_PCAP_UTILS RTE_LOGTYPE_USER2
 

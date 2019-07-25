@@ -10,6 +10,7 @@
 #include "cmd_parser.h"
 #include "cmd_runner.h"
 #include "spp_pcap.h"
+#include "shared/secondary/return_codes.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/string_buffer.h"
 #include "shared/secondary/spp_worker_th/conn_spp_ctl.h"

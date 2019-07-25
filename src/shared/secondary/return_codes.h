@@ -5,7 +5,7 @@
 #ifndef _SPP_SEC_RETURN_CODES_H_
 #define _SPP_SEC_RETURN_CODES_H_
 
-enum spp_return_val {
+enum sppwk_return_val {
 	SPPWK_RET_OK = 0,  /**< succeeded */
 	SPPWK_RET_NG = -1, /**< failed */
 };
