@@ -211,12 +211,6 @@ void log_component_info(const struct sppwk_comp_info *component_info);
 /* Output log message for interface information */
 void log_interface_info(const struct iface_info *iface_info);
 
-/* Output log message for all management information */
-void log_all_mng_info(
-		const struct core_mng_info *core,
-		const struct sppwk_comp_info *component,
-		const struct iface_info *interface);
-
 /* Copy management information */
 void copy_mng_info(
 		struct core_mng_info *dst_core,

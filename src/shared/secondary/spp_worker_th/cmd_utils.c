@@ -268,7 +268,7 @@ log_interface_info(const struct iface_info *iface_info)
 }
 
 /* Dump of all management information */
-void
+static void
 log_all_mng_info(
 		const struct core_mng_info *core,
 		const struct sppwk_comp_info *component,
