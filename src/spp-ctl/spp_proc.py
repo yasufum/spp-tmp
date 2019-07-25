@@ -110,7 +110,7 @@ def exec_command(func):
             if data is None:
                 raise RuntimeError("%s(%d): %s: no-data returned" %
                                    (self.type, self.id, command))
-            LOG.debug("reply: %s", data)
+            LOG.debug("reply: %s", data.replace('\0', ''))
             return self._decode_reply(data)
     return wrapper
 
