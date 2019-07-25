@@ -156,7 +156,7 @@ append_vlan_block(const char *name, char **output,
 	}
 
 	sppwk_get_port_attrs(&port_attrs, port_id, dir);
-	for (i = 0; i < PORT_ABL_MAX; i++) {
+	for (i = 0; i < PORT_CAPABL_MAX; i++) {
 		switch (port_attrs[i].ops) {
 		case SPPWK_PORT_OPS_ADD_VLAN:
 		case SPPWK_PORT_OPS_DEL_VLAN:
@@ -171,14 +171,14 @@ append_vlan_block(const char *name, char **output,
 			 * An if statement after loop termination is false
 			 * by "maximum+1 ".
 			 */
-			i = PORT_ABL_MAX + 1;
+			i = PORT_CAPABL_MAX + 1;
 			break;
 		default:
 			/* not used */
 			break;
 		}
 	}
-	if (i == PORT_ABL_MAX) {
+	if (i == PORT_CAPABL_MAX) {
 		ret = append_vlan_value(&tmp_buff, SPPWK_PORT_OPS_NONE,
 				0, 0);
 		if (unlikely(ret < SPPWK_RET_OK))

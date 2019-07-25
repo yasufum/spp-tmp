@@ -13,6 +13,7 @@
 #include <lz4frame.h>
 
 #include "shared/common.h"
+#include "data_types.h"
 #include "cmd_utils.h"
 #include "spp_pcap.h"
 #include "cmd_runner.h"
@@ -52,6 +53,19 @@
 
 /* Ensure snaplen not to be over the maximum size */
 #define TRANCATE_SNAPLEN(a, b) (((a) < (b))?(a):(b))
+
+/* getopt_long return value for long option */
+enum SPP_LONGOPT_RETVAL {
+	SPP_LONGOPT_RETVAL__ = 127,
+
+	/*
+	 * Return value definition for getopt_long()
+	 * Only for long option
+	 */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,  /* --client-id */
+	SPP_LONGOPT_RETVAL_OUT_DIR,    /* --out-dir */
+	SPP_LONGOPT_RETVAL_FILE_SIZE   /* --fsize */
+};
 
 /* capture thread type */
 enum worker_thread_type {
@@ -138,7 +152,7 @@ struct pcap_status_info {
 static struct iface_info g_iface_info;
 
 /* Core management information */
-static struct core_mng_info g_core_info[RTE_MAX_LCORE];
+static struct spp_pcap_core_mng_info g_core_info[RTE_MAX_LCORE];
 
 /* Packet capture request information */
 static int g_capture_request;

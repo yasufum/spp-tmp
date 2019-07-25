@@ -34,8 +34,8 @@ struct port_capabl_mng_info {
 	volatile int upd_index; /* Flag to indicate using update side. */
 
 	/* A set of attrs including sppwk_port_capability. */
-	/* TODO(yasufum) confirm why using PORT_ABL_MAX. */
-	struct sppwk_port_attrs port_attrs[TWO_SIDES][PORT_ABL_MAX];
+	/* TODO(yasufum) confirm why using PORT_CAPABL_MAX. */
+	struct sppwk_port_attrs port_attrs[TWO_SIDES][PORT_CAPABL_MAX];
 };
 
 /* Port ability port information */
@@ -284,8 +284,8 @@ update_port_attrs(struct sppwk_port_info *port,
 
 	port_attrs_out = mng->port_attrs[mng->upd_index];
 	memset(port_attrs_out, 0x00, sizeof(struct sppwk_port_attrs)
-			* PORT_ABL_MAX);
-	for (in_cnt = 0; in_cnt < PORT_ABL_MAX; in_cnt++) {
+			* PORT_CAPABL_MAX);
+	for (in_cnt = 0; in_cnt < PORT_CAPABL_MAX; in_cnt++) {
 		if (port_attrs_in[in_cnt].dir != dir)
 			continue;
 
@@ -356,7 +356,7 @@ vlan_operation(uint16_t port_id, struct rte_mbuf **pkts, const uint16_t nb_pkts,
 	if (unlikely(port_attrs[0].ops == SPPWK_PORT_OPS_NONE))
 		return nb_pkts;
 
-	for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
+	for (cnt = 0; cnt < PORT_CAPABL_MAX; cnt++) {
 		/* Do nothing if the port is assigned no VLAN feature. */
 		if (port_attrs[cnt].ops == SPPWK_PORT_OPS_NONE)
 			break;

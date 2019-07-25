@@ -34,6 +34,15 @@
 #define MIR_RX_DESC_DEFAULT 1024
 #define MIR_TX_DESC_DEFAULT 1024
 
+/* getopt_long return value for long option */
+enum SPP_LONGOPT_RETVAL {
+	SPP_LONGOPT_RETVAL__ = 127,
+
+	/* Return value definition for getopt_long(). Only for long option. */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,    /* For `--client-id` */
+	SPP_LONGOPT_RETVAL_VHOST_CLIENT  /* For `--vhost-client` */
+};
+
 /* A set of port info of rx and tx */
 struct mirror_rxtx {
 	struct sppwk_port_info rx; /* rx port */

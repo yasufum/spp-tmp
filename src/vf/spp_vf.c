@@ -21,6 +21,15 @@
 #include "shared/secondary/spp_worker_th/ringlatencystats.h"
 #endif
 
+/* getopt_long return value for long option */
+enum SPP_LONGOPT_RETVAL {
+	SPP_LONGOPT_RETVAL__ = 127,
+
+	/* Return value definition for getopt_long(). Only for long option. */
+	SPP_LONGOPT_RETVAL_CLIENT_ID,    /* For `--client-id` */
+	SPP_LONGOPT_RETVAL_VHOST_CLIENT  /* For `--vhost-client` */
+};
+
 /* Declare global variables */
 /* Interface management information */
 static struct iface_info g_iface_info;

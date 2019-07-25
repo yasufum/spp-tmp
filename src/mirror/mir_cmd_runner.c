@@ -178,11 +178,11 @@ update_port(enum sppwk_action wk_action,
 			/* registered */
 			/* TODO(yasufum) confirm it is needed for spp_mirror. */
 			if (port_attrs->ops == SPPWK_PORT_OPS_ADD_VLAN) {
-				while ((cnt < PORT_ABL_MAX) &&
+				while ((cnt < PORT_CAPABL_MAX) &&
 					    (port_info->port_attrs[cnt].ops !=
 					    SPPWK_PORT_OPS_ADD_VLAN))
 					cnt++;
-				if (cnt >= PORT_ABL_MAX) {
+				if (cnt >= PORT_CAPABL_MAX) {
 					RTE_LOG(ERR, MIR_CMD_RUNNER, "update VLAN tag "
 						"Non-registratio\n");
 					return SPPWK_RET_NG;
@@ -203,12 +203,12 @@ update_port(enum sppwk_action wk_action,
 		}
 
 		if (port_attrs->ops != SPPWK_PORT_OPS_NONE) {
-			while ((cnt < PORT_ABL_MAX) &&
+			while ((cnt < PORT_CAPABL_MAX) &&
 					(port_info->port_attrs[cnt].ops !=
 					SPPWK_PORT_OPS_NONE)) {
 				cnt++;
 			}
-			if (cnt >= PORT_ABL_MAX) {
+			if (cnt >= PORT_CAPABL_MAX) {
 				RTE_LOG(ERR, MIR_CMD_RUNNER,
 						"No space of port port_attrs.\n");
 				return SPPWK_RET_NG;
@@ -225,7 +225,7 @@ update_port(enum sppwk_action wk_action,
 		break;
 
 	case SPPWK_ACT_DEL:
-		for (cnt = 0; cnt < PORT_ABL_MAX; cnt++) {
+		for (cnt = 0; cnt < PORT_CAPABL_MAX; cnt++) {
 			if (port_info->port_attrs[cnt].ops ==
 					SPPWK_PORT_OPS_NONE)
 				continue;

@@ -15,10 +15,10 @@
 
 /* Manage data to addoress */
 struct mng_data_info {
-	struct iface_info	  *p_iface_info;
-	struct core_mng_info	  *p_core_info;
-	int			  *p_capture_request;
-	int			  *p_capture_status;
+	struct iface_info *p_iface_info;
+	struct spp_pcap_core_mng_info *p_core_info;
+	int *p_capture_request;
+	int *p_capture_status;
 };
 
 /* Declare global variables */
@@ -192,9 +192,10 @@ init_iface_info(void)
 static void
 init_core_info(void)
 {
-	struct core_mng_info *p_core_info = g_mng_data_addr.p_core_info;
+	struct spp_pcap_core_mng_info *p_core_info =
+		g_mng_data_addr.p_core_info;
 	memset(p_core_info, 0x00,
-			sizeof(struct core_mng_info)*RTE_MAX_LCORE);
+		sizeof(struct spp_pcap_core_mng_info)*RTE_MAX_LCORE);
 	set_all_core_status(SPPWK_LCORE_STOPPED);
 	*g_mng_data_addr.p_capture_request = SPP_CAPTURE_IDLE;
 	*g_mng_data_addr.p_capture_status = SPP_CAPTURE_IDLE;
@@ -284,7 +285,7 @@ int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
 
 /* Set mange data address */
 int spp_set_mng_data_addr(struct iface_info *iface_p,
-			  struct core_mng_info *core_mng_p,
+			  struct spp_pcap_core_mng_info *core_mng_p,
 			  int *capture_request_p,
 			  int *capture_status_p)
 {
@@ -303,7 +304,7 @@ int spp_set_mng_data_addr(struct iface_info *iface_p,
 
 /* Get manage data address */
 void spp_get_mng_data_addr(struct iface_info **iface_p,
-			   struct core_mng_info **core_mng_p,
+			   struct spp_pcap_core_mng_info **core_mng_p,
 			   int **capture_request_p,
 			   int **capture_status_p)
 {

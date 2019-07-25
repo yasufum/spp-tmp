@@ -11,6 +11,8 @@
 #ifndef _SPPWK_CMD_UTILS_H_
 #define _SPPWK_CMD_UTILS_H_
 
+#include "data_types.h"
+
 /**
  * @file cmd_utils.h
  *
@@ -31,161 +33,6 @@
 
 /* Max number of core status check */
 #define SPP_CORE_STATUS_CHECK_MAX 5
-
-/* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
-/* Status of a component on lcore. */
-enum sppwk_lcore_status {
-	SPPWK_LCORE_UNUSED,
-	SPPWK_LCORE_STOPPED,
-	SPPWK_LCORE_IDLING,
-	SPPWK_LCORE_RUNNING,
-	SPPWK_LCORE_REQ_STOP  /**< Request for stopping. */
-};
-
-/* State on capture */
-enum sppwk_capture_status {
-	SPP_CAPTURE_IDLE,      /* Idling */
-	SPP_CAPTURE_RUNNING     /* Running */
-};
-
-/* Direction of RX or TX on a port. */
-enum sppwk_port_dir {
-	SPPWK_PORT_DIR_NONE,  /**< None */
-	SPPWK_PORT_DIR_RX,    /**< RX port */
-	SPPWK_PORT_DIR_TX,    /**< TX port */
-	SPPWK_PORT_DIR_BOTH,  /**< Both of RX and TX */
-};
-
-/* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
-/* Type of SPP worker thread. */
-enum sppwk_worker_type {
-	SPPWK_TYPE_NONE,  /**< Not used */
-	SPPWK_TYPE_CLS,  /**< Classifier_mac */
-	SPPWK_TYPE_MRG,  /**< Merger */
-	SPPWK_TYPE_FWD,  /**< Forwarder */
-	SPPWK_TYPE_MIR,  /**< Mirror */
-};
-
-/**
- * Port ability operation which indicates vlan tag operation on the port
- * (e.g. add vlan tag or delete vlan tag)
- */
-enum sppwk_port_ops {
-	SPPWK_PORT_OPS_NONE,
-	SPPWK_PORT_OPS_ADD_VLAN,  /* Add vlan tag. */
-	SPPWK_PORT_OPS_DEL_VLAN,  /* Delete vlan tag. */
-};
-
-/* getopt_long return value for long option */
-enum SPP_LONGOPT_RETVAL {
-	SPP_LONGOPT_RETVAL__ = 127,
-
-	/*
-	 * Return value definition for getopt_long()
-	 * Only for long option
-	 */
-	SPP_LONGOPT_RETVAL_CLIENT_ID,  /* --client-id */
-	SPP_LONGOPT_RETVAL_OUT_DIR,    /* --out-dir */
-	SPP_LONGOPT_RETVAL_FILE_SIZE   /* --fsize */
-};
-
-/** VLAN tag information */
-struct sppwk_vlan_tag {
-	int vid; /**< VLAN ID */
-	int pcp; /**< Priority Code Point */
-	int tci; /**< Tag Control Information */
-};
-
-/* Ability for vlantag for a port. */
-union sppwk_port_capability {
-	/** VLAN tag information */
-	struct sppwk_vlan_tag vlantag;
-};
-
-/* Port attributes of SPP worker processes. */
-struct sppwk_port_attrs {
-	enum sppwk_port_ops ops;  /**< Port capability Operations */
-	enum sppwk_port_dir dir;  /**< Direction of RX, TX or both */
-	union sppwk_port_capability capability;   /**< Port capability */
-};
-
-/* TODO(yasufum) confirm why vlantag is required for spp_pcap. */
-/* Attributes for classifying . */
-struct sppwk_cls_attrs {
-	uint64_t mac_addr;  /**< Mac address (binary) */
-	char mac_addr_str[STR_LEN_SHORT];  /**< Mac address (text) */
-	struct sppwk_vlan_tag vlantag;   /**< VLAN tag information */
-};
-
-/* Interface information structure */
-struct sppwk_port_idx {
-	enum port_type iface_type;  /**< phy, vhost or ring. */
-	int iface_no;
-};
-
-/* Define detailed port params in addition to `sppwk_port_idx`. */
-struct sppwk_port_info {
-	enum port_type iface_type;  /**< phy, vhost or ring */
-	int iface_no;
-	int ethdev_port_id;  /**< Consistent ID of ethdev */
-	struct sppwk_cls_attrs cls_attrs;
-	struct sppwk_port_attrs port_attrs[PORT_ABL_MAX];
-};
-
-/* TODO(yasufum) merge it to the same definition in shared/.../cmd_utils.h */
-/* Attributes of SPP worker thread named as `component`. */
-struct sppwk_comp_info {
-	char name[STR_LEN_NAME];  /**< Component name */
-	enum sppwk_worker_type wk_type;  /**< Type of worker thread */
-	unsigned int lcore_id;
-	int comp_id;  /**< Component ID */
-	int nof_rx;  /**< The number of rx ports */
-	int nof_tx;  /**< The number of tx ports */
-	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS]; /**< rx ports */
-	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
-};
-
-/* Manage interfaces and port information as global variable */
-struct iface_info {
-	struct sppwk_port_info phy[RTE_MAX_ETHPORTS];
-	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
-};
-
-/* Manage core status and component information as global variable */
-struct core_mng_info {
-	/* Status of cpu core */
-	volatile enum sppwk_lcore_status status;
-};
-
-/* TODO(yasufum) refactor name of func and vars, and comments. */
-/* TODO(yasufum) confirm this var is used in spp_pcap. */
-/* TODO(yasufum) if so, consider to merge to shared. */
-struct spp_iterate_core_params;
-/**
- * Define func to iterate lcore to list core information for showing status
- * or so, as a member of struct `spp_iterate_core_params`.
- */
-typedef int (*spp_iterate_core_element_proc)(
-		struct spp_iterate_core_params *params,
-		const unsigned int lcore_id,
-		const char *wk_name,
-		const char *wk_type,
-		const int nof_rx,
-		const struct sppwk_port_idx *rx_ports,
-		const int nof_tx,
-		const struct sppwk_port_idx *tx_ports);
-
-/**
- * iterate core table parameters used to list content of lcore table for.
- * showing status or so.
- */
-/* TODO(yasufum) consider to merge to shared. */
-/* TODO(yasufum) refactor name of func and vars, and comments. */
-struct spp_iterate_core_params {
-	char *output;  /* Buffer used for output */
-	/** The function for creating core information */
-	spp_iterate_core_element_proc element_proc;
-};
 
 /**
  * Add ring pmd for owned proccess or thread.
@@ -260,18 +107,6 @@ get_iface_info(enum port_type iface_type, int iface_no);
  */
 int init_mng_data(void);
 
-/**
- * Get component type of target core
- *
- * @param lcore_id
- *  Logical core ID.
- *
- * @return
- *  Type of component executed on specified logical core
- */
-enum spp_component_type
-spp_get_component_type(unsigned int lcore_id);
-
 /* Get core information which is in use */
 struct core_info *get_core_info(unsigned int lcore_id);
 
@@ -315,7 +150,7 @@ spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
  * @retval SPPWK_RET_NG If failed.
  */
 int spp_set_mng_data_addr(struct iface_info *iface_p,
-			  struct core_mng_info *core_mng_p,
+			  struct spp_pcap_core_mng_info *core_mng_p,
 			  int *capture_request_p,
 			  int *capture_status_p);
 
@@ -328,7 +163,7 @@ int spp_set_mng_data_addr(struct iface_info *iface_p,
  * @param capture_status_p Pointer to req of pcap.
  */
 void spp_get_mng_data_addr(struct iface_info **iface_p,
-			   struct core_mng_info **core_mng_p,
+			   struct spp_pcap_core_mng_info **core_mng_p,
 			   int **capture_request_p,
 			   int **capture_status_p);
 
