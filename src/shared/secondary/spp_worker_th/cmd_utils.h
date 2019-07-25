@@ -27,11 +27,6 @@
 #define SPPWK_TYPE_PCAP_STR "pcap"
 #define SPPWK_TYPE_NONE_STR "unuse"
 
-/** Identifier string for each interface */
-#define SPPWK_PHY_STR "phy"
-#define SPPWK_VHOST_STR "vhost"
-#define SPPWK_RING_STR "ring"
-
 /** Waiting time for checking update (not used for spp_pcap). */
 #define SPP_CHANGE_UPDATE_INTERVAL 10  /* micro sec */
 

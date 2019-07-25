@@ -10,6 +10,11 @@
 #define STR_LEN_SHORT 32  /* Size of short string. */
 #define STR_LEN_NAME 128  /* Size of string for names. */
 
+/** Identifier string for each interface */
+#define SPPWK_PHY_STR "phy"
+#define SPPWK_VHOST_STR "vhost"
+#define SPPWK_RING_STR "ring"
+
 /* TODO(yasufum) confirm usage of this value and why it is 4. */
 #define PORT_CAPABL_MAX 4  /* Max num of port abilities. */
 
