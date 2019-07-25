@@ -192,7 +192,7 @@ do_send(int *connected, int *sock, char *str)
 	return 0;
 }
 
-/*
+/**
  * Launch secondary process of given name and ID.
  *
  * This function finds the path of secondary by using the path of spp_primary
@@ -230,6 +230,10 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 		RTE_LOG(INFO, PRIMARY,
 				"Failed to find exec file of spp_primary.\n");
 	else {
+		/**
+		 * TODO(yasufum) confirm that log dir and helper tool are
+		 * existing.
+		 */
 		/* Tokenize path of spp_primary */
 		token_list[i] = strtok(path_spp_pri, "/");
 		while (token_list[i] != NULL) {
@@ -452,17 +456,11 @@ get_status_json(char *str)
  * combination of port type and ID like as 'ring:0'.
  */
 static int
-add_port(char *res_uid)
+add_port(char *p_type, int p_id)
 {
 	uint16_t dev_id;
-	char *p_type;
-	int p_id;
-	int res;
+	int res = 0;
 	uint16_t cnt = 0;
-
-	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0)
-		return -1;
 
 	for (dev_id = 0; dev_id < RTE_MAX_ETHPORTS; dev_id++) {
 		if (port_id_list[dev_id].port_id == PORT_RESET)
@@ -523,19 +521,9 @@ find_ethdev_id(int p_id, enum port_type ptype)
 
 /* Delete port. */
 static int
-del_port(char *res_uid)
+del_port(char *p_type, int p_id)
 {
 	uint16_t dev_id = 0;
-	char *p_type;
-	int p_id;
-	int res;
-
-	res = parse_resource_uid(res_uid, &p_type, &p_id);
-	if (res < 0) {
-		RTE_LOG(ERR, PRIMARY,
-			"Failed to parse resource UID\n");
-		return -1;
-	}
 
 	if (!strcmp(p_type, "vhost")) {
 		dev_id = find_ethdev_id(p_id, VHOST);
@@ -579,6 +567,10 @@ parse_command(char *str)
 	int i = 0;
 	uint16_t dev_id;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
+	char result[16] = { 0 };  /* succeeded or failed. */
+	char port_set[32] = { 0 };
+	char *p_type;
+	int p_id;
 
 	memset(sec_name, '\0', 16);
 
@@ -603,6 +595,7 @@ parse_command(char *str)
 		memset(str, '\0', MSG_SIZE);
 		ret = get_status_json(str);
 
+		/* Output all of ports under management for debugging. */
 		RTE_ETH_FOREACH_DEV(dev_id) {
 			rte_eth_dev_get_name_by_port(dev_id, dev_name);
 			if (strlen(dev_name) > 0)
@@ -617,27 +610,77 @@ parse_command(char *str)
 		ret = launch_sec_proc(sec_name,
 				strtod(token_list[1], NULL), sec_args);
 
+		if (ret < 0) {
+			RTE_LOG(ERR, PRIMARY, "Failed to launch secondary.\n");
+			sprintf(result, "%s", "\"failed\"");
+		} else
+			sprintf(result, "%s", "\"succeeded\"");
+
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"launch\"");
+
 	} else if (!strcmp(token_list[0], "add")) {
 		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
 				token_list[0]);
 
-		if (add_port(token_list[1]) < 0)
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		if (ret < 0) {
+			RTE_LOG(ERR, PRIMARY, "Failed to parse RES UID.\n");
+			return ret;
+		}
+
+		if (add_port(p_type, p_id) < 0) {
 			RTE_LOG(ERR, PRIMARY, "Failed to add_port()\n");
+			sprintf(result, "%s", "\"failed\"");
+		} else
+			sprintf(result, "%s", "\"succeeded\"");
+
+		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"add\"",
+				"\"port\"", port_set);
 
 	} else if (!strcmp(token_list[0], "del")) {
 		RTE_LOG(DEBUG, PRIMARY, "Received del command\n");
-		cmd = STOP;
-		if (del_port(token_list[1]) < 0)
+
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		if (ret < 0) {
+			RTE_LOG(ERR, PRIMARY, "Failed to parse RES UID.\n");
+			return ret;
+		}
+
+		if (del_port(p_type, p_id) < 0) {
 			RTE_LOG(ERR, PRIMARY, "Failed to del_port()\n");
+			sprintf(result, "%s", "\"failed\"");
+		} else
+			sprintf(result, "%s", "\"succeeded\"");
+
+		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+				"\"result\"", result,
+				"\"command\"", "\"del\"",
+				"\"port\"", port_set);
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, PRIMARY, "'exit' command received.\n");
 		cmd = STOP;
 		ret = -1;
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"exit\"");
 
 	} else if (!strcmp(token_list[0], "clear")) {
-		sprintf(str, "{\"status\": \"cleared\"}");
 		clear_stats();
+		memset(str, '\0', MSG_SIZE);
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"clear\"");
 	}
 
 	return ret;
