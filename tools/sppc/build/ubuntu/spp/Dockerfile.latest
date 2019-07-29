@@ -20,6 +20,7 @@ ENV PATH ${home_dir}/${spp_dir}/src/primary/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/nfv/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/vf/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/vm/${rte_target}/:${PATH}
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
     git \

@@ -12,7 +12,7 @@ ENV https_proxy $https_proxy
 ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
-
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
     git \
