@@ -13,6 +13,9 @@ import sys
 
 import spp_proc
 
+PORT_TYPES = ["phy", "vhost", "ring", "pcap", "nullpmd", "tap"]
+VF_PORT_TYPES = ["phy", "vhost", "ring"]
+# TODO(yasufum) consider PCAP_PORT_TYPES is required.
 
 LOG = logging.getLogger(__name__)
 
@@ -50,7 +53,7 @@ class BaseHandler(bottle.Bottle):
     def _validate_port(self, port):
         try:
             if_type, if_num = port.split(":")
-            if if_type not in ["phy", "vhost", "ring", "pcap", "nullpmd"]:
+            if if_type not in PORT_TYPES:
                 raise
             int(if_num)
         except Exception:
@@ -176,7 +179,7 @@ class V1VFCommon(object):
         vf = {}
         vf["client-id"] = info["client-id"]
         vf["ports"] = []
-        for key in ["phy", "vhost", "ring"]:
+        for key in VF_PORT_TYPES:
             for idx in info[key]:
                 vf["ports"].append(key + ":" + str(idx))
         vf["master-lcore"] = info["master-lcore"]
