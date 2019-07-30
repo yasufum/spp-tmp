@@ -136,6 +136,54 @@ Response example
     }
 
 
+PUT /v1/primary/ports
+---------------------
+
+Add or delete port.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+
+Request (body)
+~~~~~~~~~~~~~~
+
+.. _table_spp_ctl_spp_primary_ports_get_body:
+
+.. table:: Request body params of ports of ``spp_primary``.
+
+    +--------+--------+--------------------------------------------------+
+    | Name   | Type   | Description                                      |
+    |        |        |                                                  |
+    +========+========+==================================================+
+    | action | string | ``add`` or ``del``.                              |
+    +--------+--------+--------------------------------------------------+
+    | port   | string | Resource UID of {port_type}:{port_id}.           |
+    +--------+--------+--------------------------------------------------+
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X PUT -H 'application/json' \
+      -d '{"action": "add", "port": "ring:0"}' \
+      http://127.0.0.1:7777/v1/primary/ports
+
+
+Response
+~~~~~~~~
+
+There is no body content for the response of a successful ``PUT`` request.
+
+
+Equivalent CLI command
+~~~~~~~~~~~~~~~~~~~~~~
+
+Not supported in SPP CLI.
+
+
 DELETE /v1/primary/status
 -------------------------
 
