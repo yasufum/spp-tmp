@@ -43,11 +43,14 @@
 #define RTE_MP_RX_DESC_DEFAULT 512
 #define RTE_MP_TX_DESC_DEFAULT 512
 
-#define VDEV_PREFIX_RING  "net_ring"
-#define VDEV_PREFIX_VHOST "eth_vhost"
-#define VDEV_PREFIX_PCAP  "net_pcap"
-#define VDEV_PREFIX_TAP   "net_tap"
-#define VDEV_PREFIX_NULL  "eth_null"
+#define VDEV_ETH_RING "eth_ring"
+#define VDEV_NET_RING "net_ring"
+#define VDEV_ETH_VHOST "eth_vhost"
+#define VDEV_NET_VHOST "net_vhost"
+#define VDEV_PCAP "net_pcap"
+#define VDEV_ETH_TAP "eth_tap"
+#define VDEV_NET_TAP "net_tap"
+#define VDEV_NULL "eth_null"
 
 
 /* Command. */
