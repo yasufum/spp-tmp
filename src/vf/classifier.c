@@ -44,9 +44,6 @@
 #define DEFAULT_HASH_FUNC rte_jhash
 #endif
 
-/* number of classifier information (reference/update) */
-#define NOF_CLS_INFO 2
-
 /* number of classifier mac table entry */
 #define NOF_CLS_TABLE_ENTRIES 128
 
@@ -67,20 +64,14 @@
 
 /* classifier management information */
 struct cls_mng_info {
-	/* classifier information */
-	struct cls_comp_info cmp_infos[NOF_CLS_INFO];
-
-	/* Reference index number for classifier information */
-	volatile int ref_index;
-
-	/* Update index number for classifier information */
-	volatile int upd_index;
-
-	/* used flag */
+	struct cls_comp_info cmp_infos[TWO_SIDES];
+	volatile int ref_index;  /* Flag for ref side */
+	volatile int upd_index;  /* Flag for update side */
 	volatile int is_used;
 };
 
-struct cls_mng_info g_mng_infos[RTE_MAX_LCORE];
+/* classifier information per lcore */
+struct cls_mng_info cls_mng_info_list[RTE_MAX_LCORE];
 
 /* uninitialize classifier. */
 static void
@@ -90,7 +81,7 @@ uninit_classifier(struct cls_mng_info *mng_info)
 
 	mng_info->is_used = 0;
 
-	for (i = 0; i < NOF_CLS_INFO; ++i)
+	for (i = 0; i < TWO_SIDES; ++i)
 		uninit_component_info(mng_info->cmp_infos + (long)i);
 
 	memset(mng_info, 0, sizeof(struct cls_mng_info));
@@ -98,36 +89,32 @@ uninit_classifier(struct cls_mng_info *mng_info)
 
 /* initialize classifier information. */
 void
-init_classifier_info(int component_id)
+init_classifier_info(int comp_id)
 {
 	struct cls_mng_info *mng_info = NULL;
 
-	mng_info = g_mng_infos + component_id;
+	mng_info = cls_mng_info_list + comp_id;
 	uninit_classifier(mng_info);
 }
 
-/*
- * hash table name buffer size
- *[reson for value]
- *	in dpdk's lib/librte_hash/rte_cuckoo_hash.c
- *		snprintf(ring_name, sizeof(ring_name), "HT_%s", params->name);
- *		snprintf(hash_name, sizeof(hash_name), "HT_%s", params->name);
- *	ring_name buffer size is RTE_RING_NAMESIZE
- *	hash_name buffer size is RTE_HASH_NAMESIZE
+/**
+ * Define the size of name of hash table.
+ * In `dpdk/lib/librte_hash/rte_cuckoo_hash.c`, RTE_RING_NAMESIZE and
+ * RTE_HASH_NAMESIZE are defined as `ring_name` and `hash_name`. Both of them
+ * have prefix `HT_`, so required `-3`.
+ *   - snprintf(ring_name, sizeof(ring_name), "HT_%s", params->name);
+ *   - snprintf(hash_name, sizeof(hash_name), "HT_%s", params->name);
  */
 static const size_t HASH_TABLE_NAME_BUF_SZ =
 		((RTE_HASH_NAMESIZE < RTE_RING_NAMESIZE) ?  RTE_HASH_NAMESIZE :
 		RTE_RING_NAMESIZE) - 3;
 
-/* mac address string(xx:xx:xx:xx:xx:xx) buffer size */
+/* MAC address string(xx:xx:xx:xx:xx:xx) buffer size */
 static const size_t ETHER_ADDR_STR_BUF_SZ =
 		ETHER_ADDR_LEN * 2 + (ETHER_ADDR_LEN - 1) + 1;
 
-/* classifier information per lcore */
-struct cls_mng_info g_mng_infos[RTE_MAX_LCORE];
-
 /**
- * Hash table count used for making a name of hash table
+ * Hash table count used for making a name of hash table.
  *
  * This function is required because it is incremented at the time of use,
  * but since we want to start at 0.
@@ -697,7 +684,7 @@ change_classifier_index(struct cls_mng_info *mng_info, int id)
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
 				"Core[%u] Change update index.\n", id);
 		mng_info->ref_index =
-				(mng_info->upd_index + 1) % NOF_CLS_INFO;
+				(mng_info->upd_index + 1) % TWO_SIDES;
 	}
 }
 
@@ -705,7 +692,7 @@ change_classifier_index(struct cls_mng_info *mng_info, int id)
 int
 init_cls_mng_info(void)
 {
-	memset(g_mng_infos, 0, sizeof(g_mng_infos));
+	memset(cls_mng_info_list, 0, sizeof(cls_mng_info_list));
 	return 0;
 }
 
@@ -715,7 +702,7 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 {
 	int ret;
 	int wk_id = wk_comp_info->comp_id;
-	struct cls_mng_info *mng_info = g_mng_infos + wk_id;
+	struct cls_mng_info *mng_info = cls_mng_info_list + wk_id;
 	struct cls_comp_info *cls_info = NULL;
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
@@ -757,7 +744,7 @@ spp_classifier_mac_do(int id)
 {
 	int i;
 	int n_rx;
-	struct cls_mng_info *mng_info = g_mng_infos + id;
+	struct cls_mng_info *mng_info = cls_mng_info_list + id;
 	struct cls_comp_info *cmp_info = NULL;
 	struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
 
@@ -837,7 +824,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
 	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
 
-	mng_info = g_mng_infos + id;
+	mng_info = cls_mng_info_list + id;
 	if (!is_used_mng_info(mng_info)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
 				"Classifier is not used "
@@ -953,7 +940,7 @@ add_classifier_table_val(
 	struct cls_port_info *port_info;
 
 	for (i = 0; i < RTE_MAX_LCORE; i++) {
-		mng_info = g_mng_infos + i;
+		mng_info = cls_mng_info_list + i;
 		if (!is_used_mng_info(mng_info))
 			continue;
 
