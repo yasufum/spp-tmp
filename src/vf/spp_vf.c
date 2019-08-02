@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 
-#include "spp_vf.h"
 #include "classifier.h"
 #include "forwarder.h"
 #include "shared/secondary/utils.h"
@@ -16,6 +15,8 @@
 #include "shared/secondary/spp_worker_th/cmd_runner.h"
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
+
+#define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 #include "shared/secondary/spp_worker_th/ringlatencystats.h"
