@@ -87,7 +87,7 @@ uninit_classifier(struct cls_mng_info *mng_info)
 	memset(mng_info, 0, sizeof(struct cls_mng_info));
 }
 
-/* initialize classifier information. */
+/* Initialize classifier information. */
 void
 init_classifier_info(int comp_id)
 {
@@ -445,7 +445,7 @@ uninit_component_info(struct cls_comp_info *comp_info)
 
 /* transmit packet to one destination. */
 static inline void
-transmit_packet(struct cls_port_info *clsd_data)
+transmit_packets(struct cls_port_info *clsd_data)
 {
 	int i;
 	uint16_t n_tx;
@@ -488,7 +488,7 @@ transmit_all_packet(struct cls_comp_info *cmp_info)
 					"nof_pkts=%hu\n",
 					i,
 					clsd_data_tx[i].nof_pkts);
-			transmit_packet(&clsd_data_tx[i]);
+			transmit_packets(&clsd_data_tx[i]);
 		}
 	}
 }
@@ -510,7 +510,7 @@ push_packet(struct rte_mbuf *pkt, struct cls_port_info *clsd_data)
 				clsd_data->iface_no,
 				clsd_data->ethdev_port_id,
 				clsd_data->nof_pkts);
-		transmit_packet(clsd_data);
+		transmit_packets(clsd_data);
 	}
 }
 
@@ -634,12 +634,8 @@ select_classified_index(const struct rte_mbuf *pkt,
 	return mac_cls->default_cls_idx;
 }
 
-/*
- * classify packet by destination mac address,
- * and transmit packet (conditional).
- */
 static inline void
-classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
+_classify_packets(struct rte_mbuf **rx_pkts, uint16_t n_rx,
 		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data)
 {
@@ -669,6 +665,7 @@ classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
 	}
 }
 
+/* TODO(yasufum) Revise this comment and name of func. */
 /* change update index at classifier management information */
 static inline void
 change_classifier_index(struct cls_mng_info *mng_info, int id)
@@ -738,13 +735,13 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 	return SPPWK_RET_OK;
 }
 
-/* classifier(mac address) thread function. */
+/* Classify incoming packets on a thread of given `comp_id`. */
 int
-spp_classifier_mac_do(int id)
+classify_packets(int comp_id)
 {
 	int i;
 	int n_rx;
-	struct cls_mng_info *mng_info = cls_mng_info_list + id;
+	struct cls_mng_info *mng_info = cls_mng_info_list + comp_id;
 	struct cls_comp_info *cmp_info = NULL;
 	struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
 
@@ -756,23 +753,18 @@ spp_classifier_mac_do(int id)
 			US_PER_S * DRAIN_TX_PACKET_INTERVAL;
 
 	/* change index of update classifier management information */
-	change_classifier_index(mng_info, id);
+	change_classifier_index(mng_info, comp_id);
 
 	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
 	clsd_data_rx = &cmp_info->rx_port_i;
 	clsd_data_tx = cmp_info->tx_ports_i;
 
-	/**
-	 * decide classifier information of the current cycle If at least,
-	 * one rx port, one tx port and one classifier_table exist, then start
-	 * classifying. If not, stop classifying.
-	 */
+	/* Check if it is ready to do classifying. */
 	if (!(clsd_data_rx->iface_type != UNDEF &&
 			cmp_info->nof_tx_ports >= 1 &&
 			cmp_info->mac_addr_entry == 1))
 		return SPPWK_RET_OK;
 
-	/* drain tx packets, if buffer is not filled for interval */
 	cur_tsc = rte_rdtsc();
 	if (unlikely(cur_tsc - prev_tsc > drain_tsc)) {
 		for (i = 0; i < cmp_info->nof_tx_ports; i++) {
@@ -784,7 +776,7 @@ spp_classifier_mac_do(int id)
 					"nof_pkts=%hu, interval=%lu\n",
 					i, clsd_data_tx[i].nof_pkts,
 					cur_tsc - prev_tsc);
-				transmit_packet(&clsd_data_tx[i]);
+				transmit_packets(&clsd_data_tx[i]);
 		}
 		prev_tsc = cur_tsc;
 	}
@@ -792,7 +784,7 @@ spp_classifier_mac_do(int id)
 	if (clsd_data_rx->iface_type == UNDEF)
 		return SPPWK_RET_OK;
 
-	/* retrieve packets */
+	/* Retrieve packets */
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 	n_rx = sppwk_eth_vlan_ring_stats_rx_burst(clsd_data_rx->ethdev_port_id,
 			clsd_data_rx->iface_type, clsd_data_rx->iface_no,
@@ -804,8 +796,7 @@ spp_classifier_mac_do(int id)
 	if (unlikely(n_rx == 0))
 		return SPPWK_RET_OK;
 
-	/* classify and interval that transmit burst packet */
-	classify_packet(rx_pkts, n_rx, cmp_info, clsd_data_tx);
+	_classify_packets(rx_pkts, n_rx, cmp_info, clsd_data_tx);
 
 	return SPPWK_RET_OK;
 }

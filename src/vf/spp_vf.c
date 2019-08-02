@@ -177,7 +177,7 @@ slave_main(void *arg __attribute__ ((unused)))
 			if (spp_get_component_type(core->id[cnt]) ==
 					SPPWK_TYPE_CLS) {
 				/* Component type for classifier. */
-				ret = spp_classifier_mac_do(core->id[cnt]);
+				ret = classify_packets(core->id[cnt]);
 				if (unlikely(ret != 0))
 					break;
 			} else {

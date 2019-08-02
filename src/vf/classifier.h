@@ -34,19 +34,17 @@ int init_cls_mng_info(void);
  *  The unique component ID.
  *
  */
-void init_classifier_info(int component_id);
+void init_classifier_info(int comp_id);
 
 
 /**
- * classifier(mac address) thread function.
+ * Classify incoming packets.
  *
- * @param id
- *  The unique component ID.
- *
+ * @param id Component ID.
  * @retval SPPWK_RET_OK succeeded.
  * @retval SPPWK_RET_NG failed.
  */
-int spp_classifier_mac_do(int id);
+int classify_packets(int comp_id);
 
 /**
  * classifier(mac address) iterate classifier table.
