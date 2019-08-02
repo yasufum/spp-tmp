@@ -551,7 +551,7 @@ update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp)
 }
 
 /**
- * Operator function called in iterator for getting each of entries of
+ * Operation function called in iterator for getting each of entries of
  * classifier table named as iterate_adding_mac_entry().
  */
 int
@@ -629,7 +629,7 @@ get_comp_type_from_str(const char *type_str)
 }
 
 /**
- * List of combination of tag and operator function. It is used to assemble
+ * List of combination of tag and operation function. It is used to assemble
  * a result of command in JSON like as following.
  *
  *     {

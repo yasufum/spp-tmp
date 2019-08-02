@@ -32,6 +32,7 @@ typedef int (*classifier_table_proc)(
  * iterate classifier table parameters which is used when listing classifier
  * table content for status command or so.
  */
+/* TODO(yasufum) remove it because no need to have `output` as a member */
 struct classifier_table_params {
 	void *output;  /* Buffer used for output */
 	/* The function for creating classifier table information */
@@ -48,7 +49,7 @@ int append_classifier_element_value(
  * Setup data of classifier table and call iterator function for getting
  * each of entries.
  *
- * @params[in] params Object which has pointer of operator func and attrs.
+ * @params[in] params Object which has pointer of operation func and attrs.
  */
 int add_classifier_table_val(
 		struct classifier_table_params *params);

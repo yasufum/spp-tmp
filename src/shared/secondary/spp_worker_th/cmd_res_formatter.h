@@ -63,7 +63,7 @@ int append_command_results_value(const char *name, char **output,
 int append_info_value(const char *name, char **output);
 
 /**
- * Operator functions start with prefix `add_` defined in `response_info_list`
+ * Operation functions start with prefix `add_` defined in `response_info_list`
  * of struct `cmd_res_formatter_ops` which are for making each of parts of
  * command response.
  */

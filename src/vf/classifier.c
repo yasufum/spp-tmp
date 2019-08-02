@@ -849,13 +849,9 @@ get_classifier_status(unsigned int lcore_id, int id,
 	return SPPWK_RET_OK;
 }
 
-/**
- * For setting up a response for `status` command, iterate adding each of
- * entries in MAC address table to the result message.
- */
+/* Add MAC addresses in classifier table for `status` command. */
 static void
-iterate_adding_mac_entry(
-		struct classifier_table_params *params,
+add_mac_entry(struct classifier_table_params *params,
 		uint16_t vid,
 		struct mac_classifier *mac_cls,
 		__rte_unused struct cls_comp_info *cmp_info,
@@ -879,7 +875,6 @@ iterate_adding_mac_entry(
 		port.iface_no = (port_info +
 				mac_cls->default_cls_idx)->iface_no_global;
 
-		/* Logging DEBUG message. */
 		LOG_ENT((long)mac_cls->default_cls_idx, vid,
 				SPPWK_TERM_DEFAULT, cmp_info, port_info);
 		/**
@@ -909,18 +904,14 @@ iterate_adding_mac_entry(
 		 * Append each entry of MAC address. `tbl_proc` is function
 		 * pointer to append_classifier_element_value().
 		 */
-		(*params->tbl_proc)(params, cls_type, vid,
-				mac_addr_str, &port);
+		(*params->tbl_proc)(params, cls_type, vid, mac_addr_str,
+				&port);
 	}
 }
 
-/**
- * Setup data of classifier table and call iterator function for getting
- * each of entries.
- */
-int
-add_classifier_table_val(
-		struct classifier_table_params *params)
+/* Add entries of classifier table. */
+static int
+_add_classifier_table(struct classifier_table_params *params)
 {
 	int i, vlan_id;
 	struct cls_mng_info *mng_info;
@@ -936,13 +927,13 @@ add_classifier_table_val(
 		port_info = cmp_info->tx_ports_i;
 
 		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
-			"Start iterate classifier table on lcore %u.\n", i);
+			"Parse MAC entries for status on lcore %u.\n", i);
 
 		for (vlan_id = 0; vlan_id < NOF_VLAN; ++vlan_id) {
 			if (cmp_info->mac_clfs[vlan_id] == NULL)
 				continue;
 
-			iterate_adding_mac_entry(params, (uint16_t) vlan_id,
+			add_mac_entry(params, (uint16_t) vlan_id,
 					cmp_info->mac_clfs[vlan_id], cmp_info,
 					port_info);
 		}
@@ -951,56 +942,30 @@ add_classifier_table_val(
 	return SPPWK_RET_OK;
 }
 
-/* Iterate classifier_table to create response to status command */
-static int
-_add_classifier_table(
-		struct classifier_table_params *params)
-{
-	int ret;
-
-	ret = add_classifier_table_val(params);
-	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				"Cannot iterate classifier_mac_table.\n");
-		return SPPWK_RET_NG;
-	}
-
-	return SPPWK_RET_OK;
-}
-
-/**
- * Add entries of classifier table in JSON. Before iterating the entries,
- * this function calls several nested functions.
- *   add_classifier_table()  // This function.
- *     -> _add_classifier_table()  // Wrapper and doesn't almost nothing.
- *       -> add_classifier_table_val()  // Setup data and call iterator.
- *         -> iterate_adding_mac_entry()
- */
+/* Add entries of classifier table in JSON. */
 int
 add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
-	int ret = SPPWK_RET_NG;
-	struct classifier_table_params itr_params;
+	int ret;
+	struct classifier_table_params tbl_params;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
+
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-				/* TODO(yasufum) refactor no meaning err msg */
-				"allocate error. (name = %s)\n",
-				name);
+		RTE_LOG(ERR, SPP_CLASSIFIER_MAC, "Failed to alloc buff.\n");
 		return SPPWK_RET_NG;
 	}
 
-	itr_params.output = tmp_buff;
-	itr_params.tbl_proc = append_classifier_element_value;
+	tbl_params.output = tmp_buff;
+	tbl_params.tbl_proc = append_classifier_element_value;
 
-	ret = _add_classifier_table(&itr_params);
+	ret = _add_classifier_table(&tbl_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {
-		spp_strbuf_free(itr_params.output);
+		spp_strbuf_free(tbl_params.output);
 		return SPPWK_RET_NG;
 	}
 
-	ret = append_json_array_brackets(output, name, itr_params.output);
-	spp_strbuf_free(itr_params.output);
+	ret = append_json_array_brackets(output, name, tbl_params.output);
+	spp_strbuf_free(tbl_params.output);
 	return ret;
 }
