@@ -103,27 +103,6 @@ struct cancel_backup_info {
 	struct iface_info interface;
 };
 
-struct spp_iterate_classifier_table_params;
-/**
- * Define func to iterate classifier for showing status or so, as a member
- * member of struct `spp_iterate_classifier_table_params`.
- */
-typedef int (*spp_iterate_classifier_element_proc)(
-		struct spp_iterate_classifier_table_params *params,
-		enum sppwk_cls_type cls_type,
-		int vid, const char *mac,
-		const struct sppwk_port_idx *port);
-
-/**
- * iterate classifier table parameters which is used when listing classifier
- * table content for status command or so.
- */
-struct spp_iterate_classifier_table_params {
-	void *output;  /* Buffer used for output */
-	/* The function for creating classifier table information */
-	spp_iterate_classifier_element_proc element_proc;
-};
-
 /**
  * Hexdump `addr` for logging, used for core_info or component info.
  *

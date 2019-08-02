@@ -70,9 +70,6 @@ int append_info_value(const char *name, char **output);
 int add_client_id(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
 
-int add_classifier_table(const char *name, char **output,
-		void *tmp __attribute__ ((unused)));
-
 int add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
 

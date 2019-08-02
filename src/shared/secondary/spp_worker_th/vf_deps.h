@@ -88,15 +88,6 @@ void init_classifier_info(int component_id);
 void uninit_component_info(struct cls_comp_info *cmp_info);
 
 /**
- * Setup data of classifier table and call iterator function for getting
- * each of entries.
- *
- * @params[in] params Object which has pointer of operator func and attrs.
- */
-int add_classifier_table_val(
-		struct spp_iterate_classifier_table_params *params);
-
-/**
  * Activate temporarily stored component info while flushing.
  *
  * @param[in] p_comp_info Info of component.
@@ -105,15 +96,6 @@ int add_classifier_table_val(
  * @retval SPPWK_RET_NG If failed.
  */
 int update_comp_info(struct sppwk_comp_info *p_comp_info, int *p_change_comp);
-
-int append_classifier_element_value(
-		struct spp_iterate_classifier_table_params *params,
-		enum sppwk_cls_type cls_type,
-		int vid, const char *mac,
-		const struct sppwk_port_idx *port);
-
-int add_classifier_table(const char *name, char **output,
-		void *tmp __attribute__ ((unused)));
 
 enum sppwk_worker_type get_comp_type_from_str(const char *type_str);
 

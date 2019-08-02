@@ -18,6 +18,43 @@
  */
 
 struct spp_iterate_classifier_table_params;
+/**
+ * Define func to iterate classifier for showing status or so, as a member
+ * member of struct `spp_iterate_classifier_table_params`.
+ */
+typedef int (*spp_iterate_classifier_element_proc)(
+		struct spp_iterate_classifier_table_params *params,
+		enum sppwk_cls_type cls_type,
+		int vid, const char *mac,
+		const struct sppwk_port_idx *port);
+
+/**
+ * iterate classifier table parameters which is used when listing classifier
+ * table content for status command or so.
+ */
+struct spp_iterate_classifier_table_params {
+	void *output;  /* Buffer used for output */
+	/* The function for creating classifier table information */
+	spp_iterate_classifier_element_proc element_proc;
+};
+
+int append_classifier_element_value(
+		struct spp_iterate_classifier_table_params *params,
+		enum sppwk_cls_type cls_type,
+		int vid, const char *mac,
+		const struct sppwk_port_idx *port);
+
+/**
+ * Setup data of classifier table and call iterator function for getting
+ * each of entries.
+ *
+ * @params[in] params Object which has pointer of operator func and attrs.
+ */
+int add_classifier_table_val(
+		struct spp_iterate_classifier_table_params *params);
+
+int add_classifier_table(const char *name, char **output,
+		void *tmp __attribute__ ((unused)));
 
 /**
  * classifier(mac address) initialize globals.
@@ -45,19 +82,6 @@ void init_classifier_info(int comp_id);
  * @retval SPPWK_RET_NG failed.
  */
 int classify_packets(int comp_id);
-
-/**
- * classifier(mac address) iterate classifier table.
- *
- * @param params
- *  Point to struct spp_iterate_classifier_table_params.@n
- *  Detailed data of classifier table.
- *
- * @retval SPPWK_RET_OK succeeded.
- * @retval SPPWK_RET_NG failed.
- */
-int add_classifier_table_val(
-		struct spp_iterate_classifier_table_params *params);
 
 /**
  * Get classifier status.
