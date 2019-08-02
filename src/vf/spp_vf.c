@@ -211,17 +211,16 @@ main(int argc, char *argv[])
 	int ret;
 	char ctl_ip[IPADDR_LEN] = { 0 };
 	int ctl_port;
-	int ret_cmd_init;
 	unsigned int master_lcore;
 	unsigned int lcore_id;
 
 #ifdef SPP_DEMONIZE
 	/* Daemonize process */
-	int ret_daemon = daemon(0, 0);
-	if (unlikely(ret_daemon != 0)) {
+	ret = daemon(0, 0);
+	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, APP, "daemonize is failed. (ret = %d)\n",
-				ret_daemon);
-		return ret_daemon;
+				ret);
+		return ret;
 	}
 #endif
 
@@ -248,8 +247,8 @@ main(int argc, char *argv[])
 	 */
 	while (1) {
 		/* Parse spp_vf specific parameters */
-		int ret_parse = parse_app_args(argc, argv);
-		if (unlikely(ret_parse != SPPWK_RET_OK))
+		ret = parse_app_args(argc, argv);
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
 		if (sppwk_set_mng_data(&g_iface_info, g_component_info,
@@ -261,12 +260,12 @@ main(int argc, char *argv[])
 			break;
 		}
 
-		int ret_mng = init_mng_data();
-		if (unlikely(ret_mng != SPPWK_RET_OK))
+		ret = init_mng_data();
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
-		int ret_classifier_mac_init = init_cls_mng_info();
-		if (unlikely(ret_classifier_mac_init != SPPWK_RET_OK))
+		ret = init_cls_mng_info();
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
 		init_forwarder();
@@ -275,8 +274,8 @@ main(int argc, char *argv[])
 		/* Setup connection for accepting commands from controller */
 		get_spp_ctl_ip(ctl_ip);
 		ctl_port = get_spp_ctl_port();
-		ret_cmd_init = sppwk_cmd_runner_conn(ctl_ip, ctl_port);
-		if (unlikely(ret_cmd_init != SPPWK_RET_OK))
+		ret = sppwk_cmd_runner_conn(ctl_ip, ctl_port);
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
@@ -291,10 +290,10 @@ main(int argc, char *argv[])
 			if (port_type == RING)
 				nof_rings++;
 		}
-		int ret_ringlatency = spp_ringlatencystats_init(
+		ret = spp_ringlatencystats_init(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
 				nof_rings);
-		if (unlikely(ret_ringlatency != SPPWK_RET_OK))
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
@@ -305,8 +304,8 @@ main(int argc, char *argv[])
 
 		/* Set the status of main thread to idle */
 		g_core_info[master_lcore].status = SPPWK_LCORE_IDLING;
-		int ret_wait = check_core_status_wait(SPPWK_LCORE_IDLING);
-		if (unlikely(ret_wait != SPPWK_RET_OK))
+		ret = check_core_status_wait(SPPWK_LCORE_IDLING);
+		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
 		/* Start forwarding */
@@ -318,7 +317,6 @@ main(int argc, char *argv[])
 		backup_mng_info(&g_backup_info);
 
 		/* Enter loop for accepting commands */
-		int ret_do = SPPWK_RET_OK;
 #ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[master_lcore].status !=
 				SPPWK_LCORE_REQ_STOP)) {
@@ -326,8 +324,8 @@ main(int argc, char *argv[])
 		{
 #endif
 			/* Receive command */
-			ret_do = sppwk_run_cmd();
-			if (unlikely(ret_do != SPPWK_RET_OK))
+			ret = sppwk_run_cmd();
+			if (unlikely(ret != SPPWK_RET_OK))
 				break;
 
 		       /*
@@ -340,7 +338,7 @@ main(int argc, char *argv[])
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
-		if (unlikely(ret_do != SPPWK_RET_OK)) {
+		if (unlikely(ret != SPPWK_RET_OK)) {
 			set_all_core_status(SPPWK_LCORE_REQ_STOP);
 			break;
 		}
@@ -351,8 +349,8 @@ main(int argc, char *argv[])
 
 	/* Finalize to exit */
 	g_core_info[master_lcore].status = SPPWK_LCORE_STOPPED;
-	int ret_core_end = check_core_status_wait(SPPWK_LCORE_STOPPED);
-	if (unlikely(ret_core_end != SPPWK_RET_OK))
+	ret = check_core_status_wait(SPPWK_LCORE_STOPPED);
+	if (unlikely(ret != SPPWK_RET_OK))
 		RTE_LOG(ERR, APP, "Failed to terminate master thread.\n");
 
 	/*
