@@ -804,7 +804,7 @@ classify_packets(int comp_id)
 /* classifier iterate component information */
 int
 get_classifier_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params)
+		struct spp_iterate_core_params *lcore_params)
 {
 	int ret = SPPWK_RET_NG;
 	int i;
@@ -843,8 +843,8 @@ get_classifier_status(unsigned int lcore_id, int id,
 
 	/* Set the information with the function specified by the command. */
 	/* TODO(yasufum) rename `element_proc` */
-	ret = (*params->element_proc)(
-		params, lcore_id, cmp_info->name, SPPWK_TYPE_CLS_STR,
+	ret = (*lcore_params->element_proc)(
+		lcore_params, lcore_id, cmp_info->name, SPPWK_TYPE_CLS_STR,
 		nof_rx, rx_ports, nof_tx, tx_ports);
 	if (unlikely(ret != SPPWK_RET_OK))
 		return SPPWK_RET_NG;
@@ -858,7 +858,7 @@ get_classifier_status(unsigned int lcore_id, int id,
  */
 static void
 iterate_adding_mac_entry(
-		struct spp_iterate_classifier_table_params *params,
+		struct classifier_table_params *params,
 		uint16_t vid,
 		struct mac_classifier *mac_cls,
 		__rte_unused struct cls_comp_info *cmp_info,
@@ -886,10 +886,10 @@ iterate_adding_mac_entry(
 		LOG_ENT((long)mac_cls->default_cls_idx, vid,
 				SPPWK_TERM_DEFAULT, cmp_info, port_info);
 		/**
-		 * Append "default" entry. `element_proc` is a funciton
-		 * pointer to append_classifier_element_value().
+		 * Append "default" entry. `tbl_proc` is funciton pointer to
+		 * append_classifier_element_value().
 		 */
-		(*params->element_proc)(params, cls_type, vid,
+		(*params->tbl_proc)(params, cls_type, vid,
 				SPPWK_TERM_DEFAULT, &port);
 	}
 
@@ -909,10 +909,10 @@ iterate_adding_mac_entry(
 		LOG_ENT((long)data, vid, mac_addr_str, cmp_info, port_info);
 
 		/**
-		 * Append each entry of MAC address. `element_proc` is a
-		 * funciton pointer to append_classifier_element_value().
+		 * Append each entry of MAC address. `tbl_proc` is function
+		 * pointer to append_classifier_element_value().
 		 */
-		(*params->element_proc)(params, cls_type, vid,
+		(*params->tbl_proc)(params, cls_type, vid,
 				mac_addr_str, &port);
 	}
 }
@@ -923,7 +923,7 @@ iterate_adding_mac_entry(
  */
 int
 add_classifier_table_val(
-		struct spp_iterate_classifier_table_params *params)
+		struct classifier_table_params *params)
 {
 	int i, vlan_id;
 	struct cls_mng_info *mng_info;
@@ -957,7 +957,7 @@ add_classifier_table_val(
 /* Iterate classifier_table to create response to status command */
 static int
 _add_classifier_table(
-		struct spp_iterate_classifier_table_params *params)
+		struct classifier_table_params *params)
 {
 	int ret;
 
@@ -984,7 +984,7 @@ add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
-	struct spp_iterate_classifier_table_params itr_params;
+	struct classifier_table_params itr_params;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
@@ -995,7 +995,7 @@ add_classifier_table(const char *name, char **output,
 	}
 
 	itr_params.output = tmp_buff;
-	itr_params.element_proc = append_classifier_element_value;
+	itr_params.tbl_proc = append_classifier_element_value;
 
 	ret = _add_classifier_table(&itr_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {

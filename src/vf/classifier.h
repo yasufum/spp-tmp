@@ -17,13 +17,13 @@
  * and determines which port to be transferred to incoming packets.
  */
 
-struct spp_iterate_classifier_table_params;
+struct classifier_table_params;
 /**
  * Define func to iterate classifier for showing status or so, as a member
- * member of struct `spp_iterate_classifier_table_params`.
+ * member of struct `classifier_table_params`.
  */
-typedef int (*spp_iterate_classifier_element_proc)(
-		struct spp_iterate_classifier_table_params *params,
+typedef int (*classifier_table_proc)(
+		struct classifier_table_params *params,
 		enum sppwk_cls_type cls_type,
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port);
@@ -32,14 +32,14 @@ typedef int (*spp_iterate_classifier_element_proc)(
  * iterate classifier table parameters which is used when listing classifier
  * table content for status command or so.
  */
-struct spp_iterate_classifier_table_params {
+struct classifier_table_params {
 	void *output;  /* Buffer used for output */
 	/* The function for creating classifier table information */
-	spp_iterate_classifier_element_proc element_proc;
+	classifier_table_proc tbl_proc;
 };
 
 int append_classifier_element_value(
-		struct spp_iterate_classifier_table_params *params,
+		struct classifier_table_params *params,
 		enum sppwk_cls_type cls_type,
 		int vid, const char *mac,
 		const struct sppwk_port_idx *port);
@@ -51,7 +51,7 @@ int append_classifier_element_value(
  * @params[in] params Object which has pointer of operator func and attrs.
  */
 int add_classifier_table_val(
-		struct spp_iterate_classifier_table_params *params);
+		struct classifier_table_params *params);
 
 int add_classifier_table(const char *name, char **output,
 		void *tmp __attribute__ ((unused)));
