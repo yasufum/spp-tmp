@@ -69,16 +69,26 @@ struct cls_mng_info {
 /* classifier information per lcore */
 struct cls_mng_info cls_mng_info_list[RTE_MAX_LCORE];
 
+/* uninitialize classifier information. */
+static void
+clean_component_info(struct cls_comp_info *comp_info)
+{
+	int i;
+	for (i = 0; i < NOF_VLAN; ++i)
+		free_mac_classifier(comp_info->mac_clfs[i]);
+	memset(comp_info, 0, sizeof(struct cls_comp_info));
+}
+
 /* uninitialize classifier. */
 static void
-uninit_classifier(struct cls_mng_info *mng_info)
+clean_classifier(struct cls_mng_info *mng_info)
 {
 	int i;
 
 	mng_info->is_used = 0;
 
 	for (i = 0; i < TWO_SIDES; ++i)
-		uninit_component_info(mng_info->cmp_infos + (long)i);
+		clean_component_info(mng_info->cmp_infos + (long)i);
 
 	memset(mng_info, 0, sizeof(struct cls_mng_info));
 }
@@ -90,7 +100,7 @@ init_classifier_info(int comp_id)
 	struct cls_mng_info *mng_info = NULL;
 
 	mng_info = cls_mng_info_list + comp_id;
-	uninit_classifier(mng_info);
+	clean_classifier(mng_info);
 }
 
 /**
@@ -429,16 +439,6 @@ init_component_info(struct cls_comp_info *cmp_info,
 	return SPPWK_RET_OK;
 }
 
-/* uninitialize classifier information. */
-void
-uninit_component_info(struct cls_comp_info *comp_info)
-{
-	int i;
-	for (i = 0; i < NOF_VLAN; ++i)
-		free_mac_classifier(comp_info->mac_clfs[i]);
-	memset(comp_info, 0, sizeof(struct cls_comp_info));
-}
-
 /* transmit packet to one destination. */
 static inline void
 transmit_packets(struct cls_port_info *clsd_data)
@@ -722,8 +722,8 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 			mng_info->upd_index))
 		rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
-	/* uninitialize old */
-	uninit_component_info(mng_info->cmp_infos + mng_info->upd_index);
+	/* Clean old one. */
+	clean_component_info(mng_info->cmp_infos + mng_info->upd_index);
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
 			"Done update classifier, id=%u.\n", wk_id);

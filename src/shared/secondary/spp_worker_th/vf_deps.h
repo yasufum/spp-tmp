@@ -85,8 +85,6 @@ int update_forwarder(struct sppwk_comp_info *wk_comp_info);
 
 void init_classifier_info(int component_id);
 
-void uninit_component_info(struct cls_comp_info *cmp_info);
-
 /**
  * Activate temporarily stored component info while flushing.
  *
