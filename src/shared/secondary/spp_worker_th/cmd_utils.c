@@ -705,7 +705,7 @@ update_lcore_info(void)
 		if (*(p_change_core + cnt) != 0) {
 			info = (p_core_info + cnt);
 			while (likely(info->ref_index == info->upd_index))
-				rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
+				rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
 			memcpy(&info->core[info->upd_index],
 					&info->core[info->ref_index],

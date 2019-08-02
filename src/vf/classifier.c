@@ -47,9 +47,6 @@
 /* number of classifier mac table entry */
 #define NOF_CLS_TABLE_ENTRIES 128
 
-/* interval that wait until change update index (micro second) */
-#define CHANGE_UPDATE_INDEX_WAIT_INTERVAL SPP_CHANGE_UPDATE_INTERVAL
-
 /*
  *  interval that transmit burst packet,
  *  if buffer is not filled (nano second)
@@ -724,7 +721,7 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 	/* wait until no longer access the new update side */
 	while (likely(mng_info->ref_index ==
 			mng_info->upd_index))
-		rte_delay_us_block(CHANGE_UPDATE_INDEX_WAIT_INTERVAL);
+		rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
 	/* uninitialize old */
 	uninit_component_info(mng_info->cmp_infos + mng_info->upd_index);

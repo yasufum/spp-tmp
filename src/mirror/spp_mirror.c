@@ -284,7 +284,7 @@ update_mirror(struct sppwk_comp_info *wk_comp)
 
 	info->upd_index = info->ref_index;
 	while (likely(info->ref_index == info->upd_index))
-		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
+		rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, MIRROR,
 			"Done update mirror (id=%d, name=%s, type=%d)\n",

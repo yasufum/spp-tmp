@@ -156,7 +156,7 @@ update_forwarder(struct sppwk_comp_info *comp_info)
 
 	fwd_info->upd_index = fwd_info->ref_index;
 	while (likely(fwd_info->ref_index == fwd_info->upd_index))
-		rte_delay_us_block(SPP_CHANGE_UPDATE_INTERVAL);
+		rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
 	RTE_LOG(INFO, FORWARD,
 			"Done update forwarder. (id=%d, name=%s, type=%d)\n",

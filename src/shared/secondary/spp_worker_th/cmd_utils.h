@@ -28,7 +28,7 @@
 #define SPPWK_TYPE_NONE_STR "unuse"
 
 /** Waiting time for checking update (not used for spp_pcap). */
-#define SPP_CHANGE_UPDATE_INTERVAL 10  /* micro sec */
+#define SPPWK_UPDATE_INTERVAL 10  /* micro sec */
 
 /**
  * Used for index of arrary of management data which has two sides. It is not
