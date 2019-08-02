@@ -21,7 +21,7 @@
 #include <rte_launch.h>
 #include <netinet/in.h>
 
-#include "classifier_mac.h"
+#include "classifier.h"
 #include "spp_vf.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/string_buffer.h"

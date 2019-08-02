@@ -2,7 +2,7 @@
  * Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
  */
 
-#include "classifier_mac.h"
+#include "classifier.h"
 #include "forwarder.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/json_helper.h"

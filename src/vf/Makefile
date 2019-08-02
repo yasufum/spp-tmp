@@ -15,7 +15,7 @@ SPP_SEC_DIR = ../shared/secondary
 SPP_WKT_DIR = ../shared/secondary/spp_worker_th
 
 # all source are stored in SRCS-y
-SRCS-y := spp_vf.c classifier_mac.c forwarder.c
+SRCS-y := spp_vf.c classifier.c forwarder.c
 SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_SEC_DIR)/json_helper.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c

@@ -7,7 +7,7 @@
 #include <getopt.h>
 
 #include "spp_vf.h"
-#include "classifier_mac.h"
+#include "classifier.h"
 #include "forwarder.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
