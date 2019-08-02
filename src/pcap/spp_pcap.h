@@ -10,16 +10,15 @@
 /**
  * Pcap get core status
  *
- * @param lcore_id The logical core ID for forwarder and merger.
- * @param params
- *  The pointer to struct spp_iterate_core_params.@n
- *  Detailed data of pcap status.
+ * @param lcore_id Lcore ID.
+ * @param params Pointer to struct sppwk_lcore_params.
  *
  * @retval SPPWK_RET_OK succeeded.
  * @retval SPPWK_RET_NG failed.
  */
+/* TODO(yasufum) consider to move spp_pcap.c. */
 int spp_pcap_get_core_status(
 		unsigned int lcore_id,
-		struct spp_iterate_core_params *params);
+		struct sppwk_lcore_params *params);
 
 #endif /* __SPP_PCAP_H__ */

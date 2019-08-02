@@ -55,6 +55,6 @@ int forward_packets(int id);
  */
 int
 get_forwarder_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
+		struct sppwk_lcore_params *params);
 
 #endif /* __SPP_FORWARD_H__ */

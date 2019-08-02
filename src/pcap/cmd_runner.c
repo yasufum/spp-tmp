@@ -66,7 +66,7 @@ const char *CAPTURE_STATUS_STRINGS[] = {
  * append response for status command.
  */
 static int
-spp_iterate_core_info(struct spp_iterate_core_params *params)
+spp_iterate_core_info(struct sppwk_lcore_params *params)
 {
 	int ret;
 	int lcore_id;
@@ -449,7 +449,7 @@ append_process_type_value(const char *name, char **output,
 
 static int
 append_pcap_core_element_value(
-		struct spp_iterate_core_params *params,
+		struct sppwk_lcore_params *params,
 		const unsigned int lcore_id,
 		const char *name, const char *type,
 		const int num_rx,
@@ -513,27 +513,25 @@ append_core_value(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
-	struct spp_iterate_core_params itr_params;
+	struct sppwk_lcore_params lcore_params;
 
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, PCAP_RUNNER,
-				"allocate error. (name = %s)\n",
-				name);
+		RTE_LOG(ERR, PCAP_RUNNER, "Failed to alloc buff.\n");
 		return SPPWK_RET_NG;
 	}
 
-	itr_params.output = tmp_buff;
-	itr_params.element_proc = append_pcap_core_element_value;
+	lcore_params.output = tmp_buff;
+	lcore_params.lcore_proc = append_pcap_core_element_value;
 
-	ret = spp_iterate_core_info(&itr_params);
+	ret = spp_iterate_core_info(&lcore_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {
-		spp_strbuf_free(itr_params.output);
+		spp_strbuf_free(lcore_params.output);
 		return SPPWK_RET_NG;
 	}
 
-	ret = append_json_array_brackets(name, output, itr_params.output);
-	spp_strbuf_free(itr_params.output);
+	ret = append_json_array_brackets(name, output, lcore_params.output);
+	spp_strbuf_free(lcore_params.output);
 	return ret;
 }
 

@@ -278,8 +278,7 @@ append_port_array(const char *name, char **output, const int num,
  */
 /* append one element of core information for JSON format */
 int
-append_core_element_value(
-		struct spp_iterate_core_params *params,
+append_core_element_value(struct sppwk_lcore_params *params,
 		const unsigned int lcore_id,
 		const char *name, const char *type,
 		const int num_rx, const struct sppwk_port_idx *rx_ports,

@@ -56,7 +56,7 @@ init_forwarder(void)
 /* Get forwarder status. */
 int
 get_forwarder_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params)
+		struct sppwk_lcore_params *params)
 {
 	int ret = SPPWK_RET_NG;
 	int cnt;
@@ -92,10 +92,9 @@ get_forwarder_status(unsigned int lcore_id, int id,
 	}
 
 	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(
-		params, lcore_id,
-		fwd_path->name, component_type,
-		fwd_path->nof_rx, rx_ports, fwd_path->nof_tx, tx_ports);
+	ret = (*params->lcore_proc)(params, lcore_id, fwd_path->name,
+			component_type, fwd_path->nof_rx, rx_ports,
+			fwd_path->nof_tx, tx_ports);
 	if (unlikely(ret != SPPWK_RET_OK))
 		return SPPWK_RET_NG;
 

@@ -296,7 +296,7 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 
 /* Iterate core information to create response to status command */
 static int
-spp_iterate_core_info(struct spp_iterate_core_params *params)
+spp_iterate_core_info(struct sppwk_lcore_params *params)
 {
 	int ret;
 	int lcore_id, cnt;
@@ -310,7 +310,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 
 		core = get_core_info(lcore_id);
 		if (core->num == 0) {
-			ret = (*params->element_proc)(
+			ret = (*params->lcore_proc)(
 				params, lcore_id,
 				"", SPPWK_TYPE_NONE_STR,
 				0, NULL, 0, NULL);
@@ -352,7 +352,7 @@ add_core(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))
 {
 	int ret = SPPWK_RET_NG;
-	struct spp_iterate_core_params itr_params;
+	struct sppwk_lcore_params lcore_params;
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 	if (unlikely(tmp_buff == NULL)) {
 		RTE_LOG(ERR, MIR_CMD_RUNNER,
@@ -362,17 +362,17 @@ add_core(const char *name, char **output,
 		return SPPWK_RET_NG;
 	}
 
-	itr_params.output = tmp_buff;
-	itr_params.element_proc = append_core_element_value;
+	lcore_params.output = tmp_buff;
+	lcore_params.lcore_proc = append_core_element_value;
 
-	ret = spp_iterate_core_info(&itr_params);
+	ret = spp_iterate_core_info(&lcore_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {
-		spp_strbuf_free(itr_params.output);
+		spp_strbuf_free(lcore_params.output);
 		return SPPWK_RET_NG;
 	}
 
-	ret = append_json_array_brackets(output, name, itr_params.output);
-	spp_strbuf_free(itr_params.output);
+	ret = append_json_array_brackets(output, name, lcore_params.output);
+	spp_strbuf_free(lcore_params.output);
 	return ret;
 }
 

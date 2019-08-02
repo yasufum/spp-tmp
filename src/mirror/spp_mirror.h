@@ -23,6 +23,6 @@
  * in this file. It is bad dependency for the global variable.
  */
 int get_mirror_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
+		struct sppwk_lcore_params *params);
 
 #endif /* __SPP_MIRROR_H__ */

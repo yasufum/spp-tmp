@@ -665,7 +665,7 @@ main(int argc, char *argv[])
 /* Mirror get component status */
 int
 get_mirror_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params)
+		struct sppwk_lcore_params *params)
 {
 	int ret = SPPWK_RET_NG;
 	int cnt;
@@ -697,7 +697,7 @@ get_mirror_status(unsigned int lcore_id, int id,
 	}
 
 	/* Set the information with the function specified by the command. */
-	ret = (*params->element_proc)(params, lcore_id, path->name,
+	ret = (*params->lcore_proc)(params, lcore_id, path->name,
 			component_type, path->nof_rx, rx_ports, path->nof_tx,
 			tx_ports);
 	if (unlikely(ret != 0))

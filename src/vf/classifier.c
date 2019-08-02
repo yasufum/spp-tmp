@@ -801,7 +801,7 @@ classify_packets(int comp_id)
 /* classifier iterate component information */
 int
 get_classifier_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *lcore_params)
+		struct sppwk_lcore_params *lcore_params)
 {
 	int ret = SPPWK_RET_NG;
 	int i;
@@ -839,8 +839,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 	}
 
 	/* Set the information with the function specified by the command. */
-	/* TODO(yasufum) rename `element_proc` */
-	ret = (*lcore_params->element_proc)(
+	ret = (*lcore_params->lcore_proc)(
 		lcore_params, lcore_id, cmp_info->name, SPPWK_TYPE_CLS_STR,
 		nof_rx, rx_ports, nof_tx, tx_ports);
 	if (unlikely(ret != SPPWK_RET_OK))

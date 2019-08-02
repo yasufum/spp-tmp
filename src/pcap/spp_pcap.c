@@ -369,7 +369,7 @@ parse_app_args(int argc, char *argv[])
 int
 spp_pcap_get_core_status(
 		unsigned int lcore_id,
-		struct spp_iterate_core_params *params)
+		struct sppwk_lcore_params *params)
 {
 	char role_type[8];
 	struct pcap_mng_info *info = &g_pcap_info[lcore_id];
@@ -396,7 +396,7 @@ spp_pcap_get_core_status(
 	}
 
 	/* Set information with specified by the command. */
-	res = (*params->element_proc)(params, lcore_id, name, role_type,
+	res = (*params->lcore_proc)(params, lcore_id, name, role_type,
 		rx_num, rx_ports, 0, NULL);
 	if (unlikely(res != 0))
 		return SPPWK_RET_NG;

@@ -125,14 +125,13 @@ struct iface_info {
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 };
 
-/* TODO(yasufum) revise using term `iterate`, or comments. */
-struct spp_iterate_core_params;
+struct sppwk_lcore_params;
 /**
  * Define func to iterate lcore to list core information for showing status
- * or so, as a member of struct `spp_iterate_core_params`.
+ * or so, as a member of struct `sppwk_lcore_params`.
  */
-typedef int (*spp_iterate_core_element_proc)(
-		struct spp_iterate_core_params *params,
+typedef int (*sppwk_lcore_proc)(
+		struct sppwk_lcore_params *params,
 		const unsigned int lcore_id,
 		const char *wk_name,  /* Name of worker named as component. */
 		const char *wk_type,  /* Type of worker named as component. */
@@ -146,10 +145,10 @@ typedef int (*spp_iterate_core_element_proc)(
  * showing status or so.
  */
 /* TODO(yasufum) refactor name of func and vars, and comments. */
-struct spp_iterate_core_params {
+struct sppwk_lcore_params {
 	char *output;  /* Buffer used for output */
 	/** The function for creating core information */
-	spp_iterate_core_element_proc element_proc;
+	sppwk_lcore_proc lcore_proc;
 };
 
 #endif  /* __SPPWK_DATA_TYPES_H__ */

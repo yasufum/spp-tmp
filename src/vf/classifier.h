@@ -100,6 +100,6 @@ int classify_packets(int comp_id);
  * in this file. It is bad dependency for the global variable.
  */
 int get_classifier_status(unsigned int lcore_id, int id,
-		struct spp_iterate_core_params *params);
+		struct sppwk_lcore_params *params);
 
 #endif /* _CLASSIFIER_MAC_H_ */
