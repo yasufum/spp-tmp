@@ -66,7 +66,7 @@
 #define CLS_DUMMY_ADDR 0x010000000000
 
 /* classifier management information */
-struct management_info {
+struct cls_mng_info {
 	/* classifier information */
 	struct cls_comp_info cmp_infos[NOF_CLS_INFO];
 
@@ -80,11 +80,11 @@ struct management_info {
 	volatile int is_used;
 };
 
-struct management_info g_mng_infos[RTE_MAX_LCORE];
+struct cls_mng_info g_mng_infos[RTE_MAX_LCORE];
 
 /* uninitialize classifier. */
 static void
-uninit_classifier(struct management_info *mng_info)
+uninit_classifier(struct cls_mng_info *mng_info)
 {
 	int i;
 
@@ -93,14 +93,14 @@ uninit_classifier(struct management_info *mng_info)
 	for (i = 0; i < NOF_CLS_INFO; ++i)
 		uninit_component_info(mng_info->cmp_infos + (long)i);
 
-	memset(mng_info, 0, sizeof(struct management_info));
+	memset(mng_info, 0, sizeof(struct cls_mng_info));
 }
 
 /* initialize classifier information. */
 void
 init_classifier_info(int component_id)
 {
-	struct management_info *mng_info = NULL;
+	struct cls_mng_info *mng_info = NULL;
 
 	mng_info = g_mng_infos + component_id;
 	uninit_classifier(mng_info);
@@ -124,7 +124,7 @@ static const size_t ETHER_ADDR_STR_BUF_SZ =
 		ETHER_ADDR_LEN * 2 + (ETHER_ADDR_LEN - 1) + 1;
 
 /* classifier information per lcore */
-struct management_info g_mng_infos[RTE_MAX_LCORE];
+struct cls_mng_info g_mng_infos[RTE_MAX_LCORE];
 
 /**
  * Hash table count used for making a name of hash table
@@ -277,7 +277,7 @@ log_entry(
 
 /* check if management information is used. */
 static inline int
-is_used_mng_info(const struct management_info *mng_info)
+is_used_mng_info(const struct cls_mng_info *mng_info)
 {
 	return (mng_info != NULL && mng_info->is_used);
 }
@@ -684,7 +684,7 @@ classify_packet(struct rte_mbuf **rx_pkts, uint16_t n_rx,
 
 /* change update index at classifier management information */
 static inline void
-change_classifier_index(struct management_info *mng_info, int id)
+change_classifier_index(struct cls_mng_info *mng_info, int id)
 {
 	if (unlikely(mng_info->ref_index ==
 			mng_info->upd_index)) {
@@ -715,7 +715,7 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 {
 	int ret;
 	int wk_id = wk_comp_info->comp_id;
-	struct management_info *mng_info = g_mng_infos + wk_id;
+	struct cls_mng_info *mng_info = g_mng_infos + wk_id;
 	struct cls_comp_info *cls_info = NULL;
 
 	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
@@ -757,7 +757,7 @@ spp_classifier_mac_do(int id)
 {
 	int i;
 	int n_rx;
-	struct management_info *mng_info = g_mng_infos + id;
+	struct cls_mng_info *mng_info = g_mng_infos + id;
 	struct cls_comp_info *cmp_info = NULL;
 	struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
 
@@ -831,7 +831,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 	int ret = SPPWK_RET_NG;
 	int i;
 	int nof_tx, nof_rx = 0;  /* Num of RX and TX ports. */
-	struct management_info *mng_info;
+	struct cls_mng_info *mng_info;
 	struct cls_comp_info *cmp_info;
 	struct cls_port_info *port_info;
 	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
@@ -948,7 +948,7 @@ add_classifier_table_val(
 		struct spp_iterate_classifier_table_params *params)
 {
 	int i, vlan_id;
-	struct management_info *mng_info;
+	struct cls_mng_info *mng_info;
 	struct cls_comp_info *cmp_info;
 	struct cls_port_info *port_info;
 
