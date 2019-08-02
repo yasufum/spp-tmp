@@ -160,7 +160,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	RTE_LOG(INFO, APP, "Slave started on lcore %d.\n", lcore_id);
 	set_core_status(lcore_id, SPPWK_LCORE_IDLING);
 
-	while ((status = spp_get_core_status(lcore_id)) !=
+	while ((status = sppwk_get_lcore_status(lcore_id)) !=
 			SPPWK_LCORE_REQ_STOP) {
 		if (status != SPPWK_LCORE_RUNNING)
 			continue;

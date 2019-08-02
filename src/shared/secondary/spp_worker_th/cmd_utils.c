@@ -70,7 +70,7 @@ log_hexdumped(const char *obj_name, const void *obj_addr, const size_t size)
 
 /* Get status of lcore of given ID. */
 enum sppwk_lcore_status
-spp_get_core_status(unsigned int lcore_id)
+sppwk_get_lcore_status(unsigned int lcore_id)
 {
 	return (g_mng_data.p_core_info + lcore_id)->status;
 }

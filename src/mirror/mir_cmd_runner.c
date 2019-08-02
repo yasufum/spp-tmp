@@ -305,7 +305,7 @@ spp_iterate_core_info(struct spp_iterate_core_params *params)
 	struct sppwk_comp_info *comp_info = NULL;
 
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-		if (spp_get_core_status(lcore_id) == SPPWK_LCORE_UNUSED)
+		if (sppwk_get_lcore_status(lcore_id) == SPPWK_LCORE_UNUSED)
 			continue;
 
 		core = get_core_info(lcore_id);

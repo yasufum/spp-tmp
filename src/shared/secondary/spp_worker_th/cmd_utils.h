@@ -144,12 +144,12 @@ void log_hexdumped(const char *obj_name, const void *obj_addr,
 int spp_vf_add_vhost_pmd(int index, int client);
 
 /**
- * Get core status
+ * Get lcore status.
  *
  * @param[in] lcore_id Logical core ID.
  * @return Status of specified logical core.
  */
-enum sppwk_lcore_status spp_get_core_status(unsigned int lcore_id);
+enum sppwk_lcore_status sppwk_get_lcore_status(unsigned int lcore_id);
 
 /**
  * Get component type of target component_info
