@@ -28,7 +28,7 @@
 
 
 /* TODO(yasufum) change log label after filename is revised. */
-#define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
+#define RTE_LOGTYPE_WK_CMD_UTILS RTE_LOGTYPE_USER1
 
 /* A set of pointers of management data */
 /* TODO(yasufum) change names start with `p_change` because it wrong meanig. */
@@ -54,10 +54,11 @@ log_hexdumped(const char *obj_name, const void *obj_addr, const size_t size)
 	const uint32_t *buf = obj_addr;
 
 	if ((obj_name != NULL) && (obj_name[0] != '\0'))
-		RTE_LOG(DEBUG, APP, "Name of dumped buf: %s.\n", obj_name);
+		RTE_LOG(DEBUG, WK_CMD_UTILS, "Name of dumped buf: %s.\n",
+				obj_name);
 
 	for (cnt = 0; cnt < max_cnt; cnt += 16) {
-		RTE_LOG(DEBUG, APP, "[%p]"
+		RTE_LOG(DEBUG, WK_CMD_UTILS, "[%p]"
 			" %08x %08x %08x %08x %08x %08x %08x %08x"
 			" %08x %08x %08x %08x %08x %08x %08x %08x",
 			&buf[cnt],
@@ -106,7 +107,8 @@ check_core_status_wait(enum sppwk_lcore_status status)
 			return SPPWK_RET_OK;
 	}
 
-	RTE_LOG(ERR, APP, "Status check time out. (status = %d)\n", status);
+	RTE_LOG(ERR, WK_CMD_UTILS, "Status check time out. (status = %d)\n",
+			status);
 	return SPPWK_RET_NG;
 }
 
@@ -177,7 +179,8 @@ log_core_info(const struct core_mng_info *core_info)
 	unsigned int lcore_id = 0;
 	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
 		info = &core_info[lcore_id];
-		RTE_LOG(DEBUG, APP, "core[%d] status=%d, ref=%d, upd=%d\n",
+		RTE_LOG(DEBUG, WK_CMD_UTILS,
+				"core[%d] status=%d, ref=%d, upd=%d\n",
 				lcore_id, info->status,
 				info->ref_index, info->upd_index);
 
@@ -203,7 +206,7 @@ log_component_info(const struct sppwk_comp_info *comp_info)
 		if (tmp_ci->wk_type == SPPWK_TYPE_NONE)
 			continue;
 
-		RTE_LOG(DEBUG, APP, "component[%d] name=%s, type=%d, "
+		RTE_LOG(DEBUG, WK_CMD_UTILS, "component[%d] name=%s, type=%d, "
 				"core=%u, index=%d\n",
 				cnt, tmp_ci->name, tmp_ci->wk_type,
 				tmp_ci->lcore_id, tmp_ci->comp_id);
@@ -231,7 +234,8 @@ log_interface_info(const struct iface_info *iface_info)
 		if (port->iface_type == UNDEF)
 			continue;
 
-		RTE_LOG(DEBUG, APP, "phy  [%d] type=%d, no=%d, port=%d, "
+		RTE_LOG(DEBUG, WK_CMD_UTILS,
+				"phy  [%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
@@ -244,7 +248,8 @@ log_interface_info(const struct iface_info *iface_info)
 		if (port->iface_type == UNDEF)
 			continue;
 
-		RTE_LOG(DEBUG, APP, "vhost[%d] type=%d, no=%d, port=%d, "
+		RTE_LOG(DEBUG, WK_CMD_UTILS,
+				"vhost[%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
@@ -257,7 +262,8 @@ log_interface_info(const struct iface_info *iface_info)
 		if (port->iface_type == UNDEF)
 			continue;
 
-		RTE_LOG(DEBUG, APP, "ring [%d] type=%d, no=%d, port=%d, "
+		RTE_LOG(DEBUG, WK_CMD_UTILS,
+				"ring [%d] type=%d, no=%d, port=%d, "
 				"vid = %u, mac=%08lx(%s)\n",
 				cnt, port->iface_type, port->iface_no,
 				port->ethdev_port_id,
@@ -417,7 +423,8 @@ init_host_port_info(void)
 		rte_eth_dev_get_name_by_port(i, dev_name);
 		ret = parse_dev_name(dev_name, &port_type, &port_id);
 		if (ret < 0)
-			RTE_LOG(ERR, APP, "Failed to parse dev_name.\n");
+			RTE_LOG(ERR, WK_CMD_UTILS,
+					"Failed to parse dev_name.\n");
 
 		if (port_type == PHY) {
 			port_id = nof_phys;
@@ -438,9 +445,10 @@ init_host_port_info(void)
 			p_iface_info->ring[port_id].ethdev_port_id = port_id;
 			break;
 		default:
-			RTE_LOG(ERR, APP, "Unsupported port on host, "
-				"type:%d, id:%d.\n",
-				port_type, port_id);
+			RTE_LOG(ERR, WK_CMD_UTILS,
+					"Unsupported port on host, "
+					"type:%d, id:%d.\n",
+					port_type, port_id);
 		}
 	}
 
@@ -750,7 +758,8 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 	char *saveptr = NULL;
 	char *endptr = NULL;
 
-	RTE_LOG(DEBUG, APP, "Try to convert MAC addr `%s`.\n", macaddr);
+	RTE_LOG(DEBUG, WK_CMD_UTILS, "Try to convert MAC addr `%s`.\n",
+			macaddr);
 
 	strcpy(tmp_mac, macaddr);
 	while (1) {
@@ -761,7 +770,7 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 
 		/* Check for mal-formatted address */
 		if (unlikely(token_cnt >= ETHER_ADDR_LEN)) {
-			RTE_LOG(ERR, APP,
+			RTE_LOG(ERR, WK_CMD_UTILS,
 					"Invalid MAC address `%s`.\n",
 					macaddr);
 			return SPPWK_RET_NG;
@@ -779,7 +788,7 @@ sppwk_convert_mac_str_to_int64(const char *macaddr)
 		str = NULL;
 	}
 
-	RTE_LOG(DEBUG, APP,
+	RTE_LOG(DEBUG, WK_CMD_UTILS,
 			"Succeeded to convert MAC addr `%s` to `0x%08lx`.\n",
 			macaddr, ret_mac);
 	return ret_mac;

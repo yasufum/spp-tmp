@@ -16,7 +16,7 @@
 #include "shared/secondary/spp_worker_th/cmd_parser.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
-#define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
+#define RTE_LOGTYPE_SPP_VF RTE_LOGTYPE_USER1
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
 #include "shared/secondary/spp_worker_th/ringlatencystats.h"
@@ -54,7 +54,7 @@ static struct cancel_backup_info g_backup_info;
 static void
 usage(const char *progname)
 {
-	RTE_LOG(INFO, APP, "Usage: %s [EAL args] --"
+	RTE_LOG(INFO, SPP_VF, "Usage: %s [EAL args] --"
 			" --client-id CLIENT_ID"
 			" -s SERVER_IP:SERVER_PORT"
 			" [--vhost-client]\n"
@@ -140,7 +140,7 @@ parse_app_args(int argc, char *argv[])
 		usage(progname);
 		return SPPWK_RET_NG;
 	}
-	RTE_LOG(INFO, APP,
+	RTE_LOG(INFO, SPP_VF,
 			"Parsed app args (client_id=%d,server=%s:%d,"
 			"vhost_client=%d)\n",
 			cli_id, ctl_ip, ctl_port, get_vhost_cli_mode());
@@ -158,7 +158,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	struct core_mng_info *info = &g_core_info[lcore_id];
 	struct core_info *core = get_core_info(lcore_id);
 
-	RTE_LOG(INFO, APP, "Slave started on lcore %d.\n", lcore_id);
+	RTE_LOG(INFO, SPP_VF, "Slave started on lcore %d.\n", lcore_id);
 	set_core_status(lcore_id, SPPWK_LCORE_IDLING);
 
 	while ((status = sppwk_get_lcore_status(lcore_id)) !=
@@ -189,7 +189,7 @@ slave_main(void *arg __attribute__ ((unused)))
 			}
 		}
 		if (unlikely(ret != 0)) {
-			RTE_LOG(ERR, APP, "Failed to forward on lcore %d. "
+			RTE_LOG(ERR, SPP_VF, "Failed to forward on lcore %d. "
 					"(id = %d).\n",
 					lcore_id, core->id[cnt]);
 			break;
@@ -197,7 +197,7 @@ slave_main(void *arg __attribute__ ((unused)))
 	}
 
 	set_core_status(lcore_id, SPPWK_LCORE_STOPPED);
-	RTE_LOG(INFO, APP, "Terminated slave on lcore %d.\n", lcore_id);
+	RTE_LOG(INFO, SPP_VF, "Terminated slave on lcore %d.\n", lcore_id);
 	return ret;
 }
 
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 	/* Daemonize process */
 	ret = daemon(0, 0);
 	if (unlikely(ret != 0)) {
-		RTE_LOG(ERR, APP, "daemonize is failed. (ret = %d)\n",
+		RTE_LOG(ERR, SPP_VF, "daemonize is failed. (ret = %d)\n",
 				ret);
 		return ret;
 	}
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 					g_core_info, g_change_core,
 					g_change_component,
 					&g_backup_info) < SPPWK_RET_OK) {
-			RTE_LOG(ERR, APP,
+			RTE_LOG(ERR, SPP_VF,
 				"Failed to set management data.\n");
 			break;
 		}
@@ -311,8 +311,8 @@ main(int argc, char *argv[])
 
 		/* Start forwarding */
 		set_all_core_status(SPPWK_LCORE_RUNNING);
-		RTE_LOG(INFO, APP, "My ID %d start handling message\n", 0);
-		RTE_LOG(INFO, APP, "[Press Ctrl-C to quit ...]\n");
+		RTE_LOG(INFO, SPP_VF, "My ID %d start handling message\n", 0);
+		RTE_LOG(INFO, SPP_VF, "[Press Ctrl-C to quit ...]\n");
 
 		/* Backup the management information after initialization */
 		backup_mng_info(&g_backup_info);
@@ -352,7 +352,7 @@ main(int argc, char *argv[])
 	g_core_info[master_lcore].status = SPPWK_LCORE_STOPPED;
 	ret = check_core_status_wait(SPPWK_LCORE_STOPPED);
 	if (unlikely(ret != SPPWK_RET_OK))
-		RTE_LOG(ERR, APP, "Failed to terminate master thread.\n");
+		RTE_LOG(ERR, SPP_VF, "Failed to terminate master thread.\n");
 
 	/*
 	 * Remove vhost sock file if it is not running
@@ -364,6 +364,6 @@ main(int argc, char *argv[])
 	spp_ringlatencystats_uninit();
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
-	RTE_LOG(INFO, APP, "Exit spp_vf.\n");
+	RTE_LOG(INFO, SPP_VF, "Exit spp_vf.\n");
 	return ret;
 }
