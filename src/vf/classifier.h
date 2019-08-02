@@ -25,7 +25,7 @@ struct spp_iterate_classifier_table_params;
  * @retval SPPWK_RET_OK succeeded.
  * @retval SPPWK_RET_NG failed.
  */
-int spp_classifier_mac_init(void);
+int init_cls_mng_info(void);
 
 /**
  * initialize classifier information.

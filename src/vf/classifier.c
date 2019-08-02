@@ -703,7 +703,7 @@ change_classifier_index(struct management_info *mng_info, int id)
 
 /* classifier(mac address) initialize globals. */
 int
-spp_classifier_mac_init(void)
+init_cls_mng_info(void)
 {
 	memset(g_mng_infos, 0, sizeof(g_mng_infos));
 	return 0;

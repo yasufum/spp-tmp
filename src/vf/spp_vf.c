@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 		if (unlikely(ret_mng != SPPWK_RET_OK))
 			break;
 
-		int ret_classifier_mac_init = spp_classifier_mac_init();
+		int ret_classifier_mac_init = init_cls_mng_info();
 		if (unlikely(ret_classifier_mac_init != SPPWK_RET_OK))
 			break;
 
