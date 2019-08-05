@@ -270,7 +270,7 @@ Start components in ``spp_vf``.
 .. code-block:: none
 
    # terminal 2
-   spp > vf 1; component start cls 2 classifier_mac
+   spp > vf 1; component start cls 2 classifier
    spp > vf 1; component start mgr 3 merge
    spp > vf 1; component start fwd1 4 forward
    spp > vf 1; component start fwd2 5 forward

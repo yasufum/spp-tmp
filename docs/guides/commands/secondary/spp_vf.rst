@@ -122,7 +122,7 @@ consists of three parts.
         - rx: ring:0
         - tx: ring:1
       - core:6 'mg' (type: merge)
-      - core:7 'cls' (type: classifier_mac)
+      - core:7 'cls' (type: classifier)
         - rx: ring:2
         - tx: ring:3
         - tx: ring:4
@@ -132,7 +132,7 @@ consists of three parts.
 ``client-id`` is a secondary ID of the process and ``ports`` is a list of
 all of ports owned the process.
 
-``Classifier Table`` is a list of entries of ``classifier_mac`` worker thread.
+``Classifier Table`` is a list of entries of ``classifier`` worker thread.
 Each of entry is a combination of MAC address and destination port which is
 assigned to this thread.
 
@@ -150,11 +150,11 @@ component
 Assign or release a role of forwarding to worker threads running on each of
 cores which are reserved with ``-c`` or ``-l`` option while launching
 ``spp_vf``. The role of the worker is chosen from ``forward``, ``merge`` or
-``classifier_mac``.
+``classifier``.
 
 ``forward`` role is for simply forwarding from source port to destination port.
 On the other hands, ``merge`` role is for receiving packets from multiple ports
-as N:1 communication, or ``classifier_mac`` role is for sending packet to
+as N:1 communication, or ``classifier`` role is for sending packet to
 multiple ports by referring MAC address as 1:N communication.
 
 You are required to give an arbitrary name with as an ID for specifying the role.
@@ -178,8 +178,8 @@ Here are some examples of assigning roles with ``component`` command.
     # assign 'merge' role with name 'mgr1' on core 3
     spp > vf 2; component start mgr1 3 merge
 
-    # assign 'classifier_mac' role with name 'cls1' on core 4
-    spp > vf 2; component start cls1 4 classifier_mac
+    # assign 'classifier' role with name 'cls1' on core 4
+    spp > vf 2; component start cls1 4 classifier
 
 In the above examples, each different ``CORE-ID`` is specified to each role.
 You can assign several components on the same core, but performance might be

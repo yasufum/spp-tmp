@@ -187,7 +187,7 @@ Response example
         {
           "core": 6,
           "name": "cls",
-          "type": "classifier_mac",
+          "type": "classifier",
           "rx_port": [
             {
               "port": "phy:0",
@@ -273,7 +273,7 @@ Request (path)
 Request (body)
 ~~~~~~~~~~~~~~
 
-``type`` param is oen of ``forward``, ``merge`` or ``classifier_mac``.
+``type`` param is oen of ``forward``, ``merge`` or ``classifier``.
 
 .. _table_spp_ctl_spp_vf_components_res:
 

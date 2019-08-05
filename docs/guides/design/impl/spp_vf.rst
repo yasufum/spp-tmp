@@ -27,18 +27,15 @@ on assigned lcores..
 
     /* spp_vf.c */
 
-    int ret_dpdk = rte_eal_init(argc, argv);
+    ret = rte_eal_init(argc, argv);
 
-    int ret_classifier_mac_init = spp_classifier_mac_init();
-
-    init_forwarder();
-    sppwk_port_capability_init();
+    /* skipping lines ... */
 
     /* Start worker threads of classifier and forwarder */
-    unsigned int lcore_id = 0;
-    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-            rte_eal_remote_launch(slave_main, NULL, lcore_id);
-    }
+   unsigned int lcore_id = 0;
+   RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+           rte_eal_remote_launch(slave_main, NULL, lcore_id);
+   }
 
 
 Slave Main
@@ -61,17 +58,17 @@ or simply forwards packets.
         if (status != SPPWK_LCORE_RUNNING)
             continue;
 
-        // skipping lines ...
+        /* skipping lines ... */
 
         /* It is for processing multiple components. */
         for (cnt = 0; cnt < core->num; cnt++) {
         /* Component classification to call a function. */
         if (spp_get_component_type(core->id[cnt]) ==
-            SPPWK_TYPE_CLS) {
+                    SPPWK_TYPE_CLS) {
             /* Component type for classifier. */
-            ret = spp_classifier_mac_do(core->id[cnt]);
+            ret = classify_packets(core->id[cnt]);
             if (unlikely(ret != 0))
-            break;
+                    break;
         } else {
             /* Component type for forward or merge. */
                 ret = forward_packets(core->id[cnt]);
@@ -138,19 +135,19 @@ Classifying the packet
 ----------------------
 
 If component type is ``SPPWK_TYPE_CLS``, worker thread behaves as a classifier,
-so component calls ``spp_classifier_mac_do()``. In this function, packets
+so component calls ``classify_packets()``. In this function, packets
 from RX port are received with ``sppwk_eth_vlan_rx_burst()`` which is derived
 from ``rte_eth_rx_burst()`` for adding or deleting VLAN tags.
 Received packets are classified with ``classify_packet()``.
 
 .. code-block:: c
 
-    /* classifier_mac.c */
+    /* classifier.c */
 
     n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id, 0,
         rx_pkts, MAX_PKT_BURST);
 
-    // skipping lines ...
+    /* skipping lines ... */
 
     classify_packet(rx_pkts, n_rx, cmp_info, clsd_data_tx);
 
@@ -163,14 +160,13 @@ tables ``forward_rxtx``, ``forward_path`` and ``forward_info``.
 The ``forward_rxtx`` has two member variables for expressing the port
 to be sent(tx) and to be receive(rx),
 ``forward_path`` has member variables for expressing the data path.
-Like ``classifier_mac_info``, ``forward_info`` has two tables,
+Like as ``mac_classifier``, ``forward_info`` has two tables,
 one is for updating by commands, the other is for looking up to process
 packets.
 
-
 .. code-block:: c
 
-    /* spp_forward.c */
+    /* forwarder.c */
     /* A set of port info of rx and tx */
     struct forward_rxtx {
             struct spp_port_info rx; /* rx port */
@@ -179,12 +175,11 @@ packets.
 
     /* Information on the path used for forward. */
     struct forward_path {
-            char name[SPP_NAME_STR_LEN];    /* component name */
-            volatile enum spp_component_type type;
-                                            /* component type */
-            int num;  /* number of receive ports */
-            struct forward_rxtx ports[RTE_MAX_ETHPORTS];
-                                            /* port used for transfer */
+            char name[STR_LEN_NAME];  /* Component name */
+            volatile enum sppwk_worker_type wk_type;
+            int nof_rx;  /* Number of RX ports */
+            int nof_tx;  /* Number of TX ports */
+            struct forward_rxtx ports[RTE_MAX_ETHPORTS];  /* Set of RX and TX */
     };
 
     /* Information for forward. */
@@ -205,7 +200,7 @@ It is implemented as ``handle_l2multicast_packet()`` and called from
 
 .. code-block:: c
 
-    /* classify_packet() in classifier_mac.c */
+    /* classify_packet() in classifier.c */
 
     /* L2 multicast(include broadcast) ? */
     if (unlikely(is_multicast_ether_addr(&eth->d_addr))) {
@@ -222,32 +217,21 @@ multicast packets.
 
 .. code-block:: c
 
-    /* classifier_mac.c */
+    /* classifier.c */
 
-    /* handle L2 multicast(include broadcast) packet */
-    static inline void
     handle_l2multicast_packet(struct rte_mbuf *pkt,
-                    struct classifier_mac_info *classifier_info,
-                    struct classified_data *classified_data)
+            struct cls_comp_info *cmp_info,
+            struct cls_port_info *clsd_data)
     {
             int i;
+            struct mac_classifier *mac_cls;
+            uint16_t vid = get_vid(pkt);
+            int gen_def_clsd_idx = get_general_default_classified_index(cmp_info);
+            int n_act_clsd;
 
-            if (unlikely(classifier_info->num_active_classified == 0)) {
-                    RTE_LOG(ERR,
-                            SPP_CLASSIFIER_MAC,
-                            "No mac address.(l2 multicast packet)\n");
-                    rte_pktmbuf_free(pkt);
-                    return;
-            }
+            /* skipping lines... */
 
-            rte_mbuf_refcnt_update(pkt,
-                    (classifier_info->num_active_classified - 1));
-
-            for (i = 0; i < classifier_info->num_active_classified; i++) {
-                    push_packet(pkt, classified_data +
-                            (long)classifier_info->active_classifieds[i]);
-            }
-    }
+            rte_mbuf_refcnt_update(pkt, (int16_t)(n_act_clsd - 1));
 
 
 Two phase update for forwarding

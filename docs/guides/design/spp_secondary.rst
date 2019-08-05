@@ -107,7 +107,7 @@ There are three types of components, ``forwarder``,
 ``merger`` and ``classifier``.
 
 This is an example of network configuration, in which one
-``classifier_mac``,
+``classifier``,
 one merger and four forwarders are running in ``spp_vf`` process
 for two destinations of vhost interface.
 Incoming packets from rx on host1 are sent to each of vhosts of VM

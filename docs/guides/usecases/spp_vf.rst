@@ -83,7 +83,7 @@ and other options on local host ``host2``.
 .. code-block:: none
 
     # terminal 2
-    spp > vf 1; component start cls 3 classifier_mac
+    spp > vf 1; component start cls 3 classifier
     spp > vf 1; component start fwd1 4 forward
     spp > vf 1; component start fwd2 5 forward
     spp > vf 1; component start mgr 6 merge
@@ -333,7 +333,7 @@ First of all, start components with names such as ``cls1``, ``fwd1`` or so.
 .. code-block:: none
 
     # terminal 2
-    spp > vf 1; component start cls1 2 classifier_mac
+    spp > vf 1; component start cls1 2 classifier
     spp > vf 1; component start fwd1 3 forward
     spp > vf 1; component start fwd2 4 forward
     spp > vf 1; component start fwd3 5 forward
@@ -384,7 +384,7 @@ Configuration for the second login path is almost the same as the first path.
 .. code-block:: none
 
     # terminal 2
-    spp > vf 1; component start cls2 8 classifier_mac
+    spp > vf 1; component start cls2 8 classifier
     spp > vf 1; component start fwd5 9 forward
     spp > vf 1; component start fwd6 10 forward
     spp > vf 1; component start fwd7 11 forward
