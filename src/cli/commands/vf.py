@@ -20,7 +20,7 @@ class SppVf(object):
             'port': ['add', 'del'],
             'classifier_table': ['add', 'del']}
 
-    WORKER_TYPES = ['forward', 'merge', 'classifier_mac']
+    WORKER_TYPES = ['forward', 'merge', 'classifier']
 
     def __init__(self, spp_ctl_cli, sec_id, use_cache=False):
         self.spp_ctl_cli = spp_ctl_cli
@@ -526,7 +526,7 @@ class SppVf(object):
         # (2) launch or terminate a worker thread with arbitrary name
         #   NAME: arbitrary name used as identifier
         #   CORE_ID: one of unused cores referred from status
-        #   ROLE: role of workers, 'forward', 'merge' or 'classifier_mac'
+        #   ROLE: role of workers, 'forward', 'merge' or 'classifier'
         spp > vf 1; component start NAME CORE_ID ROLE
         spp > vf 1; component stop NAME CORE_ID ROLE
 
