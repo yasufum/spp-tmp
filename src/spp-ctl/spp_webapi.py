@@ -243,7 +243,7 @@ class V1VFHandler(BaseHandler, V1VFCommon):
         return self.convert_info(proc.get_status())
 
     def vf_comp_start(self, proc, body):
-        self.validate_comp_start(body, ["forward", "merge", "classifier_mac"])
+        self.validate_comp_start(body, ["forward", "merge", "classifier"])
         proc.start_component(body['name'], body['core'], body['type'])
 
     def vf_comp_stop(self, proc, name):
