@@ -33,7 +33,7 @@
 #include "shared/secondary/spp_worker_th/ringlatencystats.h"
 #endif
 
-#define RTE_LOGTYPE_SPP_CLASSIFIER_MAC RTE_LOGTYPE_USER1
+#define RTE_LOGTYPE_VF_CLS RTE_LOGTYPE_USER1
 
 #ifdef RTE_MACHINE_CPUFLAG_SSE4_2
 #include <rte_hash_crc.h>
@@ -43,14 +43,11 @@
 #define DEFAULT_HASH_FUNC rte_jhash
 #endif
 
-/* number of classifier mac table entry */
+/* Number of classifier table entry */
 #define NOF_CLS_TABLE_ENTRIES 128
 
-/*
- *  interval that transmit burst packet,
- *  if buffer is not filled (nano second)
- */
-#define DRAIN_TX_PACKET_INTERVAL 100
+/* Interval transmit burst packet if buffer is not filled. */
+#define DRAIN_TX_PACKET_INTERVAL 100  /* nano sec */
 
 /* VID of VLAN untagged */
 #define VLAN_UNTAGGED_VID 0x0fff
@@ -60,7 +57,7 @@
 
 /* classifier management information */
 struct cls_mng_info {
-	struct cls_comp_info cmp_infos[TWO_SIDES];
+	struct cls_comp_info comp_list[TWO_SIDES];
 	volatile int ref_index;  /* Flag for ref side */
 	volatile int upd_index;  /* Flag for update side */
 	volatile int is_used;
@@ -88,7 +85,7 @@ clean_classifier(struct cls_mng_info *mng_info)
 	mng_info->is_used = 0;
 
 	for (i = 0; i < TWO_SIDES; ++i)
-		clean_component_info(mng_info->cmp_infos + (long)i);
+		clean_component_info(mng_info->comp_list + (long)i);
 
 	memset(mng_info, 0, sizeof(struct cls_mng_info));
 }
@@ -147,10 +144,9 @@ get_vid(const struct rte_mbuf *pkt)
 
 #if RTE_LOG_DP_LEVEL >= RTE_LOG_DEBUG
 
-#define LOG_DBG(name, fmt, ...)                                        \
-		RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,                  \
-				"[%s]Log(%s:%d):"fmt,                  \
-				name, __func__, __LINE__, __VA_ARGS__)
+#define LOG_DBG(name, fmt, ...) \
+	RTE_LOG_DP(DEBUG, VF_CLS, "[%s]Log(%s:%d):"fmt, name, \
+			__func__, __LINE__, __VA_ARGS__)
 
 static void
 log_packet(const char *name, struct rte_mbuf *pkt,
@@ -168,15 +164,11 @@ log_packet(const char *name, struct rte_mbuf *pkt,
 	ether_format_addr(mac_addr_str[1], sizeof(mac_addr_str),
 			&eth->s_addr);
 
-	RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,
+	RTE_LOG_DP(DEBUG, VF_CLS,
 			"[%s]Packet(%s:%d). d_addr=%s, s_addr=%s, "
 			"vid=%hu, pktlen=%u\n",
-			name,
-			func_name,
-			line_num,
-			mac_addr_str[0],
-			mac_addr_str[1],
-			vid,
+			name, func_name, line_num,
+			mac_addr_str[0], mac_addr_str[1], vid,
 			rte_pktmbuf_pkt_len(pkt));
 }
 
@@ -184,13 +176,10 @@ log_packet(const char *name, struct rte_mbuf *pkt,
 		log_packet(name, pkt, __func__, __LINE__)
 
 static void
-log_classification(
-		long clsd_idx,
-		struct rte_mbuf *pkt,
+log_classification(long clsd_idx, struct rte_mbuf *pkt,
 		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data,
-		const char *func_name,
-		int line_num)
+		const char *func_name, int line_num)
 {
 	struct ether_hdr *eth;
 	uint16_t vid;
@@ -212,17 +201,12 @@ log_classification(
 				clsd_data[clsd_idx].iface_type,
 				clsd_data[clsd_idx].iface_no_global);
 
-	RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,
+	RTE_LOG_DP(DEBUG, VF_CLS,
 			"[%s]Classification(%s:%d). d_addr=%s, "
 			"s_addr=%s, vid=%hu, pktlen=%u, tx_iface=%s\n",
-			cmp_info->name,
-			func_name,
-			line_num,
-			mac_addr_str[0],
-			mac_addr_str[1],
-			vid,
-			rte_pktmbuf_pkt_len(pkt),
-			iface_str);
+			cmp_info->name, func_name, line_num,
+			mac_addr_str[0], mac_addr_str[1], vid,
+			rte_pktmbuf_pkt_len(pkt), iface_str);
 }
 
 #define LOG_CLS(clsd_idx, pkt, cmp_info, clsd_data)                    \
@@ -231,14 +215,10 @@ log_classification(
 
 /* Log DEBUG message for classified MAC and VLAN info. */
 static void
-log_entry(
-		long clsd_idx,
-		uint16_t vid,
-		const char *mac_addr_str,
+log_entry(long clsd_idx, uint16_t vid, const char *mac_addr_str,
 		struct cls_comp_info *cmp_info,
 		struct cls_port_info *clsd_data,
-		const char *func_name,
-		int line_num)
+		const char *func_name, int line_num)
 {
 	char iface_str[STR_LEN_NAME];
 
@@ -249,13 +229,9 @@ log_entry(
 				clsd_data[clsd_idx].iface_type,
 				clsd_data[clsd_idx].iface_no_global);
 
-	RTE_LOG_DP(DEBUG, SPP_CLASSIFIER_MAC,
+	RTE_LOG_DP(DEBUG, VF_CLS,
 			"[%s]Entry(%s:%d). vid=%hu, mac_addr=%s, iface=%s\n",
-			cmp_info->name,
-			func_name,
-			line_num,
-			vid,
-			mac_addr_str,
+			cmp_info->name, func_name, line_num, vid, mac_addr_str,
 			iface_str);
 }
 #define LOG_ENT(clsd_idx, vid, mac_addr_str, cmp_info, clsd_data)           \
@@ -295,11 +271,10 @@ create_mac_classification(void)
 	mac_cls_tab = &mac_cls->cls_tbl;
 
 	/* make hash table name(require uniqueness between processes) */
-	sprintf(hash_tab_name, "cmtab_%07x%02hx",
-			getpid(),
+	sprintf(hash_tab_name, "cmtab_%07x%02hx", getpid(),
 			rte_atomic16_add_return(&g_hash_table_count, 1));
 
-	RTE_LOG(INFO, SPP_CLASSIFIER_MAC, "Create table. name=%s, bufsz=%lu\n",
+	RTE_LOG(INFO, VF_CLS, "Create table. name=%s, bufsz=%lu\n",
 			hash_tab_name, HASH_TABLE_NAME_BUF_SZ);
 
 	/* set hash creating parameters */
@@ -312,10 +287,10 @@ create_mac_classification(void)
 			.socket_id = rte_socket_id(),
 	};
 
-	/* create classifier mac table (hash table) */
+	/* Create classifier table. */
 	*mac_cls_tab = rte_hash_create(&hash_params);
 	if (unlikely(*mac_cls_tab == NULL)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+		RTE_LOG(ERR, VF_CLS,
 				"Cannot create mac classification table. "
 				"name=%s\n", hash_tab_name);
 		rte_free(mac_cls);
@@ -378,7 +353,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 
 		/* if mac classification is NULL, make instance */
 		if (unlikely(cmp_info->mac_clfs[vid] == NULL)) {
-			RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+			RTE_LOG(DEBUG, VF_CLS,
 					"Mac classification is not registered."
 					" create. vid=%hu\n", vid);
 			cmp_info->mac_clfs[vid] =
@@ -397,18 +372,17 @@ init_component_info(struct cls_comp_info *cmp_info,
 		/* store default classified */
 		if (unlikely(tx_port->cls_attrs.mac_addr == CLS_DUMMY_ADDR)) {
 			mac_cls->default_cls_idx = i;
-			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+			RTE_LOG(INFO, VF_CLS,
 					"default classified. vid=%hu, "
 					"iface_type=%d, iface_no=%d, "
 					"ethdev_port_id=%d\n",
-					vid,
-					tx_port->iface_type,
+					vid, tx_port->iface_type,
 					tx_port->iface_no,
 					tx_port->ethdev_port_id);
 			continue;
 		}
 
-		/* add entry to classifier mac table */
+		/* Add entry to classifier table. */
 		rte_memcpy(&eth_addr, &tx_port->cls_attrs.mac_addr,
 				ETHER_ADDR_LEN);
 		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
@@ -417,23 +391,19 @@ init_component_info(struct cls_comp_info *cmp_info,
 		ret = rte_hash_add_key_data(mac_cls->cls_tbl,
 				(void *)&eth_addr, (void *)(long)i);
 		if (unlikely(ret < 0)) {
-			RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
-					"Cannot add entry to classifier mac "
-					"table. ret=%d, vid=%hu, "
-					"mac_addr=%s\n",
+			RTE_LOG(ERR, VF_CLS,
+					"Cannot add to classifier table. "
+					"ret=%d, vid=%hu, mac_addr=%s\n",
 					ret, vid, mac_addr_str);
 			return SPPWK_RET_NG;
 		}
 
-		RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
-				"Add entry to classifier mac table. "
+		RTE_LOG(INFO, VF_CLS,
+				"Add entry to classifier table. "
 				"vid=%hu, mac_addr=%s, iface_type=%d, "
 				"iface_no=%d, ethdev_port_id=%d\n",
-				vid,
-				mac_addr_str,
-				tx_port->iface_type,
-				tx_port->iface_no,
-				tx_port->ethdev_port_id);
+				vid, mac_addr_str, tx_port->iface_type,
+				tx_port->iface_no, tx_port->ethdev_port_id);
 	}
 
 	return SPPWK_RET_OK;
@@ -460,7 +430,7 @@ transmit_packets(struct cls_port_info *clsd_data)
 	if (unlikely(n_tx != clsd_data->nof_pkts)) {
 		for (i = n_tx; i < clsd_data->nof_pkts; i++)
 			rte_pktmbuf_free(clsd_data->pkts[i]);
-		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+		RTE_LOG(DEBUG, VF_CLS,
 				"drop packets(tx). num=%hu, ethdev_port_id=%hu\n",
 				(uint16_t)(clsd_data->nof_pkts - n_tx),
 				clsd_data->ethdev_port_id);
@@ -478,12 +448,10 @@ transmit_all_packet(struct cls_comp_info *cmp_info)
 
 	for (i = 0; i < cmp_info->nof_tx_ports; i++) {
 		if (unlikely(clsd_data_tx[i].nof_pkts != 0)) {
-			RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+			RTE_LOG(INFO, VF_CLS,
 					"transmit all packets (drain). "
-					"index=%d, "
-					"nof_pkts=%hu\n",
-					i,
-					clsd_data_tx[i].nof_pkts);
+					"index=%d, nof_pkts=%hu\n",
+					i, clsd_data_tx[i].nof_pkts);
 			transmit_packets(&clsd_data_tx[i]);
 		}
 	}
@@ -497,7 +465,7 @@ push_packet(struct rte_mbuf *pkt, struct cls_port_info *clsd_data)
 
 	/* transmit packet, if buffer is filled */
 	if (unlikely(clsd_data->nof_pkts == MAX_PKT_BURST)) {
-		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+		RTE_LOG(DEBUG, VF_CLS,
 				"transmit packets (buffer is filled). "
 				"iface_type=%d, iface_no={%d,%d}, "
 				"tx_port=%hu, nof_pkts=%hu\n",
@@ -547,7 +515,7 @@ handle_l2multicast_packet(struct rte_mbuf *pkt,
 		 */
 		if (unlikely(gen_def_clsd_idx < 0)) {
 			/* untagged's default is not registered too */
-			RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+			RTE_LOG(ERR, VF_CLS,
 					"No entry.(l2 multicast packet)\n");
 			rte_pktmbuf_free(pkt);
 			return;
@@ -672,9 +640,9 @@ change_classifier_index(struct cls_mng_info *mng_info, int id)
 		sppwk_swap_two_sides(SPPWK_SWAP_REF, 0, 0);
 
 		/* Transmit all packets for switching the using data. */
-		transmit_all_packet(mng_info->cmp_infos + mng_info->ref_index);
+		transmit_all_packet(mng_info->comp_list + mng_info->ref_index);
 
-		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+		RTE_LOG(DEBUG, VF_CLS,
 				"Core[%u] Change update index.\n", id);
 		mng_info->ref_index =
 				(mng_info->upd_index + 1) % TWO_SIDES;
@@ -698,16 +666,16 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 	struct cls_mng_info *mng_info = cls_mng_info_list + wk_id;
 	struct cls_comp_info *cls_info = NULL;
 
-	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+	RTE_LOG(INFO, VF_CLS,
 			"Start updating classifier, id=%u.\n", wk_id);
 
 	/* TODO(yasufum) rename `infos`. */
-	cls_info = mng_info->cmp_infos + mng_info->upd_index;
+	cls_info = mng_info->comp_list + mng_info->upd_index;
 
 	/* initialize update side classifier information */
 	ret = init_component_info(cls_info, wk_comp_info);
 	if (unlikely(ret != SPPWK_RET_OK)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+		RTE_LOG(ERR, VF_CLS,
 				"Cannot update classifier, ret=%d.\n", ret);
 		return ret;
 	}
@@ -723,9 +691,9 @@ update_classifier(struct sppwk_comp_info *wk_comp_info)
 		rte_delay_us_block(SPPWK_UPDATE_INTERVAL);
 
 	/* Clean old one. */
-	clean_component_info(mng_info->cmp_infos + mng_info->upd_index);
+	clean_component_info(mng_info->comp_list + mng_info->upd_index);
 
-	RTE_LOG(INFO, SPP_CLASSIFIER_MAC,
+	RTE_LOG(INFO, VF_CLS,
 			"Done update classifier, id=%u.\n", wk_id);
 
 	return SPPWK_RET_OK;
@@ -751,7 +719,7 @@ classify_packets(int comp_id)
 	/* change index of update classifier management information */
 	change_classifier_index(mng_info, comp_id);
 
-	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
+	cmp_info = mng_info->comp_list + mng_info->ref_index;
 	clsd_data_rx = &cmp_info->rx_port_i;
 	clsd_data_tx = cmp_info->tx_ports_i;
 
@@ -767,7 +735,7 @@ classify_packets(int comp_id)
 			if (likely(clsd_data_tx[i].nof_pkts == 0))
 				continue;
 
-			RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+			RTE_LOG(DEBUG, VF_CLS,
 					"transmit packets (drain). index=%d, "
 					"nof_pkts=%hu, interval=%lu\n",
 					i, clsd_data_tx[i].nof_pkts,
@@ -813,14 +781,14 @@ get_classifier_status(unsigned int lcore_id, int id,
 
 	mng_info = cls_mng_info_list + id;
 	if (!is_used_mng_info(mng_info)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC,
+		RTE_LOG(ERR, VF_CLS,
 				"Classifier is not used "
 				"(comp_id=%d, lcore_id=%d, type=%d).\n",
 				id, lcore_id, SPPWK_TYPE_CLS);
 		return SPPWK_RET_NG;
 	}
 
-	cmp_info = mng_info->cmp_infos + mng_info->ref_index;
+	cmp_info = mng_info->comp_list + mng_info->ref_index;
 	port_info = cmp_info->tx_ports_i;
 
 	memset(rx_ports, 0x00, sizeof(rx_ports));
@@ -902,8 +870,7 @@ add_mac_entry(struct classifier_table_params *params,
 		 * Append each entry of MAC address. `tbl_proc` is function
 		 * pointer to append_classifier_element_value().
 		 */
-		(*params->tbl_proc)(params, cls_type, vid, mac_addr_str,
-				&port);
+		(*params->tbl_proc)(params, cls_type, vid, mac_addr_str, &port);
 	}
 }
 
@@ -921,10 +888,10 @@ _add_classifier_table(struct classifier_table_params *params)
 		if (!is_used_mng_info(mng_info))
 			continue;
 
-		cmp_info = mng_info->cmp_infos + mng_info->ref_index;
+		cmp_info = mng_info->comp_list + mng_info->ref_index;
 		port_info = cmp_info->tx_ports_i;
 
-		RTE_LOG(DEBUG, SPP_CLASSIFIER_MAC,
+		RTE_LOG(DEBUG, VF_CLS,
 			"Parse MAC entries for status on lcore %u.\n", i);
 
 		for (vlan_id = 0; vlan_id < NOF_VLAN; ++vlan_id) {
@@ -950,7 +917,7 @@ add_classifier_table(const char *name, char **output,
 	char *tmp_buff = spp_strbuf_allocate(CMD_RES_BUF_INIT_SIZE);
 
 	if (unlikely(tmp_buff == NULL)) {
-		RTE_LOG(ERR, SPP_CLASSIFIER_MAC, "Failed to alloc buff.\n");
+		RTE_LOG(ERR, VF_CLS, "Failed to alloc buff.\n");
 		return SPPWK_RET_NG;
 	}
 

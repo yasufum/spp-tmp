@@ -2,8 +2,8 @@
  * Copyright(c) 2017-2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _CLASSIFIER_MAC_H_
-#define _CLASSIFIER_MAC_H_
+#ifndef __CLASSIFIER_H__
+#define __CLASSIFIER_H__
 
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
 
@@ -102,4 +102,4 @@ int classify_packets(int comp_id);
 int get_classifier_status(unsigned int lcore_id, int id,
 		struct sppwk_lcore_params *params);
 
-#endif /* _CLASSIFIER_MAC_H_ */
+#endif /* __CLASSIFIER_H__ */
