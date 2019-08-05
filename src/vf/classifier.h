@@ -96,7 +96,7 @@ int classify_packets(int comp_id);
 /**
  * TODO(yasufum) Consider to move this function to `vf_cmd_runner.c`.
  * This function is called only from `vf_cmd_runner.c`, but
- * must be defined in `classifier_mac.c` because it refers g_mng_info defined
+ * must be defined in `classifier.c` because it refers g_mng_info defined
  * in this file. It is bad dependency for the global variable.
  */
 int get_classifier_status(unsigned int lcore_id, int id,

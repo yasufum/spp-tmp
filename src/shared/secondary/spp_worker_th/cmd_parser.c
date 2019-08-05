@@ -63,7 +63,7 @@ sppwk_cmd_type_str(enum sppwk_cmd_type ctype)
 	switch (ctype) {
 	case SPPWK_CMDTYPE_CLS_MAC:
 	case SPPWK_CMDTYPE_CLS_VLAN:
-		return "classifier_mac";
+		return "classifier";
 	case SPPWK_CMDTYPE_CLIENT_ID:
 		return "_get_client_id";
 	case SPPWK_CMDTYPE_STATUS:

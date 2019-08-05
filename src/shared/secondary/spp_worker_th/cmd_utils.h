@@ -20,7 +20,7 @@
  *  "merge" -> "merger", "forward" -> "forwarder".
  */
 /** Identifier string for each component (status command) */
-#define SPPWK_TYPE_CLS_STR "classifier_mac"
+#define SPPWK_TYPE_CLS_STR "classifier"
 #define SPPWK_TYPE_MRG_STR "merge"
 #define SPPWK_TYPE_FWD_STR "forward"
 #define SPPWK_TYPE_MIR_STR "mirror"
@@ -59,7 +59,7 @@
  *  "merge" -> "merger", "forward" -> "forwarder".
  */
 /* Name string for each component */
-#define CORE_TYPE_CLASSIFIER_MAC_STR "classifier_mac"
+#define CORE_TYPE_CLASSIFIER_MAC_STR "classifier"
 #define CORE_TYPE_MERGE_STR	     "merge"
 #define CORE_TYPE_FORWARD_STR	     "forward"
 #define CORE_TYPE_MIRROR_STR	     "mirror"
