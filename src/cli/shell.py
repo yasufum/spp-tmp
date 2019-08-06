@@ -36,7 +36,7 @@ class Shell(cmd.Cmd, object):
                         os.path.dirname(__file__))
 
             self.cli_config = yaml.load(open(config_path),
-                Loader=yaml.FullLoader)
+                                        Loader=yaml.FullLoader)
         except IOError as e:
             print('Error: No config file found!')
             print(e)
@@ -50,7 +50,8 @@ class Shell(cmd.Cmd, object):
 
         # Shell settings which are reserved vars of Cmd class.
         # `intro` is to be shown as a welcome message.
-        self.intro = 'Welcome to the SPP CLI. Type `help` or `?` to list commands.\n'
+        self.intro = 'Welcome to the SPP CLI. ' + \
+                     'Type `help` or `?` to list commands.\n'
         self.prompt = self.cli_config['prompt']['val']  # command prompt
 
         # Recipe file to be recorded with `record` command
@@ -611,9 +612,13 @@ class Shell(cmd.Cmd, object):
                 for s in ['"', "'"]:
                     args = args.replace(s, '')
 
-                # TODO(yasufum) add validation for given value
-                self.cli_config[key]['val'] = args[(len(key) + 1):]
-                print('Set {}: "{}"'.format(key, self.cli_config[key]['val']))
+                val = args[(len(key) + 1):]
+                if common.validate_config_val(key, val):
+                    self.cli_config[key]['val'] = val
+                    print('Set {k}: "{v}"'.format(k=key, v=val))
+                else:
+                    print('Invalid value "{v}" for "{k}"'.format(
+                        k=key, v=val))
 
                 # Command prompt should be updated immediately
                 if key == 'prompt':

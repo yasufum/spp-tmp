@@ -3,6 +3,7 @@
 # Copyright(c) 2017-2018 Nippon Telegraph and Telephone Corporation
 
 import os
+import re
 from .. import spp_common
 
 CHAR_EXCEPT = '-'
@@ -207,8 +208,77 @@ def is_valid_port(port_num):
 
     return True
 
+
 def current_server_addr():
     return spp_common.cur_server_addr
 
+
 def set_current_server_addr(ipaddr, port):
     spp_common.cur_server_addr = '{}:{}'.format(ipaddr, port)
+
+
+def validate_config_val(key, val):
+    """Check if given value is valid for config."""
+
+    # Check int value
+    should_be_int_vals = [
+            'max_secondary', 'sec_m_lcore', 'sec_nfv_nof_lcores',
+            'sec_vf_nof_lcores', 'sec_mirror_nof_lcores',
+            'sec_pcap_nof_lcores']
+    if key in should_be_int_vals:
+        if re.match(r'\d+$', val) is not None:
+            return True
+        else:
+            return False
+
+    # topo_size should be percentage or ratio.
+    if key == 'topo_size':
+        matched = re.match(r'(\d+)%$', val)
+        if matched is not None:
+            percentage = int(matched.group(1))
+            if percentage > 0 and percentage <= 100:
+                return True
+            else:
+                return False
+
+        matched = re.match(r'([0-1]\.\d+)$', val)
+        if (matched is not None) or (val == '1'):
+            if val == '1':
+                ratio = 1.0
+            else:
+                ratio = float(matched.group(1))
+            if ratio > 0 and ratio <= 1:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    # Check pcap port.
+    # TODO(yasufum) confirm cap_ports is correct
+    cap_ports = ['phy', 'ring']
+    if key == 'sec_pcap_port':
+        matched = re.match(r'(\w+):(\d+)$', val)
+        if matched is not None:
+            if matched.group(1) in cap_ports:
+                return True
+            return False
+        else:
+            return False
+
+    # Check memory option
+    if key == 'sec_mem':
+        # Match '-m 512' or so.
+        matched = re.match(r'-m\s+\d+$', val)
+        if matched is not None:
+            return True
+
+        # Match '--socket-mem 512', '--socket-mem 512,512' or so.
+        matched = re.match(r'--socket-mem\s+([1-9,]+\d+)$', val)
+        if matched is not None:
+            return True
+        else:
+            return False
+
+    # No need to check others.
+    return True
