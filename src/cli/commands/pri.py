@@ -351,10 +351,11 @@ class SppPrimary(object):
                             cli_config['max_secondary']['val'])
 
                     if tokens[2] in spp_common.SEC_TYPES:
-                        used_ids = spp_common.used_sec_ids
+                        used_sec_ids = [str(i) for i in self._get_sec_ids()]
                         candidates = [
                                 str(i+1) for i in range(max_secondary)
-                                if str(i+1) not in used_ids]
+                                if str(i+1) not in used_sec_ids]
+                        logger.debug(candidates)
                 else:
                     logger.error(
                             'Error: max_secondary is not defined in config')
@@ -365,7 +366,8 @@ class SppPrimary(object):
                 # Sec ID is contained as the third entry in tokens. Here is an
                 # example of tokens.
                 #   ['pri;', 'launch', 'nfv', '1', '']
-                if tokens[3] not in spp_common.used_sec_ids:
+                used_sec_ids = [str(i) for i in self._get_sec_ids()]
+                if tokens[3] not in used_sec_ids:
                     candidates = self._setup_launch_opts(
                             tokens, cli_config)
 
@@ -527,25 +529,25 @@ class SppPrimary(object):
                 opts['app']['--client-id'] = sec_id
 
         # Check if sec ID is already used.
-        if sec_id in spp_common.used_sec_ids:
+        used_sec_ids = [str(i) for i in self._get_sec_ids()]
+        if sec_id in used_sec_ids:
             print('Secondary ID {sid} is already used!'.format(
                 sid=sec_id))
             return None
 
         logger.debug('launch, {}'.format(opts))
 
-        # Send request for launch secondary.
+        # Send request for launching secondary.
         res = self.spp_ctl_cli.put('primary/launch', opts)
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
-                # Wait for launch secondary as best effort
+                # Wait for launching secondary as best effort
                 time.sleep(wait_time)
 
                 print('Send request to launch {ptype}:{sid}.'.format(
                     ptype=proc_type, sid=sec_id))
-                # Add used ID to avoid to launch with duplicated ID.
-                spp_common.used_sec_ids.append(sec_id)
+
             elif res.status_code in error_codes:
                 pass
             else:
