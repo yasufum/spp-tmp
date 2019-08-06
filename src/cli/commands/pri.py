@@ -25,14 +25,13 @@ class SppPrimary(object):
 
         # Default args for `pri; launch`, used if given cli_config is invalid
 
-        # TODO(yasufum) replace placeholders __XXX__ to {keyword}.
         # Setup template of args for `pri; launch`
-        temp = "-l __MASTER_LCORE__,{slcores} "
-        temp = temp + "__MEM__ "
+        temp = "-l {m_lcore},{s_lcores} "
+        temp = temp + "{mem} "
         temp = temp + "-- "
         temp = temp + "{opt_sid} {sid} "  # '-n 1' or '--client-id 1'
         temp = temp + "-s {sec_addr} "  # '-s 192.168.1.100:6666'
-        temp = temp + "__VHOST_CLI__"
+        temp = temp + "{vhost_cli}"
         self.launch_template = temp
 
     def run(self, cmd, cli_config):
@@ -284,19 +283,25 @@ class SppPrimary(object):
                         self.launch_template = '{} {}'.format(
                             self.launch_template, temp)
 
+                # Flag for checking all params are valid or not.
+                has_invalid_param = False
+
                 # Get and flatten empty lcores on each of sockets.
                 empty_lcores = self._get_empty_lcores()
                 empty_lcores = sum(empty_lcores, [])
 
                 if 'sec_m_lcore' in cli_config.keys():
-                    m_lcore_id = int(cli_config['sec_m_lcore']['val'])
+                    master_lcore = cli_config['sec_m_lcore']['val']
+                else:
+                    logger.error('Config "sec_m_lcore" is not defined!')
+                    has_invalid_param = True
 
                 # Decide lcore option based on configured number of
                 # lcores.
                 slave_lcores = []
                 for l in empty_lcores:
                     # Master lcore ID should be smaller than slaves.
-                    if l > m_lcore_id:
+                    if l > int(master_lcore):
                         slave_lcores.append(str(l))
                     # TODO(yasufum) warn if enough number of empty
                     # lcores cannot be assinged.
@@ -307,13 +312,30 @@ class SppPrimary(object):
                 # change '1,2,3' to '1-3'.
                 slave_lcores = ','.join(slave_lcores)
 
-                # Replace labels in template with actual params to make
-                # candidate options.
-                temp = self._setup_launch_template(
-                        cli_config, self.launch_template)
-                candidates = [temp.format(
-                    slcores=slave_lcores, opt_sid=opt_sid, sid=sid,
-                    sec_addr=server_addr)]
+                if 'sec_mem' in cli_config.keys():
+                    sec_mem = cli_config['sec_mem']['val']
+                else:
+                    logger.error('Config "sec_mem" is not defined!')
+                    has_invalid_param = True
+
+                if 'sec_vhost_cli' in cli_config.keys():
+                    if cli_config['sec_vhost_cli']['val']:
+                        vhost_client = '--vhost-client'
+                    else:
+                        vhost_client = ''
+                else:
+                    logger.error('Config "sec_vhost_cli" is not defined!')
+                    has_invalid_param = True
+
+                # Replace labels in template with params.
+                if has_invalid_param is False:
+                    candidates = [self.launch_template.format(
+                        m_lcore=master_lcore, s_lcores=slave_lcores,
+                        mem=sec_mem, opt_sid=opt_sid, sid=sid,
+                        sec_addr=server_addr,
+                        vhost_cli=vhost_client)]
+                else:
+                    candidates = []
 
         else:
             logger.error(
@@ -379,27 +401,6 @@ class SppPrimary(object):
                            ]
 
         return completions
-
-    # TODO(yasufum) add checking for cli_config has keys
-    def _setup_launch_template(self, cli_config, template):
-        """Check given `cli_config` for params of launch."""
-
-        if 'sec_mem' in cli_config.keys():
-            sec_mem = cli_config['sec_mem']['val']
-        template = template.replace('__MEM__', sec_mem)
-
-        if 'sec_m_lcore' in cli_config.keys():
-            sec_m_lcore = cli_config['sec_m_lcore']['val']
-        template = template.replace('__MASTER_LCORE__', str(sec_m_lcore))
-
-        if 'sec_vhost_cli' in cli_config.keys():
-            if cli_config['sec_vhost_cli']['val']:
-                vhost_client = '--vhost-client'
-            else:
-                vhost_client = ''
-        template = template.replace('__VHOST_CLI__', vhost_client)
-
-        return template
 
     def _get_sec_ids(self):
         sec_ids = []

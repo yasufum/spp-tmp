@@ -37,6 +37,10 @@ class Shell(cmd.Cmd, object):
 
             self.cli_config = yaml.load(open(config_path),
                                         Loader=yaml.FullLoader)
+
+            # TODO(yasufum) add validating config params with
+            # common.validate_config_val() here. Exit if it is invalid.
+
         except IOError as e:
             print('Error: No config file found!')
             print(e)
