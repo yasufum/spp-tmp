@@ -43,31 +43,6 @@ set_user_log_debug(int num_user_log)
 	return 0;
 }
 
-/**
- * Take the number of clients passed with `-n` option and convert to
- * to a number to store in the num_clients variable.
- *
- * TODO(yasufum): Revise the usage of this function for spp_primary because
- * it does not use for the number of ring ports, but clients. The name of
- * function is inadequte.
- */
-int
-parse_num_clients(uint16_t *num_clients, const char *clients)
-{
-	char *end = NULL;
-	unsigned long temp;
-
-	if (clients == NULL || *clients == '\0')
-		return -1;
-
-	temp = strtoul(clients, &end, 10);
-	if (end == NULL || *end != '\0' || temp == 0)
-		return -1;
-
-	*num_clients = (uint16_t)temp;
-	return 0;
-}
-
 int
 parse_server(char **server_ip, int *server_port, char *server_addr)
 {
@@ -87,32 +62,6 @@ parse_server(char **server_ip, int *server_port, char *server_addr)
 
 	RTE_LOG(DEBUG, SHARED, "token %s\n", token);
 	*server_port = atoi(token);
-	return 0;
-}
-
-/* Get directory name of given proc_name */
-int get_sec_dir(char *proc_name, char *dir_name)
-{
-	if (!strcmp(proc_name, "spp_nfv")) {
-		sprintf(dir_name, "%s", "nfv");
-		RTE_LOG(DEBUG, SHARED, "Found dir 'nfv' for '%s'.\n",
-				proc_name);
-	} else if (!strcmp(proc_name, "spp_vf")) {
-		sprintf(dir_name, "%s", "vf");
-		RTE_LOG(DEBUG, SHARED, "Found dir 'vf' for '%s'.\n",
-				proc_name);
-	} else if (!strcmp(proc_name, "spp_mirror")) {
-		sprintf(dir_name, "%s", "mirror");
-		RTE_LOG(DEBUG, SHARED, "Found dir 'mirror' for '%s'.\n",
-				proc_name);
-	} else if (!strcmp(proc_name, "spp_pcap")) {
-		sprintf(dir_name, "%s", "pcap");
-		RTE_LOG(DEBUG, SHARED, "Found dir 'pcap' for '%s'.\n",
-				proc_name);
-	} else {
-		RTE_LOG(DEBUG, SHARED, "No dir found for '%s'.\n",
-				proc_name);
-	}
 	return 0;
 }
 

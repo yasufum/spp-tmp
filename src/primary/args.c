@@ -72,6 +72,27 @@ parse_portmask(struct port_info *ports, uint16_t max_ports,
 }
 
 /**
+ * Take the number of clients passed with `-n` option and convert to
+ * to a number to store in the num_clients variable.
+ */
+static int
+parse_nof_rings(uint16_t *num_clients, const char *clients)
+{
+	char *end = NULL;
+	unsigned long temp;
+
+	if (clients == NULL || *clients == '\0')
+		return -1;
+
+	temp = strtoul(clients, &end, 10);
+	if (end == NULL || *end != '\0' || temp == 0)
+		return -1;
+
+	*num_clients = (uint16_t)temp;
+	return 0;
+}
+
+/**
  * The application specific arguments follow the DPDK-specific
  * arguments which are stripped by the DPDK init. This function
  * processes these application arguments, printing usage info
@@ -97,7 +118,7 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			if (parse_num_clients(&num_rings, optarg) != 0) {
+			if (parse_nof_rings(&num_rings, optarg) != 0) {
 				usage();
 				return -1;
 			}
