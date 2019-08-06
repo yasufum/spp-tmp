@@ -238,9 +238,6 @@ class SppPrimary(object):
             if (tokens[2] in spp_common.SEC_TYPES) and \
                     (int(tokens[3])-1 in range(max_secondary)):
                 ptype = tokens[2]
-
-                # TODO(yasufum) Not accept if given sec ID is already
-                # used.
                 sid = tokens[3]
 
                 # Option of secondary ID is different between spp_nfv
@@ -290,21 +287,26 @@ class SppPrimary(object):
                 empty_lcores = self._get_empty_lcores()
                 empty_lcores = sum(empty_lcores, [])
 
+                # Check if enough number of lcores available.
+                if len(empty_lcores) < nof_slaves:
+                    common.print_compl_warinig(
+                        'No available lcores remained!')
+                    return []
+
                 if 'sec_m_lcore' in cli_config.keys():
                     master_lcore = cli_config['sec_m_lcore']['val']
                 else:
                     logger.error('Config "sec_m_lcore" is not defined!')
                     has_invalid_param = True
 
-                # Decide lcore option based on configured number of
-                # lcores.
+                # Decide lcore option based on configured number of lcores.
                 slave_lcores = []
                 for l in empty_lcores:
                     # Master lcore ID should be smaller than slaves.
                     if l > int(master_lcore):
                         slave_lcores.append(str(l))
-                    # TODO(yasufum) warn if enough number of empty
-                    # lcores cannot be assinged.
+
+                    # Check if required number of lcores are found.
                     if len(slave_lcores) > (nof_slaves - 1):
                         break
 

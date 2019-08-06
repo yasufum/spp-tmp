@@ -282,3 +282,14 @@ def validate_config_val(key, val):
 
     # No need to check others.
     return True
+
+
+def print_compl_warinig(msg):
+    """Print warning message for completion.
+
+    Printing message while complition disturbs user's input, but it should be
+    printed in some error cases. This method is just for printing warning
+    message simply.
+    """
+
+    print('// WARN: {msg}'.format(msg=msg))
