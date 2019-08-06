@@ -11,9 +11,11 @@
 #include <rte_memzone.h>
 #include <rte_log.h>
 
-#include "shared/common.h"
+#include "shared/secondary/common.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/add_port.h"
+#include "shared/secondary/common.h"
+#include "shared/common.h"
 
 #include "params.h"
 #include "init.h"

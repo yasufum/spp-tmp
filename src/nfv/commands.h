@@ -6,7 +6,7 @@
 #ifndef _NFV_COMMANDS_H_
 #define _NFV_COMMANDS_H_
 
-#include "shared/common.h"
+#include "shared/secondary/common.h"
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
 

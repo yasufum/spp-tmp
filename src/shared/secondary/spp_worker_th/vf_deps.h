@@ -10,6 +10,7 @@
 #include "cmd_utils.h"
 #include "cmd_parser.h"
 #include "cmd_res_formatter.h"
+#include "shared/secondary/common.h"
 
 #define SPPWK_PROC_TYPE "vf"
 

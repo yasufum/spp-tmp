@@ -18,6 +18,7 @@
 #include "spp_pcap.h"
 #include "cmd_runner.h"
 #include "cmd_parser.h"
+#include "shared/secondary/common.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"

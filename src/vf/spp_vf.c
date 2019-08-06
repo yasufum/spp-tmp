@@ -8,6 +8,7 @@
 
 #include "classifier.h"
 #include "forwarder.h"
+#include "shared/secondary/common.h"
 #include "shared/secondary/utils.h"
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "shared/secondary/return_codes.h"

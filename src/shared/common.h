@@ -3,14 +3,12 @@
  * Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _SHARED_COMMON_H_
-#define _SHARED_COMMON_H_
+#ifndef __SHARED_COMMON_H__
+#define __SHARED_COMMON_H__
 
 #include <signal.h>
 #include <unistd.h>
 #include <rte_ethdev_driver.h>
-
-#define IPADDR_LEN 16  /* Length of IP address in string. */
 
 #define MSG_SIZE 2048  /* socket buffer len */
 
@@ -27,18 +25,6 @@
 
 /* Interval time to retry connection. */
 #define CONN_RETRY_USEC (1000 * 1000)  /* micro sec */
-
-/*
- * When doing reads from the NIC or the client queues,
- * use this batch size
- */
-//#define PACKET_READ_SIZE 32
-
-/*
- * TODO(yasufum) move it from common.h used only for spp_nfv, spp_vf and
- * spp_mirror.
- */
-#define MAX_PKT_BURST 32
 
 #define RTE_MP_RX_DESC_DEFAULT 512
 #define RTE_MP_TX_DESC_DEFAULT 512
@@ -151,37 +137,6 @@ int parse_server(char **server_ip, int *server_port, char *server_addr);
 int get_sec_dir(char *proc_name, char *dir_name);
 
 extern uint8_t lcore_id_used[RTE_MAX_LCORE];
-
-/**
- * Get IP address of spp_ctl as string.
- *
- * @param[in,out] s_ip IP address of spp_ctl.
- * @return 0 if succeeded, or -1 if failed.
- */
-int get_spp_ctl_ip(char *s_ip);
-
-/**
- * Set IP address of spp_ctl.
- *
- * @param[in] s_ip IP address of spp_ctl.
- * @return 0 if succeeded, or -1 if failed.
- */
-int set_spp_ctl_ip(const char *s_ip);
-
-/**
- * Get port number for connecting to spp_ctl as string.
- *
- * @return Port number, or -1 if failed.
- */
-int get_spp_ctl_port(void);
-
-/**
- * Set port number for connecting to spp_ctl.
- *
- * @param[in] s_port Port number for spp_ctl.
- * @return 0 if succeeded, or -1 if failed.
- */
-int set_spp_ctl_port(int s_port);
 
 /**
  * Get port type and port ID from ethdev name, such as `eth_vhost1` which

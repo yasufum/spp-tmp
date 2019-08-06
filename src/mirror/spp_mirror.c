@@ -10,7 +10,7 @@
 #include <rte_cycles.h>
 
 #include "spp_mirror.h"
-#include "shared/common.h"
+#include "shared/secondary/common.h"
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/return_codes.h"
 #include "shared/secondary/utils.h"

@@ -18,6 +18,7 @@ SPP_WKT_DIR = ../shared/secondary/spp_worker_th
 SRCS-y := spp_vf.c classifier.c forwarder.c
 SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_SEC_DIR)/json_helper.c
+SRCS-y += $(SPP_SEC_DIR)/common.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c
 SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
 SRCS-y += $(SPP_WKT_DIR)/port_capability.c
