@@ -22,7 +22,7 @@ struct cmd_result {
 };
 
 /**
- * Contains command response and operator func for. It is used as an array of
+ * Contains command response and operation func for. It is used as an array of
  * this struct.
  */
 struct cmd_res_formatter_ops {

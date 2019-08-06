@@ -57,6 +57,7 @@ sppwk_action_str(enum sppwk_action wk_action)
 }
 
 /* Get string of cmd type. It is mainly used for logging. */
+/* TODO(yasufum) spp_vf specific vars must be localized to vf. */
 const char*
 sppwk_cmd_type_str(enum sppwk_cmd_type ctype)
 {
@@ -81,9 +82,9 @@ sppwk_cmd_type_str(enum sppwk_cmd_type ctype)
 
 /**
  * List of classifier type. The order of items should be same as the order of
- * enum `spp_classifier_type` defined in spp_proc.h.
+ * enum `sppwk_cls_type` defined in cmd_utils.h.
  */
-/* TODO(yasufum) fix similar vars in command_proc.c */
+/* TODO(yasufum) spp_vf specific vars must be localized to vf. */
 const char *CLS_TYPE_LIST[] = {
 	"none",
 	"mac",
@@ -93,7 +94,7 @@ const char *CLS_TYPE_LIST[] = {
 
 /**
  * List of port direction. The order of items should be same as the order of
- * enum `spp_port_rxtx` in spp_vf.h.
+ * enum `sppwk_port_dir` in data_types.h.
  */
 const char *PORT_DIR_LIST[] = {
 	"none",
@@ -104,8 +105,10 @@ const char *PORT_DIR_LIST[] = {
 
 /**
  * List of port abilities. The order of items should be same as the order of
- * enum `spp_port_ability_type` in spp_vf.h.
+ * enum `sppwk_port_ops` in data_types.h.
  */
+/* TODO(yasufum) spp_vf specific vars must be localized to vf. */
+/* TODO(yasufum) rename ABILITY to CAPABILITY */
 const char *PORT_ABILITY_LIST[] = {
 	"none",
 	"add_vlantag",
@@ -534,6 +537,7 @@ parse_comp_name_portcmd(void *output, const char *arg_val,
 /* Parse vlan operation for port command. */
 /* TODO(yasufum) add desc for how to be used. */
 /* TODO(yasufum) add desc for what is port ability. */
+/* TODO(yasufum) spp_vf specific function must be localized to vf. */
 static int
 parse_port_vlan_ops(void *output, const char *arg_val,
 		int allow_override __attribute__ ((unused)))
@@ -759,18 +763,20 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	return SPPWK_RET_OK;
 }
 
-/* Attributes operator functions of command for parsing. */
+/* Attributes operation functions of command for parsing. */
 struct sppwk_cmd_ops {
 	const char *name;
 	size_t offset;  /* Offset of struct spp_command */
-	/* Pointer to operator function */
+	/* Pointer to operation function */
 	int (*func)(void *output, const char *arg_val, int allow_override);
 };
 
 /* Used for command which takes no params, such as `status`. */
 #define SPPWK_CMD_NO_PARAMS { NULL, 0, NULL }
 
-/* A set of operator functions for parsing command. */
+/* A set of operation functions for parsing command. */
+/* TODO(yasufum) spp_vf specific function must be localized to vf. */
+/* TODO(yasufum) It must be separated into each of commands. */
 static struct sppwk_cmd_ops
 cmd_ops_list[][SPPWK_MAX_PARAMS] = {
 	{  /* classifier_table(mac) */
@@ -931,6 +937,7 @@ parse_cmd_comp(struct sppwk_cmd_req *request, int argc, char *argv[],
 }
 
 /* Validate given command for clssfier_table. */
+/* TODO(yasufum) spp_vf specific function must be localized to vf. */
 static int
 parse_cmd_cls_table(struct sppwk_cmd_req *request, int argc, char *argv[],
 		struct sppwk_parse_err_msg *wk_err_msg, int maxargc)
@@ -939,6 +946,7 @@ parse_cmd_cls_table(struct sppwk_cmd_req *request, int argc, char *argv[],
 }
 
 /* Validate given command for clssfier_table of vlan. */
+/* TODO(yasufum) spp_vf specific function must be localized to vf. */
 static int
 parse_cmd_cls_table_vlan(struct sppwk_cmd_req *request, int argc, char *argv[],
 		struct sppwk_parse_err_msg *wk_err_msg,
@@ -997,7 +1005,7 @@ parse_cmd_port(struct sppwk_cmd_req *request, int argc, char *argv[],
 
 /**
  * A set of attributes of commands for parsing. The last member of function
- * pointer is the operator function for the command.
+ * pointer is the operation function for the command.
  */
 struct cmd_parse_attrs {
 	const char *cmd_name;
@@ -1010,8 +1018,9 @@ struct cmd_parse_attrs {
 
 /**
  * List of command attributes defines the name of command, number of params
- * and operator functions.
+ * and operation functions.
  */
+/* TODO(yasufum) spp_vf specific function must be localized to vf. */
 static struct cmd_parse_attrs cmd_attr_list[] = {
 	{ "classifier_table", 5, 5, parse_cmd_cls_table },
 	{ "classifier_table", 6, 6, parse_cmd_cls_table_vlan },
