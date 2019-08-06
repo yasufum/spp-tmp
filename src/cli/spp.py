@@ -3,6 +3,7 @@
 # Copyright(c) 2015-2016 Intel Corporation
 
 import argparse
+import os
 import re
 from .shell import Shell
 from .shell_lib import common
@@ -20,6 +21,8 @@ def main(argv):
     parser.add_argument('-b', '--bind-addr', action='append',
                         default=['%s:%s' % (api_ipaddr, api_port)],
                         help='bind address, default=127.0.0.1:7777')
+    parser.add_argument('--config', type=str,
+                        help='Config file path')
     args = parser.parse_args()
 
     if len(args.bind_addr) > 1:
@@ -48,7 +51,7 @@ def main(argv):
 
         spp_cli_objs.append(spp_ctl_cli)
 
-    shell = Shell(spp_cli_objs)
+    shell = Shell(spp_cli_objs, args.config)
     shell.cmdloop()
     shell = None
 

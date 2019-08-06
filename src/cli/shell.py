@@ -24,39 +24,44 @@ import yaml
 class Shell(cmd.Cmd, object):
     """SPP command prompt."""
 
-    # Load default config, can be changed via `config` command
-    # TODO(yasufum) enable to give config file from option
-    try:
-        config_file = "{}/config/default.yml".format(
-                os.path.dirname(__file__))
-        cli_config = yaml.load(open(config_file),
-                               Loader=yaml.FullLoader)
-    except IOError as e:
-        print('Error: no config file found!')
-        print(e)
-        exit()
+    def __init__(self, spp_cli_objs, config, use_cache=False):
 
-    hist_file = os.path.expanduser('~/.spp_history')
-    PLUGIN_DIR = 'plugins'
+        # Load default config, can be changed via `config` command
+        try:
+            if config is not None:
+                config_path = "{}/{}".format(
+                        os.getcwd(), config)
+            else:
+                config_path = "{}/config/default.yml".format(
+                        os.path.dirname(__file__))
 
-    # Commands not included in history
-    HIST_EXCEPT = ['bye', 'exit', 'history', 'redo']
+            self.cli_config = yaml.load(open(config_path),
+                Loader=yaml.FullLoader)
+        except IOError as e:
+            print('Error: No config file found!')
+            print(e)
+            exit()
 
-    # Shell settings which are reserved vars of Cmd class.
-    # `intro` is to be shown as a welcome message.
-    intro = 'Welcome to the SPP CLI. Type `help` or `?` to list commands.\n'
-    prompt = cli_config['prompt']['val']  # command prompt
+        self.hist_file = os.path.expanduser('~/.spp_history')
+        self.plugin_dir = 'plugins'
 
-    # Recipe file to be recorded with `record` command
-    recorded_file = None
+        # Commands not included in history
+        self.hist_except = ['bye', 'exit', 'history', 'redo']
 
-    # setup history file
-    if os.path.exists(hist_file):
-        readline.read_history_file(hist_file)
-    else:
-        readline.write_history_file(hist_file)
+        # Shell settings which are reserved vars of Cmd class.
+        # `intro` is to be shown as a welcome message.
+        self.intro = 'Welcome to the SPP CLI. Type `help` or `?` to list commands.\n'
+        self.prompt = self.cli_config['prompt']['val']  # command prompt
 
-    def __init__(self, spp_cli_objs, use_cache=False):
+        # Recipe file to be recorded with `record` command
+        self.recorded_file = None
+
+        # setup history file
+        if os.path.exists(self.hist_file):
+            readline.read_history_file(self.hist_file)
+        else:
+            readline.write_history_file(self.hist_file)
+
         cmd.Cmd.__init__(self)
         self.spp_ctl_server = server.SppCtlServer(spp_cli_objs)
         self.spp_ctl_cli = spp_cli_objs[0]
@@ -107,7 +112,7 @@ class Shell(cmd.Cmd, object):
             self.init_spp_procs()
 
         # TODO(yasufum) do not add to history if command is failed.
-        if line.strip().split(' ')[0] not in self.HIST_EXCEPT:
+        if line.strip().split(' ')[0] not in self.hist_except:
             readline.write_history_file(self.hist_file)
         return stop
 
@@ -917,7 +922,7 @@ class Shell(cmd.Cmd, object):
         args = re.sub(r'\s+', ' ', args)
         list_args = args.split(' ')
 
-        libdir = self.PLUGIN_DIR
+        libdir = self.plugin_dir
         mod_name = list_args[0]
         method_name = 'do_%s' % mod_name
         exec('from .%s import %s' % (libdir, mod_name))
@@ -933,7 +938,7 @@ class Shell(cmd.Cmd, object):
     def complete_load_cmd(self, text, line, begidx, endidx):
         """Complete command plugins
 
-        Search under PLUGIN_DIR with compl_common() method.
+        Search under `plugin_dir` with compl_common() method.
         This method is intended to be used for searching current
         directory, but not in this case. If text is not '',
         compl_common() does not work correctly and do filtering
@@ -942,7 +947,7 @@ class Shell(cmd.Cmd, object):
 
         curdir = os.path.dirname(__file__)
         res = common.compl_common(
-            '', '%s/%s' % (curdir, self.PLUGIN_DIR), 'py')
+            '', '%s/%s' % (curdir, self.plugin_dir), 'py')
 
         completions = []
         for t in res:
