@@ -27,7 +27,7 @@ Support four types of output.
 
 This command uses `graphviz
 <https://www.graphviz.org/>`_
-gfor generating topology file.
+for generating topology file.
 You can also generate a dot formatted file or image files supported by
 graphviz.
 
@@ -40,8 +40,9 @@ to output in a terminal.
       imagemagick \
       libsixel-bin
 
-MacOS is also supported optionally for using SPP CLI runs on a remote host.
-In this case, iTerm2 and imgcat are required.
+MacOS is also supported optionally for using topo runs on a remote host.
+In this case, iTerm2 and imgcat are required as described in the next
+section.
 
 To output in browser with ``topo http`` command, install required packages
 by using ``requirements.txt`` as described in
@@ -62,16 +63,18 @@ Output an image of network configuration in terminal.
 
     spp > topo term
 
-There are few terminal applications to output image with ``topo``.
+There are few terminal applications supporting to output image with ``topo``.
 You can use mlterm, xterm or other terminals supported by `img2sixel
 <https://github.com/saitoha/libsixel>`_.
 You can also use `iTerm2
 <https://iterm2.com/index.html>`_ on MacOS.
-If you use iTerm2, you have to get a shell script
+If you use iTerm2, you need to downloada a shell script
 ``imgcat`` from `iTerm2's displaying support site
 <https://iterm2.com/documentation-images.html>`_
 and save this script as
-``spp/src/controller/3rd_party/imgcat``.
+``src/controller/3rd_party/imgcat`` with permission ``775``.
+``topo`` command tries to ``img2sixel`` first, then ``imgcat``
+in the ``3rd_party`` directory.
 
 .. _figure_topo_term_exp:
 
