@@ -28,7 +28,8 @@ class SppTopo(object):
         self.graph_size = None
 
         # Graphviz params
-        topo_file = '{dir}/../config/topo.yml'.format(dir=os.path.dirname(__file__))
+        topo_file = '{dir}/../config/topo.yml'.format(
+                dir=os.path.dirname(__file__))
         topo_conf = yaml.load(open(topo_file), Loader=yaml.FullLoader)
         self.SEC_COLORS = topo_conf['topo_sec_colors']['val']
         self.PORT_COLORS = topo_conf['topo_port_colors']['val']
@@ -40,18 +41,20 @@ class SppTopo(object):
             print('Config "topo_size" is invalid value.')
             exit()
 
-    def run(self, args, sec_ids):
+    def run(self, args):
         args_ary = args.split()
         if len(args_ary) == 0:
             print("Usage: topo dst [ftype]")
             return False
-        elif (args_ary[0] == "term") or (args_ary[0] == "http"):
-            self.show(args_ary[0], sec_ids, self.graph_size)
-        elif len(args_ary) == 1:
+        elif args_ary[0] == "term":
+            self.to_term(self.graph_size)
+        elif args_ary[0] == "http":
+            self.to_http()
+        elif len(args_ary) == 1:  # find ftype from filename
             ftype = args_ary[0].split(".")[-1]
-            self.output(args_ary[0], sec_ids, ftype)
-        elif len(args_ary) == 2:
-            self.output(args_ary[0], sec_ids, args_ary[1])
+            self.to_file(args_ary[0], ftype)
+        elif len(args_ary) == 2:  # ftype is given as args_ary[1]
+            self.to_file(args_ary[0], args_ary[1])
         else:
             print("Usage: topo dst [ftype]")
 
@@ -66,12 +69,12 @@ class SppTopo(object):
         matched = re.match(r'(\d+)%$', size)
         if matched:  # percentage
             i = int(matched.group(1))
-            if i > 0 and  i <= 100:
+            if i > 0 and i <= 100:
                 self.graph_size = size
                 return True
             else:
                 return False
-        elif re.match(r'0\.\d+$',size):  # ratio
+        elif re.match(r'0\.\d+$', size):  # ratio
             i = float(size) * 100
             self.graph_size = str(i) + '%'
             return True
@@ -81,58 +84,22 @@ class SppTopo(object):
         else:
             return False
 
-    def show(self, dtype, sec_ids, size):
-        res_ary = []
-        error_codes = self.spp_ctl_cli.rest_common_error_codes
-
-        for sec_id in sec_ids:
-            res = self.spp_ctl_cli.get('nfvs/{sid}'.format(sid=sec_id))
-            if res.status_code == 200:
-                res_ary.append(res.json())
-            elif res.status_code in error_codes:
-                # Print default error message
-                pass
-            else:
-                # Ignore unknown response because no problem for drawing graph
-                pass
-
-        if dtype == "http":
-            self.to_http(res_ary)
-        elif dtype == "term":
-            self.to_term(res_ary, size)
-        else:
-            print("Invalid file type")
-
-    def output(self, fname, sec_ids, ftype="dot"):
-        res_ary = []
-        error_codes = self.spp_ctl_cli.rest_common_error_codes
-
-        for sec_id in sec_ids:
-            res = self.spp_ctl_cli.get('nfvs/{sid}'.format(sid=sec_id))
-            if res.status_code == 200:
-                res_ary.append(res.json())
-            elif res.status_code in error_codes:
-                # Print default error message
-                pass
-            else:
-                # Ignore unknown response because no problem for drawing graph
-                pass
-
+    def to_file(self, fname, ftype="dot"):
         if ftype == "dot":
-            self.to_dot(res_ary, fname)
+            self.to_dot(fname)
         elif ftype == "json" or ftype == "js":
-            self.to_json(res_ary, fname)
+            self.to_json(fname)
         elif ftype == "yaml" or ftype == "yml":
-            self.to_yaml(res_ary, fname)
+            self.to_yaml(fname)
         elif ftype == "jpg" or ftype == "png" or ftype == "bmp":
-            self.to_img(res_ary, fname)
+            self.to_img(fname)
         else:
             print("Invalid file type")
-            return res_ary
+            return False
         print("Create topology: '{fname}'".format(fname=fname))
-        return res_ary
+        return True
 
-    def to_dot(self, sec_list, output_fname):
+    def to_dot(self, output_fname):
         """Output dot script."""
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
@@ -145,7 +112,7 @@ class SppTopo(object):
         links = []
 
         # parse status message from sec.
-        for sec in sec_list:
+        for sec in self.spp_ctl_cli.get_sec_procs('nfv'):
             if sec is None:
                 continue
             for port in sec['ports']:
@@ -186,7 +153,7 @@ class SppTopo(object):
                     dst_type, dst_id = patch['dst'].split(':')
 
                 tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                    dst_type, dst_id, attrs)
+                                        dst_type, dst_id, attrs)
                 links.append(tmp)
 
         output = ["{} spp{{".format(self.GRAPH_TYPE)]
@@ -202,8 +169,8 @@ class SppTopo(object):
         for node in phy_nodes:
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=self.PORT_COLORS["phy"]))
+                '{nd}[label="{lbl}", fillcolor="{col}"];'.format(
+                    nd=node, lbl=label, col=self.PORT_COLORS["phy"]))
 
         ring_nodes = []
         for node in rings:
@@ -213,8 +180,8 @@ class SppTopo(object):
         for node in ring_nodes:
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=self.PORT_COLORS["ring"]))
+                '{nd}[label="{lbl}", fillcolor="{col}"];'.format(
+                    nd=node, lbl=label, col=self.PORT_COLORS["ring"]))
 
         vhost_nodes = []
         for node in vhosts:
@@ -224,8 +191,8 @@ class SppTopo(object):
         for node in vhost_nodes:
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=self.PORT_COLORS["vhost"]))
+                '{nd}[label="{lbl}", fillcolor="{col}"];'.format(
+                    nd=node, lbl=label, col=self.PORT_COLORS["vhost"]))
 
         # Align the same type of nodes with rank attribute
         output.append(
@@ -283,31 +250,33 @@ class SppTopo(object):
         f.write("\n".join(output))
         f.close()
 
-    def to_json(self, sec_list, output_fname):
+    def to_json(self, output_fname):
         import json
         f = open(output_fname, "w+")
+        sec_list = self.spp_ctl_cli.get_sec_procs('nfv')
         f.write(json.dumps(sec_list))
         f.close()
 
-    def to_yaml(self, sec_list, output_fname):
+    def to_yaml(self, output_fname):
         import yaml
         f = open(output_fname, "w+")
+        sec_list = self.spp_ctl_cli.get_sec_procs('nfv')
         f.write(yaml.dump(sec_list))
         f.close()
 
-    def to_img(self, sec_list, output_fname):
+    def to_img(self, output_fname):
         tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
-        self.to_dot(sec_list, tmpfile)
+        self.to_dot(tmpfile)
         fmt = output_fname.split(".")[-1]
         cmd = "dot -T{fmt} {dotf} -o {of}".format(
                 fmt=fmt, dotf=tmpfile, of=output_fname)
         subprocess.call(cmd, shell=True)
         subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
 
-    def to_http(self, sec_list):
+    def to_http(self):
         import websocket
         tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
-        self.to_dot(sec_list, tmpfile)
+        self.to_dot(tmpfile)
         msg = open(tmpfile).read()
         subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
         # TODO(yasufum) change to be able to use other than `localhost`.
@@ -319,9 +288,9 @@ class SppTopo(object):
         except socket.error:
             print('Error: Connection refused! Is running websocket server?')
 
-    def to_term(self, sec_list, size):
+    def to_term(self, size):
         tmpfile = "{fn}.jpg".format(fn=uuid.uuid4().hex)
-        self.to_img(sec_list, tmpfile)
+        self.to_img(tmpfile)
         from distutils import spawn
 
         # TODO(yasufum) add check for using only supported terminal
@@ -342,7 +311,7 @@ class SppTopo(object):
                     size=img_size, fn1=tmpfile, fn2=tmpfile)
             subprocess.call(cmd, shell=True)
             subprocess.call("{cmd} {fn}".format(cmd=img_cmd, fn=tmpfile),
-                    shell=True)
+                            shell=True)
             subprocess.call(["rm", "-f", tmpfile])
         else:
             print("img2sixel (or imgcat.sh for MacOS) not found!")

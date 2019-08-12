@@ -90,22 +90,22 @@ class Shell(cmd.Cmd, object):
 
         self.secondaries = {}
         self.secondaries['nfv'] = {}
-        for sec_id in self.get_sec_ids('nfv'):
+        for sec_id in self.spp_ctl_cli.get_sec_ids('nfv'):
             self.secondaries['nfv'][sec_id] = nfv.SppNfv(
                     self.spp_ctl_cli, sec_id)
 
         self.secondaries['vf'] = {}
-        for sec_id in self.get_sec_ids('vf'):
+        for sec_id in self.spp_ctl_cli.get_sec_ids('vf'):
             self.secondaries['vf'][sec_id] = vf.SppVf(
                     self.spp_ctl_cli, sec_id)
 
         self.secondaries['mirror'] = {}
-        for sec_id in self.get_sec_ids('mirror'):
+        for sec_id in self.spp_ctl_cli.get_sec_ids('mirror'):
             self.secondaries['mirror'][sec_id] = mirror.SppMirror(
                     self.spp_ctl_cli, sec_id)
 
         self.secondaries['pcap'] = {}
-        for sec_id in self.get_sec_ids('pcap'):
+        for sec_id in self.spp_ctl_cli.get_sec_ids('pcap'):
             self.secondaries['pcap'][sec_id] = pcap.SppPcap(
                     self.spp_ctl_cli, sec_id)
 
@@ -141,24 +141,6 @@ class Shell(cmd.Cmd, object):
         to do nothing.
         """
         pass
-
-    def get_sec_ids(self, ptype):
-        """Return a list of IDs of running secondary processes.
-
-        'ptype' is 'nfv', 'vf' or 'mirror' or 'pcap'.
-        """
-
-        ids = []
-        res = self.spp_ctl_cli.get('processes')
-        if res is not None:
-            if res.status_code == 200:
-                try:
-                    for ent in res.json():
-                        if ent['type'] == ptype:
-                            ids.append(ent['client-id'])
-                except KeyError as e:
-                    print('Error: {} is not defined!'.format(e))
-        return ids
 
     def print_status(self):
         """Display information about connected clients."""
@@ -347,7 +329,7 @@ class Shell(cmd.Cmd, object):
         tokens = line.split(';')
         if len(tokens) == 1:
             # Add SppNfv of sec_id if it is not exist
-            sec_ids = self.get_sec_ids('nfv')
+            sec_ids = self.spp_ctl_cli.get_sec_ids('nfv')
             for idx in sec_ids:
                 if self.secondaries['nfv'][idx] is None:
                     self.secondaries['nfv'][idx] = nfv.SppNfv(
@@ -372,7 +354,8 @@ class Shell(cmd.Cmd, object):
                             self.spp_ctl_cli, idx)
 
                 res = self.secondaries['nfv'][idx].complete(
-                        self.get_sec_ids('nfv'), text, line, begidx, endidx)
+                        self.spp_ctl_cli.get_sec_ids('nfv'),
+                        text, line, begidx, endidx)
 
                 # logger.info(res)
                 return res
@@ -407,7 +390,7 @@ class Shell(cmd.Cmd, object):
         tokens = line.split(';')
         if len(tokens) == 1:
             # Add SppVf of sec_id if it is not exist
-            sec_ids = self.get_sec_ids('vf')
+            sec_ids = self.spp_ctl_cli.get_sec_ids('vf')
             for idx in sec_ids:
                 if self.secondaries['vf'][idx] is None:
                     self.secondaries['vf'][idx] = vf.SppVf(
@@ -432,7 +415,8 @@ class Shell(cmd.Cmd, object):
                             self.spp_ctl_cli, idx)
 
                 return self.secondaries['vf'][idx].complete(
-                        self.get_sec_ids('vf'), text, line, begidx, endidx)
+                        self.spp_ctl_cli.get_sec_ids('vf'),
+                        text, line, begidx, endidx)
 
     def do_mirror(self, cmd):
         """Send a command to spp_mirror."""
@@ -463,7 +447,7 @@ class Shell(cmd.Cmd, object):
         tokens = line.split(';')
         if len(tokens) == 1:
             # Add SppMirror of sec_id if it is not exist
-            sec_ids = self.get_sec_ids('mirror')
+            sec_ids = self.spp_ctl_cli.get_sec_ids('mirror')
             for idx in sec_ids:
                 if self.secondaries['mirror'][idx] is None:
                     self.secondaries['mirror'][idx] = mirror.SppMirror(
@@ -489,7 +473,8 @@ class Shell(cmd.Cmd, object):
                             self.spp_ctl_cli, idx)
 
                 return self.secondaries['mirror'][idx].complete(
-                        self.get_sec_ids('mirror'), text, line, begidx, endidx)
+                        self.spp_ctl_cli.get_sec_ids('mirror'),
+                        text, line, begidx, endidx)
 
     def do_pcap(self, cmd):
         """Send a command to spp_pcap."""
@@ -520,7 +505,7 @@ class Shell(cmd.Cmd, object):
         tokens = line.split(';')
         if len(tokens) == 1:
             # Add SppPcap of sec_id if it is not exist
-            sec_ids = self.get_sec_ids('pcap')
+            sec_ids = self.spp_ctl_cli.get_sec_ids('pcap')
             for idx in sec_ids:
                 if self.secondaries['pcap'][idx] is None:
                     self.secondaries['pcap'][idx] = pcap.SppPcap(
@@ -546,7 +531,8 @@ class Shell(cmd.Cmd, object):
                             self.spp_ctl_cli, idx)
 
                 return self.secondaries['pcap'][idx].complete(
-                        self.get_sec_ids('pcap'), text, line, begidx, endidx)
+                        self.spp_ctl_cli.get_sec_ids('pcap'),
+                        text, line, begidx, endidx)
 
     def do_record(self, fname):
         """Save commands as a recipe file."""
@@ -908,7 +894,7 @@ class Shell(cmd.Cmd, object):
 
     def do_topo(self, args):
         """Output network topology."""
-        self.spp_topo.run(args, self.get_sec_ids('nfv'))
+        self.spp_topo.run(args)
 
     def help_topo(self):
         """Print help message of topo command."""

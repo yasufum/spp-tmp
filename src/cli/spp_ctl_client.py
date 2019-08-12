@@ -68,3 +68,45 @@ class SppCtlClient(object):
             return False
         else:
             return True
+
+    def get_sec_ids(self, ptype):
+        """Return a list of IDs of running secondary processes.
+
+        'ptype' is 'nfv', 'vf' or 'mirror' or 'pcap'.
+        """
+
+        ids = []
+        res = self.get('processes')
+        if res is not None:
+            if res.status_code == 200:
+                try:
+                    for ent in res.json():
+                        if ent['type'] == ptype:
+                            ids.append(ent['client-id'])
+                except KeyError as e:
+                    print('Error: {} is not defined!'.format(e))
+        return ids
+
+    def get_sec_procs(self, ptype):
+        """Get secondary processes info of given type.
+
+        Processes info from spp-ctl is retrieved as JSON, then loaded with
+        json() before returned.
+        """
+
+        sec_procs = []
+        error_codes = self.rest_common_error_codes
+
+        for sec_id in self.get_sec_ids(ptype):
+            # NOTE: take care API's proc type are defined as plural such as
+            # 'nfvs', 'vfs' or so.
+            res = self.get('{pt}s/{sid}'.format(pt=ptype, sid=sec_id))
+            if res.status_code == 200:
+                sec_procs.append(res.json())
+            elif res.status_code in error_codes:
+                # TODO(yasufum) Print default error message
+                pass
+            else:
+                # Ignore unknown response because no problem for drawing graph
+                pass
+        return sec_procs
