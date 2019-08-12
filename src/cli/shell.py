@@ -627,6 +627,8 @@ class Shell(cmd.Cmd, object):
                 # Command prompt should be updated immediately
                 if key == 'prompt':
                     self.prompt = self.cli_config['prompt']['val']
+                elif key == 'topo_size':
+                    self.spp_topo.resize(self.cli_config['topo_size']['val'])
 
     def help_config(self):
         """Print help message of config command."""
@@ -903,14 +905,6 @@ class Shell(cmd.Cmd, object):
             return completions
         else:
             pass
-
-    def do_topo_resize(self, args):
-        """Change the size of the image of topo_resize command."""
-        self.spp_topo.resize_graph(args)
-
-    def help_topo_resize(self):
-        """Print help message of topo command."""
-        topo.SppTopo.help_resize()
 
     def do_topo(self, args):
         """Output network topology."""

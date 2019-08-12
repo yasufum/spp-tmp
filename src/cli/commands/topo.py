@@ -25,7 +25,11 @@ class SppTopo(object):
     def __init__(self, spp_ctl_cli, subgraphs, size):
         self.spp_ctl_cli = spp_ctl_cli
         self.subgraphs = subgraphs
-        self.graph_size = size
+        self.graph_size = None
+
+        if self.resize(size) is not True:
+            print('Config "topo_size" is invalid value.')
+            exit()
 
     def run(self, args, sec_ids):
         args_ary = args.split()
@@ -41,6 +45,32 @@ class SppTopo(object):
             self.output(args_ary[0], sec_ids, args_ary[1])
         else:
             print("Usage: topo dst [ftype]")
+
+    def resize(self, size):
+        """Parse given size and set to self.graph_size.
+
+        The format of `size` is percentage or ratio. Return True if succeeded
+        to parse, or False if invalid format.
+        """
+
+        size = str(size)
+        matched = re.match(r'(\d+)%$', size)
+        if matched:  # percentage
+            i = int(matched.group(1))
+            if i > 0 and  i <= 100:
+                self.graph_size = size
+                return True
+            else:
+                return False
+        elif re.match(r'0\.\d+$',size):  # ratio
+            i = float(size) * 100
+            self.graph_size = str(i) + '%'
+            return True
+        elif size == '1':
+            self.graph_size = '100%'
+            return True
+        else:
+            return False
 
     def show(self, dtype, sec_ids, size):
         res_ary = []
@@ -319,21 +349,6 @@ class SppTopo(object):
             topo_doc += "commands/experimental.html"
             print("See '%s' for required packages." % topo_doc)
 
-    def resize_graph(self, args):
-        if args == '':
-            print(self.graph_size)
-        else:
-            if '%' in args:
-                self.graph_size = args
-                print(self.graph_size)
-            elif '.' in args:
-                ii = float(args) * 100
-                self.graph_size = str(ii) + '%'
-                print(self.graph_size)
-            else:  # TODO(yasufum) add check for no number
-                self.graph_size = str(float(args) * 100) + '%'
-                print(self.graph_size)
-
     def format_sec_status(self, sec_id, stat):
         """Return formatted secondary status as a hash
 
@@ -475,18 +490,6 @@ class SppTopo(object):
         spp > topo network_conf.jpg  # image
         spp > topo network_conf.dot  # text
         spp > topo network_conf.js# text
-        """
-
-        print(msg)
-
-    @classmethod
-    def help_resize(cls):
-        msg = """Change the size of the image of topo command.
-
-        You can specify the size by percentage or ratio.
-
-        spp > topo resize 60%  # percentage
-        spp > topo resize 0.6  # ratio
         """
 
         print(msg)
