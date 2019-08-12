@@ -30,6 +30,14 @@ def add_eal_args(parser, mem_size=1024, mem_channel=4):
         type=str,
         help='Memory size')
     parser.add_argument(
+        '-b', '--pci-blacklist',
+        nargs='*', type=str,
+        help='PCI blacklist for excluding devices')
+    parser.add_argument(
+        '-w', '--pci-whitelist',
+        nargs='*', type=str,
+        help='PCI whitelist for including devices')
+    parser.add_argument(
         '--nof-memchan',
         type=int,
         default=mem_channel,
@@ -82,6 +90,15 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', hugedir=None):
         eal_opts += [
             '--vdev', 'virtio_user%d,queues=%d,path=%s' % (
                 dev_ids[i], args.nof_queues, socks[i]['guest']), '\\']
+
+    if (args.pci_blacklist is not None) and (args.pci_whitelist is not None):
+        common.error_exit("Cannot use both of '-b' and '-w' at once")
+    elif args.pci_blacklist is not None:
+        for bd in args.pci_blacklist:
+            eal_opts += ['-b', bd, '\\']
+    elif args.pci_whitelist is not None:
+        for wd in args.pci_whitelist:
+            eal_opts += ['-w', wd, '\\']
 
     eal_opts += [
         '--file-prefix', file_prefix, '\\',
