@@ -77,7 +77,7 @@ class SppTopo(object):
         error_codes = self.spp_ctl_cli.rest_common_error_codes
 
         for sec_id in sec_ids:
-            res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
+            res = self.spp_ctl_cli.get('nfvs/{sid}'.format(sid=sec_id))
             if res.status_code == 200:
                 res_ary.append(res.json())
             elif res.status_code in error_codes:
@@ -99,7 +99,7 @@ class SppTopo(object):
         error_codes = self.spp_ctl_cli.rest_common_error_codes
 
         for sec_id in sec_ids:
-            res = self.spp_ctl_cli.get('nfvs/%d' % sec_id)
+            res = self.spp_ctl_cli.get('nfvs/{sid}'.format(sid=sec_id))
             if res.status_code == 200:
                 res_ary.append(res.json())
             elif res.status_code in error_codes:
@@ -120,10 +120,11 @@ class SppTopo(object):
         else:
             print("Invalid file type")
             return res_ary
-        print("Create topology: '%s'" % fname)
+        print("Create topology: '{fname}'".format(fname=fname))
         return res_ary
 
     def to_dot(self, sec_list, output_fname):
+        """Output dot script."""
 
         # Graphviz params
         # TODO(yasufum) consider to move gviz params to config file.
@@ -142,7 +143,7 @@ class SppTopo(object):
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
 
-        node_template = '%s' + self.delim_node + '%s'
+        node_template = '{}' + self.delim_node + '{}'
 
         phys = []
         rings = []
@@ -170,7 +171,8 @@ class SppTopo(object):
                         pass
                     else:
                         raise ValueError(
-                            "Invaid interface type: %s" % r_type)
+                            "Invaid interface type: {rtype}".format(
+                                rtype=r_type))
 
             for patch in sec['patches']:
                 if sec['status'] == 'running':
@@ -182,18 +184,18 @@ class SppTopo(object):
                     SEC_COLORS[sec["client-id"]],
                     l_style
                 )
-                link_style = node_template + ' %s ' + node_template + '%s;'
+                link_style = node_template + ' {} ' + node_template + '{};'
 
                 if self._is_valid_port(patch['src']):
                     src_type, src_id = patch['src'].split(':')
                 if self._is_valid_port(patch['dst']):
                     dst_type, dst_id = patch['dst'].split(':')
 
-                tmp = link_style % (src_type, src_id, LINK_TYPE,
+                tmp = link_style.format(src_type, src_id, LINK_TYPE,
                                     dst_type, dst_id, attrs)
                 links.append(tmp)
 
-        output = ["%s spp{" % GRAPH_TYPE]
+        output = ["{} spp{{".format(GRAPH_TYPE)]
         output.append("newrank=true;")
         output.append(node_attrs)
 
@@ -201,65 +203,65 @@ class SppTopo(object):
         for node in phys:
             r_type, r_id = node.split(':')
             phy_nodes.append(
-                node_template % (r_type, r_id))
+                node_template.format(r_type, r_id))
         phy_nodes = list(set(phy_nodes))
         for node in phy_nodes:
-            label = re.sub(r'%s' % self.delim_node, ':', node)
+            label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '%s[label="%s", fillcolor="%s"];' % (
-                    node, label, PORT_COLORS["phy"]))
+                '{n}[label="{l}", fillcolor="{c}"];'.format(
+                    n=node, l=label, c=PORT_COLORS["phy"]))
 
         ring_nodes = []
         for node in rings:
             r_type, r_id = node.split(':')
-            ring_nodes.append(node_template % (r_type, r_id))
+            ring_nodes.append(node_template.format(r_type, r_id))
         ring_nodes = list(set(ring_nodes))
         for node in ring_nodes:
-            label = re.sub(r'%s' % self.delim_node, ':', node)
+            label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '%s[label="%s", fillcolor="%s"];' % (
-                    node, label, PORT_COLORS["ring"]))
+                '{n}[label="{l}", fillcolor="{c}"];'.format(
+                    n=node, l=label, c=PORT_COLORS["ring"]))
 
         vhost_nodes = []
         for node in vhosts:
             r_type, r_id = node.split(':')
-            vhost_nodes.append(node_template % (r_type, r_id))
+            vhost_nodes.append(node_template.format(r_type, r_id))
         vhost_nodes = list(set(vhost_nodes))
         for node in vhost_nodes:
-            label = re.sub(r'%s' % self.delim_node, ':', node)
+            label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
-                '%s[label="%s", fillcolor="%s"];' % (
-                    node, label, PORT_COLORS["vhost"]))
+                '{n}[label="{l}", fillcolor="{c}"];'.format(
+                    n=node, l=label, c=PORT_COLORS["vhost"]))
 
         # Align the same type of nodes with rank attribute
         output.append(
-            '{rank=same; %s}' % ("; ".join(ring_nodes)))
+            '{{rank=same; {rn}}}'.format(rn="; ".join(ring_nodes)))
         output.append(
-            '{rank=same; %s}' % ("; ".join(vhost_nodes)))
+            '{{rank=same; {vn}}}'.format(vn="; ".join(vhost_nodes)))
 
         # Decide the bottom, phy or vhost
-        rank_style = '{rank=max; %s}' % node_template
+        rank_style = '{{rank=max; ' + node_template + '}}'
         if len(phys) > 0:
             r_type, r_id = phys[0].split(':')
         elif len(vhosts) > 0:
             r_type, r_id = vhosts[0].split(':')
-        output.append(rank_style % (r_type, r_id))
+        output.append(rank_style.format(r_type, r_id))
 
         # TODO(yasufum) check if it is needed, or is not needed for vhost_nodes
         if len(phy_nodes) > 0:
             output.append(
-                '{rank=same; %s}' % ("; ".join(phy_nodes)))
+                '{{rank=same; {pn}}}'.format(pn="; ".join(phy_nodes)))
 
         # Add subgraph
         ssgs = []
         if len(self.subgraphs) > 0:
             cnt = 1
             for label, val in self.subgraphs.items():
-                cluster_id = "cluster%d" % cnt
+                cluster_id = "cluster{}".format(cnt)
                 ssg_label = label
                 ssg_ports = re.sub(r'%s' % ':', self.delim_node, val)
-                ssg = 'subgraph %s {label="%s" %s}' % (
-                    cluster_id, ssg_label, ssg_ports)
+                ssg = 'subgraph {cid} {{label="{ssgl}" {ssgp}}}'.format(
+                    cid=cluster_id, ssgl=ssg_label, ssgp=ssg_ports)
                 ssgs.append(ssg)
                 cnt += 1
 
@@ -268,13 +270,14 @@ class SppTopo(object):
         sg_ports = "; ".join(phy_nodes + ring_nodes)
         if len(ssgs) == 0:
             output.append(
-                'subgraph %s {label="%s" %s}' % (
-                    cluster_id, sg_label, sg_ports))
+                'subgraph {cid} {{label="{sgl}" {sgp}}}'.format(
+                    cid=cluster_id, sgl=sg_label, sgp=sg_ports))
         else:
-            tmp = 'label="%s" %s' % (sg_label, sg_ports)
+            tmp = 'label="{sgl}" {sgp}'.format(sgl=sg_label, sgp=sg_ports)
             contents = [tmp] + ssgs
             output.append(
-                'subgraph %s {%s}' % (cluster_id, '; '.join(contents)))
+                'subgraph {cid} {{{cont}}}'.format(
+                    cid=cluster_id, cont='; '.join(contents)))
 
         # Add links
         for link in links:
@@ -299,19 +302,21 @@ class SppTopo(object):
         f.close()
 
     def to_img(self, sec_list, output_fname):
-        tmpfile = "%s.dot" % uuid.uuid4().hex
+        tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
         self.to_dot(sec_list, tmpfile)
         fmt = output_fname.split(".")[-1]
-        cmd = "dot -T%s %s -o %s" % (fmt, tmpfile, output_fname)
+        cmd = "dot -T{fmt} {dotf} -o {of}".format(
+                fmt=fmt, dotf=tmpfile, of=output_fname)
         subprocess.call(cmd, shell=True)
-        subprocess.call("rm -f %s" % tmpfile, shell=True)
+        subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
 
     def to_http(self, sec_list):
         import websocket
-        tmpfile = "%s.dot" % uuid.uuid4().hex
+        tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
         self.to_dot(sec_list, tmpfile)
         msg = open(tmpfile).read()
-        subprocess.call("rm -f %s" % tmpfile, shell=True)
+        subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
+        # TODO(yasufum) change to be able to use other than `localhost`.
         ws_url = "ws://localhost:8989/spp_ws"
         try:
             ws = websocket.create_connection(ws_url)
@@ -321,7 +326,7 @@ class SppTopo(object):
             print('Error: Connection refused! Is running websocket server?')
 
     def to_term(self, sec_list, size):
-        tmpfile = "%s.jpg" % uuid.uuid4().hex
+        tmpfile = "{fn}.jpg".format(fn=uuid.uuid4().hex)
         self.to_img(sec_list, tmpfile)
         from distutils import spawn
 
@@ -329,8 +334,8 @@ class SppTopo(object):
         if spawn.find_executable("img2sixel") is not None:
             img_cmd = "img2sixel"
         else:
-            imgcat = "%s/%s/imgcat" % (
-                os.path.dirname(__file__), '3rd_party')
+            imgcat = "{pdir}/{sdir}/imgcat".format(
+                pdir=os.path.dirname(__file__), sdir='3rd_party')
             if os.path.exists(imgcat) is True:
                 img_cmd = imgcat
             else:
@@ -339,15 +344,17 @@ class SppTopo(object):
         if img_cmd is not None:
             # Resize image to fit the terminal
             img_size = size
-            cmd = "convert -resize %s %s %s" % (img_size, tmpfile, tmpfile)
+            cmd = "convert -resize {size} {fn1} {fn2}".format(
+                    size=img_size, fn1=tmpfile, fn2=tmpfile)
             subprocess.call(cmd, shell=True)
-            subprocess.call("%s %s" % (img_cmd, tmpfile), shell=True)
+            subprocess.call("{cmd} {fn}".format(cmd=img_cmd, fn=tmpfile),
+                    shell=True)
             subprocess.call(["rm", "-f", tmpfile])
         else:
             print("img2sixel (or imgcat.sh for MacOS) not found!")
             topo_doc = "https://spp.readthedocs.io/en/latest/"
             topo_doc += "commands/experimental.html"
-            print("See '%s' for required packages." % topo_doc)
+            print("See '{url}' for required packages.".format(url=topo_doc))
 
     def format_sec_status(self, sec_id, stat):
         """Return formatted secondary status as a hash
