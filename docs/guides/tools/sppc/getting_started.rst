@@ -256,8 +256,51 @@ app container launcher.
     Done
     testpmd>
 
-
 It launches ``testpmd`` in foreground mode.
+
+.. note::
+
+    DPDK app container tries to own ports on host which are shared with host
+    and containers by default. It causes a confliction between SPP running on
+    host and containers and unexpected behavior.
+
+    To avoid this situation, it is required to use ``-b`` or
+    ``--pci-blacklist`` EAL option to exclude ports on host. PCI address of
+    port can be inspected by using ``dpdk-devbind.py -s``.
+
+If you have ports on host and assign them to SPP, you should to exclude them
+from the app container by specifying PCI addresses of the ports with ``-b``
+or ``--pci-blacklist``.
+
+You can find PCI addresses from ``dpdk-devbind.py -s``.
+
+.. code-block:: console
+
+    # Check the status of the available devices.
+    dpdk-devbind --status
+    Network devices using DPDK-compatible driver
+    ============================================
+    0000:0a:00.0 '82599ES 10-Gigabit' drv=igb_uio unused=ixgbe
+    0000:0a:00.1 '82599ES 10-Gigabit' drv=igb_uio unused=ixgbe
+
+    Network devices using kernel driver
+    ===================================
+    ...
+
+In this case, you should exclude ``0000:0a:00.0`` and ``0000:0a:00.1``
+with ``-b`` option.
+
+.. code-block:: console
+
+    # Terminal 3
+    $ cd /path/to/spp/tools/sppc
+    $ app/testpmd.py -l 3-4 -d 1,2 \
+      -b 0000:0a:00.0 0000:0a:00.1
+    sudo docker run -it \
+    ...
+    -b 0000:0a:00.0 \
+    -b 0000:0a:00.1 \
+    ...
 
 
 .. _sppc_gs_run_apps:
