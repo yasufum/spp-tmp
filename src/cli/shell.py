@@ -73,7 +73,7 @@ class Shell(cmd.Cmd, object):
         self.use_cache = use_cache
         self.init_spp_procs()
         self.spp_topo = topo.SppTopo(
-                self.spp_ctl_cli, {}, self.cli_config['topo_size']['val'])
+                self.spp_ctl_cli, {}, self.cli_config)
 
         common.set_current_server_addr(
                 self.spp_ctl_cli.ip_addr, self.spp_ctl_cli.port)

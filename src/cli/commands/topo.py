@@ -22,12 +22,21 @@ class SppTopo(object):
 
     delim_node = '_'
 
-    def __init__(self, spp_ctl_cli, subgraphs, size):
+    def __init__(self, spp_ctl_cli, subgraphs, cli_config):
         self.spp_ctl_cli = spp_ctl_cli
         self.subgraphs = subgraphs
         self.graph_size = None
 
-        if self.resize(size) is not True:
+        # Graphviz params
+        topo_file = '{dir}/../config/topo.yml'.format(dir=os.path.dirname(__file__))
+        topo_conf = yaml.load(open(topo_file), Loader=yaml.FullLoader)
+        self.SEC_COLORS = topo_conf['topo_sec_colors']['val']
+        self.PORT_COLORS = topo_conf['topo_port_colors']['val']
+        self.LINE_STYLE = {"running": "solid", "idling": "dashed"}
+        self.GRAPH_TYPE = "digraph"
+        self.LINK_TYPE = "->"
+
+        if self.resize(cli_config['topo_size']['val']) is not True:
             print('Config "topo_size" is invalid value.')
             exit()
 
@@ -126,21 +135,6 @@ class SppTopo(object):
     def to_dot(self, sec_list, output_fname):
         """Output dot script."""
 
-        # Graphviz params
-        # TODO(yasufum) consider to move gviz params to config file.
-        SEC_COLORS = [
-            "blue", "green", "orange", "chocolate", "black",
-            "cyan3", "green3", "indianred", "lawngreen", "limegreen"]
-        PORT_COLORS = {
-            "phy": "white",
-            "ring": "yellow",
-            "vhost": "limegreen"}
-        LINE_STYLE = {
-            "running": "solid",
-            "idling": "dashed"}
-        GRAPH_TYPE = "digraph"
-        LINK_TYPE = "->"
-
         node_attrs = 'node[shape="rectangle", style="filled"];'
 
         node_template = '{}' + self.delim_node + '{}'
@@ -176,12 +170,12 @@ class SppTopo(object):
 
             for patch in sec['patches']:
                 if sec['status'] == 'running':
-                    l_style = LINE_STYLE["running"]
+                    l_style = self.LINE_STYLE["running"]
                 else:
-                    l_style = LINE_STYLE["idling"]
+                    l_style = self.LINE_STYLE["idling"]
                 attrs = '[label="%s", color="%s", style="%s"]' % (
                     "sec%d" % sec["client-id"],
-                    SEC_COLORS[sec["client-id"]],
+                    self.SEC_COLORS[sec["client-id"]],
                     l_style
                 )
                 link_style = node_template + ' {} ' + node_template + '{};'
@@ -191,11 +185,11 @@ class SppTopo(object):
                 if self._is_valid_port(patch['dst']):
                     dst_type, dst_id = patch['dst'].split(':')
 
-                tmp = link_style.format(src_type, src_id, LINK_TYPE,
+                tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
                                     dst_type, dst_id, attrs)
                 links.append(tmp)
 
-        output = ["{} spp{{".format(GRAPH_TYPE)]
+        output = ["{} spp{{".format(self.GRAPH_TYPE)]
         output.append("newrank=true;")
         output.append(node_attrs)
 
@@ -209,7 +203,7 @@ class SppTopo(object):
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
                 '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=PORT_COLORS["phy"]))
+                    n=node, l=label, c=self.PORT_COLORS["phy"]))
 
         ring_nodes = []
         for node in rings:
@@ -220,7 +214,7 @@ class SppTopo(object):
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
                 '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=PORT_COLORS["ring"]))
+                    n=node, l=label, c=self.PORT_COLORS["ring"]))
 
         vhost_nodes = []
         for node in vhosts:
@@ -231,7 +225,7 @@ class SppTopo(object):
             label = re.sub(r'{}'.format(self.delim_node), ':', node)
             output.append(
                 '{n}[label="{l}", fillcolor="{c}"];'.format(
-                    n=node, l=label, c=PORT_COLORS["vhost"]))
+                    n=node, l=label, c=self.PORT_COLORS["vhost"]))
 
         # Align the same type of nodes with rank attribute
         output.append(

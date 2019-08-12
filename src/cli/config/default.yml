@@ -5,9 +5,6 @@ max_secondary:
 prompt:
     val: "spp > "
     desc: Command prompt
-topo_size:
-    val: 60%
-    desc: Percentage or ratio of topo
 
 # Secondary common config
 sec_mem:
@@ -45,3 +42,8 @@ sec_pcap_nof_lcores:
 sec_pcap_port:
     val: "phy:0"
     desc: Default captured port
+
+# topo
+topo_size:
+    val: 60%
+    desc: Percentage or ratio of topo
