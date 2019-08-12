@@ -3,6 +3,6 @@ topo_sec_colors:
           "green3", "indianred", "lawngreen", "limegreen"]
     desc: Line colors for secondary processes
 topo_port_colors:
-    val: {"phy": "white", "ring": "yellow", "vhost": "azure",
+    val: {"phy": "white", "ring": "yellow", "vhost": "antiquewhite",
           "tap": "cornsilk", "nullpmd": "cyan"}
     desc: Port colors
