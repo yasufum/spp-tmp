@@ -614,7 +614,8 @@ class Shell(cmd.Cmd, object):
                 if key == 'prompt':
                     self.prompt = self.cli_config['prompt']['val']
                 elif key == 'topo_size':
-                    self.spp_topo.resize(self.cli_config['topo_size']['val'])
+                    self.spp_topo.resize(
+                            self.cli_config['topo_size']['val'])
 
     def help_config(self):
         """Print help message of config command."""

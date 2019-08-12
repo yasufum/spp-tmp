@@ -108,9 +108,9 @@ class SppTopo(object):
         """Output dot script."""
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
-        node_template = '{}' + self.delim_node + '{}'
+        node_temp = '{}' + self.delim_node + '{}'
 
-        ports, links = self._get_dot_elements(node_template)
+        ports, links = self._get_dot_elements(node_temp)
 
         # Remove duplicated entries.
         for ptype in spp_common.PORT_TYPES:
@@ -120,15 +120,18 @@ class SppTopo(object):
         output.append("newrank=true;")
         output.append(node_attrs)
 
+        # topo should support spp_pcap's file and tap port
+        all_port_types = spp_common.PORT_TYPES + [
+                self.SPP_PCAP_LABEL, 'tap']
+
         # Setup node entries
-        all_port_types = spp_common.PORT_TYPES + [self.SPP_PCAP_LABEL]
         nodes = {}
         for ptype in all_port_types:
             nodes[ptype] = []
             for node in ports[ptype]:
                 r_type, r_id = node.split(':')
                 nodes[ptype].append(
-                    node_template.format(r_type, r_id))
+                    node_temp.format(r_type, r_id))
             nodes[ptype] = list(set(nodes[ptype]))
             for node in nodes[ptype]:
                 label = re.sub(r'{}'.format(self.delim_node), ':', node)
@@ -144,7 +147,7 @@ class SppTopo(object):
 
         # Decide the bottom, phy or vhost
         # TODO(yasufum) revise how to decide bottom
-        rank_style = '{{rank=max; ' + node_template + '}}'
+        rank_style = '{{rank=max; ' + node_temp + '}}'
         if len(ports['phy']) > 0:
             r_type, r_id = ports['phy'][0].split(':')
         elif len(ports['vhost']) > 0:
@@ -406,7 +409,7 @@ class SppTopo(object):
             pass
         return True
 
-    def _get_dot_elements(self, node_template):
+    def _get_dot_elements(self, node_temp):
         """Get entries of nodes and links.
 
         To generate dot script, this method returns ports as nodes and links
@@ -416,8 +419,10 @@ class SppTopo(object):
         ports = {}
         links = []
 
+        # topo should support spp_pcap's file and tap port
+        all_port_types = spp_common.PORT_TYPES + [self.SPP_PCAP_LABEL, 'tap']
+
         # Initialize ports
-        all_port_types = spp_common.PORT_TYPES + [self.SPP_PCAP_LABEL]
         for ptype in all_port_types:
             ports[ptype] = []
 
@@ -434,7 +439,7 @@ class SppTopo(object):
                         # TODO make it to a method
                         if self._is_valid_port(port):
                             r_type = port.split(':')[0]
-                            if r_type in spp_common.PORT_TYPES:
+                            if r_type in all_port_types:
                                 ports[r_type].append(port)
                             else:
                                 raise ValueError(
@@ -446,7 +451,7 @@ class SppTopo(object):
                             port = c['rx_port'][0]['port']
                             if self._is_valid_port(port):
                                 r_type = port.split(':')[0]
-                                if r_type in spp_common.PORT_TYPES:
+                                if r_type in all_port_types:
                                     ports[r_type].append(port)
                                 else:
                                     raise ValueError(
@@ -454,7 +459,7 @@ class SppTopo(object):
                                             r_type))
                     ports[self.SPP_PCAP_LABEL].append(
                             '{}:{}'.format(self.SPP_PCAP_LABEL,
-                                sec['client-id']))
+                                           sec['client-id']))
 
                 # Get links
                 if proc_t == 'nfv':
@@ -467,14 +472,15 @@ class SppTopo(object):
                                 "nfv:{}".format(sec["client-id"]),
                                 self.SEC_COLORS[sec["client-id"]],
                                 l_style)
-                        link_style = node_template + ' {} ' + node_template + '{};'
+                        link_style = node_temp + ' {} ' + node_temp + '{};'
 
                         if self._is_valid_port(patch['src']):
                             src_type, src_id = patch['src'].split(':')
                         if self._is_valid_port(patch['dst']):
                             dst_type, dst_id = patch['dst'].split(':')
 
-                        tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
+                        tmp = link_style.format(src_type, src_id,
+                                                self.LINK_TYPE,
                                                 dst_type, dst_id, attrs)
                         links.append(tmp)
 
@@ -489,10 +495,9 @@ class SppTopo(object):
                                     sec["client-id"], comp['type'][0]),
                                 self.SEC_COLORS[sec["client-id"]],
                                 l_style)
-                        link_style = node_template + ' {} ' + \
-                                node_template + '{};'
+                        link_style = node_temp + ' {} ' + node_temp + '{};'
 
-                        if comp['type'] == 'forward':  # TODO change to forwarder
+                        if comp['type'] == 'forward':
                             rxport = comp['rx_port'][0]['port']
                             if self._is_valid_port(rxport):
                                 src_type, src_id = rxport.split(':')
@@ -500,8 +505,9 @@ class SppTopo(object):
                             if self._is_valid_port(txport):
                                 dst_type, dst_id = txport.split(':')
 
-                            tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                            dst_type, dst_id, attrs)
+                            tmp = link_style.format(src_type, src_id,
+                                                    self.LINK_TYPE,
+                                                    dst_type, dst_id, attrs)
                             links.append(tmp)
 
                         elif comp['type'] == 'classifier':
@@ -512,8 +518,10 @@ class SppTopo(object):
                                 if self._is_valid_port(txp['port']):
                                     dst_type, dst_id = txp['port'].split(':')
 
-                                tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                                dst_type, dst_id, attrs)
+                                tmp = link_style.format(src_type, src_id,
+                                                        self.LINK_TYPE,
+                                                        dst_type, dst_id,
+                                                        attrs)
                                 links.append(tmp)
                         elif comp['type'] == 'merge':  # TODO change to merger
                             txport = comp['tx_port'][0]['port']
@@ -523,8 +531,10 @@ class SppTopo(object):
                                 if self._is_valid_port(rxp['port']):
                                     src_type, src_id = rxp['port'].split(':')
 
-                                tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                                dst_type, dst_id, attrs)
+                                tmp = link_style.format(src_type, src_id,
+                                                        self.LINK_TYPE,
+                                                        dst_type, dst_id,
+                                                        attrs)
                                 links.append(tmp)
 
                 elif proc_t == 'mirror':
@@ -537,8 +547,7 @@ class SppTopo(object):
                                 "vf:{}".format(sec["client-id"]),
                                 self.SEC_COLORS[sec["client-id"]],
                                 l_style)
-                        link_style = node_template + ' {} ' + \
-                                node_template + '{};'
+                        link_style = node_temp + ' {} ' + node_temp + '{};'
 
                         rxport = comp['rx_port'][0]['port']
                         if self._is_valid_port(rxport):
@@ -547,8 +556,9 @@ class SppTopo(object):
                             if self._is_valid_port(txp['port']):
                                 dst_type, dst_id = txp['port'].split(':')
 
-                            tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                            dst_type, dst_id, attrs)
+                            tmp = link_style.format(src_type, src_id,
+                                                    self.LINK_TYPE,
+                                                    dst_type, dst_id, attrs)
                             links.append(tmp)
 
                 elif proc_t == 'pcap':
@@ -560,15 +570,15 @@ class SppTopo(object):
                             "pcap:{}".format(sec["client-id"]),
                             self.SEC_COLORS[sec["client-id"]],
                             l_style)
-                    link_style = node_template + ' {} ' + node_template + '{};'
+                    link_style = node_temp + ' {} ' + node_temp + '{};'
 
                     for c in sec['core']:  # TODO consider change to component
                         if c['role'] == 'receive':  # TODO change to receiver
                             rxport = c['rx_port'][0]['port']
                             if self._is_valid_port(rxport):
                                 src_type, src_id = rxport.split(':')
-                            dst_type, dst_id = self.SPP_PCAP_LABEL, sec['client-id']
-
+                            dst_type = self.SPP_PCAP_LABEL
+                            dst_id = sec['client-id']
                     tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
                                             dst_type, dst_id, attrs)
                     links.append(tmp)
