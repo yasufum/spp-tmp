@@ -142,11 +142,13 @@ On the other hand, application specific options are different each other.
     $ python app/spp-primary.py -h
     usage: spp-primary.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                           [--socket-mem SOCKET_MEM]
-                          [--nof-memchan NOF_MEMCHAN]
-                          [-n NOF_RING] [-p PORT_MASK] [-dv DEV_VHOST_IDS]
-                          [-dt DEV_TAP_IDS] [-ip CTRL_IP]
-                          [--ctrl-port CTRL_PORT]
-                          [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                          [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                          [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                          [--nof-memchan NOF_MEMCHAN] [-n NOF_RING]
+                          [-p PORT_MASK]
+                          [-dv DEV_VHOST_IDS] [-dt DEV_TAP_IDS] [-ip CTRL_IP]
+                          [--ctrl-port CTRL_PORT] [--dist-name DIST_NAME]
+                          [--dist-ver DIST_VER] [--workdir WORKDIR]
                           [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for spp-primary application container
@@ -160,6 +162,10 @@ On the other hand, application specific options are different each other.
       -m MEM, --mem MEM     Memory size (default is 1024)
       --socket-mem SOCKET_MEM
                             Memory size
+      -b [PCI_BLACKLIST [PCI_BLACKLIST ...]], --pci-blacklist [PCI_BLACKLIST..
+                            PCI blacklist for excluding devices
+      -w [PCI_WHITELIST [PCI_WHITELIST ...]], --pci-whitelist [PCI_WHITELIST..
+                            PCI whitelist for including devices
       --nof-memchan NOF_MEMCHAN
                             Number of memory channels (default is 4)
       -n NOF_RING, --nof-ring NOF_RING
@@ -177,6 +183,7 @@ On the other hand, application specific options are different each other.
       --dist-name DIST_NAME
                             Name of Linux distribution
       --dist-ver DIST_VER   Version of Linux distribution
+      --workdir WORKDIR     Path of directory in which the command is launched
       -ci CONTAINER_IMAGE, --container-image CONTAINER_IMAGE
                             Name of container image
       -fg, --foreground     Run container as foreground mode
@@ -209,6 +216,8 @@ It shows only application specific options for simplicity.
     $ python app/spp-nfv.py -h
     usage: spp-nfv.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                       [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                      [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                      [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                       [-i SEC_ID] [-ip CTRL_IP] [--ctrl-port CTRL_PORT]
                       [--dist-name DIST_NAME] [--dist-ver DIST_VER]
                       [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
@@ -258,6 +267,8 @@ It shows options without of EAL and container for simplicity.
     $ python app/l2fwd.py -h
     usage: l2fwd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                     [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                    [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                    [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                     [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                     [-p PORT_MASK]
                     [--dist-name DIST_NAME] [--dist-ver DIST_VER]
@@ -373,6 +384,8 @@ It shows options without of EAL and container for simplicity.
     $ python app/l3fwd.py -h
     usage: l3fwd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                     [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                    [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                    [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                     [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                     [-p PORT_MASK] [--config CONFIG] [-P] [-E] [-L]
                     [-dst [ETH_DEST [ETH_DEST ...]]] [--enable-jumbo]
@@ -470,6 +483,8 @@ It shows options without of EAL and container.
     $ python app/testpmd.py -h
     usage: testpmd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                       [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                      [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                      [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                       [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                       [--pci] [-i] [-a] [--tx-first]
                       [--stats-period STATS_PERIOD]
@@ -753,6 +768,8 @@ It shows options without of EAL and container for simplicity.
     $ python app/pktgen.py -h
     usage: pktgen.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                      [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                     [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                     [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                      [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                      [--matrix MATRIX] [--log-level LOG_LEVEL]
                      [--dist-name DIST_NAME] [--dist-ver DIST_VER]
@@ -959,6 +976,8 @@ Refer options and usages by ``load-balancer.py -h``.
     $ python app/load-balancer.py -h
     usage: load-balancer.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                             [--socket-mem SOCKET_MEM]
+                            [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                            [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                             [--nof-memchan NOF_MEMCHAN]
                             [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                             [-rx RX_PORTS] [-tx TX_PORTS] [-w WORKER_LCORES]
