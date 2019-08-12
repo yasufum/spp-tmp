@@ -5,10 +5,12 @@ import os
 import re
 import socket
 import subprocess
+import sys
 import traceback
 import uuid
 import yaml
 from .. import spp_common
+from ..spp_common import logger
 
 
 class SppTopo(object):
@@ -20,8 +22,6 @@ class SppTopo(object):
     * image file (jpg, png, bmp)
     * text (dot, json, yaml)
     """
-
-    delim_node = '_'
 
     def __init__(self, spp_ctl_cli, subgraphs, cli_config):
         self.spp_ctl_cli = spp_ctl_cli
@@ -38,6 +38,12 @@ class SppTopo(object):
         self.GRAPH_TYPE = "digraph"
         self.LINK_TYPE = "->"
         self.SPP_PCAP_LABEL = 'spppcap'  # Label of dummy port of spp_pcap
+        self.delim_node = '_'  # used for node ID such as 'phy_0' or 'ring_1'
+        self.node_temp = '{}' + self.delim_node + '{}'  # template of node ID
+
+        # topo should support spp_pcap's file and tap port
+        self.all_port_types = spp_common.PORT_TYPES + [
+                self.SPP_PCAP_LABEL, 'tap']
 
         # Add colors for custom ports
         self.PORT_COLORS[self.SPP_PCAP_LABEL] = "gold2"
@@ -91,16 +97,19 @@ class SppTopo(object):
 
     def to_file(self, fname, ftype="dot"):
         if ftype == "dot":
-            self.to_dot(fname)
+            if self.to_dot(fname) is not True:
+                return False
         elif ftype == "json" or ftype == "js":
             self.to_json(fname)
         elif ftype == "yaml" or ftype == "yml":
             self.to_yaml(fname)
         elif ftype == "jpg" or ftype == "png" or ftype == "bmp":
-            self.to_img(fname)
+            if self.to_img(fname) is not True:
+                return False
         else:
             print("Invalid file type")
             return False
+
         print("Create topology: '{fname}'".format(fname=fname))
         return True
 
@@ -108,9 +117,16 @@ class SppTopo(object):
         """Output dot script."""
 
         node_attrs = 'node[shape="rectangle", style="filled"];'
-        node_temp = '{}' + self.delim_node + '{}'
 
-        ports, links = self._get_dot_elements(node_temp)
+        ports, links = self._get_dot_elements()
+
+        # Check if one or more ports exist.
+        port_cnt = 0
+        for val in ports.values():
+            port_cnt += len(val)
+        if port_cnt == 0:
+            print('No secondary process exist!')
+            return False
 
         # Remove duplicated entries.
         for ptype in spp_common.PORT_TYPES:
@@ -120,18 +136,14 @@ class SppTopo(object):
         output.append("newrank=true;")
         output.append(node_attrs)
 
-        # topo should support spp_pcap's file and tap port
-        all_port_types = spp_common.PORT_TYPES + [
-                self.SPP_PCAP_LABEL, 'tap']
-
         # Setup node entries
         nodes = {}
-        for ptype in all_port_types:
+        for ptype in self.all_port_types:
             nodes[ptype] = []
             for node in ports[ptype]:
                 r_type, r_id = node.split(':')
                 nodes[ptype].append(
-                    node_temp.format(r_type, r_id))
+                    self.node_temp.format(r_type, r_id))
             nodes[ptype] = list(set(nodes[ptype]))
             for node in nodes[ptype]:
                 label = re.sub(r'{}'.format(self.delim_node), ':', node)
@@ -140,14 +152,14 @@ class SppTopo(object):
                         nd=node, lbl=label, col=self.PORT_COLORS[ptype]))
 
         # Align the same type of nodes with rank attribute
-        for ptype in all_port_types:
+        for ptype in self.all_port_types:
             if len(nodes[ptype]) > 0:
                 output.append(
                     '{{rank=same; {}}}'.format("; ".join(nodes[ptype])))
 
         # Decide the bottom, phy or vhost
         # TODO(yasufum) revise how to decide bottom
-        rank_style = '{{rank=max; ' + node_temp + '}}'
+        rank_style = '{{rank=max; ' + self.node_temp + '}}'
         if len(ports['phy']) > 0:
             r_type, r_id = ports['phy'][0].split(':')
         elif len(ports['vhost']) > 0:
@@ -169,7 +181,7 @@ class SppTopo(object):
 
         # Setup ports included in Host subgraph
         host_nodes = []
-        for ptype in all_port_types:
+        for ptype in self.all_port_types:
             host_nodes = host_nodes + nodes[ptype]
 
         cluster_id = "cluster0"
@@ -196,6 +208,8 @@ class SppTopo(object):
         f.write("\n".join(output))
         f.close()
 
+        return True
+
     def to_json(self, output_fname):
         import json
         f = open(output_fname, "w+")
@@ -212,17 +226,23 @@ class SppTopo(object):
 
     def to_img(self, output_fname):
         tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
-        self.to_dot(tmpfile)
+        if self.to_dot(tmpfile) is not True:
+            return False
+
         fmt = output_fname.split(".")[-1]
         cmd = "dot -T{fmt} {dotf} -o {of}".format(
                 fmt=fmt, dotf=tmpfile, of=output_fname)
         subprocess.call(cmd, shell=True)
         subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
 
+        return True
+
     def to_http(self):
         import websocket
         tmpfile = "{fn}.dot".format(fn=uuid.uuid4().hex)
-        self.to_dot(tmpfile)
+        if self.to_dot(tmpfile) is not True:
+            return False
+
         msg = open(tmpfile).read()
         subprocess.call("rm -f {tmpf}".format(tmpf=tmpfile), shell=True)
         # TODO(yasufum) change to be able to use other than `localhost`.
@@ -234,9 +254,13 @@ class SppTopo(object):
         except socket.error:
             print('Error: Connection refused! Is running websocket server?')
 
+        return True
+
     def to_term(self, size):
         tmpfile = "{fn}.jpg".format(fn=uuid.uuid4().hex)
-        self.to_img(tmpfile)
+        if self.to_img(tmpfile) is not True:
+            return False
+
         from distutils import spawn
 
         # TODO(yasufum) add check for using only supported terminal
@@ -409,7 +433,7 @@ class SppTopo(object):
             pass
         return True
 
-    def _get_dot_elements(self, node_temp):
+    def _get_dot_elements(self):
         """Get entries of nodes and links.
 
         To generate dot script, this method returns ports as nodes and links
@@ -419,11 +443,8 @@ class SppTopo(object):
         ports = {}
         links = []
 
-        # topo should support spp_pcap's file and tap port
-        all_port_types = spp_common.PORT_TYPES + [self.SPP_PCAP_LABEL, 'tap']
-
         # Initialize ports
-        for ptype in all_port_types:
+        for ptype in self.all_port_types:
             ports[ptype] = []
 
         # parse status message from sec.
@@ -431,163 +452,221 @@ class SppTopo(object):
             for sec in self.spp_ctl_cli.get_sec_procs(proc_t):
                 if sec is None:
                     continue
+                self._setup_dot_ports(ports, sec, proc_t)
+                self._setup_dot_links(links, sec, proc_t)
 
-                # Get ports
-                # TODO(yasufum) add try statement for handling key error
-                if proc_t in ['nfv', 'vf', 'mirror']:
-                    for port in sec['ports']:
-                        # TODO make it to a method
-                        if self._is_valid_port(port):
-                            r_type = port.split(':')[0]
-                            if r_type in all_port_types:
-                                ports[r_type].append(port)
-                            else:
-                                raise ValueError(
-                                    "Invaid interface type: {rtype}".format(
-                                        rtype=r_type))
-                elif proc_t == 'pcap':
-                    for c in sec['core']:
-                        if c['role'] == 'receive':
+        return ports, links
+
+    def _setup_dot_ports(self, ports, sec, proc_t):
+        """Parse sec obj and append port to `ports`."""
+
+        try:
+            if proc_t in ['nfv', 'vf', 'mirror']:
+                for port in sec['ports']:
+                    if self._is_valid_port(port):
+                        r_type = port.split(':')[0]
+                        if r_type in self.all_port_types:
+                            ports[r_type].append(port)
+                        else:
+                            raise ValueError(
+                                "Invaid interface type: {}".format(r_type))
+
+            elif proc_t == 'pcap':
+                for c in sec['core']:
+                    if c['role'] == 'receive':
+                        if len(c['rx_port']) > 0:
                             port = c['rx_port'][0]['port']
                             if self._is_valid_port(port):
                                 r_type = port.split(':')[0]
-                                if r_type in all_port_types:
+                                if r_type in self.all_port_types:
                                     ports[r_type].append(port)
                                 else:
                                     raise ValueError(
                                         "Invaid interface type: {}".format(
                                             r_type))
-                    ports[self.SPP_PCAP_LABEL].append(
-                            '{}:{}'.format(self.SPP_PCAP_LABEL,
-                                           sec['client-id']))
-
-                # Get links
-                if proc_t == 'nfv':
-                    for patch in sec['patches']:
-                        if sec['status'] == 'running':
-                            l_style = self.LINE_STYLE["running"]
                         else:
-                            l_style = self.LINE_STYLE["idling"]
-                        attrs = '[label="{}", color="{}", style="{}"]'.format(
-                                "nfv:{}".format(sec["client-id"]),
-                                self.SEC_COLORS[sec["client-id"]],
-                                l_style)
-                        link_style = node_temp + ' {} ' + node_temp + '{};'
+                            print('Error: No rx port in {}:{}.'.format(
+                                'pcap', sec['client-id']))
+                            return False
+                ports[self.SPP_PCAP_LABEL].append(
+                        '{}:{}'.format(self.SPP_PCAP_LABEL, sec['client-id']))
 
-                        if self._is_valid_port(patch['src']):
-                            src_type, src_id = patch['src'].split(':')
-                        if self._is_valid_port(patch['dst']):
-                            dst_type, dst_id = patch['dst'].split(':')
+            else:
+                logger.error('Invlaid secondary type {}.'.format(proc_t))
+
+            return True
+
+        except IndexError as e:
+            print('Error: Failed to parse ports. ' + e)
+        except KeyError as e:
+            print('Error: Failed to parse ports. ' + e)
+
+    def _setup_dot_links(self, links, sec, proc_t):
+        """Parse sec obj and append links to `links`."""
+
+        link_style = self.node_temp + ' {} ' + self.node_temp + '{};'
+        try:
+            # Get links
+            src_type, src_id, dst_type, dst_id = None, None, None, None
+            if proc_t == 'nfv':
+                for patch in sec['patches']:
+                    if sec['status'] == 'running':
+                        l_style = self.LINE_STYLE["running"]
+                    else:
+                        l_style = self.LINE_STYLE["idling"]
+                    attrs = '[label="{}", color="{}", style="{}"]'.format(
+                            "nfv:{}".format(sec["client-id"]),
+                            self.SEC_COLORS[sec["client-id"]],
+                            l_style)
+
+                    if self._is_valid_port(patch['src']):
+                        src_type, src_id = patch['src'].split(':')
+                    if self._is_valid_port(patch['dst']):
+                        dst_type, dst_id = patch['dst'].split(':')
+
+                    if src_type is None or dst_type is None:
+                        print('Error: Failed to parse links in {}:{}.'.format(
+                            'nfv', sec['client-id']))
+                        return False
+
+                    tmp = link_style.format(src_type, src_id,
+                                            self.LINK_TYPE,
+                                            dst_type, dst_id, attrs)
+                    links.append(tmp)
+
+            elif proc_t == 'vf':
+                for comp in sec['components']:
+                    if self._is_comp_running(comp):
+                        l_style = self.LINE_STYLE["running"]
+                    else:
+                        l_style = self.LINE_STYLE["idling"]
+                    attrs = '[label="{}", color="{}", style="{}"]'.format(
+                            "vf:{}:{}".format(
+                                sec["client-id"], comp['type'][0]),
+                            self.SEC_COLORS[sec["client-id"]],
+                            l_style)
+
+                    if comp['type'] == 'forward':
+                        if len(comp['rx_port']) > 0:
+                            rxport = comp['rx_port'][0]['port']
+                            if self._is_valid_port(rxport):
+                                src_type, src_id = rxport.split(':')
+                        if len(comp['tx_port']) > 0:
+                            txport = comp['tx_port'][0]['port']
+                            if self._is_valid_port(txport):
+                                dst_type, dst_id = txport.split(':')
+
+                        if src_type is None or dst_type is None:
+                            print('Error: {msg} {comp}:{sid} {ct}'.format(
+                                msg='Falied to parse links in', comp='vf',
+                                sid=sec['client-id'], ct=comp['type']))
+                            return False
 
                         tmp = link_style.format(src_type, src_id,
                                                 self.LINK_TYPE,
                                                 dst_type, dst_id, attrs)
                         links.append(tmp)
 
-                elif proc_t == 'vf':
-                    for comp in sec['components']:
-                        if self._is_comp_running(comp):
-                            l_style = self.LINE_STYLE["running"]
-                        else:
-                            l_style = self.LINE_STYLE["idling"]
-                        attrs = '[label="{}", color="{}", style="{}"]'.format(
-                                "vf:{}:{}".format(
-                                    sec["client-id"], comp['type'][0]),
-                                self.SEC_COLORS[sec["client-id"]],
-                                l_style)
-                        link_style = node_temp + ' {} ' + node_temp + '{};'
-
-                        if comp['type'] == 'forward':
+                    elif comp['type'] == 'classifier':
+                        if len(comp['rx_port']) > 0:
                             rxport = comp['rx_port'][0]['port']
                             if self._is_valid_port(rxport):
                                 src_type, src_id = rxport.split(':')
-                            txport = comp['tx_port'][0]['port']
-                            if self._is_valid_port(txport):
-                                dst_type, dst_id = txport.split(':')
-
-                            tmp = link_style.format(src_type, src_id,
-                                                    self.LINK_TYPE,
-                                                    dst_type, dst_id, attrs)
-                            links.append(tmp)
-
-                        elif comp['type'] == 'classifier':
-                            rxport = comp['rx_port'][0]['port']
-                            if self._is_valid_port(rxport):
-                                src_type, src_id = rxport.split(':')
-                            for txp in comp['tx_port']:
-                                if self._is_valid_port(txp['port']):
-                                    dst_type, dst_id = txp['port'].split(':')
-
-                                tmp = link_style.format(src_type, src_id,
-                                                        self.LINK_TYPE,
-                                                        dst_type, dst_id,
-                                                        attrs)
-                                links.append(tmp)
-                        elif comp['type'] == 'merge':  # TODO change to merger
-                            txport = comp['tx_port'][0]['port']
-                            if self._is_valid_port(txport):
-                                dst_type, dst_id = txport.split(':')
-                            for rxp in comp['rx_port']:
-                                if self._is_valid_port(rxp['port']):
-                                    src_type, src_id = rxp['port'].split(':')
-
-                                tmp = link_style.format(src_type, src_id,
-                                                        self.LINK_TYPE,
-                                                        dst_type, dst_id,
-                                                        attrs)
-                                links.append(tmp)
-
-                elif proc_t == 'mirror':
-                    for comp in sec['components']:
-                        if self._is_comp_running(comp):
-                            l_style = self.LINE_STYLE["running"]
-                        else:
-                            l_style = self.LINE_STYLE["idling"]
-                        attrs = '[label="{}", color="{}", style="{}"]'.format(
-                                "vf:{}".format(sec["client-id"]),
-                                self.SEC_COLORS[sec["client-id"]],
-                                l_style)
-                        link_style = node_temp + ' {} ' + node_temp + '{};'
-
-                        rxport = comp['rx_port'][0]['port']
-                        if self._is_valid_port(rxport):
-                            src_type, src_id = rxport.split(':')
                         for txp in comp['tx_port']:
                             if self._is_valid_port(txp['port']):
                                 dst_type, dst_id = txp['port'].split(':')
 
+                            if src_type is None or dst_type is None:
+                                print('Error: {msg} {comp}:{sid} {ct}'.format(
+                                    msg='Falied to parse links in', comp='vf',
+                                    sid=sec['client-id'], ct=comp['type']))
+                                return False
+
                             tmp = link_style.format(src_type, src_id,
                                                     self.LINK_TYPE,
                                                     dst_type, dst_id, attrs)
                             links.append(tmp)
 
-                elif proc_t == 'pcap':
-                    if sec['status'] == 'running':
+                    elif comp['type'] == 'merge':  # TODO change to merger
+                        if len(comp['tx_port']) > 0:
+                            txport = comp['tx_port'][0]['port']
+                            if self._is_valid_port(txport):
+                                dst_type, dst_id = txport.split(':')
+                        for rxp in comp['rx_port']:
+                            if self._is_valid_port(rxp['port']):
+                                src_type, src_id = rxp['port'].split(':')
+
+                            if src_type is None or dst_type is None:
+                                print('Error: {msg} {comp}:{sid} {ct}'.format(
+                                    msg='Falied to parse links in', comp='vf',
+                                    sid=sec['client-id'], ct=comp['type']))
+                                return False
+
+                            tmp = link_style.format(src_type, src_id,
+                                                    self.LINK_TYPE,
+                                                    dst_type, dst_id, attrs)
+                            links.append(tmp)
+
+            elif proc_t == 'mirror':
+                for comp in sec['components']:
+                    if self._is_comp_running(comp):
                         l_style = self.LINE_STYLE["running"]
                     else:
                         l_style = self.LINE_STYLE["idling"]
                     attrs = '[label="{}", color="{}", style="{}"]'.format(
-                            "pcap:{}".format(sec["client-id"]),
+                            "vf:{}".format(sec["client-id"]),
                             self.SEC_COLORS[sec["client-id"]],
                             l_style)
-                    link_style = node_temp + ' {} ' + node_temp + '{};'
 
-                    for c in sec['core']:  # TODO consider change to component
-                        if c['role'] == 'receive':  # TODO change to receiver
+                    if len(comp['rx_port']) > 0:
+                        rxport = comp['rx_port'][0]['port']
+                        if self._is_valid_port(rxport):
+                            src_type, src_id = rxport.split(':')
+                    for txp in comp['tx_port']:
+                        if self._is_valid_port(txp['port']):
+                            dst_type, dst_id = txp['port'].split(':')
+
+                        if src_type is None or dst_type is None:
+                            print('Error: {msg} {comp}:{sid} {ct}'.format(
+                                msg='Falied to parse links in', comp='vf',
+                                sid=sec['client-id'], ct=comp['type']))
+                            return False
+
+                        tmp = link_style.format(src_type, src_id,
+                                                self.LINK_TYPE,
+                                                dst_type, dst_id, attrs)
+                        links.append(tmp)
+
+            elif proc_t == 'pcap':
+                if sec['status'] == 'running':
+                    l_style = self.LINE_STYLE["running"]
+                else:
+                    l_style = self.LINE_STYLE["idling"]
+                attrs = '[label="{}", color="{}", style="{}"]'.format(
+                        "pcap:{}".format(sec["client-id"]),
+                        self.SEC_COLORS[sec["client-id"]], l_style)
+
+                for c in sec['core']:  # TODO consider change to component
+                    if c['role'] == 'receive':  # TODO change to receiver
+                        if len(comp['rx_port']) > 0:
                             rxport = c['rx_port'][0]['port']
                             if self._is_valid_port(rxport):
                                 src_type, src_id = rxport.split(':')
-                            dst_type = self.SPP_PCAP_LABEL
-                            dst_id = sec['client-id']
-                    tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
-                                            dst_type, dst_id, attrs)
-                    links.append(tmp)
+                        dst_type = self.SPP_PCAP_LABEL
+                        dst_id = sec['client-id']
+                tmp = link_style.format(src_type, src_id, self.LINK_TYPE,
+                                        dst_type, dst_id, attrs)
+                links.append(tmp)
 
-                else:
-                    # TODO(yasufum) add error handling for invalid proc types
-                    pass
+            else:
+                logger.error('Invlaid secondary type {}.'.format(proc_t))
 
-        return ports, links
+            return True
+
+        except IndexError as e:
+            print('Error: Failed to parse links. "{}"'.format(e))
+        except KeyError as e:
+            print('Error: Failed to parse links. "{}"'.format(e))
 
     @classmethod
     def help(cls):
