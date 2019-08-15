@@ -144,6 +144,7 @@ On the other hand, application specific options are different each other.
                           [--socket-mem SOCKET_MEM]
                           [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                           [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                          [--single-file-segment]
                           [--nof-memchan NOF_MEMCHAN] [-n NOF_RING]
                           [-p PORT_MASK]
                           [-dv DEV_VHOST_IDS] [-dt DEV_TAP_IDS] [-ip CTRL_IP]
@@ -166,6 +167,9 @@ On the other hand, application specific options are different each other.
                             PCI blacklist for excluding devices
       -w [PCI_WHITELIST [PCI_WHITELIST ...]], --pci-whitelist [PCI_WHITELIST..
                             PCI whitelist for including devices
+      --single-file-segments
+                            Create fewer files in hugetlbfs (non-legacy mode
+                            only).
       --nof-memchan NOF_MEMCHAN
                             Number of memory channels (default is 4)
       -n NOF_RING, --nof-ring NOF_RING
@@ -218,6 +222,7 @@ It shows only application specific options for simplicity.
                       [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
                       [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                       [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                      [--single-file-segment]
                       [-i SEC_ID] [-ip CTRL_IP] [--ctrl-port CTRL_PORT]
                       [--dist-name DIST_NAME] [--dist-ver DIST_VER]
                       [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
@@ -268,6 +273,7 @@ It shows options without of EAL and container for simplicity.
     usage: l2fwd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
                     [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
                     [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                    [--single-file-segment]
                     [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
                     [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                     [-p PORT_MASK]
@@ -386,6 +392,7 @@ It shows options without of EAL and container for simplicity.
                     [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
                     [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                     [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                    [--single-file-segment]
                     [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                     [-p PORT_MASK] [--config CONFIG] [-P] [-E] [-L]
                     [-dst [ETH_DEST [ETH_DEST ...]]] [--enable-jumbo]
@@ -485,6 +492,7 @@ It shows options without of EAL and container.
                       [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
                       [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                       [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                      [--single-file-segment]
                       [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                       [--pci] [-i] [-a] [--tx-first]
                       [--stats-period STATS_PERIOD]
@@ -770,6 +778,7 @@ It shows options without of EAL and container for simplicity.
                      [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
                      [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                      [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                     [--single-file-segment]
                      [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                      [--matrix MATRIX] [--log-level LOG_LEVEL]
                      [--dist-name DIST_NAME] [--dist-ver DIST_VER]
@@ -978,6 +987,7 @@ Refer options and usages by ``load-balancer.py -h``.
                             [--socket-mem SOCKET_MEM]
                             [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                             [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                            [--single-file-segment]
                             [--nof-memchan NOF_MEMCHAN]
                             [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
                             [-rx RX_PORTS] [-tx TX_PORTS] [-w WORKER_LCORES]
