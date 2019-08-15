@@ -38,6 +38,10 @@ def add_eal_args(parser, mem_size=1024, mem_channel=4):
         nargs='*', type=str,
         help='PCI whitelist for including devices')
     parser.add_argument(
+        '--single-file-segments',
+        action='store_true',
+        help='Create fewer files in hugetlbfs (non-legacy mode only).')
+    parser.add_argument(
         '--nof-memchan',
         type=int,
         default=mem_channel,
@@ -99,6 +103,9 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', hugedir=None):
     elif args.pci_whitelist is not None:
         for wd in args.pci_whitelist:
             eal_opts += ['-w', wd, '\\']
+
+    if args.single_file_segments is not None:
+        eal_opts += ['--single-file-segments', '\\']
 
     eal_opts += [
         '--file-prefix', file_prefix, '\\',
