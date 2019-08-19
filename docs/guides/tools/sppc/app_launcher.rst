@@ -20,6 +20,7 @@ inside a container.
     |--- helloworld.py
     |--- l2fwd.py
     |--- l3fwd.py
+    |--- l3fwd-acl.py
     |--- load-balancer.py
     |--- pktgen.py
     |--- spp-nfv.py
@@ -309,8 +310,8 @@ This application provides LPM (longest prefix match) or
 EM (exact match) methods for packet classification.
 
 ``app/l3fwd.py`` launches l3fwd on a container.
-As ``l3fwd`` application, this python script takes several options
-other than EAL for port configurations and classification methods.
+As similar to ``l3fwd`` application, this python script takes several
+options other than EAL for port configurations and classification methods.
 The mandatory options for the application are ``-p`` for portmask
 and ``--config`` for rx as a set of combination of
 ``(port, queue, locre)``.
@@ -432,6 +433,126 @@ It shows options without of EAL and container for simplicity.
       --parse-ptype PARSE_PTYPE
                             Set analyze packet type, ipv4 or ipv6 (default is
                             ipv4)
+      ...
+
+
+.. _sppc_appl_l3fwd_acl:
+
+L3fwd-acl Container
+-------------------
+
+`L3 Forwarding with Access Control
+<https://doc.dpdk.org/guides/sample_app_ug/l3_forward_access_ctrl.html>`_
+application is a simple example of packet processing using the DPDK.
+The application performs a security check on received packets.
+Packets that are in the Access Control List (ACL), which is loaded
+during initialization, are dropped. Others are forwarded to the correct
+port.
+
+``app/l3fwd-acl.py`` launches l3fwd-acl on a container.
+As similar to ``l3fwd-acl``, this python script takes several options
+other than EAL for port configurations and rules.
+The mandatory options for the application are ``-p`` for portmask
+and ``--config`` for rx as a set of combination of
+``(port, queue, locre)``.
+
+Here is an example for launching l3fwd app container with two vhost
+interfaces and printed log messages.
+There are two rx ports. ``(0,0,1)`` is for queue of port 0 for which
+lcore 1 is assigned, and ``(1,0,2)`` is for port 1.
+In this case, you should add ``-nq`` option because the number of both
+of rx and tx queues are two while the default number of virtio device
+is one.
+The number of tx queues, is two in this case, is decided to be the same
+value as the number of lcores.
+In ``--vdev`` option setup in the script, the number of queues is
+defined as ``virtio_...,queues=2,...``.
+
+.. code-block:: console
+
+    $ cd /path/to/spp/tools/sppc
+    $ python app/l3fwd-acl.py -l 1-2 -nq 2 -d 1,2 \
+      --rule_ipv4="./rule_ipv4.db" -- rule_ipv6="./rule_ipv6.db" --scalar \
+      -p 0x03 --config="(0,0,1),(1,0,2)" -fg
+      sudo docker run \
+      -it \
+      ...
+      --vdev virtio_user1,queues=2,path=/var/run/usvhost1 \
+      --vdev virtio_user2,queues=2,path=/var/run/usvhost2 \
+      --file-prefix spp-l3fwd-container1 \
+      -- \
+      -p 0x03 \
+      --config "(0,0,8),(1,0,9)" \
+      --rule_ipv4="./rule_ipv4.db" \
+      --rule_ipv6="./rule_ipv6.db" \
+      --scalar
+      EAL: Detected 16 lcore(s)
+      EAL: Auto-detected process type: PRIMARY
+      EAL: Multi-process socket /var/run/.spp-l3fwd-container1_unix
+      EAL: Probing VFIO support...
+      soft parse-ptype is enabled
+      LPM or EM none selected, default LPM on
+      Initializing port 0 ... Creating queues: nb_rxq=1 nb_txq=2...
+      LPM: Adding route 0x01010100 / 24 (0)
+      LPM: Adding route 0x02010100 / 24 (1)
+      LPM: Adding route IPV6 / 48 (0)
+      LPM: Adding route IPV6 / 48 (1)
+      txq=8,0,0 txq=9,1,0
+      Initializing port 1 ... Creating queues: nb_rxq=1 nb_txq=2...
+
+      Initializing rx queues on lcore 8 ... rxq=0,0,0
+      Initializing rx queues on lcore 9 ... rxq=1,0,0
+      ...
+
+You can increase lcores more than the number of ports, for instance,
+four lcores for two ports.
+However, remaining 3rd and 4th lcores do nothing and require
+``-nq 4`` for tx queues.
+
+Refer help for all of options and usges.
+It shows options without of EAL and container for simplicity.
+
+.. code-block:: console
+
+    $ python app/l3fwd-acl.py -h
+    usage: l3fwd-acl.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
+                        [--socket-mem SOCKET_MEM]
+                        [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                        [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                        [--single-file-segment] [--nof-memchan NOF_MEMCHAN]
+                        [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
+                        [-p PORT_MASK] [--config CONFIG] [-P]
+                        [--rule_ipv4 RULE_IPV4] [--rule_ipv6 RULE_IPV6]
+                        [--scalar] [--enable-jumbo]
+                        [--max-pkt-len MAX_PKT_LEN] [--no-numa]
+                        [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                        [--workdir WORKDIR] [-ci CONTAINER_IMAGE] [-fg]
+                        [--dry-run]
+
+    Launcher for l3fwd-acl application container
+
+    optional arguments:
+      ...
+      -d DEV_IDS, --dev-ids DEV_IDS
+                            two or more even vhost device IDs
+      -nq NOF_QUEUES, --nof-queues NOF_QUEUES
+                            Number of queues of virtio (default is 1)
+      --no-privileged       Disable docker's privileged mode if it's needed
+      -p PORT_MASK, --port-mask PORT_MASK
+                            (Mandatory) Port mask
+      --config CONFIG       (Mandatory) Define set of port, queue, lcore for
+                            ports
+      -P, --promiscous      Set all ports to promiscous mode (default is None)
+      --rule_ipv4 RULE_IPV4
+                            Specifies the IPv4 ACL and route rules file
+      --rule_ipv6 RULE_IPV6
+                            Specifies the IPv6 ACL and route rules file
+      --scalar              Use a scalar function to perform rule lookup
+      --enable-jumbo        Enable jumbo frames, [--enable-jumbo [--max-pkt-len
+                            PKTLEN]]
+      --max-pkt-len MAX_PKT_LEN
+                            Max packet length (64-9600) if jumbo is enabled.
+      --no-numa             Disable NUMA awareness (default is None)
       ...
 
 
