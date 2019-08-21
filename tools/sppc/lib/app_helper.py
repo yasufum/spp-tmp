@@ -104,7 +104,7 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', hugedir=None):
         for wd in args.pci_whitelist:
             eal_opts += ['-w', wd, '\\']
 
-    if args.single_file_segments is not None:
+    if args.single_file_segments is True:
         eal_opts += ['--single-file-segments', '\\']
 
     eal_opts += [
