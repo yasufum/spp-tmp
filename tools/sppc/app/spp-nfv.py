@@ -28,14 +28,14 @@ def parse_args():
         type=int,
         help='Secondary ID')
     parser.add_argument(
-        '-ip', '--ctrl-ip',
+        '-ip', '--ctl-ip',
         type=str,
-        help="IP address of SPP controller")
+        help="IP address of spp-ctl")
     parser.add_argument(
-        '--ctrl-port',
+        '--ctl-port',
         type=int,
         default=6666,
-        help="Port of SPP controller")
+        help="Port for secondary of spp-ctl")
 
     parser = app_helper.add_sppc_args(parser)
 
@@ -99,12 +99,13 @@ def main():
     else:
         spp_opts += ['-n', str(args.sec_id), '\\']
 
-    # IP address of SPP controller.
-    ctrl_ip = os.getenv('SPP_CTRL_IP', args.ctrl_ip)
-    if ctrl_ip is None:
-        common.error_exit('SPP_CTRL_IP')
+    # IP address of spp-ctl.
+    ctl_ip = os.getenv('SPP_CTL_IP', args.ctl_ip)
+    if ctl_ip is None:
+        print('Env variable "SPP_CTL_IP" is not defined!')
+        exit()
     else:
-        spp_opts += ['-s', '%s:%d' % (ctrl_ip, args.ctrl_port), '\\']
+        spp_opts += ['-s', '{}:{}'.format(ctl_ip, args.ctl_port), '\\']
 
     cmds = docker_cmd + docker_opts + spp_cmd + eal_opts + spp_opts
     if cmds[-1] == '\\':

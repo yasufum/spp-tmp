@@ -41,14 +41,14 @@ def parse_args():
         type=str,
         help='TAP device IDs')
     parser.add_argument(
-        '-ip', '--ctrl-ip',
+        '-ip', '--ctl-ip',
         type=str,
-        help="IP address of SPP controller")
+        help="IP address of spp-ctl")
     parser.add_argument(
-        '--ctrl-port',
+        '--ctl-port',
         type=int,
         default=5555,
-        help="Port of SPP controller")
+        help="Port for primary of spp-ctl")
 
     parser = app_helper.add_sppc_args(parser)
 
@@ -88,8 +88,8 @@ def main():
         socks = []
         for dev_id in dev_vhost_ids:
             socks.append({
-                'host': '/tmp/sock%d' % dev_id,
-                'guest': '/tmp/sock%d' % dev_id})
+                'host': '/tmp/sock{}'.format(dev_id),
+                'guest': '/tmp/sock{}'.format(dev_id)})
     else:
         dev_vhost_ids = []
 
@@ -122,13 +122,13 @@ def main():
     # Add TAP vdevs
     for i in range(len(dev_tap_ids)):
         eal_opts += [
-            '--vdev', 'net_tap%d,iface=foo%d' % (
+            '--vdev', 'net_tap{},iface=foo{}'.format(
                 dev_tap_ids[i], dev_tap_ids[i]), '\\']
 
     # Add vhost vdevs
     for i in range(len(dev_vhost_ids)):
         eal_opts += [
-            '--vdev', 'eth_vhost%d,iface=%s' % (
+            '--vdev', 'eth_vhost{},iface={}'.format(
                 dev_vhost_ids[i], socks[i]['guest']), '\\']
 
     eal_opts += ['--', '\\']
@@ -142,12 +142,13 @@ def main():
 
     spp_opts += ['-n', str(args.nof_ring), '\\']
 
-    # IP address of SPP controller.
-    ctrl_ip = os.getenv('SPP_CTRL_IP', args.ctrl_ip)
-    if ctrl_ip is None:
-        common.error_exit('SPP_CTRL_IP')
+    # IP address of spp-ctl.
+    ctl_ip = os.getenv('SPP_CTL_IP', args.ctl_ip)
+    if ctl_ip is None:
+        print('Env variable "SPP_CTL_IP" is not defined!')
+        exit()
     else:
-        spp_opts += ['-s', '%s:%d' % (ctrl_ip, args.ctrl_port), '\\']
+        spp_opts += ['-s', '{}:{}'.format(ctl_ip, args.ctl_port), '\\']
 
     cmds = docker_cmd + docker_opts + spp_cmd + eal_opts + spp_opts
     if cmds[-1] == '\\':
