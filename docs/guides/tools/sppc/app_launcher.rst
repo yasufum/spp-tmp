@@ -45,11 +45,11 @@ inside a container.
 Setup
 -----
 
-You should define ``SPP_CTRL_IP`` environment variable to SPP controller
+You should define ``SPP_CTL_IP`` environment variable to SPP controller
 be accessed from other SPP processes inside containers.
 SPP controller is a CLI tool for accepting user's commands.
 
-You cannot use ``127.0.0.1`` or ``localhost`` for ``SPP_CTRL_IP``
+You cannot use ``127.0.0.1`` or ``localhost`` for ``SPP_CTL_IP``
 because SPP processes try to find SPP controller inside each of
 containers and fail to.
 From inside of the container, SPP processes should be known IP address

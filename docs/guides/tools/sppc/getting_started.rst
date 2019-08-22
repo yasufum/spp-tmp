@@ -135,14 +135,14 @@ Launch SPP and App Containers
 -----------------------------
 
 Before launch containers, you should set IP address of host machine
-as ``SPP_CTRL_IP`` environment variable
+as ``SPP_CTL_IP`` environment variable
 for controller to be accessed from inside containers.
 It is better to define this variable in ``$HOME/.bashrc``.
 
 .. code-block:: console
 
     # Set your host IP address
-    export SPP_CTRL_IP=HOST_IPADDR
+    export SPP_CTL_IP=HOST_IPADDR
 
 
 SPP Controller
@@ -180,7 +180,7 @@ processes.
 SPP Primary Container
 ~~~~~~~~~~~~~~~~~~~~~
 
-As ``SPP_CTRL_IP`` is activated, you are enalbed to run
+As ``SPP_CTL_IP`` is activated, you are enalbed to run
 ``app/spp-primary.py`` with options of EAL and SPP primary
 in terminal 3.
 In this case, launch spp-primary in background mode using one core
