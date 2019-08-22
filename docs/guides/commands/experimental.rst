@@ -230,50 +230,6 @@ delete subgraph ``guest_vm``.
     spp > topo_subgraph del guest_vm
 
 
-.. _commands_experimental_topo_resize:
-
-topo_resize
------------
-
-.. note::
-
-    This command will be removed because the size of image is configurable
-    with :ref:`config<commands_common_config>` command. You can resize images by changing the value of
-    ``topo_size``.
-
-``topo_resize`` is a supplemental command for changing the size of
-images displayed on the terminal with ``topo``.
-
-``topo`` displays an image generated from graphviz with default size.
-However, it is too small or large for some environments because it
-depends on the resolution actually.
-
-To check default size, run ``topo_resize`` with no arguments.
-It shows current size of the image.
-
-.. code-block:: console
-
-    # shows current size
-    spp > topo_resize
-    60%
-
-You can resize it with percentage
-
-.. code-block:: console
-
-    # resize with percentage
-    spp > topo_resize 80%
-    80%
-
-or ratio.
-
-.. code-block:: console
-
-    # resize with ratio
-    spp > topo_resize 0.8
-    80%
-
-
 .. _commands_experimental_load_cmd:
 
 load_cmd
