@@ -540,7 +540,7 @@ options of ``spp_pcap``.
 
 * ``--client-id``: Client ID unique among secondary processes.
 * ``-s``: IPv4 address and secondary port of spp-ctl.
-* ``-c``: Captured port, e.g. ``phy:0``, ``ring:1`` or so.
+* ``-c``: Captured port. Only ``phy`` and ``ring`` are supported.
 * ``--out-dir``: Optional. Path of dir for captured file. Default is ``/tmp``.
 * ``--fsize``: Optional. Maximum size of a capture file. Default is ``1GiB``.
 

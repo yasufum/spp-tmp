@@ -209,10 +209,10 @@ specific port. It is aimed to capture up to 10Gbps packets.
 ``spp_pcap`` in which ``spp_pcap`` process receives packets from ``phy:0``
 for capturing.
 
-``spp_pcap`` provides packet capturing capability as a SPP secondary process.
-``spp_pcap`` has one manager thread like spp_vf, and has two types of worker
-threads unlike spp_vf.
+.. note::
 
+   ``spp_pcap`` supports only two types of ports for capturing, ``phy``
+   and ``ring``, currently.
 
 .. _figure_spp_pcap_overview:
 
