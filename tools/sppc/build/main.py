@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument(
         '-t', '--target',
         type=str,
-        help="Build target ('dpdk', 'pktgen' or 'spp')")
+        help="Build target ('dpdk', 'pktgen', 'spp' or 'suricata')")
     parser.add_argument(
         '-ci', '--container-image',
         type=str,
@@ -62,6 +62,18 @@ def parse_args():
         '--spp-branch',
         type=str,
         help="Specific version or branch of SPP")
+
+    # Supporting suricata is experimental
+    parser.add_argument(
+        '--suricata-repo',
+        type=str,
+        default="https://github.com/vipinpv85/DPDK_SURICATA-4_1_1.git",
+        help="Git URL of DPDK-Suricata")
+    parser.add_argument(
+        '--suricata-branch',
+        type=str,
+        help="Specific version or branch of DPDK-Suricata")
+
     parser.add_argument(
         '--only-envsh',
         action='store_true',
@@ -85,6 +97,8 @@ def create_env_sh(dst_dir, rte_sdk, target, target_dir):
         contents += "export PKTGEN_DIR=%s" % target_dir
     elif target == 'spp':
         contents += "export SPP_DIR=%s" % target_dir
+    elif target == 'suricata':
+        contents += "export SURICATA_DIR=%s" % target_dir
 
     try:
         f = open('%s/env.sh' % dst_dir, 'w')
@@ -106,7 +120,7 @@ def main():
             args.dist_name,
             args.dist_ver)
     else:
-        print("Error: Target '-t [dpdk|pktgen|spp]' is required!")
+        print("Error: Target, such as '-t dpdk' or '-t spp' is required!")
         exit()
 
     # Decide which of Dockerfile with given base image version
@@ -132,12 +146,22 @@ def main():
     else:
         spp_branch = ''
 
+    if args.suricata_branch is not None:
+        suricata_branch = "-b %s" % args.suricata_branch
+    else:
+        suricata_branch = ''
+
     # Setup project directory by extracting from any of git URL.
     # If DPDK is hosted on 'https://github.com/user/custom-dpdk.git',
     # the directory is 'custom-dpdk'.
     dpdk_dir = args.dpdk_repo.split('/')[-1].split('.')[0]
     pktgen_dir = args.pktgen_repo.split('/')[-1].split('.')[0]
     spp_dir = args.spp_repo.split('/')[-1].split('.')[0]
+
+    # NOTE: Suricata has sub-directory as project root.
+    suricata_ver = '4.1.4'
+    suricata_dir = '{}/suricata-{}'.format(
+            args.suricata_repo.split('/')[-1].split('.')[0], suricata_ver)
 
     # RTE_SDK is decided with DPDK's dir.
     rte_sdk = '%s/%s' % (env.HOMEDIR, dpdk_dir)
@@ -149,6 +173,8 @@ def main():
                 create_env_sh(dockerfile_dir, rte_sdk, args.target, pktgen_dir)
             elif args.target == 'spp':
                 create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
+            elif args.target == 'suricata':
+                create_env_sh(dockerfile_dir, rte_sdk, args.target, suricata_dir)
             elif args.target == 'dpdk':
                 create_env_sh(dockerfile_dir, rte_sdk, args.target, dpdk_dir)
             print("Info: '%s/env.sh' created." % dockerfile_dir)
@@ -162,6 +188,8 @@ def main():
             create_env_sh(dockerfile_dir, rte_sdk, args.target, pktgen_dir)
         elif args.target == 'spp':
             create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
+        elif args.target == 'suricata':
+            create_env_sh(dockerfile_dir, rte_sdk, args.target, suricata_dir)
         elif args.target == 'dpdk':
             create_env_sh(dockerfile_dir, rte_sdk, args.target, dpdk_dir)
 
@@ -196,6 +224,11 @@ def main():
             '--build-arg', 'spp_repo=%s' % args.spp_repo, '\\',
             '--build-arg', 'spp_branch=%s' % spp_branch, '\\',
             '--build-arg', 'spp_dir=%s' % spp_dir, '\\']
+    elif args.target == 'suricata':
+        docker_cmd += [
+            '--build-arg', 'suricata_repo=%s' % args.suricata_repo, '\\',
+            '--build-arg', 'suricata_branch=%s' % suricata_branch, '\\',
+            '--build-arg', 'suricata_dir=%s' % suricata_dir, '\\']
 
     docker_cmd += [
         '-f', '%s' % dockerfile, '\\',

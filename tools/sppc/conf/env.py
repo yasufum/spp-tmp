@@ -10,4 +10,6 @@ RTE_TARGET = 'x86_64-native-linuxapp-gcc'
 CONTAINER_IMG_NAME = {
     'dpdk': 'sppc/dpdk',
     'pktgen': 'sppc/pktgen',
-    'spp': 'sppc/spp'}
+    'spp': 'sppc/spp',
+    'suricata': 'sppc/suricata',
+    }
