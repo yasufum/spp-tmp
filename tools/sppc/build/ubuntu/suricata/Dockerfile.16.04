@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:16.04
 
 ARG rte_sdk
 ARG rte_target
@@ -15,8 +15,6 @@ ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
 ENV INSTALL_SURICATA_SH install_suricata.sh
-ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
-ENV PATH ${home_dir}/${suricata_dir}/src:${PATH}
 ENV DEBIAN_FRONTEND noninteractive
 
 # NOTE: There two ways for compiling suricata with DPDK. One is using sources
@@ -51,6 +49,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     automake \
+    autoconf \
     liblz4-dev \
     libpcre3 libpcre3-dbg libpcre3-dev build-essential libpcap-dev \
     libnet1-dev libyaml-0-2 libyaml-dev pkg-config zlib1g zlib1g-dev \
@@ -73,38 +72,41 @@ RUN make config T=${rte_target} O=${rte_target}
 WORKDIR ${rte_sdk}/${rte_target}
 RUN make -j 4
 
-# NOTE: Case 1
-WORKDIR ${home_dir}
-RUN wget ${SURICATA_DOWNLOAD}
-RUN tar zxvf ${SURICATA_TGZ}
-WORKDIR ${home_dir}/${SURICATA_SRCDIR}
-RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} autoconf
-RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} sh configure --enable-dpdk
-RUN make -j 10
-ENV PATH ${SURICATA_SRCDIR}/src:${PATH}
+## NOTE: Case 1
+#WORKDIR ${home_dir}
+#RUN wget ${SURICATA_DOWNLOAD}
+#RUN tar zxvf ${SURICATA_TGZ}
+#WORKDIR ${home_dir}/${SURICATA_SRCDIR}
+#RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} autoconf
+#RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} sh configure --enable-dpdk
+#RUN make -j 10
+#ENV PATH ${SURICATA_SRCDIR}/src:${PATH}
 
 # NOTE: Case 2
 # Compiling suricata with Dockerfile is failed if clone suricata
 # while building this image. So, do it after app container is launched.
 # Create suricata install script.
-#WORKDIR ${home_dir}
-#RUN echo "#!/bin/bash" > ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "git clone ${suricata_repo}" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "cd ${suricata_dir}" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "autoconf" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "./configure --enable-dpdk" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "make -j 10" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN echo "make install" >> ${home_dir}/${INSTALL_SURICATA_SH}
-#RUN chmod 775 ${home_dir}/${INSTALL_SURICATA_SH}
+WORKDIR ${home_dir}
+RUN echo "#!/bin/bash" > ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "git clone ${suricata_repo}" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "cd ${suricata_dir}" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "autoconf" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "./configure --enable-dpdk" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "make -j 10" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN echo "make install" >> ${home_dir}/${INSTALL_SURICATA_SH}
+RUN chmod 775 ${home_dir}/${INSTALL_SURICATA_SH}
+ENV PATH ${home_dir}/${suricata_dir}/src:${PATH}
 
 # NOTE: Case 3 Compiling suricata with Dockerfile does not work
 # Compile suricata
+#WORKDIR ${home_dir}
 #RUN git clone ${suricata_branch} ${suricata_repo}
 #WORKDIR ${home_dir}/${suricata_dir}
 #RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} autoconf
 #RUN RTE_SDK=${rte_sdk} RTE_TARGET=${rte_target} sh configure --enable-dpdk
 #RUN make -j 10
+#ENV PATH ${home_dir}/${suricata_dir}/src:${PATH}
 
 # Set working directory when container is launched
 WORKDIR ${home_dir}
