@@ -141,7 +141,7 @@ parse_command(char *str)
 	int max_token = 0;
 	int ret = 0;
 	char result[16] = { 0 };  /* succeeded or failed. */
-	char port_set[32] = { 0 };
+	char port_set[128] = { 0 };
 	char *p_type;
 	int p_id;
 
