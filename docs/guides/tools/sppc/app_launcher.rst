@@ -1098,7 +1098,6 @@ or failed to launch.
     --lpm "1.0.0.0/24=>0; 1.0.1.0/24=>1; 1.0.2.0/24=>2;"
 
 
-``load-balancer.py`` supports all of options other than mandatories.
 Refer options and usages by ``load-balancer.py -h``.
 
 .. code-block:: console
@@ -1141,6 +1140,65 @@ Refer options and usages by ``load-balancer.py -h``.
       --lpm LPM             List of LPM rules
       --pos-lb POS_LB       Position of the 1-byte field used for identify
                             worker
+      ...
+
+
+.. _sppc_appl_suricata:
+
+Suricata Container
+------------------
+
+`Suricata
+<https://suricata.readthedocs.io/en/suricata-4.1.2/index.html>`_
+is a sophisticated IDS/IPS application.
+SPP container supports suricata 4.1.4 hosted this
+`repository
+<https://github.com/vipinpv85/DPDK_SURICATA-4_1_1>`_.
+
+Unlike other scripts, ``app/suricata.py`` does not launch appliation
+directly but bash to enable to edit config file on the container.
+Suricata accepts options from config file specified with
+``--dpdk`` option.
+You can copy your config to the container by using ``docker cp``.
+Sample config ``mysuricata.cfg`` is included under ``suricata-4.1.4``.
+
+Here is an example of launching suricata with image
+``sppc/suricata-ubuntu2:latest``
+which is built as described in
+:ref:`sppc_build_img_suricata`.
+
+.. code-block:: console
+
+    $ docker cp your.cnf CONTAINER_ID:/path/to/conf/your.conf
+    $ ./suricata.py -d 1,2 -fg -ci sppc/suricata-ubuntu2:latest
+    # suricata --dpdk=/path/to/config
+
+
+Refer options and usages by ``load-balancer.py -h``.
+
+.. code-block:: console
+
+    $ python app/suricata.py -h
+    usage: suricata.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
+                       [--socket-mem SOCKET_MEM]
+                       [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                       [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                       [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                       [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
+                       [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                       [--workdir WORKDIR] [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
+
+    Launcher for suricata container
+
+    optional arguments:
+      ...
+      -d DEV_IDS, --dev-ids DEV_IDS
+                            two or more even vhost device IDs
+      -nq NOF_QUEUES, --nof-queues NOF_QUEUES
+                            Number of queues of virtio (default is 1)
+      --no-privileged       Disable docker's privileged mode if it's needed
+      --dist-name DIST_NAME
+                            Name of Linux distribution
       ...
 
 

@@ -14,12 +14,12 @@ This script is for running ``docker build`` with a set of
 This script supports building application from any of repositories.
 For example, you can build SPP hosted on your repository
 ``https://github.com/your/spp.git``
-with DPDK 18.02 as following.
+with DPDK 18.11 as following.
 
 .. code-block:: console
 
     $ cd /path/to/spp/tools/sppc
-    $ python build/build.py --dpdk-branch v18.02 \
+    $ python build/build.py --dpdk-branch v18.11 \
       --spp-repo https://github.com/your/spp.git
 
 Refer all of options running with ``-h`` option.
@@ -28,18 +28,20 @@ Refer all of options running with ``-h`` option.
 
     $ python build/main.py -h
     usage: main.py [-h] [-t TARGET] [-ci CONTAINER_IMAGE]
-                   [--dist-name DIST_NAME]
-                   [--dist-ver DIST_VER] [--dpdk-repo DPDK_REPO]
-                   [--dpdk-branch DPDK_BRANCH] [--pktgen-repo PKTGEN_REPO]
-                   [--pktgen-branch PKTGEN_BRANCH] [--spp-repo SPP_REPO]
-                   [--spp-branch SPP_BRANCH] [--only-envsh] [--dry-run]
+                   [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                   [--dpdk-repo DPDK_REPO] [--dpdk-branch DPDK_BRANCH]
+                   [--pktgen-repo PKTGEN_REPO] [--pktgen-branch PKTGEN_BRANCH]
+                   [--spp-repo SPP_REPO] [--spp-branch SPP_BRANCH]
+                   [--suricata-repo SURICATA_REPO]
+                   [--suricata-branch SURICATA_BRANCH]
+                   [--only-envsh] [--dry-run]
 
     Docker image builder for DPDK applications
 
     optional arguments:
       -h, --help            show this help message and exit
       -t TARGET, --target TARGET
-                            Build target ('dpdk', 'pktgen' or 'spp')
+                            Build target ('dpdk', 'pktgen', 'spp' or 'suricata')
       -ci CONTAINER_IMAGE, --container-image CONTAINER_IMAGE
                             Name of container image
       --dist-name DIST_NAME
@@ -56,6 +58,10 @@ Refer all of options running with ``-h`` option.
       --spp-repo SPP_REPO   Git URL of SPP
       --spp-branch SPP_BRANCH
                             Specific version or branch of SPP
+      --suricata-repo SURICATA_REPO
+                            Git URL of DPDK-Suricata
+      --suricata-branch SURICATA_BRANCH
+                            Specific version or branch of DPDK-Suricata
       --only-envsh          Create config 'env.sh' and exit without docker build
       --dry-run             Print matrix for checking and exit without docker
                             build
@@ -151,10 +157,70 @@ It is included in a future release.
     |    |--- Dockerfile.16.04
     |    |--- Dockerfile.18.04
     |    ---- Dockerfile.latest
-    ---- spp
+    |--- spp
+    |    |--- Dockerfile.16.04
+    |    |--- Dockerfile.18.04
+    |    ---- Dockerfile.latest
+    ---- suricata
          |--- Dockerfile.16.04
          |--- Dockerfile.18.04
          ---- Dockerfile.latest
+
+
+.. _sppc_build_img_suricata:
+
+Build suricata image
+~~~~~~~~~~~~~~~~~~~~
+
+Building DPDK, pktgen and SPP is completed by just running ``build/main.py``
+script. However, building suricata requires few additional few steps.
+
+
+First, build an image with ``main.py`` script as similar to other apps.
+In this example, use DPDK v18.11 and Ubuntu 16.04.
+
+.. code-block:: console
+
+    $ python build/main.py -t suricata --dpdk-branch v18.11 --dist-ver 16.04
+
+After build is completed, you can find image named as
+``sppc/suricata-ubuntu:16.04`` from ``docker images``.
+Run bash command with this image, and execute an installer script in home
+directory which is created while building.
+
+.. code-block:: console
+
+    sppc/suricata-ubuntu  16.04 ...
+    $ docker run -it sppc/suricata-ubuntu:16.04 /bin/bash
+    # ./install_suricata.sh
+
+It clones and compiles suricata under home directory. You can find
+``$HOME/DPDK_SURICATA-4_1_1`` after runing this script is completed.
+
+Although now you are ready to use suricata, it takes a little time for doing
+this task everytime you run the app container.
+For skipping this task, you can create another image from running container
+with ``docker commit`` command.
+
+Logout and create a new docker image with ``docker commit`` image's
+container ID. In this example, new image is named as
+`sppc/suricata-ubuntu2:16.04`.
+
+.. code-block:: console
+
+    # exit
+    $ docker ps -a
+    CONTAINER_ID  sppc/suricata-ubuntu:16.04  "/bin/bash"  3 minutes ...
+    $ docker commit CONTAINER_ID sppc/suricata-ubuntu2:16.04
+
+You can run compiled suricata with the new image with docker as following,
+or app container launcher with specific options as described in.
+:ref:`sppc_appl_suricata`.
+
+.. code-block:: console
+
+    $ docker run -it sppc/suricata-ubuntu:16.04 /bin/bash
+    # suricata --build-info
 
 
 .. _sppc_build_img_inspect:
