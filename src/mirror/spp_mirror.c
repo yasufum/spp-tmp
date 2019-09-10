@@ -615,12 +615,9 @@ main(int argc, char *argv[])
 
 		/* Enter loop for accepting commands */
 		int ret_do = 0;
-#ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[master_lcore].status !=
-				SPPWK_LCORE_REQ_STOP)) {
-#else
+					SPPWK_LCORE_REQ_STOP))
 		{
-#endif
 			/* Receive command */
 			ret_do = sppwk_run_cmd();
 			if (unlikely(ret_do != SPPWK_RET_OK))
