@@ -319,12 +319,9 @@ main(int argc, char *argv[])
 		backup_mng_info(&g_backup_info);
 
 		/* Enter loop for accepting commands */
-#ifndef USE_UT_SPP_VF
 		while (likely(g_core_info[master_lcore].status !=
-				SPPWK_LCORE_REQ_STOP)) {
-#else
+					SPPWK_LCORE_REQ_STOP))
 		{
-#endif
 			/* Receive command */
 			ret = sppwk_run_cmd();
 			if (unlikely(ret != SPPWK_RET_OK))
