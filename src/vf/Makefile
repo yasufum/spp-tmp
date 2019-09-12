@@ -37,6 +37,10 @@ CFLAGS += -DSPP_VF_MODULE
 
 # Optional Settings
 #CFLAGS += -DSPP_DEMONIZE
+
+# TODO(Hideyuki Yamashita) ringlatencystats cannot run because a fatal
+# bug in initialization of this feature. So you should not use it until
+# this fatal bug is fixed.
 #CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)

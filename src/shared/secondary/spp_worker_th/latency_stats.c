@@ -48,6 +48,11 @@ cycles_per_ns(void)
 	return rte_get_timer_hz() / NS_PER_SEC;
 }
 
+/**
+ * TODO(Hideyuki Yamashita) This function has a fatal bug in rte_zmalloc()
+ * for `g_stats_info` and should be fixed. rte_zmalloc() returns NULL for
+ * unknow reason.
+ */
 int
 sppwk_init_ring_latency_stats(uint64_t samp_intvl, uint16_t stats_count)
 {
