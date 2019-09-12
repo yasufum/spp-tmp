@@ -136,7 +136,7 @@ enum sppwk_lcore_status sppwk_get_lcore_status(unsigned int lcore_id);
  * @param id Component ID.
  * @return Type of component executed
  */
-enum sppwk_worker_type spp_get_component_type(int id);
+enum sppwk_worker_type sppwk_get_comp_type(int id);
 
 /* TODO(yasufum) revise the name of func. */
 /**

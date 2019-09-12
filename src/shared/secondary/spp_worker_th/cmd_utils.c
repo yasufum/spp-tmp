@@ -492,11 +492,10 @@ del_vhost_sockfile(struct sppwk_port_info *vhost)
 
 /* Get component type of target component_info */
 enum sppwk_worker_type
-spp_get_component_type(int id)
+sppwk_get_comp_type(int id)
 {
-	struct sppwk_comp_info *component_info =
-				(g_mng_data.p_component_info + id);
-	return component_info->wk_type;
+	struct sppwk_comp_info *ci = (g_mng_data.p_component_info + id);
+	return ci->wk_type;
 }
 
 /* Get core information which is in use */

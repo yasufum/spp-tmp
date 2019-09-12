@@ -167,7 +167,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		if (status != SPPWK_LCORE_RUNNING)
 			continue;
 
-		if (spp_check_core_update(lcore_id) == SPPWK_RET_OK) {
+		if (sppwk_is_lcore_updated(lcore_id) == 1) {
 			/* Setting with the flush command trigger. */
 			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);
@@ -176,7 +176,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		/* It is for processing multiple components. */
 		for (cnt = 0; cnt < core->num; cnt++) {
 			/* Component classification to call a function. */
-			if (spp_get_component_type(core->id[cnt]) ==
+			if (sppwk_get_comp_type(core->id[cnt]) ==
 					SPPWK_TYPE_CLS) {
 				/* Component type for classifier. */
 				ret = classify_packets(core->id[cnt]);
