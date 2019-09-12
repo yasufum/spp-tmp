@@ -428,9 +428,9 @@ exec_one_cmd(const struct sppwk_cmd_attrs *cmd)
 	return ret;
 }
 
-/* Iterate core information to create response to status command */
+/* Iterate core info to create response of spp_vf status */
 static int
-spp_iterate_core_info(struct sppwk_lcore_params *params)
+iterate_lcore_info(struct sppwk_lcore_params *params)
 {
 	int ret;
 	int lcore_id, cnt;
@@ -444,16 +444,12 @@ spp_iterate_core_info(struct sppwk_lcore_params *params)
 
 		core = get_core_info(lcore_id);
 		if (core->num == 0) {
-			ret = (*params->lcore_proc)(
-				params, lcore_id,
-				"", SPPWK_TYPE_NONE_STR,
-				0, NULL, 0, NULL);
+			ret = (*params->lcore_proc)(params, lcore_id, "",
+				SPPWK_TYPE_NONE_STR, 0, NULL, 0, NULL);
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, VF_CMD_RUNNER,
-						"Cannot iterate core "
-						"information. "
-						"(core = %d, type = %d)\n",
-						lcore_id, SPPWK_TYPE_NONE);
+						"Failed to proc on lcore %d\n",
+						lcore_id);
 				return SPPWK_RET_NG;
 			}
 			continue;
@@ -474,9 +470,8 @@ spp_iterate_core_info(struct sppwk_lcore_params *params)
 
 			if (unlikely(ret != 0)) {
 				RTE_LOG(ERR, VF_CMD_RUNNER,
-						"Cannot iterate core "
-						"information. "
-						"(core = %d, type = %d)\n",
+						"Failed to get on lcore %d ,"
+						"type %d\n",
 						lcore_id, comp_info->wk_type);
 				return SPPWK_RET_NG;
 			}
@@ -502,7 +497,7 @@ add_core(const char *name, char **output,
 	lcore_params.output = tmp_buff;
 	lcore_params.lcore_proc = append_core_element_value;
 
-	ret = spp_iterate_core_info(&lcore_params);
+	ret = iterate_lcore_info(&lcore_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		spp_strbuf_free(lcore_params.output);
 		return SPPWK_RET_NG;
