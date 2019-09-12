@@ -292,7 +292,7 @@ main(int argc, char *argv[])
 			if (port_type == RING)
 				nof_rings++;
 		}
-		ret = spp_ringlatencystats_init(
+		ret = sppwk_init_ring_latency_stats(
 				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
 				nof_rings);
 		if (unlikely(ret != SPPWK_RET_OK))
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 	del_vhost_sockfile(g_iface_info.vhost);
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-	spp_ringlatencystats_uninit();
+	sppwk_clean_ring_latency_stats();
 #endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 	RTE_LOG(INFO, SPP_VF, "Exit spp_vf.\n");

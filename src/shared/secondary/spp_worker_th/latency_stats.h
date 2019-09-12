@@ -43,12 +43,9 @@ struct ring_latency_stats_t {
  * @retval SPPWK_RET_OK: succeeded.
  * @retval SPPWK_RET_NG: failed.
  */
-int spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count);
+int sppwk_init_ring_latency_stats(uint64_t samp_intvl, uint16_t stats_count);
 
-/**
- *uninitialize ring latency statistics.
- */
-void spp_ringlatencystats_uninit(void);
+void sppwk_clean_ring_latency_stats(void);
 
 /**
  * add time-stamp to mbuf's member.
@@ -81,7 +78,7 @@ void sppwk_calc_ring_latency(int ring_id,
 /**
  * get number of ring latency statistics.
  *
- * @return spp_ringlatencystats_init's parameter "stats_count"
+ * @return sppwk_init_ring_latency_stats's parameter "stats_count"
  */
 int spp_ringlatencystats_get_count(void);
 
@@ -157,8 +154,8 @@ uint16_t sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
 
 #else
 
-#define spp_ringlatencystats_init(arg1, arg2) 0
-#define spp_ringlatencystats_uninit()
+#define sppwk_init_ring_latency_stats(arg1, arg2) 0
+#define sppwk_clean_ring_latency_stats()
 #define spp_ringlatencystats_add_time_stamp(arg1, arg2, arg3)
 #define sppwk_calc_ring_latency(arg1, arg2, arg3)
 #define spp_ringlatencystats_get_count() 0

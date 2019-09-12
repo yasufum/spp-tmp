@@ -49,7 +49,7 @@ cycles_per_ns(void)
 }
 
 int
-spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
+sppwk_init_ring_latency_stats(uint64_t samp_intvl, uint16_t stats_count)
 {
 	/* allocate memory for ring latency statistics information */
 	g_stats_info = rte_zmalloc(
@@ -76,7 +76,7 @@ spp_ringlatencystats_init(uint64_t samp_intvl, uint16_t stats_count)
 }
 
 void
-spp_ringlatencystats_uninit(void)
+sppwk_clean_ring_latency_stats(void)
 {
 	/* free memory for ring latency statistics information */
 	if (likely(g_stats_info != NULL)) {
