@@ -463,10 +463,10 @@ parse_port(void *output, const char *arg_val, int allow_override)
 	/* If action is `add`, check the port is already used for rx and tx. */
 	if (allow_override == 0) {
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
-				(spp_check_used_port(tmp_port.iface_type,
+				(sppwk_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
 						SPPWK_PORT_DIR_RX) >= 0) &&
-				(spp_check_used_port(tmp_port.iface_type,
+				(sppwk_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
 						SPPWK_PORT_DIR_TX) >= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
@@ -498,7 +498,7 @@ parse_port_direction(void *output, const char *arg_val, int allow_override)
 	/* add vlantag command check */
 	if (allow_override == 0) {
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
-				(spp_check_used_port(port->port.iface_type,
+				(sppwk_check_used_port(port->port.iface_type,
 					port->port.iface_no, ret) >= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port in used. (port command) val=%s\n",

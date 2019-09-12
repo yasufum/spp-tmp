@@ -519,7 +519,7 @@ sppwk_is_lcore_updated(unsigned int lcore_id)
 
 /* Check if component is using port. */
 int
-spp_check_used_port(
+sppwk_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
 		enum sppwk_port_dir dir)
@@ -562,14 +562,14 @@ set_component_change_port(struct sppwk_port_info *port,
 {
 	int ret = 0;
 	if ((dir == SPPWK_PORT_DIR_RX) || (dir == SPPWK_PORT_DIR_BOTH)) {
-		ret = spp_check_used_port(port->iface_type, port->iface_no,
+		ret = sppwk_check_used_port(port->iface_type, port->iface_no,
 				SPPWK_PORT_DIR_RX);
 		if (ret >= 0)
 			*(g_mng_data.p_change_component + ret) = 1;
 	}
 
 	if ((dir == SPPWK_PORT_DIR_TX) || (dir == SPPWK_PORT_DIR_BOTH)) {
-		ret = spp_check_used_port(port->iface_type, port->iface_no,
+		ret = sppwk_check_used_port(port->iface_type, port->iface_no,
 				SPPWK_PORT_DIR_TX);
 		if (ret >= 0)
 			*(g_mng_data.p_change_component + ret) = 1;

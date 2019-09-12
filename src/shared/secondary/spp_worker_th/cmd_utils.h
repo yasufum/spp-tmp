@@ -225,7 +225,7 @@ int sppwk_is_lcore_updated(unsigned int lcore_id);
  * @retval 0~127      If match component ID
  * @retval SPPWK_RET_NG If failed.
  */
-int spp_check_used_port(
+int sppwk_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
 		enum sppwk_port_dir dir);
