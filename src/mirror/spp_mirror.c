@@ -457,7 +457,7 @@ slave_main(void *arg __attribute__ ((unused)))
 		if (status != SPPWK_LCORE_RUNNING)
 			continue;
 
-		if (spp_check_core_update(lcore_id) == SPPWK_RET_OK) {
+		if (sppwk_is_lcore_updated(lcore_id) == 1) {
 			/* Setting with the flush command trigger. */
 			info->ref_index = (info->upd_index+1) % TWO_SIDES;
 			core = get_core_info(lcore_id);

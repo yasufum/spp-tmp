@@ -506,15 +506,15 @@ get_core_info(unsigned int lcore_id)
 	return &(info->core[info->ref_index]);
 }
 
-/* Check core index change */
+/* Check lcore info of given ID is updated */
 int
-spp_check_core_update(unsigned int lcore_id)
+sppwk_is_lcore_updated(unsigned int lcore_id)
 {
 	struct core_mng_info *info = (g_mng_data.p_core_info + lcore_id);
 	if (info->ref_index == info->upd_index)
-		return SPPWK_RET_OK;
+		return 1;
 	else
-		return SPPWK_RET_NG;
+		return 0;
 }
 
 /* Check if component is using port. */

@@ -208,13 +208,13 @@ void del_vhost_sockfile(struct sppwk_port_info *vhost);
 struct core_info *get_core_info(unsigned int lcore_id);
 
 /**
- * Check core index change
+ * Check lcore info of given ID is updated.
  *
  * @param lcore_id Lcore ID.
- * @retval SPPWK_RET_OK If index is updated.
- * @retval SPPWK_RET_NG If index is not updated.
+ * @retval 1 If it is updated.
+ * @retval 0 If it is not updated.
  */
-int spp_check_core_update(unsigned int lcore_id);
+int sppwk_is_lcore_updated(unsigned int lcore_id);
 
 /**
  * Check if component is using port.
