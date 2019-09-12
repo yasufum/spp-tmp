@@ -499,15 +499,6 @@ spp_get_component_type(int id)
 	return component_info->wk_type;
 }
 
-/* Get core ID of target component */
-unsigned int
-spp_get_component_core(int component_id)
-{
-	struct sppwk_comp_info *info =
-			(g_mng_data.p_component_info + component_id);
-	return info->lcore_id;
-}
-
 /* Get core information which is in use */
 struct core_info *
 get_core_info(unsigned int lcore_id)

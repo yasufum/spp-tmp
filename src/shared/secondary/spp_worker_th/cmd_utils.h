@@ -204,14 +204,6 @@ int init_mng_data(void);
 /* Remove sock file if spp is not running */
 void del_vhost_sockfile(struct sppwk_port_info *vhost);
 
-/**
- * Get core ID of target component
- *
- * @param component_id Unique component ID.
- * @return Logical core id of specified component.
- */
-unsigned int spp_get_component_core(int component_id);
-
 /* Get core information which is in use */
 struct core_info *get_core_info(unsigned int lcore_id);
 
