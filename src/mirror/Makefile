@@ -26,7 +26,7 @@ SRCS-y += $(SPP_WKT_DIR)/port_capability.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
-SRCS-y += $(SPP_WKT_DIR)/ringlatencystats.c
+SRCS-y += $(SPP_WKT_DIR)/latency_stats.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_res_formatter.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API

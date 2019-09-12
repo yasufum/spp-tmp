@@ -10,7 +10,7 @@
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#include "shared/secondary/spp_worker_th/latency_stats.h"
 #endif
 
 #define RTE_LOGTYPE_FORWARD RTE_LOGTYPE_USER1

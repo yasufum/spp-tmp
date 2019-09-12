@@ -14,7 +14,7 @@
 #include <rte_malloc.h>
 #include <rte_memcpy.h>
 
-#include "ringlatencystats.h"
+#include "latency_stats.h"
 #include "cmd_utils.h"
 #include "port_capability.h"
 #include "../return_codes.h"

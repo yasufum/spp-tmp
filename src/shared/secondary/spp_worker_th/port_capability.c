@@ -12,7 +12,7 @@
 #include "shared/secondary/return_codes.h"
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "ringlatencystats.h"
+#include "latency_stats.h"
 #endif
 
 /**

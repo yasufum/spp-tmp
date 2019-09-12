@@ -20,7 +20,7 @@
 #define RTE_LOGTYPE_SPP_VF RTE_LOGTYPE_USER1
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "shared/secondary/spp_worker_th/ringlatencystats.h"
+#include "shared/secondary/spp_worker_th/latency_stats.h"
 #endif
 
 /* getopt_long return value for long option */
