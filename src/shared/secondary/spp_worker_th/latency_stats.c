@@ -120,8 +120,8 @@ spp_ringlatencystats_add_time_stamp(int ring_id,
 }
 
 void
-spp_ringlatencystats_calculate_latency(int ring_id,
-			struct rte_mbuf **pkts, uint16_t nb_pkts)
+sppwk_calc_ring_latency(int ring_id,
+		struct rte_mbuf **pkts, uint16_t nb_pkts)
 {
 	unsigned int i;
 	uint64_t now;
@@ -199,7 +199,7 @@ print_ring_latency_stats(struct iface_info *if_info)
 	}
 }
 
-/* Wrapper function for rte_eth_rx_burst() with ring latency feature. */
+/* Wrapper function for rte_eth_rx_burst() with calc ring latency. */
 uint16_t
 sppwk_eth_ring_stats_rx_burst(uint16_t port_id,
 		enum port_type iface_type,
@@ -216,13 +216,11 @@ sppwk_eth_ring_stats_rx_burst(uint16_t port_id,
 		return SPPWK_RET_OK;
 
 	if (iface_type == RING)
-		spp_ringlatencystats_calculate_latency(
-				iface_no,
-				rx_pkts, nb_pkts);
+		sppwk_calc_ring_latency(iface_no, rx_pkts, nb_pkts);
 	return nb_rx;
 }
 
-/* Wrapper function for rte_eth_tx_burst() with ring latency feature. */
+/* Wrapper function for rte_eth_tx_burst() with calc ring latency. */
 uint16_t
 sppwk_eth_ring_stats_tx_burst(uint16_t port_id,
 		enum port_type iface_type,

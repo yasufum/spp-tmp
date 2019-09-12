@@ -61,20 +61,16 @@ void spp_ringlatencystats_add_time_stamp(int ring_id,
 			struct rte_mbuf **pkts, uint16_t nb_pkts);
 
 /**
- * calculate latency.
+ * calculate latency of ring.
  *
  * @note call at dequeue.
  *
- * @param ring_id
- *  The ring id.
- * @param pkts
- *  The address of an array of nb_pkts pointers to rte_mbuf structures
- *  which contain the packets to be measured.
- * @param nb_pkts
- *  The maximum number of packets to be measured.
+ * @param ring_id ring id.
+ * @param pkts Pointer to nb_pkts to containing packets.
+ * @param nb_pkts Max number of packets to be measured.
  */
-void spp_ringlatencystats_calculate_latency(int ring_id,
-			struct rte_mbuf **pkts, uint16_t nb_pkts);
+void sppwk_calc_ring_latency(int ring_id,
+		struct rte_mbuf **pkts, uint16_t nb_pkts);
 
 /**
  * get number of ring latency statistics.
@@ -158,7 +154,7 @@ uint16_t sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
 #define spp_ringlatencystats_init(arg1, arg2) 0
 #define spp_ringlatencystats_uninit()
 #define spp_ringlatencystats_add_time_stamp(arg1, arg2, arg3)
-#define spp_ringlatencystats_calculate_latency(arg1, arg2, arg3)
+#define sppwk_calc_ring_latency(arg1, arg2, arg3)
 #define spp_ringlatencystats_get_count() 0
 #define spp_ringlatencystats_get_stats(arg1, arg2)
 #define print_ringlatencystats_stats(arg)

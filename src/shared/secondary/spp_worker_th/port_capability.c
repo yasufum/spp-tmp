@@ -422,8 +422,7 @@ sppwk_eth_vlan_ring_stats_rx_burst(uint16_t port_id,
 		return SPPWK_RET_OK;
 
 	if (iface_type == RING)
-		spp_ringlatencystats_calculate_latency(iface_no,
-				rx_pkts, nb_pkts);
+		sppwk_calc_ring_latency(iface_no, rx_pkts, nb_pkts);
 
 	/* Add or delete VLAN tag. */
 	return vlan_operation(port_id, rx_pkts, nb_rx, SPPWK_PORT_DIR_RX);
