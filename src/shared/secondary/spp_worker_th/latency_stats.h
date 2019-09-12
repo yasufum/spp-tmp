@@ -52,16 +52,12 @@ void sppwk_clean_ring_latency_stats(void);
  *
  * @note call at enqueue.
  *
- * @param ring_id
- *  The ring id.
- * @param pkts
- *  The address of an array of nb_pkts pointers to rte_mbuf structures
- *  which contain the packets to be measured.
- * @param nb_pkts
- *  The maximum number of packets to be measured.
+ * @param ring_id Ring id.
+ * @param pkts Pointer to nb_pkts rte_mbuf containing packets.
+ * @param nb_pkts Maximum number of packets to be measured.
  */
-void spp_ringlatencystats_add_time_stamp(int ring_id,
-			struct rte_mbuf **pkts, uint16_t nb_pkts);
+void sppwk_add_ring_latency_time(int ring_id,
+		struct rte_mbuf **pkts, uint16_t nb_pkts);
 
 /**
  * calculate latency of ring.
@@ -80,7 +76,7 @@ void sppwk_calc_ring_latency(int ring_id,
  *
  * @return sppwk_init_ring_latency_stats's parameter "stats_count"
  */
-int spp_ringlatencystats_get_count(void);
+int sppwk_get_ring_latency_stats_count(void);
 
 /**
  *get specific ring latency statistics.
@@ -90,7 +86,7 @@ int spp_ringlatencystats_get_count(void);
  * @param stats
  *  The statistics values.
  */
-void spp_ringlatencystats_get_stats(int ring_id,
+void sppwk_get_ring_latency_stats(int ring_id,
 		struct ring_latency_stats_t *stats);
 
 /* Print statistics of time for packet processing in ring interface */
@@ -156,10 +152,10 @@ uint16_t sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
 
 #define sppwk_init_ring_latency_stats(arg1, arg2) 0
 #define sppwk_clean_ring_latency_stats()
-#define spp_ringlatencystats_add_time_stamp(arg1, arg2, arg3)
+#define sppwk_add_ring_latency_time(arg1, arg2, arg3)
 #define sppwk_calc_ring_latency(arg1, arg2, arg3)
-#define spp_ringlatencystats_get_count() 0
-#define spp_ringlatencystats_get_stats(arg1, arg2)
+#define sppwk_get_ring_latency_stats_count() 0
+#define sppwk_get_ring_latency_stats(arg1, arg2)
 #define print_ringlatencystats_stats(arg)
 #define sppwk_eth_ring_stats_rx_burst(arg1, arg2, arg3, arg4, arg5, arg6)
 #define sppwk_eth_ring_stats_tx_burst(arg1, arg2, arg3, arg4, arg5, arg6)

@@ -86,8 +86,8 @@ sppwk_clean_ring_latency_stats(void)
 }
 
 void
-spp_ringlatencystats_add_time_stamp(int ring_id,
-			struct rte_mbuf **pkts, uint16_t nb_pkts)
+sppwk_add_ring_latency_time(int ring_id,
+		struct rte_mbuf **pkts, uint16_t nb_pkts)
 {
 	unsigned int i;
 	uint64_t diff_tsc, now;
@@ -102,8 +102,7 @@ spp_ringlatencystats_add_time_stamp(int ring_id,
 		diff_tsc = now - stats_info->prev_tsc;
 		stats_info->timer_tsc += diff_tsc;
 
-		/* when it is over sampling interval */
-		/* set tsc to mbuf::timestamp */
+		/* set tsc to mbuf timestamp if it is over sampling interval. */
 		if (unlikely(stats_info->timer_tsc >= g_samp_intvl)) {
 			RTE_LOG(DEBUG, SPP_RING_LATENCY_STATS,
 					"Set timestamp. ring_id=%d, "
@@ -143,13 +142,13 @@ sppwk_calc_ring_latency(int ring_id,
 }
 
 int
-spp_ringlatencystats_get_count(void)
+sppwk_get_ring_latency_stats_count(void)
 {
 	return g_stats_count;
 }
 
 void
-spp_ringlatencystats_get_stats(int ring_id,
+sppwk_get_ring_latency_stats(int ring_id,
 		struct ring_latency_stats_t *stats)
 {
 	struct ring_latency_stats_info *stats_info = &g_stats_info[ring_id];
@@ -177,7 +176,7 @@ print_ring_latency_stats(struct iface_info *if_info)
 		if (if_info->ring[ring_cnt].iface_type == UNDEF)
 			continue;
 
-		spp_ringlatencystats_get_stats(ring_cnt, &stats[ring_cnt]);
+		sppwk_get_ring_latency_stats(ring_cnt, &stats[ring_cnt]);
 		printf(", %-18d", ring_cnt);
 	}
 	printf("\n");
@@ -229,9 +228,7 @@ sppwk_eth_ring_stats_tx_burst(uint16_t port_id,
 	nb_tx = rte_eth_tx_burst(port_id, 0, tx_pkts, nb_pkts);
 
 	if (iface_type == RING)
-		spp_ringlatencystats_add_time_stamp(
-				iface_no,
-				tx_pkts, nb_pkts);
+		sppwk_add_ring_latency_time(iface_no, tx_pkts, nb_pkts);
 	return nb_tx;
 }
 

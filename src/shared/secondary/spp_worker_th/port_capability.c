@@ -444,7 +444,7 @@ sppwk_eth_vlan_ring_stats_tx_burst(uint16_t port_id,
 		return SPPWK_RET_OK;
 
 	if (iface_type == RING) {
-		spp_ringlatencystats_add_time_stamp(iface_no, tx_pkts, nb_pkts);
+		sppwk_add_ring_latency_time(iface_no, tx_pkts, nb_pkts);
 	}
 
 	return rte_eth_tx_burst(port_id, 0, tx_pkts, nb_tx);
