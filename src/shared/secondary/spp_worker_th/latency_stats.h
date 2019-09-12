@@ -9,19 +9,25 @@
  * @file
  * SPP RING latency statistics
  *
- * Measure the latency through ring-PMD.
+ * Util functions for measuring latency of ring-PMD.
  */
 
 #include <rte_mbuf.h>
 #include "cmd_utils.h"
 
-/** number of slots to save latency. 0ns~99ns and 100ns over */
-#define SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT 101
+/**
+ * Statistics of latency of ring is counted with histgram like data structure.
+ * To count frequency of each of time in nano sec, this data is implemented as
+ * an array in which frequency counts of 1-100[ns] are contained. If the
+ * latency is larger than 100[ns], it is added to the last entry. It means
+ * this array has 101 entries, 100 entries for 1-100[ns] and 1 entry for over
+ * 100[ns].
+ */
+#define TOTAL_LATENCY_ENT 101
 
-/** ring latency statistics */
-struct spp_ringlatencystats_ring_latency_stats {
-	/** slots to save latency */
-	uint64_t slot[SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT];
+/** statistics of latency of ring */
+struct ring_latency_stats_t {
+	uint64_t distr[TOTAL_LATENCY_ENT]; /* distribution of time */
 };
 
 
@@ -88,7 +94,7 @@ int spp_ringlatencystats_get_count(void);
  *  The statistics values.
  */
 void spp_ringlatencystats_get_stats(int ring_id,
-		struct spp_ringlatencystats_ring_latency_stats *stats);
+		struct ring_latency_stats_t *stats);
 
 /* Print statistics of time for packet processing in ring interface */
 void print_ring_latency_stats(struct iface_info *if_info);

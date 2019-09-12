@@ -27,10 +27,9 @@
 
 /** ring latency statistics information */
 struct ring_latency_stats_info {
-	uint64_t timer_tsc;     /**< sampling interval counter */
-	uint64_t prev_tsc;      /**< previous time */
-	struct spp_ringlatencystats_ring_latency_stats stats;
-				/**< ring latency statistics list */
+	uint64_t timer_tsc;  /**< sampling interval */
+	uint64_t prev_tsc;   /**< previous time */
+	struct ring_latency_stats_t stats;  /**< list of stats */
 };
 
 /** sampling interval */
@@ -133,16 +132,13 @@ sppwk_calc_ring_latency(int ring_id,
 		if (likely(pkts[i]->timestamp == 0))
 			continue;
 
-		/* when mbuf::timestamp is not zero */
-		/* calculate latency */
+		/* calc latency if mbuf `timestamp` is non-zero. */
 		latency = (uint64_t)floor((now - pkts[i]->timestamp) /
 				cycles_per_ns());
-		if (likely(latency < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT-1))
-			stats_info->stats.slot[latency]++;
+		if (likely(latency < TOTAL_LATENCY_ENT-1))
+			stats_info->stats.distr[latency]++;
 		else
-			stats_info->stats.slot[
-					SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT
-					-1]++;
+			stats_info->stats.distr[TOTAL_LATENCY_ENT-1]++;
 	}
 }
 
@@ -154,12 +150,12 @@ spp_ringlatencystats_get_count(void)
 
 void
 spp_ringlatencystats_get_stats(int ring_id,
-		struct spp_ringlatencystats_ring_latency_stats *stats)
+		struct ring_latency_stats_t *stats)
 {
 	struct ring_latency_stats_info *stats_info = &g_stats_info[ring_id];
 
 	rte_memcpy(stats, &stats_info->stats,
-			sizeof(struct spp_ringlatencystats_ring_latency_stats));
+			sizeof(struct ring_latency_stats_t));
 }
 
 /* Print statistics of time for packet processing in ring interface */
@@ -172,7 +168,7 @@ print_ring_latency_stats(struct iface_info *if_info)
 	printf("%s%s", clr, topLeft);
 
 	int ring_cnt, stats_cnt;
-	struct spp_ringlatencystats_ring_latency_stats stats[RTE_MAX_ETHPORTS];
+	struct ring_latency_stats_t stats[RTE_MAX_ETHPORTS];
 	memset(&stats, 0x00, sizeof(stats));
 
 	printf("RING Latency\n");
@@ -186,14 +182,14 @@ print_ring_latency_stats(struct iface_info *if_info)
 	}
 	printf("\n");
 
-	for (stats_cnt = 0; stats_cnt < SPP_RINGLATENCYSTATS_STATS_SLOT_COUNT;
+	for (stats_cnt = 0; stats_cnt < TOTAL_LATENCY_ENT;
 			stats_cnt++) {
 		printf("%3dns", stats_cnt);
 		for (ring_cnt = 0; ring_cnt < RTE_MAX_ETHPORTS; ring_cnt++) {
 			if (if_info->ring[ring_cnt].iface_type == UNDEF)
 				continue;
 
-			printf(", 0x%-16lx", stats[ring_cnt].slot[stats_cnt]);
+			printf(", 0x%-16lx", stats[ring_cnt].distr[stats_cnt]);
 		}
 		printf("\n");
 	}
