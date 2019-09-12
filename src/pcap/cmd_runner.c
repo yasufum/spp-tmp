@@ -61,12 +61,9 @@ const char *CAPTURE_STATUS_STRINGS[] = {
 	"", /* termination */
 };
 
-/**
- * Iterate core information for number of available cores to
- * append response for status command.
- */
+/* Iterate core info to create response of spp_pcap status */
 static int
-spp_iterate_core_info(struct sppwk_lcore_params *params)
+iterate_lcore_info(struct sppwk_lcore_params *params)
 {
 	int ret;
 	int lcore_id;
@@ -78,8 +75,7 @@ spp_iterate_core_info(struct sppwk_lcore_params *params)
 		ret = spp_pcap_get_core_status(lcore_id, params);
 		if (unlikely(ret != 0)) {
 			RTE_LOG(ERR, PCAP_RUNNER,
-					"Cannot iterate core information. "
-						"(core = %d)\n", lcore_id);
+					"Failed to get lcore %d\n", lcore_id);
 			return SPPWK_RET_NG;
 		}
 	}
@@ -524,7 +520,7 @@ append_core_value(const char *name, char **output,
 	lcore_params.output = tmp_buff;
 	lcore_params.lcore_proc = append_pcap_core_element_value;
 
-	ret = spp_iterate_core_info(&lcore_params);
+	ret = iterate_lcore_info(&lcore_params);
 	if (unlikely(ret != SPPWK_RET_OK)) {
 		spp_strbuf_free(lcore_params.output);
 		return SPPWK_RET_NG;
