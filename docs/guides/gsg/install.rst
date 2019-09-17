@@ -7,12 +7,13 @@
 Install DPDK and SPP
 ====================
 
-Before using SPP, you need to install DPDK.
+Before setting up SPP, you need to install DPDK.
 In this document, briefly described how to install and setup DPDK.
 Refer to `DPDK documentation
 <https://dpdk.org/doc/guides/>`_ for more details.
 For Linux, see `Getting Started Guide for Linux
 <http://www.dpdk.org/doc/guides/linux_gsg/index.html>`_ .
+
 
 .. _setup_install_packages:
 
@@ -22,10 +23,11 @@ Required Packages
 Installing packages for DPDK and SPP is almost the on Ubunu and CentOS,
 but names are different for some packages.
 
+
 Ubuntu
 ~~~~~~
 
-To compile DPDK, required to install following packages.
+To compile DPDK, it is required to install following packages.
 
 .. code-block:: console
 
@@ -39,8 +41,8 @@ You also need to install linux-headers of your kernel version.
 
     $ sudo apt install linux-headers-$(uname -r)
 
-Some of secondary processes depend on external libraries and you failed to
-compile SPP without them.
+Some of SPP secondary processes depend on other libraries and you fail to
+compile SPP without installing them.
 
 SPP provides libpcap-based PMD for dumping packet to a file or retrieve
 it from the file.
@@ -82,9 +84,7 @@ To compile DPDK, required to install following packages.
       kernel-headers \
       kernel-devel
 
-Some of secondary processes depend on external libraries and you failed to
-compile SPP without them.
-
+As same as Ubuntu, you should install additional packages because
 SPP provides libpcap-based PMD for dumping packet to a file or retrieve
 it from the file.
 ``spp_nfv`` and ``spp_pcap`` use ``libpcap-dev`` for packet capture.
@@ -115,8 +115,8 @@ Clone repository and compile DPDK in any directory.
     $ cd /path/to/any
     $ git clone http://dpdk.org/git/dpdk
 
-Installing on Ubuntu and CentOS are almost the same, but packages are
-different.
+Installing on Ubuntu and CentOS are almost the same, but required packages
+are just bit different.
 
 PCAP is disabled by default in DPDK configuration.
 ``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
@@ -139,7 +139,8 @@ Compile DPDK with target environment.
     $ make install T=$RTE_TARGET
 
 
-PCAP is disabled by default in DPDK configuration.
+PCAP is disabled by default in DPDK configuration, so should be changed
+if you use this feature.
 ``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
 config file ``common_base`` should be changed to ``y`` to enable PCAP.
 
@@ -150,7 +151,7 @@ config file ``common_base`` should be changed to ``y`` to enable PCAP.
     ...
     CONFIG_RTE_PORT_PCAP=y
 
-Compile DPDK with target environment.
+Compile DPDK with options for target environment.
 
 .. code-block:: console
 
@@ -163,7 +164,8 @@ Compile DPDK with target environment.
 Pyhton
 ------
 
-Python3 and pip3 are also required if not installed.
+Python3 and pip3 are also required because SPP controller is implemented
+in Pyhton3. Required packages can be installed from ``requirements.txt``.
 
 .. code-block:: console
 
@@ -206,8 +208,10 @@ Clone SPP repository and compile it in any directory.
     $ cd spp
     $ make  # Confirm that $RTE_SDK and $RTE_TARGET are set
 
-If you use ``spp_mirror`` in deep copy mode, you should comment out
-the definition of copy mode in Makefile of ``spp_mirror`` before.
+If you use ``spp_mirror`` in deep copy mode,
+which is used for cloning whole of packet data for modification,
+you should change configuration of copy mode in Makefile of ``spp_mirror``
+before.
 It is for copying full payload into a new mbuf.
 Default mode is shallow copy.
 
@@ -324,9 +328,9 @@ cannot find it by using ``ifconfig`` or ``ip``.
 Confirm DPDK is setup properly
 ------------------------------
 
-You can confirm if you are ready to use DPDK by running DPDK's sample
-application. ``l2fwd`` is good choice to confirm it before SPP because
-it is very similar to SPP's worker process for forwarding.
+For testing, you can confirm if you are ready to use DPDK by running
+DPDK's sample application. ``l2fwd`` is good example to confirm it
+before SPP because it is very similar to SPP's worker process for forwarding.
 
 .. code-block:: console
 
