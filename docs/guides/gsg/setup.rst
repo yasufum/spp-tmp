@@ -11,7 +11,8 @@ Setup
 This documentation is described for following distributions.
 
 - Ubuntu 16.04 and 18.04
-- CentOS 7.6
+- CentOS 7.6 (not fully supported)
+
 
 .. _gsg_reserve_hugep:
 
@@ -29,18 +30,20 @@ How to configure reserving hugepages is different between 2MB or 1GB.
 In general, 1GB is better for getting high performance,
 but 2MB is easier for configuration than 1GB.
 
+
 1GB Hugepage
 ~~~~~~~~~~~~
 
-For 1GB page, hugepage setting is activated while booting system.
+For using 1GB page, hugepage setting is activated while booting system.
 It must be defined in boot loader configuration, usually it is
 ``/etc/default/grub``.
 Add an entry of configuration of the size and the number of pages.
 
-Here is an example for Ubuntu, but almost the same as CentOS. The point is
+Here is an example for Ubuntu, and almost the same as CentOS. The points are
 that ``hugepagesz`` is for the size and ``hugepages`` is for the number of
 pages.
-You can also configure isolcpus for performance tuning as described in
+You can also configure ``isolcpus`` in grub setting for improving performance
+as described in
 :ref:`Performance Optimizing<gsg_performance_opt>`.
 
 .. code-block:: none
@@ -54,21 +57,23 @@ config file, or this configuration is not activated.
 
 .. code-block:: console
 
+    # Ubuntu
     $ sudo update-grub
     Generating grub configuration file ...
 
-For CentOS7, you use ``grub2-mkconfig`` instead of ``update-grub``.
+Or for CentOS7, you use ``grub2-mkconfig`` instead of ``update-grub``.
 In this case, you should give the output file with ``-o`` option.
 The output path might be different, so you should find your correct
 ``grub.cfg`` by yourself.
 
 .. code-block:: console
 
+    # CentOS
     $ sudo grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
 
 .. note::
 
-    1GB hugepages might possibly not be supported on your hardware.
+    1GB hugepages might not be supported on your hardware.
     It depends on that CPUs support 1GB pages or not. You can check it
     by referring ``/proc/cpuinfo``. If it is supported, you can find
     ``pdpe1gb`` in the ``flags`` attribute.
@@ -78,10 +83,11 @@ The output path might be different, so you should find your correct
         $ cat /proc/cpuinfo | grep pdpe1gb
         flags           : fpu vme ... pdpe1gb ...
 
+
 2MB Hugepage
 ~~~~~~~~~~~~
 
-For 2MB page, you can activate hugepages while booting or at anytime
+For using 2MB page, you can activate hugepages while booting or at anytime
 after system is booted.
 Define hugepages setting in ``/etc/default/grub`` to activate it while
 booting, or overwrite the number of 2MB hugepages as following.
@@ -90,7 +96,7 @@ booting, or overwrite the number of 2MB hugepages as following.
 
     $ echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 
-In this case, 1024 pages of 2MB (totally 2048 MB) are reserved.
+In this case, 1024 pages of 2MB, totally 2048 MB, are reserved.
 
 
 Mount hugepages
@@ -104,9 +110,8 @@ Make the memory available for using hugepages from DPDK.
     $ mount -t hugetlbfs nodev /mnt/huge
 
 It is also available while booting by adding a configuration of mount
-point in ``/etc/fstab``, or after booted.
-
-The mount point for 2MB or 1GB can be made permanent accross reboot.
+point in ``/etc/fstab``.
+The mount point for 2MB or 1GB can be made permanently accross reboot.
 For 2MB, it is no need to declare the size of hugepages explicity.
 
 .. code-block:: none
@@ -114,7 +119,7 @@ For 2MB, it is no need to declare the size of hugepages explicity.
     # /etc/fstab
     nodev /mnt/huge hugetlbfs defaults 0 0
 
-For 1GB, the size of hugepage must be specified.
+For 1GB, the size of hugepage ``pagesize`` must be specified.
 
 .. code-block:: none
 
@@ -159,8 +164,9 @@ Using Virtual Machine
 ---------------------
 
 SPP provides vhost interface for inter VM communication.
-You can use any of hypervisors, but this document describes usecases of
-qemu and libvirt.
+You can use any of DPDK supported hypervisors, but this document describes
+usecases of qemu and libvirt.
+
 
 Server mode v.s. Client mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,6 +179,7 @@ Client mode is optional and supported in qemu 2.7 or later.
 For using this mode, launch secondary process with ``--vhost-client``.
 Qemu creates socket file instead of secondary process.
 It means that you can launch a VM before secondary process create vhost port.
+
 
 Libvirt
 ~~~~~~~
@@ -255,9 +262,9 @@ Or, you can also avoid by simply removing AppArmor itself.
 
     $ sudo apt-get remove apparmor
 
-If you use CentOS, not Ubuntu, confirm that SELinux doesn't prevent
+If you use CentOS, confirm that SELinux doesn't prevent
 for permission.
-SELinux should be disabled in this case.
+SELinux is disabled simply by changing the configuration to ``disabled``.
 
 .. code-block:: console
 
@@ -275,7 +282,8 @@ Check your SELinux configuration.
 Python 2 or 3 ?
 ---------------
 
-Python2 is not supported anymore for SPP.
+Without SPP container tools, Python2 is not supported anymore.
+SPP container will also be updated to Python3.
 
 
 Reference
