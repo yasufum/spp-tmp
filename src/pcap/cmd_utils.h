@@ -113,23 +113,7 @@ struct core_info *get_core_info(unsigned int lcore_id);
  */
 /* TODO(yasufum) consider to merge to shared. */
 int
-spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
-
-/**
- * Port type to string
- *
- * @param port
- *  Character string of Port type to be converted.
- * @param iface_type
- *  port interface type
- * @param iface_no
- *  interface no
- *
- * @retval SPPWK_RET_OK succeeded.
- * @retval SPPWK_RET_NG failed.
- */
-int
-spp_format_port_string(char *port, enum port_type iface_type, int iface_no);
+sppwk_port_uid(char *port, enum port_type iface_type, int iface_no);
 
 /**
  * Set mange data address

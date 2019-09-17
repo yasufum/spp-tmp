@@ -263,7 +263,7 @@ init_mng_data(void)
  * Generate a formatted string of combination from interface type and
  * number and assign to given 'port'
  */
-int spp_format_port_string(char *port, enum port_type iface_type, int iface_no)
+int sppwk_port_uid(char *port, enum port_type iface_type, int iface_no)
 {
 	const char *iface_type_str;
 
