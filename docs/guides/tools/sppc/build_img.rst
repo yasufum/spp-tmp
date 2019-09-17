@@ -19,7 +19,7 @@ with DPDK 18.11 as following.
 .. code-block:: console
 
     $ cd /path/to/spp/tools/sppc
-    $ python build/build.py --dpdk-branch v18.11 \
+    $ python build/main.py --dpdk-branch v18.11 \
       --spp-repo https://github.com/your/spp.git
 
 Refer all of options running with ``-h`` option.
@@ -240,5 +240,5 @@ This script refers ``ubuntu/dpdk/env.sh`` for Ubuntu image  to include
 environment variables.
 So, it is failed to ``build/run.sh`` if this config file
 does not exist.
-You can create it from ``build/build.py`` with ``--only-envsh`` option
+You can create it from ``build/main.py`` with ``--only-envsh`` option
 if you removed it accidentally.
