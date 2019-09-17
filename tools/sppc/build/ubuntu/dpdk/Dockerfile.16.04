@@ -34,9 +34,9 @@ RUN git clone $dpdk_branch $dpdk_repo
 
 # Compile DPDK
 WORKDIR $rte_sdk
-RUN make install T=$rte_target
-RUN make app T=$rte_target
-RUN make examples T=$rte_target
+RUN make -j install T=$rte_target
+RUN make -j app T=$rte_target
+RUN make -j examples T=$rte_target
 
 # Set working directory when container is launched
 WORKDIR ${home_dir}

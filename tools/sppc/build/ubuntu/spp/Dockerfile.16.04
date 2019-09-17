@@ -44,10 +44,10 @@ RUN git clone ${spp_branch} ${spp_repo}
 
 # Compile DPDK and SPP
 WORKDIR ${rte_sdk}
-RUN make install T=${rte_target}
+RUN make -j install T=${rte_target}
 
 WORKDIR ${home_dir}/${spp_dir}
-RUN make
+RUN make -j
 
 # Set working directory when container is launched
 WORKDIR ${home_dir}
