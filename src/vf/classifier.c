@@ -114,7 +114,7 @@ static const size_t HASH_TABLE_NAME_BUF_SZ =
 
 /* MAC address string(xx:xx:xx:xx:xx:xx) buffer size */
 static const size_t ETHER_ADDR_STR_BUF_SZ =
-		ETHER_ADDR_LEN * 2 + (ETHER_ADDR_LEN - 1) + 1;
+		RTE_ETHER_ADDR_LEN * 2 + (RTE_ETHER_ADDR_LEN - 1) + 1;
 
 /**
  * Hash table count used for making a name of hash table.
@@ -128,13 +128,13 @@ static rte_atomic16_t g_hash_table_count = RTE_ATOMIC16_INIT(0xff);
 static inline uint16_t
 get_vid(const struct rte_mbuf *pkt)
 {
-	struct ether_hdr *eth;
-	struct vlan_hdr *vh;
+	struct rte_ether_hdr *eth;
+	struct rte_vlan_hdr *vh;
 
-	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
-	if (eth->ether_type == rte_cpu_to_be_16(ETHER_TYPE_VLAN)) {
+	eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
+	if (eth->ether_type == rte_cpu_to_be_16(RTE_ETHER_TYPE_VLAN)) {
 		/* vlan tagged */
-		vh = (struct vlan_hdr *)(eth + 1);
+		vh = (struct rte_vlan_hdr *)(eth + 1);
 		return rte_be_to_cpu_16(vh->vlan_tci) & 0x0fff;
 	}
 
@@ -152,11 +152,11 @@ static void
 log_packet(const char *name, struct rte_mbuf *pkt,
 		const char *func_name, int line_num)
 {
-	struct ether_hdr *eth;
+	struct rte_ether_hdr *eth;
 	uint16_t vid;
 	char mac_addr_str[2][ETHER_ADDR_STR_BUF_SZ];
 
-	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
+	eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
 	vid = get_vid(pkt);
 
 	ether_format_addr(mac_addr_str[0], sizeof(mac_addr_str),
@@ -181,12 +181,12 @@ log_classification(long clsd_idx, struct rte_mbuf *pkt,
 		struct cls_port_info *clsd_data,
 		const char *func_name, int line_num)
 {
-	struct ether_hdr *eth;
+	struct rte_ether_hdr *eth;
 	uint16_t vid;
 	char mac_addr_str[2][ETHER_ADDR_STR_BUF_SZ];
 	char iface_str[STR_LEN_NAME];
 
-	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
+	eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
 	vid = get_vid(pkt);
 
 	ether_format_addr(mac_addr_str[0], sizeof(mac_addr_str),
@@ -281,7 +281,7 @@ create_mac_classification(void)
 	struct rte_hash_parameters hash_params = {
 			.name      = hash_tab_name,
 			.entries   = NOF_CLS_TABLE_ENTRIES,
-			.key_len   = sizeof(struct ether_addr),
+			.key_len   = sizeof(struct rte_ether_addr),
 			.hash_func = DEFAULT_HASH_FUNC,
 			.hash_func_init_val = 0,
 			.socket_id = rte_socket_id(),
@@ -308,7 +308,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 	int ret = SPPWK_RET_NG;
 	int i;
 	struct mac_classifier *mac_cls;
-	struct ether_addr eth_addr;
+	struct rte_ether_addr eth_addr;
 	char mac_addr_str[ETHER_ADDR_STR_BUF_SZ];
 	/* Classifier has one RX port and several TX ports. */
 	struct cls_port_info *cls_rx_port_info = &cmp_info->rx_port_i;
@@ -384,8 +384,8 @@ init_component_info(struct cls_comp_info *cmp_info,
 
 		/* Add entry to classifier table. */
 		rte_memcpy(&eth_addr, &tx_port->cls_attrs.mac_addr,
-				ETHER_ADDR_LEN);
-		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
+				RTE_ETHER_ADDR_LEN);
+		rte_ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
 				&eth_addr);
 
 		ret = rte_hash_add_key_data(mac_cls->cls_tbl,
@@ -552,12 +552,12 @@ select_classified_index(const struct rte_mbuf *pkt,
 		struct cls_comp_info *cmp_info)
 {
 	int ret;
-	struct ether_hdr *eth;
+	struct rte_ether_hdr *eth;
 	void *lookup_data;
 	struct mac_classifier *mac_cls;
 	uint16_t vid;
 
-	eth = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
+	eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
 	vid = get_vid(pkt);
 
 	/* select mac address classification by vid */
@@ -582,7 +582,7 @@ select_classified_index(const struct rte_mbuf *pkt,
 			"(EINVAL=%d, ENOENT=%d)\n", ret, EINVAL, ENOENT);
 
 	/* check if packet is l2 multicast */
-	if (unlikely(is_multicast_ether_addr(&eth->d_addr)))
+	if (unlikely(rte_is_multicast_ether_addr(&eth->d_addr)))
 		return -2;
 
 	/* if default is not set, use untagged's default */
@@ -858,8 +858,8 @@ add_mac_entry(struct classifier_table_params *params,
 		if (unlikely(ret < 0))
 			break;
 
-		ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
-				(const struct ether_addr *)key);
+		rte_ether_format_addr(mac_addr_str, sizeof(mac_addr_str),
+				(const struct rte_ether_addr *)key);
 
 		port.iface_type = (port_info + (long)data)->iface_type;
 		port.iface_no = (port_info + (long)data)->iface_no_global;
