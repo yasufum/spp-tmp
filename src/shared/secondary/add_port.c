@@ -142,7 +142,7 @@ int
 add_vhost_pmd(int index)
 {
 	struct rte_eth_conf port_conf = {
-		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+		.rxmode = { .max_rx_pkt_len = RTE_ETHER_MAX_LEN }
 	};
 	struct rte_mempool *mp;
 	uint16_t vhost_port_id;
@@ -225,7 +225,7 @@ int
 add_pcap_pmd(int index)
 {
 	struct rte_eth_conf port_conf = {
-		.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+		.rxmode = { .max_rx_pkt_len = RTE_ETHER_MAX_LEN }
 	};
 
 	struct rte_mempool *mp;
@@ -306,7 +306,7 @@ int
 add_null_pmd(int index)
 {
 	struct rte_eth_conf port_conf = {
-			.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+			.rxmode = { .max_rx_pkt_len = RTE_ETHER_MAX_LEN }
 	};
 
 	struct rte_mempool *mp;
