@@ -18,11 +18,15 @@ from .shell_lib import common
 from . import spp_common
 from .spp_common import logger
 import subprocess
+import time
 import yaml
 
 
 class Shell(cmd.Cmd, object):
     """SPP command prompt."""
+
+    WAIT_PRI_INTERVAL = 0.5  # sec
+    WAIT_PRI_TIMEOUT = 20    # sec
 
     def __init__(self, spp_cli_objs, config, use_cache=False):
 
@@ -78,6 +82,31 @@ class Shell(cmd.Cmd, object):
         common.set_current_server_addr(
                 self.spp_ctl_cli.ip_addr, self.spp_ctl_cli.port)
 
+        # Wait for launching spp_primary.
+        print('Waiting for spp_primary is ready .', end='', flush=True)
+        wait_cnt = self.WAIT_PRI_TIMEOUT / self.WAIT_PRI_INTERVAL
+        cnt = 0
+        is_pri_ready = False
+        while(is_pri_ready is False) and (cnt < wait_cnt):
+            res = self.spp_ctl_cli.get('processes')
+            if res is not None:
+                if res.status_code == 200:
+                    pri_obj = None
+                    try:
+                        proc_objs = res.json()
+                        for proc_obj in proc_objs:
+                            if proc_obj['type'] == 'primary':
+                                pri_obj = proc_obj
+                    except KeyError as e:
+                        print('Error: {} is not defined!'.format(e))
+
+                    if pri_obj is not None:
+                        is_pri_ready = True
+            time.sleep(self.WAIT_PRI_INTERVAL)
+            print('.', end='', flush=True)
+            cnt += 1
+        print(' OK!')
+
     def init_spp_procs(self):
         """Initialize delegators of SPP processes.
 
@@ -129,7 +158,7 @@ class Shell(cmd.Cmd, object):
         """
 
         if common.is_comment_line(line):
-            print("%s" % line.strip())
+            print("{}".format(line.strip()))
 
         else:
             super(Shell, self).default(line)
@@ -146,7 +175,7 @@ class Shell(cmd.Cmd, object):
         """Display information about connected clients."""
 
         print('- spp-ctl:')
-        print('  - address: %s:%s' % (self.spp_ctl_cli.ip_addr,
+        print('  - address: {}:{}'.format(self.spp_ctl_cli.ip_addr,
                                       self.spp_ctl_cli.port))
         res = self.spp_ctl_cli.get('processes')
         if res is not None:
@@ -177,8 +206,8 @@ class Shell(cmd.Cmd, object):
                     cnt = 1
                     for pt in ['nfv', 'vf', 'mirror', 'pcap']:
                         for obj in sec_obj[pt]:
-                            print('    %d: %s:%s' %
-                                  (cnt, obj['type'], obj['client-id']))
+                            print('    {}: {}:{}'.format(
+                                    cnt, obj['type'], obj['client-id']))
                             cnt += 1
                 except KeyError as e:
                     print('Error: {} is not defined!'.format(e))
@@ -312,7 +341,7 @@ class Shell(cmd.Cmd, object):
             if self._is_sec_registered('nfv', int(cmds[0])):
                 self.secondaries['nfv'][int(cmds[0])].run(cmds[1])
         else:
-            print('Invalid command: %s' % tmparg)
+            print('Invalid command: {}'.format(tmparg))
 
     def help_nfv(self):
         """Print help message of nfv command."""
@@ -373,7 +402,7 @@ class Shell(cmd.Cmd, object):
             if self._is_sec_registered('vf', int(cmds[0])):
                 self.secondaries['vf'][int(cmds[0])].run(cmds[1])
         else:
-            print('Invalid command: %s' % tmparg)
+            print('Invalid command: {}'.format(tmparg))
 
     def help_vf(self):
         """Print help message of vf command."""
@@ -430,7 +459,7 @@ class Shell(cmd.Cmd, object):
             if self._is_sec_registered('mirror', int(cmds[0])):
                 self.secondaries['mirror'][int(cmds[0])].run(cmds[1])
         else:
-            print('Invalid command: %s' % tmparg)
+            print('Invalid command: {}'.format(tmparg))
 
     def help_mirror(self):
         """Print help message of mirror command."""
@@ -839,7 +868,7 @@ class Shell(cmd.Cmd, object):
                 print("No subgraph.")
             else:
                 for label, subg in self.spp_topo.subgraphs.items():
-                    print('label: %s\tsubgraph: "%s"' % (label, subg))
+                    print('label: {}\tsubgraph: "{}"'.format(label, subg))
         else:  # add or del
             tokens = args_cleaned.split(' ')
             # Add subgraph
@@ -853,18 +882,18 @@ class Shell(cmd.Cmd, object):
 
                     # TODO(yasufum) add validation for subgraph
                     self.spp_topo.subgraphs[label] = subg
-                    print("Add subgraph '%s'" % label)
+                    print("Add subgraph '{}'".format(label))
                 else:
-                    print("Invalid syntax '%s'!" % args_cleaned)
+                    print("Invalid syntax '{}'!".format(args_cleaned))
             # Delete subgraph
             elif ((tokens[0] == 'del') or
                     (tokens[0] == 'delete') or
                     (tokens[0] == 'remove')):
                 del(self.spp_topo.subgraphs[tokens[1]])
-                print("Delete subgraph '%s'" % tokens[1])
+                print("Delete subgraph '{}'".format(tokens[1]))
 
             else:
-                print("Ivalid subcommand '%s'!" % tokens[0])
+                print("Ivalid subcommand '{}'!".format(tokens[0]))
 
     def help_topo_subgraph(self):
         """Print help message of topo_subgraph command."""
@@ -919,7 +948,7 @@ class Shell(cmd.Cmd, object):
         do_cmd = '%s.%s' % (mod_name, method_name)
         exec('Shell.%s = %s' % (method_name, do_cmd))
 
-        print("Module '%s' loaded." % mod_name)
+        print("Module '{}' loaded.".format(mod_name))
 
     def help_load_cmd(self):
         """Print help message of load_cmd command."""
