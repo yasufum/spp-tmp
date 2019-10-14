@@ -105,7 +105,7 @@ class Shell(cmd.Cmd, object):
             time.sleep(self.WAIT_PRI_INTERVAL)
             print('.', end='', flush=True)
             cnt += 1
-        print(' OK!')
+        print(' OK! ({}[sec])'.format(cnt * self.WAIT_PRI_INTERVAL))
 
     def init_spp_procs(self):
         """Initialize delegators of SPP processes.
