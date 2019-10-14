@@ -19,7 +19,6 @@
 #include "shared/basic_forwarder.h"
 
 #include "params.h"
-#include "init.h"
 #include "nfv_status.h"
 #include "shared/port_manager.h"
 #include "commands.h"

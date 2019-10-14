@@ -17,6 +17,7 @@
 #include "init.h"
 #include "primary.h"
 
+#include "shared/port_manager.h"
 #include "shared/secondary/add_port.h"
 #include "shared/secondary/utils.h"
 
@@ -161,6 +162,32 @@ sleep_lcore(void *dummy __rte_unused)
 			do_stats_display();
 	}
 
+	return 0;
+}
+
+/* main processing loop for forwarding. */
+static void
+forward_loop(void)
+{
+	unsigned int lcore_id = rte_lcore_id();
+
+	RTE_LOG(INFO, PRIMARY, "entering main loop on lcore %u\n", lcore_id);
+
+	while (1) {
+		if (unlikely(cmd == STOP)) {
+			sleep(1);
+			continue;
+		} else if (cmd == FORWARD) {
+			forward();
+		}
+	}
+}
+
+/* leading to forward loop. */
+static int
+main_loop(void *dummy __rte_unused)
+{
+	forward_loop();
 	return 0;
 }
 
@@ -825,8 +852,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* put all other cores to sleep bar master */
-	rte_eal_mp_remote_launch(sleep_lcore, NULL, SKIP_MASTER);
+	if (get_forwarding_flg() == 1) {
+		/* initialize port forward array*/
+		forward_array_init();
+		port_map_init();
+
+		/* do forwarding */
+		rte_eal_mp_remote_launch(main_loop, NULL, SKIP_MASTER);
+	} else
+		/* put all other cores to sleep bar master */
+		rte_eal_mp_remote_launch(sleep_lcore, NULL, SKIP_MASTER);
 
 	while (on) {
 		ret = do_connection(&connected, &sock);

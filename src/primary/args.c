@@ -17,6 +17,25 @@ uint16_t num_rings;
 char *server_ip;
 int server_port;
 
+/* Flag for deciding to forward */
+int do_forwarding;
+
+/*
+ * Long options mapped to a short option.
+ *
+ * First long only option value must be >= 256, so that we won't
+ * conflict with short options.
+ */
+enum {
+	CMD_LINE_OPT_MIN_NUM = 256,
+	CMD_OPT_DISP_STATS,
+};
+
+struct option lgopts[] = {
+	{"disp-stats", no_argument, NULL, CMD_OPT_DISP_STATS},
+	{0}
+};
+
 static const char *progname;
 
 /**
@@ -30,6 +49,26 @@ usage(void)
 	    " -p PORTMASK: hexadecimal bitmask of ports to use\n"
 	    " -n NUM_RINGS: number of ring ports used from secondaries\n"
 	    , progname);
+}
+
+int set_forwarding_flg(int flg)
+{
+	if (flg == 0 || flg == 1)
+		do_forwarding = flg;
+	else {
+		RTE_LOG(ERR, PRIMARY, "Invalid value for forwarding flg.\n");
+		return -1;
+	}
+	return 0;
+}
+
+int get_forwarding_flg(void)
+{
+	if (do_forwarding < 0) {
+		RTE_LOG(ERR, PRIMARY, "Forwarding flg is not initialized.\n");
+		return -1;
+	}
+	return do_forwarding;
 }
 
 /**
@@ -103,7 +142,6 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 {
 	int option_index, opt;
 	char **argvopt = argv;
-	struct option lgopts[] = { {0} };
 	int ret;
 
 	progname = argv[0];
@@ -111,6 +149,9 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 	while ((opt = getopt_long(argc, argvopt, "n:p:s:", lgopts,
 		&option_index)) != EOF) {
 		switch (opt) {
+		case CMD_OPT_DISP_STATS:
+			set_forwarding_flg(0);
+			break;
 		case 'p':
 			if (parse_portmask(ports, max_ports, optarg) != 0) {
 				usage();

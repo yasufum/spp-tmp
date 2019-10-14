@@ -141,7 +141,10 @@ init(int argc, char *argv[])
 		ports = mz->addr;
 	}
 
-	/* parse additional, application arguments */
+	/* Primary does forwarding without option `disp-stats` as default. */
+	set_forwarding_flg(1);
+
+	/* Parse additional, application arguments */
 	retval = parse_app_args(total_ports, argc, argv);
 	if (retval != 0)
 		return -1;

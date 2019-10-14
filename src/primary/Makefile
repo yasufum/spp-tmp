@@ -18,12 +18,12 @@ endif
 # binary name
 APP = spp_primary
 
-# TODO: move add_port.c and parse_resource uid() in utils.c to shared
-#       dir and remove it.
+# TODO: revise to not use functions in secondary's.
 SPP_SEC_DIR = ../shared/secondary
 
 # all source are stored in SRCS-y
-SRCS-y := main.c init.c args.c ../shared/common.c
+SRCS-y := main.c init.c args.c
+SRCS-y += ../shared/common.c ../shared/basic_forwarder.c ../shared/port_manager.c
 SRCS-y += $(SPP_SEC_DIR)/add_port.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c
 
