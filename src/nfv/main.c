@@ -21,7 +21,7 @@
 #include "params.h"
 #include "init.h"
 #include "nfv_status.h"
-#include "nfv_utils.h"
+#include "shared/port_manager.h"
 #include "commands.h"
 
 #define RTE_LOGTYPE_SPP_NFV RTE_LOGTYPE_USER1

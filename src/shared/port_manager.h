@@ -3,10 +3,12 @@
  * Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
  */
 
-#ifndef _NFV_NFV_UTILS_H_
-#define _NFV_NFV_UTILS_H_
+#ifndef __SHARED_PORT_MANAGER_H__
+#define __SHARED_PORT_MANAGER_H__
 
-#define RTE_LOGTYPE_SPP_NFV RTE_LOGTYPE_USER1
+#define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
+
+#include "shared/basic_forwarder.h"
 
 static void
 forward_array_remove(int port_id)
@@ -78,11 +80,11 @@ add_patch(uint16_t in_port, uint16_t out_port)
 	ports_fwd_array[out_port].rx_func = &rte_eth_rx_burst;
 	ports_fwd_array[out_port].tx_func = &rte_eth_tx_burst;
 
-	RTE_LOG(DEBUG, SPP_NFV, "STATUS: in port %d in_port_id %d\n", in_port,
+	RTE_LOG(DEBUG, SHARED, "STATUS: in port %d in_port_id %d\n", in_port,
 		ports_fwd_array[in_port].in_port_id);
-	RTE_LOG(DEBUG, SPP_NFV, "STATUS: in port %d patch out port id %d\n",
+	RTE_LOG(DEBUG, SHARED, "STATUS: in port %d patch out port id %d\n",
 		in_port, ports_fwd_array[in_port].out_port_id);
-	RTE_LOG(DEBUG, SPP_NFV, "STATUS: outport %d in_port_id %d\n", out_port,
+	RTE_LOG(DEBUG, SHARED, "STATUS: outport %d in_port_id %d\n", out_port,
 		ports_fwd_array[out_port].in_port_id);
 
 	return 0;
@@ -97,8 +99,8 @@ forward_array_reset(void)
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 		if (ports_fwd_array[i].in_port_id != PORT_RESET) {
 			ports_fwd_array[i].out_port_id = PORT_RESET;
-			RTE_LOG(INFO, SPP_NFV, "Port ID %d\n", i);
-			RTE_LOG(INFO, SPP_NFV, "out_port_id %d\n",
+			RTE_LOG(INFO, SHARED, "Port ID %d\n", i);
+			RTE_LOG(INFO, SHARED, "out_port_id %d\n",
 				ports_fwd_array[i].out_port_id);
 		}
 	}
@@ -116,4 +118,4 @@ static enum port_type get_port_type(char *portname)
 	return UNDEF;
 }
 
-#endif // _NFV_COMMAND_UTILS_H_
+#endif  // __SHARED_PORT_MANAGER_H__
