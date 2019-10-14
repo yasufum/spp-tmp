@@ -11,7 +11,7 @@ sec_mem:
     val: -m 512
     desc: Mem size
 sec_m_lcore:
-    val: 1
+    val: 2
     desc: Shared master lcore among secondaries
 sec_wait_launch:
     val: 0.5
