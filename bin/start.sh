@@ -64,7 +64,6 @@ echo "Start spp_primary"
 start_spp_pri
 
 if [ ! ${DRY_RUN} ]; then
-    echo "Waiting for spp-ctl is ready ..."
-    sleep 1
-    python3 ${SPP_DIR}/src/spp.py -b ${SPP_HOST_IP}
+    sleep 1  # wait for spp-ctl is ready
+    python3 ${SPP_DIR}/src/spp.py -b ${SPP_HOST_IP} --wait-pri
 fi
