@@ -21,6 +21,8 @@ def main(argv):
     parser.add_argument('-b', '--bind-addr', action='append',
                         default=['%s:%s' % (api_ipaddr, api_port)],
                         help='bind address, default=127.0.0.1:7777')
+    parser.add_argument('--wait-pri', action='store_true',
+                        help='Wait for spp_primary is launched')
     parser.add_argument('--config', type=str,
                         help='Config file path')
     args = parser.parse_args()
@@ -51,7 +53,7 @@ def main(argv):
 
         spp_cli_objs.append(spp_ctl_cli)
 
-    shell = Shell(spp_cli_objs, args.config)
+    shell = Shell(spp_cli_objs, args.config, args.wait_pri)
     shell.cmdloop()
     shell = None
 

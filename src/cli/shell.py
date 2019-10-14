@@ -28,7 +28,7 @@ class Shell(cmd.Cmd, object):
     WAIT_PRI_INTERVAL = 0.5  # sec
     WAIT_PRI_TIMEOUT = 20    # sec
 
-    def __init__(self, spp_cli_objs, config, use_cache=False):
+    def __init__(self, spp_cli_objs, config, wait_pri=False, use_cache=False):
 
         # Load default config, can be changed via `config` command
         try:
@@ -82,30 +82,8 @@ class Shell(cmd.Cmd, object):
         common.set_current_server_addr(
                 self.spp_ctl_cli.ip_addr, self.spp_ctl_cli.port)
 
-        # Wait for launching spp_primary.
-        print('Waiting for spp_primary is ready .', end='', flush=True)
-        wait_cnt = self.WAIT_PRI_TIMEOUT / self.WAIT_PRI_INTERVAL
-        cnt = 0
-        is_pri_ready = False
-        while(is_pri_ready is False) and (cnt < wait_cnt):
-            res = self.spp_ctl_cli.get('processes')
-            if res is not None:
-                if res.status_code == 200:
-                    pri_obj = None
-                    try:
-                        proc_objs = res.json()
-                        for proc_obj in proc_objs:
-                            if proc_obj['type'] == 'primary':
-                                pri_obj = proc_obj
-                    except KeyError as e:
-                        print('Error: {} is not defined!'.format(e))
-
-                    if pri_obj is not None:
-                        is_pri_ready = True
-            time.sleep(self.WAIT_PRI_INTERVAL)
-            print('.', end='', flush=True)
-            cnt += 1
-        print(' OK! ({}[sec])'.format(cnt * self.WAIT_PRI_INTERVAL))
+        if wait_pri is True:
+            self._wait_pri_launched()
 
     def init_spp_procs(self):
         """Initialize delegators of SPP processes.
@@ -137,6 +115,40 @@ class Shell(cmd.Cmd, object):
         for sec_id in self.spp_ctl_cli.get_sec_ids('pcap'):
             self.secondaries['pcap'][sec_id] = pcap.SppPcap(
                     self.spp_ctl_cli, sec_id)
+
+    def _wait_pri_launched(self):
+        """Wait for launching spp_primary."""
+
+        print('Waiting for spp_primary is ready ...',
+                end='', flush=True)
+        wait_cnt = self.WAIT_PRI_TIMEOUT / self.WAIT_PRI_INTERVAL
+        cnt = 0
+        is_pri_ready = False
+        while cnt < wait_cnt:
+            res = self.spp_ctl_cli.get('processes')
+            if res is not None:
+                if res.status_code == 200:
+                    pri_obj = None
+                    try:
+                        proc_objs = res.json()
+                        for proc_obj in proc_objs:
+                            if proc_obj['type'] == 'primary':
+                                pri_obj = proc_obj
+                    except KeyError as e:
+                        print('Error: {} is not defined!'.format(e))
+
+                    if pri_obj is not None:
+                        is_pri_ready = True
+                        break
+            time.sleep(self.WAIT_PRI_INTERVAL)
+            print('.', end='', flush=True)
+            cnt += 1
+
+        t = cnt * self.WAIT_PRI_INTERVAL
+        if is_pri_ready is True:
+            print(' OK! ({}[sec])'.format(t))
+        else:
+            print(' Timeout! ({}[sec])'.format(t))
 
     # Called everytime after running command. `stop` is returned from `do_*`
     # method and SPP CLI is terminated if it is True. It means that only
