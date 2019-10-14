@@ -5,8 +5,6 @@
 #ifndef __SHARED_SECONDARY_COMMON_H__
 #define __SHARED_SECONDARY_COMMON_H__
 
-#define MAX_PKT_BURST 32
-
 #define IPADDR_LEN 16  /* Length of IP address in string. */
 
 /**

@@ -29,6 +29,9 @@
 #define RTE_MP_RX_DESC_DEFAULT 512
 #define RTE_MP_TX_DESC_DEFAULT 512
 
+/* Packets are read in a burst of size MAX_PKT_BURST from RX queue. */
+#define MAX_PKT_BURST 32
+
 #define VDEV_ETH_RING "eth_ring"
 #define VDEV_NET_RING "net_ring"
 #define VDEV_ETH_VHOST "eth_vhost"

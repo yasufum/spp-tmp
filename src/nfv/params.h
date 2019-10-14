@@ -22,13 +22,9 @@ struct porttype_map portmap[] = {
 	{ .port_name = NULL,    .port_type = UNDEF, },
 };
 
-static struct port ports_fwd_array[RTE_MAX_ETHPORTS];
-
 /* the port details */
 struct port_info *ports;
 
 static enum cmd_type cmd;
-
-static struct port_map port_map[RTE_MAX_ETHPORTS];
 
 #endif // _NFV_PARAMS_H_
