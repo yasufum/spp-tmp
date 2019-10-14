@@ -30,13 +30,13 @@ static sig_atomic_t on = 1;
 
 uint8_t lcore_id_used[RTE_MAX_LCORE] = {};
 
+/*
+ * Long options mapped to a short option.
+ *
+ * First long only option value must be >= 256, so that we won't
+ * conflict with short options.
+ */
 enum {
-	/*
-	 * Long options mapped to a short option.
-	 *
-	 * First long only option value must be >= 256, so that we won't
-	 * conflict with short options.
-	 */
 	CMD_LINE_OPT_MIN_NUM = 256,
 	CMD_OPT_ENABLE_VHOST_CLI,
 };
