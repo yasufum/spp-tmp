@@ -25,7 +25,7 @@ class SppPrimary(object):
         self.spp_ctl_cli = spp_ctl_cli
 
         self.ports = []  # registered ports
-        self.patchs = []
+        self.patches = []
 
         # Default args for `pri; launch`, used if given cli_config is invalid
 
@@ -248,7 +248,7 @@ class SppPrimary(object):
                 print('Error: unknown response for get_patches.')
 
     def _get_ports_and_patches(self):
-        """Get all of ports and patchs at once.
+        """Get all of ports and patches at once.
 
         This method is to execute `_get_ports()` and `_get_patches()` at
         once to reduce request to spp-ctl. Returned value is a set of
@@ -357,16 +357,16 @@ class SppPrimary(object):
 
         return sockets
 
-    def _setup_launch_opts(self, tokens, cli_config):
+    def _setup_launch_opts(self, sub_tokens, cli_config):
         """Make options for launch cmd from config params."""
 
         if 'max_secondary' in cli_config.keys():
             max_secondary = int(cli_config['max_secondary']['val'])
 
-            if (tokens[2] in spp_common.SEC_TYPES) and \
-                    (int(tokens[3])-1 in range(max_secondary)):
-                ptype = tokens[2]
-                sid = tokens[3]
+            if (sub_tokens[1] in spp_common.SEC_TYPES) and \
+                    (int(sub_tokens[2])-1 in range(max_secondary)):
+                ptype = sub_tokens[1]
+                sid = sub_tokens[2]
 
                 # Option of secondary ID is different between spp_nfv
                 # and others.
@@ -481,56 +481,166 @@ class SppPrimary(object):
         Called from complete_pri() to complete primary command.
         """
 
-        candidates = []
-        tokens = line.split(' ')
+        try:
+            candidates = []
+            tokens = line.split(' ')
 
-        # Parse command line
-        if tokens[0].endswith(';'):
+            # Parse command line
+            if tokens[0].endswith(';'):
 
-            # Show sub commands
-            if len(tokens) == 2:
-                # Add sub commands
-                candidates = candidates + self.PRI_CMDS[:]
+                # Show sub commands
+                if len(tokens) == 2:
+                    # Add sub commands
+                    candidates = candidates + self.PRI_CMDS[:]
 
-            # Show args of `launch` sub command.
-            elif len(tokens) == 3 and tokens[1] == 'launch':
-                for pt in spp_common.SEC_TYPES:
-                    candidates.append('{}'.format(pt))
-
-            elif len(tokens) == 4 and tokens[1] == 'launch':
-                if 'max_secondary' in cli_config.keys():
-                    max_secondary = int(
-                            cli_config['max_secondary']['val'])
-
-                    if tokens[2] in spp_common.SEC_TYPES:
-                        used_sec_ids = [str(i) for i in self._get_sec_ids()]
-                        candidates = [
-                                str(i+1) for i in range(max_secondary)
-                                if str(i+1) not in used_sec_ids]
-                        logger.debug(candidates)
                 else:
-                    logger.error(
-                            'Error: max_secondary is not defined in config')
-                    candidates = []
+                    # Show args of `launch` sub command.
+                    if tokens[1] == 'launch':
+                        candidates = self._compl_launch(tokens[1:], cli_config)
+                    elif tokens[1] == 'add':
+                        candidates = self._compl_add(tokens[1:])
+                    elif tokens[1] == 'del':
+                        candidates = self._compl_del(tokens[1:])
+                    elif tokens[1] == 'patch':
+                        candidates = self._compl_patch(tokens[1:])
 
-            elif len(tokens) == 5 and tokens[1] == 'launch':
-                # Do not show candidate if given sec ID is already used.
-                # Sec ID is contained as the third entry in tokens. Here is an
-                # example of tokens.
-                #   ['pri;', 'launch', 'nfv', '1', '']
-                used_sec_ids = [str(i) for i in self._get_sec_ids()]
-                if tokens[3] not in used_sec_ids:
-                    candidates = self._setup_launch_opts(
-                            tokens, cli_config)
+            if not text:
+                completions = candidates
+            else:
+                completions = [p for p in candidates
+                               if p.startswith(text)
+                               ]
 
-        if not text:
-            completions = candidates
-        else:
-            completions = [p for p in candidates
-                           if p.startswith(text)
-                           ]
+            return completions
 
-        return completions
+        except Exception as e:
+            print(e)
+
+    def _compl_launch(self, sub_tokens, cli_config):
+        candidates = []
+        if len(sub_tokens) == 2:
+            for pt in spp_common.SEC_TYPES:
+                candidates.append('{}'.format(pt))
+
+        elif len(sub_tokens) == 3:
+            if 'max_secondary' in cli_config.keys():
+                max_secondary = int(
+                        cli_config['max_secondary']['val'])
+
+                if sub_tokens[1] in spp_common.SEC_TYPES:
+                    used_sec_ids = [str(i) for i in self._get_sec_ids()]
+                    candidates = [
+                            str(i+1) for i in range(max_secondary)
+                            if str(i+1) not in used_sec_ids]
+                    logger.debug(candidates)
+            else:
+                logger.error(
+                        'Error: max_secondary is not defined in config')
+                candidates = []
+
+        elif len(sub_tokens) == 4:
+            # Do not show candidate if given sec ID is already used.
+            # Sec ID is contained as the 2nd entry in sub_tokens. Here is an
+            # example of sub_tokens.
+            #   ['launch', 'nfv', '1', '']
+            used_sec_ids = [str(i) for i in self._get_sec_ids()]
+            if sub_tokens[1] not in used_sec_ids:
+                candidates = self._setup_launch_opts(
+                        sub_tokens, cli_config)
+
+        return candidates
+
+    # TODO(yasufum): consider to merge nfv's.
+    def _compl_add(self, sub_tokens):
+        """Complete `add` command."""
+
+        if len(sub_tokens) < 3:
+            res = []
+
+            port_types = spp_common.PORT_TYPES[:]
+            port_types.remove('phy')
+
+            for kw in port_types:
+                if kw.startswith(sub_tokens[1]):
+                    res.append(kw + ':')
+            return res
+
+    # TODO(yasufum): consider to merge nfv's.
+    def _compl_del(self, sub_tokens):
+        """Complete `del` command."""
+
+        # Del command consists of two tokens max, for instance,
+        # `nfv 1; del ring:1`.
+        if len(sub_tokens) < 3:
+            res = []
+
+            self.ports, self.patches = self._get_ports_and_patches()
+
+            # Patched ports should not be included in the candidate of del.
+            patched_ports = self._get_patched_ports()
+
+            # Remove ports already used from candidate.
+            for kw in self.ports:
+                if not (kw in patched_ports):
+                    if kw.startswith(sub_tokens[1]):
+                        if ':' in sub_tokens[1]:  # exp, 'ring:' or 'ring:0'
+                            res.append(kw.split(':')[1])
+                        else:
+                            res.append(kw)
+
+            # Physical port cannot be removed.
+            for p in res:
+                if p.startswith('phy:'):
+                    res.remove(p)
+
+            return res
+
+    # TODO(yasufum): consider to merge nfv's.
+    def _compl_patch(self, sub_tokens):
+        """Complete `patch` command."""
+
+        # Patch command consists of three tokens max, for instance,
+        # `nfv 1; patch phy:0 ring:1`.
+        if len(sub_tokens) < 4:
+            res = []
+
+            self.ports, self.patches = self._get_ports_and_patches()
+
+            # Get patched ports of src and dst to be used for completion.
+            src_ports = []
+            dst_ports = []
+            for pt in self.patches:
+                src_ports.append(pt['src'])
+                dst_ports.append(pt['dst'])
+
+            # Remove patched ports from candidates.
+            target_idx = len(sub_tokens) - 1  # target is src or dst
+            tmp_ports = self.ports[:]  # candidates
+            if target_idx == 1:  # find src port
+                # If some of ports are patched, `reset` should be included.
+                if self.patches != []:
+                    tmp_ports.append('reset')
+                for pt in src_ports:
+                    tmp_ports.remove(pt)  # remove patched ports
+            else:  # find dst port
+                # If `reset` is given, no need to show dst ports.
+                if sub_tokens[target_idx - 1] == 'reset':
+                    tmp_ports = []
+                else:
+                    for pt in dst_ports:
+                        tmp_ports.remove(pt)
+
+            # Return candidates.
+            for kw in tmp_ports:
+                if kw.startswith(sub_tokens[target_idx]):
+                    # Completion does not work correctly if `:` is included in
+                    # tokens. Required to create keyword only after `:`.
+                    if ':' in sub_tokens[target_idx]:  # 'ring:' or 'ring:0'
+                        res.append(kw.split(':')[1])  # add only after `:`
+                    else:
+                        res.append(kw)
+
+            return res
 
     def _get_sec_ids(self):
         sec_ids = []

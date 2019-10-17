@@ -28,7 +28,7 @@ class SppNfv(object):
         self.spp_ctl_cli = spp_ctl_cli
         self.sec_id = sec_id
         self.ports = []  # registered ports
-        self.patchs = []
+        self.patches = []
 
         # Call REST API each time of completion if it is True.
         self.use_cache = use_cache
@@ -129,13 +129,13 @@ class SppNfv(object):
                 print('Error: unknown response.')
 
     # TODO(yasufum) change name starts with '_' as private
-    def get_ports_and_patches(self):
-        """Get all of ports and patchs at once.
+    def _get_ports_and_patches(self):
+        """Get all of ports and patches at once.
 
         This method is to execute `get_ports()` and `get_patches()` at
         once to reduce request to spp-ctl. Returned value is a set of
         lists. You use this method as following.
-          ports, patches = get_ports_and_patches()
+          ports, patches = _get_ports_and_patches()
         """
 
         res = self.spp_ctl_cli.get('nfvs/%d' % self.sec_id)
@@ -150,8 +150,7 @@ class SppNfv(object):
             else:
                 print('Error: unknown response.')
 
-    # TODO(yasufum) change name starts with '_' as private
-    def get_patched_ports(self):
+    def _get_patched_ports(self):
         """Get all of patched ports as a list.
 
         This method is to get a list of patched ports instead of a dict.
@@ -234,10 +233,10 @@ class SppNfv(object):
             res = []
 
             if self.use_cache is False:
-                self.ports, self.patches = self.get_ports_and_patches()
+                self.ports, self.patches = self._get_ports_and_patches()
 
             # Patched ports should not be included in the candidate of del.
-            patched_ports = self.get_patched_ports()
+            patched_ports = self._get_patched_ports()
 
             # Remove ports already used from candidate.
             for kw in self.ports:
@@ -264,7 +263,7 @@ class SppNfv(object):
             res = []
 
             if self.use_cache is False:
-                self.ports, self.patches = self.get_ports_and_patches()
+                self.ports, self.patches = self._get_ports_and_patches()
 
             # Get patched ports of src and dst to be used for completion.
             src_ports = []
@@ -354,7 +353,7 @@ class SppNfv(object):
                 self.patches = self.get_patches()
 
             # Patched ports should not be deleted.
-            patched_ports = self.get_patched_ports()
+            patched_ports = self._get_patched_ports()
 
             if params[0] in patched_ports:
                 print("Cannot delete patched port '%s'." % params[0])
