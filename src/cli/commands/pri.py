@@ -61,7 +61,7 @@ class SppPrimary(object):
                     # Print default error message
                     pass
                 else:
-                    print('Error: unknown response.')
+                    print('Error: unknown response from status.')
 
         elif subcmd == 'add':
             self._run_add(params)
@@ -87,7 +87,7 @@ class SppPrimary(object):
                 elif res.status_code in common_err_codes:
                     pass
                 else:
-                    print('Error: unknown response.')
+                    print('Error: unknown response for clear.')
 
         else:
             print('Invalid pri command!')
@@ -102,7 +102,7 @@ class SppPrimary(object):
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for exit.')
 
     def print_status(self, json_obj):
         """Parse SPP primary's status and print.
@@ -219,15 +219,15 @@ class SppPrimary(object):
     def _get_ports(self):
         """Get all of ports as a list."""
 
-        res = self.spp_ctl_cli.get('primary')
+        res = self.spp_ctl_cli.get('primary/status')
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                return res.json()['ports']
+                return res.json()['forwarder']['ports']
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for get_ports.')
 
     def _get_patches(self):
         """Get all of patched ports as a list of dicts.
@@ -237,15 +237,15 @@ class SppPrimary(object):
            {'src': 'ring:1', 'dst':'vhost:1'}, ...]
         """
 
-        res = self.spp_ctl_cli.get('primary')
+        res = self.spp_ctl_cli.get('primary/status')
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                return res.json()['patches']
+                return res.json()['forwarder']['patches']
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for get_patches.')
 
     def _get_ports_and_patches(self):
         """Get all of ports and patchs at once.
@@ -256,17 +256,17 @@ class SppPrimary(object):
           ports, patches = _get_ports_and_patches()
         """
 
-        res = self.spp_ctl_cli.get('primary')
+        res = self.spp_ctl_cli.get('primary/status')
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                ports = res.json()['ports']
-                patches = res.json()['patches']
+                ports = res.json()['forwarder']['ports']
+                patches = res.json()['forwarder']['patches']
                 return ports, patches
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response 3.')
 
     def _get_patched_ports(self):
         """Get all of patched ports as a list.
@@ -547,7 +547,7 @@ class SppPrimary(object):
                 # Print default error message
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for _get_sec_ids.')
         return sec_ids
 
     def _setup_opts_dict(self, opts_list):
@@ -590,7 +590,7 @@ class SppPrimary(object):
                 elif res.status_code in error_codes:
                     pass
                 else:
-                    print('Error: unknown response.')
+                    print('Error: unknown response for add.')
 
     def _run_del(self, params):
         """Run `del` command."""
@@ -617,7 +617,7 @@ class SppPrimary(object):
                     elif res.status_code in error_codes:
                         pass
                     else:
-                        print('Error: unknown response.')
+                        print('Error: unknown response for del.')
 
     def _run_forward_or_stop(self, cmd):
         """Run `forward` or `stop` command."""
@@ -641,7 +641,7 @@ class SppPrimary(object):
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for forward/stop.')
 
     def _run_patch(self, params):
         """Run `patch` command."""
@@ -657,7 +657,7 @@ class SppPrimary(object):
                 elif res.status_code in error_codes:
                     pass
                 else:
-                    print('Error: unknown response.')
+                    print('Error: unknown response for patch.')
         else:
             if len(params) < 2:
                 print('Dst port is required!')
@@ -673,7 +673,7 @@ class SppPrimary(object):
                     elif res.status_code in error_codes:
                         pass
                     else:
-                        print('Error: unknown response.')
+                        print('Error: unknown response for patch.')
 
     def _run_launch(self, params, wait_time):
         """Launch secondary process.
@@ -787,7 +787,7 @@ class SppPrimary(object):
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response.')
+                print('Error: unknown response for launch.')
 
     @classmethod
     def help(cls):

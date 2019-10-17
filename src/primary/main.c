@@ -785,10 +785,12 @@ get_status_json(char *str)
  * Add a port to spp_primary. Port is given as a resource UID which is a
  * combination of port type and ID like as 'ring:0'.
  */
+/* TODO(yasufum) consider to merge do_add in nfv/commands.h */
 static int
 add_port(char *p_type, int p_id)
 {
 	uint16_t dev_id;
+	uint16_t port_id;
 	int res = 0;
 	uint16_t cnt = 0;
 
@@ -822,6 +824,13 @@ add_port(char *p_type, int p_id)
 	if (res < 0)
 		return -1;
 
+	port_id = (uint16_t) res;
+	port_map[port_id].id = p_id;
+	port_map[port_id].port_type = port_id_list[cnt].type;
+	port_map[port_id].stats = &ports->client_stats[p_id];
+
+	/* Update ports_fwd_array with port id */
+	ports_fwd_array[port_id].in_port_id = port_id;
 	return 0;
 }
 
@@ -850,6 +859,7 @@ find_ethdev_id(int p_id, enum port_type ptype)
 }
 
 /* Delete port. */
+/* TODO(yasufum) consider to merge do_del in nfv/commands.h */
 static int
 del_port(char *p_type, int p_id)
 {
@@ -883,6 +893,9 @@ del_port(char *p_type, int p_id)
 
 	port_id_list[dev_id].port_id = PORT_RESET;
 	port_id_list[dev_id].type = UNDEF;
+
+	forward_array_remove(dev_id);
+	port_map_init_one(dev_id);
 
 	return 0;
 }

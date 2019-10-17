@@ -12,6 +12,10 @@
 
 #define RTE_LOGTYPE_SPP_NFV RTE_LOGTYPE_USER1
 
+/* TODO(yasufum): consider to rename find_port_id() to find_ethdev_id()
+ * defined in shared/port_manager.c
+ */
+
 static int
 do_del(char *p_type, int p_id)
 {
