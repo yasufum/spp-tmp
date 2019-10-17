@@ -6,7 +6,7 @@ SPP_HUGEPAGES=/dev/hugepages
 
 # spp_primary options
 LOGLEVEL=7  # change to 8 if you refer debug messages.
-PRI_CORE_LIST=0  # required one lcore usually.
+PRI_CORE_LIST=0,1  # required one lcore usually.
 PRI_MEM=1024
 PRI_MEMCHAN=4  # change for your memory channels.
 NUM_RINGS=8
