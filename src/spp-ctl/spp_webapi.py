@@ -455,13 +455,20 @@ class V1PrimaryHandler(BaseHandler):
     def set_route(self):
         self.route('/status', 'GET', callback=self.get_status)
         self.route('/status', 'DELETE', callback=self.clear_status)
-        self.route('/ports', 'PUT',
-                   callback=self.primary_port)
-        self.route('/launch', 'PUT',
-                   callback=self.launch_sec_proc)
+        self.route('/forward', 'PUT', callback=self.nfv_forward)
+        self.route('/ports', 'PUT', callback=self.primary_port)
+        self.route('/patches', 'PUT', callback=self.nfv_patch_add)
+        self.route('/patches', 'DELETE', callback=self.nfv_patch_del)
+        self.route('/launch', 'PUT', callback=self.launch_sec_proc)
         self.route('/', 'DELETE', callback=self.pri_exit)
 
     def _get_proc(self):
+        """Get Primary object for requesting.
+
+        This method is call everytime received request via REST API
+        to confirm primary is alive.
+        """
+
         proc = self.ctrl.procs.get(spp_proc.ID_PRIMARY)
         if proc is None:
             raise bottle.HTTPError(404, "primary not found.")
@@ -483,7 +490,22 @@ class V1PrimaryHandler(BaseHandler):
         proc = self._get_proc()
         proc.clear()
 
-    # TODO(yasufum) change name and make it to shared method
+    # TODO(yasufum) change name `nfv` and make it to shared method
+    def _validate_nfv_forward(self, body):
+        if 'action' not in body:
+            raise KeyRequired('action')
+        if body['action'] not in ["start", "stop"]:
+            raise KeyInvalid('action', body['action'])
+
+    # TODO(yasufum) change name `nfv` and make it to shared method
+    def nfv_forward(self, body):
+        proc = self._get_proc()
+        if body['action'] == "start":
+            proc.forward()
+        else:
+            proc.stop()
+
+    # TODO(yasufum) change name `nfv` and make it to shared method
     def _validate_nfv_port(self, body):
         for key in ['action', 'port']:
             if key not in body:
@@ -500,6 +522,25 @@ class V1PrimaryHandler(BaseHandler):
             proc.port_add(body['port'])
         else:
             proc.port_del(body['port'])
+
+    # TODO(yasufum) change name `nfv` and make it to shared method
+    def _validate_nfv_patch(self, body):
+        for key in ['src', 'dst']:
+            if key not in body:
+                raise KeyRequired(key)
+        self._validate_port(body['src'])
+        self._validate_port(body['dst'])
+
+    # TODO(yasufum) change name `nfv` and make it to shared method
+    def nfv_patch_add(self, body):
+        proc = self._get_proc()
+        self._validate_nfv_patch(body)
+        proc.patch_add(body['src'], body['dst'])
+
+    # TODO(yasufum) change name `nfv` and make it to shared method
+    def nfv_patch_del(self):
+        proc = self._get_proc()
+        proc.patch_reset()
 
     def launch_sec_proc(self, body):  # the arg should be "body"
         for key in ['client_id', 'proc_name', 'eal', 'app']:

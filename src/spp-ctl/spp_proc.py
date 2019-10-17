@@ -11,6 +11,7 @@ import spp_ctl
 
 LOG = logging.getLogger(__name__)
 
+# TODO(yasufum): Move following definitions to another file.
 ID_PRIMARY = 0
 TYPE_PRIMARY = "primary"
 TYPE_VF = "vf"
@@ -299,6 +300,22 @@ class PrimaryProc(SppProc):
     @exec_command
     def port_del(self, port):
         return "del {port}".format(**locals())
+
+    @exec_command
+    def patch_add(self, src_port, dst_port):
+        return "patch {src_port} {dst_port}".format(**locals())
+
+    @exec_command
+    def patch_reset(self):
+        return "patch reset"
+
+    @exec_command
+    def forward(self):
+        return "forward"
+
+    @exec_command
+    def stop(self):
+        return "stop"
 
     @exec_command
     def do_launch_sec_proc(self, args):
