@@ -373,13 +373,359 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 	return 0;
 }
 
+/* TODO(yasufum): change to use shared */
+static int
+append_lcore_info_json(char *str,
+		uint8_t lcore_id_used[RTE_MAX_LCORE])
+{
+	int i;
+	sprintf(str + strlen(str), "\"master-lcore\":%d,",
+			rte_get_master_lcore());
+	sprintf(str + strlen(str), "\"lcores\":[");
+	for (i = 0; i < RTE_MAX_LCORE; i++) {
+		if (lcore_id_used[i] == 1)
+			sprintf(str + strlen(str), "%d,", i);
+	}
+
+	/* Remove last ','. */
+	sprintf(str + strlen(str) - 1, "%s", "]");
+	return 0;
+}
+
+/* TODO(yasufum): change to use shared */
+static int
+append_port_info_json(char *str,
+		struct port *ports_fwd_array,
+		struct port_map *port_map)
+{
+	unsigned int i;
+	unsigned int has_port = 0;  // for checking having port at last
+
+	sprintf(str + strlen(str), "\"ports\":[");
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+			continue;
+
+		has_port = 1;
+		switch (port_map[i].port_type) {
+		case PHY:
+			sprintf(str + strlen(str), "\"phy:%u\",",
+					port_map[i].id);
+			break;
+		case RING:
+			sprintf(str + strlen(str), "\"ring:%u\",",
+				port_map[i].id);
+			break;
+		case VHOST:
+			sprintf(str + strlen(str), "\"vhost:%u\",",
+				port_map[i].id);
+			break;
+		case PCAP:
+			sprintf(str + strlen(str), "\"pcap:%u\",",
+					port_map[i].id);
+			break;
+		case NULLPMD:
+			sprintf(str + strlen(str), "\"nullpmd:%u\",",
+					port_map[i].id);
+			break;
+		case TAP:
+			sprintf(str + strlen(str), "\"tap:%u\",",
+					port_map[i].id);
+			break;
+		case UNDEF:
+			/* TODO(yasufum) Need to remove print for undefined ? */
+			sprintf(str + strlen(str), "\"udf\",");
+			break;
+		}
+	}
+
+	/* Check if it has at least one port to remove ",". */
+	if (has_port == 0) {
+		sprintf(str + strlen(str), "]");
+	} else {  /* Remove last ',' .*/
+		sprintf(str + strlen(str) - 1, "]");
+	}
+
+	return 0;
+}
+
+/* TODO(yasufum): change to use shared */
+static int
+append_patch_info_json(char *str,
+		struct port *ports_fwd_array,
+		struct port_map *port_map)
+{
+	unsigned int i;
+	unsigned int has_patch = 0;  // for checking having patch at last
+
+	char patch_str[128];
+	sprintf(str + strlen(str), "\"patches\":[");
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+
+		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+			continue;
+
+		RTE_LOG(INFO, SHARED, "Port ID %d\n", i);
+		RTE_LOG(INFO, SHARED, "Status %d\n",
+			ports_fwd_array[i].in_port_id);
+
+		memset(patch_str, '\0', sizeof(patch_str));
+
+		sprintf(patch_str, "{\"src\":");
+
+		switch (port_map[i].port_type) {
+		case PHY:
+			RTE_LOG(INFO, SHARED, "Type: PHY\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"phy:%u\",",
+					port_map[i].id);
+			break;
+		case RING:
+			RTE_LOG(INFO, SHARED, "Type: RING\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"ring:%u\",",
+					port_map[i].id);
+			break;
+		case VHOST:
+			RTE_LOG(INFO, SHARED, "Type: VHOST\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"vhost:%u\",",
+					port_map[i].id);
+			break;
+		case PCAP:
+			RTE_LOG(INFO, SHARED, "Type: PCAP\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"pcap:%u\",",
+					port_map[i].id);
+			break;
+		case NULLPMD:
+			RTE_LOG(INFO, SHARED, "Type: NULLPMD\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"nullpmd:%u\",",
+					port_map[i].id);
+			break;
+		case TAP:
+			RTE_LOG(INFO, SHARED, "Type: TAP\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"tap:%u\",",
+					port_map[i].id);
+			break;
+		case UNDEF:
+			RTE_LOG(INFO, SHARED, "Type: UDF\n");
+			/* TODO(yasufum) Need to remove print for undefined ? */
+			sprintf(patch_str + strlen(patch_str),
+					"\"udf\",");
+			break;
+		}
+
+		sprintf(patch_str + strlen(patch_str), "\"dst\":");
+
+		RTE_LOG(INFO, SHARED, "Out Port ID %d\n",
+				ports_fwd_array[i].out_port_id);
+
+		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
+			//sprintf(patch_str + strlen(patch_str), "%s", "\"\"");
+			continue;
+		} else {
+			has_patch = 1;
+			unsigned int j = ports_fwd_array[i].out_port_id;
+			switch (port_map[j].port_type) {
+			case PHY:
+				RTE_LOG(INFO, SHARED, "Type: PHY\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"phy:%u\"",
+						port_map[j].id);
+				break;
+			case RING:
+				RTE_LOG(INFO, SHARED, "Type: RING\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"ring:%u\"",
+						port_map[j].id);
+				break;
+			case VHOST:
+				RTE_LOG(INFO, SHARED, "Type: VHOST\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"vhost:%u\"",
+						port_map[j].id);
+				break;
+			case PCAP:
+				RTE_LOG(INFO, SHARED, "Type: PCAP\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"pcap:%u\"",
+						port_map[j].id);
+				break;
+			case NULLPMD:
+				RTE_LOG(INFO, SHARED, "Type: NULLPMD\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"nullpmd:%u\"",
+						port_map[j].id);
+				break;
+			case TAP:
+				RTE_LOG(INFO, SHARED, "Type: TAP\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"tap:%u\"",
+						port_map[j].id);
+				break;
+			case UNDEF:
+				RTE_LOG(INFO, SHARED, "Type: UDF\n");
+				/*
+				 * TODO(yasufum) Need to remove print for
+				 * undefined ?
+				 */
+				sprintf(patch_str + strlen(patch_str),
+						"\"udf\"");
+				break;
+			}
+		}
+
+		sprintf(patch_str + strlen(patch_str), "},");
+
+		if (has_patch != 0)
+			sprintf(str + strlen(str), "%s", patch_str);
+	}
+
+
+	/* Check if it has at least one patch to remove ",". */
+	if (has_patch == 0) {
+		sprintf(str + strlen(str), "]");
+	} else {  /* Remove last ','. */
+		sprintf(str + strlen(str) - 1, "]");
+	}
+
+	return 0;
+}
+
+static int
+forwarder_status_json(char *str)
+{
+	char buf_running[64];
+	char buf_ports[256];
+	char buf_patches[256];
+	memset(buf_running, '\0', sizeof(buf_running));
+	memset(buf_ports, '\0', sizeof(buf_ports));
+	memset(buf_patches, '\0', sizeof(buf_patches));
+
+	sprintf(buf_running + strlen(buf_running), "\"status\":");
+	if (cmd == FORWARD)
+		sprintf(buf_running + strlen(buf_running), "\"%s\"", "running");
+	else
+		sprintf(buf_running + strlen(buf_running), "\"%s\"", "idling");
+
+	append_port_info_json(buf_ports, ports_fwd_array, port_map);
+	append_patch_info_json(buf_patches, ports_fwd_array, port_map);
+
+	sprintf(str, "\"forwarder\":{%s,%s,%s}", buf_running, buf_ports,
+			buf_patches);
+	return 0;
+}
+
+static int
+phy_port_stats_json(char *str)
+{
+	int i;
+	int buf_size = 256;  /* size of temp buffer */
+	char phy_port[buf_size];
+	char buf_phy_ports[PRI_BUF_SIZE_PHY];
+	memset(phy_port, '\0', sizeof(phy_port));
+	memset(buf_phy_ports, '\0', sizeof(buf_phy_ports));
+
+	for (i = 0; i < ports->num_ports; i++) {
+
+		RTE_LOG(DEBUG, PRIMARY, "Size of buf_phy_ports str: %d\n",
+				(int)strlen(buf_phy_ports));
+
+		memset(phy_port, '\0', buf_size);
+
+		sprintf(phy_port, "{\"id\":%u,\"eth\":\"%s\","
+				"\"rx\":%"PRIu64",\"tx\":%"PRIu64","
+				"\"tx_drop\":%"PRIu64"}",
+				ports->id[i],
+				get_printable_mac_addr(ports->id[i]),
+				ports->port_stats[i].rx,
+				ports->port_stats[i].tx,
+				ports->client_stats[i].tx_drop);
+
+		int cur_buf_size = (int)strlen(buf_phy_ports) +
+			(int)strlen(phy_port);
+		if (cur_buf_size > PRI_BUF_SIZE_PHY - 1) {
+			RTE_LOG(ERR, PRIMARY,
+				"Cannot send all of phy_port stats (%d/%d)\n",
+				i, ports->num_ports);
+			sprintf(buf_phy_ports + strlen(buf_phy_ports) - 1,
+					"%s", "");
+			break;
+		}
+
+		sprintf(buf_phy_ports + strlen(buf_phy_ports), "%s", phy_port);
+
+		if (i < ports->num_ports - 1)
+			sprintf(buf_phy_ports, "%s,", buf_phy_ports);
+	}
+	sprintf(str, "\"phy_ports\":[%s]", buf_phy_ports);
+	return 0;
+}
+
+static int
+ring_port_stats_json(char *str)
+{
+	int i;
+	int buf_size = 256;  /* size of temp buffer */
+	char buf_ring_ports[PRI_BUF_SIZE_RING];
+	char ring_port[buf_size];
+	memset(ring_port, '\0', sizeof(ring_port));
+	memset(buf_ring_ports, '\0', sizeof(buf_ring_ports));
+
+	for (i = 0; i < num_rings; i++) {
+
+		RTE_LOG(DEBUG, PRIMARY, "Size of buf_ring_ports str: %d\n",
+				(int)strlen(buf_ring_ports));
+
+		memset(ring_port, '\0', buf_size);
+
+		sprintf(ring_port, "{\"id\":%u,\"rx\":%"PRIu64","
+			"\"rx_drop\":%"PRIu64","
+			"\"tx\":%"PRIu64",\"tx_drop\":%"PRIu64"}",
+			i,
+			ports->client_stats[i].rx,
+			ports->client_stats[i].rx_drop,
+			ports->client_stats[i].tx,
+			ports->client_stats[i].tx_drop);
+
+		int cur_buf_size = (int)strlen(buf_ring_ports) +
+			(int)strlen(ring_port);
+		if (cur_buf_size >  PRI_BUF_SIZE_RING - 1) {
+			RTE_LOG(ERR, PRIMARY,
+				"Cannot send all of ring_port stats (%d/%d)\n",
+				i, num_rings);
+			sprintf(buf_ring_ports + strlen(buf_ring_ports) - 1,
+					"%s", "");
+			break;
+		}
+
+		sprintf(buf_ring_ports + strlen(buf_ring_ports),
+				"%s", ring_port);
+
+		if (i < num_rings - 1)
+			sprintf(buf_ring_ports, "%s,", buf_ring_ports);
+	}
+	sprintf(str, "\"ring_ports\":[%s]", buf_ring_ports);
+	return 0;
+}
+
 /**
  * Retrieve all of statu of ports as JSON format managed by primary.
  *
  * Here is an exmaple.
  *
  * {
- *     "lcores": [0],
+ *     "master-lcore": 0,
+ *     "lcores": [0,1],
+ *     "forwarder": {
+ *         "status": "idling",
+ *         "ports": ["phy:0", "phy:1"],
+ *         "patches": ["src": "phy:0", "dst": "phy:1"]
+ *     },
  *     "ring_ports": [
  *     {
  *         "id": 0,
@@ -405,101 +751,32 @@ launch_sec_proc(char *sec_name, int sec_id, char **sec_args)
 static int
 get_status_json(char *str)
 {
-	int i;
-	int lcore_buf_size = PRI_BUF_SIZE_LCORE;
-	int phyp_buf_size = PRI_BUF_SIZE_PHY;
-	int ringp_buf_size = PRI_BUF_SIZE_RING;
-	char lcore_ids[PRI_BUF_SIZE_LCORE];
-	char phy_ports[phyp_buf_size];
-	char ring_ports[ringp_buf_size];
-	memset(lcore_ids, '\0', lcore_buf_size);
-	memset(phy_ports, '\0', phyp_buf_size);
-	memset(ring_ports, '\0', ringp_buf_size);
+	char buf_lcores[PRI_BUF_SIZE_LCORE];
+	char buf_phy_ports[PRI_BUF_SIZE_PHY];
+	char buf_ring_ports[PRI_BUF_SIZE_RING];
+	memset(buf_phy_ports, '\0', PRI_BUF_SIZE_PHY);
+	memset(buf_ring_ports, '\0', PRI_BUF_SIZE_RING);
+	memset(buf_lcores, '\0', PRI_BUF_SIZE_LCORE);
 
-	int buf_size = 256;  /* size of temp buffer */
-	char lcore_id[108];  /* seems enough */
-	char phy_port[buf_size];
-	char ring_port[buf_size];
+	append_lcore_info_json(buf_lcores, lcore_id_used);
+	phy_port_stats_json(buf_phy_ports);
+	ring_port_stats_json(buf_ring_ports);
 
-	memset(lcore_id, '\0', sizeof(lcore_id));
-	for (i = 0; i < RTE_MAX_LCORE; i++) {
-		if (lcore_id_used[i] == 1)
-			sprintf(lcore_id + strlen(lcore_id), "%d,", i);
+	RTE_LOG(INFO, PRIMARY, "%s, %s\n", buf_phy_ports, buf_ring_ports);
+
+	if (get_forwarding_flg() == 1) {
+		char tmp_buf[512];
+		memset(tmp_buf, '\0', sizeof(tmp_buf));
+		forwarder_status_json(tmp_buf);
+
+		sprintf(str, "{%s,%s,%s,%s}",
+				buf_lcores, tmp_buf, buf_phy_ports,
+				buf_ring_ports);
+
+	} else {
+		sprintf(str, "{%s,%s,%s}",
+				buf_lcores, buf_phy_ports, buf_ring_ports);
 	}
-	sprintf(lcore_id + strlen(lcore_id) - 1, "%s", "");
-
-	sprintf(lcore_ids, "\"lcores\":[%s]", lcore_id);
-
-	for (i = 0; i < ports->num_ports; i++) {
-
-		RTE_LOG(DEBUG, PRIMARY, "Size of phy_ports str: %d\n",
-				(int)strlen(phy_ports));
-
-		memset(phy_port, '\0', buf_size);
-
-		sprintf(phy_port, "{\"id\": %u, \"eth\": \"%s\", "
-				"\"rx\": %"PRIu64", \"tx\": %"PRIu64", "
-				"\"tx_drop\": %"PRIu64"}",
-				ports->id[i],
-				get_printable_mac_addr(ports->id[i]),
-				ports->port_stats[i].rx,
-				ports->port_stats[i].tx,
-				ports->client_stats[i].tx_drop);
-
-		int cur_buf_size = (int)strlen(phy_ports) +
-			(int)strlen(phy_port);
-		if (cur_buf_size > phyp_buf_size - 1) {
-			RTE_LOG(ERR, PRIMARY,
-				"Cannot send all of phy_port stats (%d/%d)\n",
-				i, ports->num_ports);
-			sprintf(phy_ports + strlen(phy_ports) - 1, "%s", "");
-			break;
-		}
-
-		sprintf(phy_ports + strlen(phy_ports), "%s", phy_port);
-
-		if (i < ports->num_ports - 1)
-			sprintf(phy_ports, "%s,", phy_ports);
-	}
-
-	for (i = 0; i < num_rings; i++) {
-
-		RTE_LOG(DEBUG, PRIMARY, "Size of ring_ports str: %d\n",
-				(int)strlen(ring_ports));
-
-		memset(ring_port, '\0', buf_size);
-
-		sprintf(ring_port, "{\"id\": %u, \"rx\": %"PRIu64", "
-			"\"rx_drop\": %"PRIu64", "
-			"\"tx\": %"PRIu64", \"tx_drop\": %"PRIu64"}",
-			i,
-			ports->client_stats[i].rx,
-			ports->client_stats[i].rx_drop,
-			ports->client_stats[i].tx,
-			ports->client_stats[i].tx_drop);
-
-		int cur_buf_size = (int)strlen(ring_ports) +
-			(int)strlen(ring_port);
-		if (cur_buf_size > ringp_buf_size - 1) {
-			RTE_LOG(ERR, PRIMARY,
-				"Cannot send all of ring_port stats (%d/%d)\n",
-				i, num_rings);
-			sprintf(ring_ports + strlen(ring_ports) - 1, "%s", "");
-			break;
-		}
-
-		sprintf(ring_ports + strlen(ring_ports), "%s", ring_port);
-
-		if (i < num_rings - 1)
-			sprintf(ring_ports, "%s,", ring_ports);
-	}
-
-	RTE_LOG(DEBUG, PRIMARY,
-			"{%s, \"phy_ports\": [%s], \"ring_ports\": [%s]}\n",
-			lcore_ids, phy_ports, ring_ports);
-
-	sprintf(str, "{%s, \"phy_ports\": [%s], \"ring_ports\": [%s]}",
-			lcore_ids, phy_ports, ring_ports);
 
 	return 0;
 }
@@ -617,7 +894,7 @@ parse_command(char *str)
 	char sec_name[16];
 	char *sec_args[NOF_TOKENS] = {NULL};
 	int ret = 0;
-	int i = 0;
+	int max_token = 0;
 	uint16_t dev_id;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	char result[16] = { 0 };  /* succeeded or failed. */
@@ -628,17 +905,17 @@ parse_command(char *str)
 	memset(sec_name, '\0', 16);
 
 	/* tokenize the user commands from controller */
-	token_list[i] = strtok(str, " ");
-	while (token_list[i] != NULL) {
+	token_list[max_token] = strtok(str, " ");
+	while (token_list[max_token] != NULL) {
 		RTE_LOG(DEBUG, PRIMARY,
 				"parse command, token[%2d] = %s\n",
-				i, token_list[i]);
-		if (i == 2)
-			sprintf(sec_name, "%s", token_list[i]);
-		else if (i > 2)
-			sec_args[i-3] = token_list[i];
-		i++;
-		token_list[i] = strtok(NULL, " ");
+				max_token, token_list[max_token]);
+		if (max_token == 2)
+			sprintf(sec_name, "%s", token_list[max_token]);
+		else if (max_token > 2)
+			sec_args[max_token-3] = token_list[max_token];
+		max_token++;
+		token_list[max_token] = strtok(NULL, " ");
 	}
 
 	if (!strcmp(token_list[0], "status")) {
@@ -673,6 +950,20 @@ parse_command(char *str)
 		sprintf(str, "{%s:%s,%s:%s}",
 				"\"result\"", result,
 				"\"command\"", "\"launch\"");
+
+	} else if (!strcmp(token_list[0], "stop")) {
+		RTE_LOG(DEBUG, PRIMARY, "stop\n");
+		cmd = STOP;
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"stop\"");
+
+	} else if (!strcmp(token_list[0], "forward")) {
+		RTE_LOG(DEBUG, PRIMARY, "forward\n");
+		cmd = FORWARD;
+		sprintf(str, "{%s:%s,%s:%s}",
+				"\"result\"", "\"succeeded\"",
+				"\"command\"", "\"forward\"");
 
 	} else if (!strcmp(token_list[0], "add")) {
 		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
@@ -718,6 +1009,84 @@ parse_command(char *str)
 				"\"result\"", result,
 				"\"command\"", "\"del\"",
 				"\"port\"", port_set);
+
+	} else if (!strcmp(token_list[0], "patch")) {
+		RTE_LOG(DEBUG, PRIMARY, "patch\n");
+
+		if (max_token <= 1)
+			return 0;
+
+		if (strncmp(token_list[1], "reset", 5) == 0) {
+			/* reset forward array*/
+			forward_array_reset();
+		} else {
+			uint16_t in_port;
+			uint16_t out_port;
+
+			if (max_token <= 2)
+				return 0;
+
+			char *in_p_type;
+			char *out_p_type;
+			int in_p_id;
+			int out_p_id;
+
+			parse_resource_uid(token_list[1], &in_p_type, &in_p_id);
+			in_port = find_port_id(in_p_id,
+					get_port_type(in_p_type));
+
+			parse_resource_uid(token_list[2],
+					&out_p_type, &out_p_id);
+			out_port = find_port_id(out_p_id,
+					get_port_type(out_p_type));
+
+			if (in_port == PORT_RESET && out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d' and '%s:%d'",
+					"Patch not found, both of",
+					in_p_type, in_p_id,
+					out_p_type, out_p_id);
+				RTE_LOG(ERR, PRIMARY, "%s\n", err_msg);
+			} else if (in_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d'",
+					"Patch not found, in_port",
+					in_p_type, in_p_id);
+				RTE_LOG(ERR, PRIMARY, "%s\n", err_msg);
+			} else if (out_port == PORT_RESET) {
+				char err_msg[128];
+				memset(err_msg, '\0', sizeof(err_msg));
+				sprintf(err_msg, "%s '%s:%d'",
+					"Patch not found, out_port",
+					out_p_type, out_p_id);
+				RTE_LOG(ERR, PRIMARY, "%s\n", err_msg);
+			}
+
+			if (add_patch(in_port, out_port) == 0) {
+				RTE_LOG(INFO, PRIMARY,
+					"Patched '%s:%d' and '%s:%d'\n",
+					in_p_type, in_p_id,
+					out_p_type, out_p_id);
+				sprintf(result, "%s", "\"succeeded\"");
+			} else {
+				RTE_LOG(ERR, PRIMARY, "Failed to patch\n");
+				sprintf(result, "%s", "\"failed\"");
+			}
+
+			sprintf(port_set,
+				"{\"src\":\"%s:%d\",\"dst\":\"%s:%d\"}",
+				in_p_type, in_p_id, out_p_type, out_p_id);
+
+			memset(str, '\0', MSG_SIZE);
+			sprintf(str, "{%s:%s,%s:%s,%s:%s}",
+					"\"result\"", result,
+					"\"command\"", "\"patch\"",
+					"\"ports\"", port_set);
+
+			ret = 0;
+		}
 
 	} else if (!strcmp(token_list[0], "exit")) {
 		RTE_LOG(DEBUG, PRIMARY, "'exit' command received.\n");
@@ -820,10 +1189,14 @@ main(int argc, char *argv[])
 	int sock = SOCK_RESET;
 	uint16_t dev_id;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
+	unsigned int nb_ports;
 	int connected = 0;
 	char str[MSG_SIZE];
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;
+	int port_type;
+	unsigned int i;
+	int nof_phy_port = 0;
 
 	set_user_log_debug(1);
 
@@ -856,6 +1229,39 @@ main(int argc, char *argv[])
 		/* initialize port forward array*/
 		forward_array_init();
 		port_map_init();
+
+		/* Check an even number of ports to send/receive on. */
+		nb_ports = rte_eth_dev_count_avail();
+		if (nb_ports > RTE_MAX_ETHPORTS)
+			nb_ports = RTE_MAX_ETHPORTS;
+
+		cmd = STOP;
+		/* update port_forward_array with active port. */
+		for (i = 0; i < nb_ports; i++) {
+			if (!rte_eth_dev_is_valid_port(i))
+				continue;
+
+			int port_id;
+			rte_eth_dev_get_name_by_port(i, dev_name);
+			ret = parse_dev_name(dev_name, &port_type, &port_id);
+			if (ret < 0)
+				RTE_LOG(ERR, PRIMARY, "Failed to parse dev_name.\n");
+			if (port_type == PHY) {
+				port_id = nof_phy_port;
+				nof_phy_port++;
+			}
+
+			/* Update ports_fwd_array with phy port. */
+			ports_fwd_array[i].in_port_id = i;
+			port_map[i].port_type = port_type;
+			port_map[i].id = port_id;
+			port_map[i].stats = &ports->port_stats[i];
+
+			/* TODO(yasufum) convert type of port_type to char */
+			RTE_LOG(DEBUG, PRIMARY, "Add port, type: %d, id: %d\n",
+					port_type, port_id);
+
+		}
 
 		/* do forwarding */
 		rte_eal_mp_remote_launch(main_loop, NULL, SKIP_MASTER);

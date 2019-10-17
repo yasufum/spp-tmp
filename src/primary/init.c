@@ -142,7 +142,10 @@ init(int argc, char *argv[])
 	}
 
 	/* Primary does forwarding without option `disp-stats` as default. */
-	set_forwarding_flg(1);
+	if (rte_lcore_count() > 1)
+		set_forwarding_flg(1);
+	else  /* Do not forwarding if no slave lcores. */
+		set_forwarding_flg(0);
 
 	/* Parse additional, application arguments */
 	retval = parse_app_args(total_ports, argc, argv);
