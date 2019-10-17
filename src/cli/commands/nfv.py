@@ -95,6 +95,7 @@ class SppNfv(object):
             else:
                 print('  - {} -> {}'.format(port, dst))
 
+    # TODO(yasufum) change name starts with '_' as private
     def get_ports(self):
         """Get all of ports as a list."""
 
@@ -108,6 +109,7 @@ class SppNfv(object):
             else:
                 print('Error: unknown response.')
 
+    # TODO(yasufum) change name starts with '_' as private
     def get_patches(self):
         """Get all of patched ports as a list of dicts.
 
@@ -126,6 +128,7 @@ class SppNfv(object):
             else:
                 print('Error: unknown response.')
 
+    # TODO(yasufum) change name starts with '_' as private
     def get_ports_and_patches(self):
         """Get all of ports and patchs at once.
 
@@ -147,6 +150,7 @@ class SppNfv(object):
             else:
                 print('Error: unknown response.')
 
+    # TODO(yasufum) change name starts with '_' as private
     def get_patched_ports(self):
         """Get all of patched ports as a list.
 

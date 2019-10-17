@@ -18,10 +18,14 @@ class SppPrimary(object):
     """
 
     # All of primary commands used for validation and completion.
-    PRI_CMDS = ['status', 'launch', 'clear']
+    PRI_CMDS = ['status', 'add', 'del', 'forward', 'stop', 'patch',
+                'launch', 'clear']
 
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
+
+        self.ports = []  # registered ports
+        self.patchs = []
 
         # Default args for `pri; launch`, used if given cli_config is invalid
 
@@ -58,6 +62,18 @@ class SppPrimary(object):
                     pass
                 else:
                     print('Error: unknown response.')
+
+        elif subcmd == 'add':
+            self._run_add(params)
+
+        elif subcmd == 'del':
+            self._run_del(params)
+
+        elif subcmd == 'forward' or cmd == 'stop':
+            self._run_forward_or_stop(cmd)
+
+        elif subcmd == 'patch':
+            self._run_patch(params)
 
         elif subcmd == 'launch':
             wait_time = float(cli_config['sec_wait_launch']['val'])
@@ -153,6 +169,75 @@ class SppPrimary(object):
                 print(temp.format(
                     rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
                     rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
+
+    # TODO(yasufum) make methods start with '_get' to be shared
+    # because it is similar to nfv. _get_ports(self) is changed as
+    # _get_ports(self, proc_type).
+    def _get_ports(self):
+        """Get all of ports as a list."""
+
+        res = self.spp_ctl_cli.get('primary')
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 200:
+                return res.json()['ports']
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _get_patches(self):
+        """Get all of patched ports as a list of dicts.
+
+        Returned value is like as
+          [{'src': 'phy:0', 'dst': 'ring:0'},
+           {'src': 'ring:1', 'dst':'vhost:1'}, ...]
+        """
+
+        res = self.spp_ctl_cli.get('primary')
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 200:
+                return res.json()['patches']
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _get_ports_and_patches(self):
+        """Get all of ports and patchs at once.
+
+        This method is to execute `_get_ports()` and `_get_patches()` at
+        once to reduce request to spp-ctl. Returned value is a set of
+        lists. You use this method as following.
+          ports, patches = _get_ports_and_patches()
+        """
+
+        res = self.spp_ctl_cli.get('primary')
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 200:
+                ports = res.json()['ports']
+                patches = res.json()['patches']
+                return ports, patches
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _get_patched_ports(self):
+        """Get all of patched ports as a list.
+
+        This method is to get a list of patched ports instead of a dict.
+        You use this method if you simply get patches without `src` and
+        `dst`.
+        """
+
+        patched_ports = []
+        for pport in self.patches:
+            patched_ports.append(pport['src'])
+            patched_ports.append(pport['dst'])
+        return list(set(patched_ports))
 
     def _get_empty_lcores(self):
         """Get lcore usage from spp-ctl for making launch options.
@@ -441,6 +526,111 @@ class SppPrimary(object):
                     opts_dict[prekey] = opt
                     prekey = None
         return opts_dict
+
+    def _run_add(self, params):
+        """Run `add` command."""
+
+        if len(params) == 0:
+            print('Port is required!')
+        elif params[0] in self.ports:
+            print("'%s' is already added." % params[0])
+        else:
+            self.ports = self._get_ports()
+
+            req_params = {'action': 'add', 'port': params[0]}
+
+            res = self.spp_ctl_cli.put('primary/ports', req_params)
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    print('Add %s.' % params[0])
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
+
+    def _run_del(self, params):
+        """Run `del` command."""
+
+        if len(params) == 0:
+            print('Port is required!')
+        elif 'phy:' in params[0]:
+            print("Cannot delete phy port '%s'." % params[0])
+        else:
+            self.patches = self._get_patches()
+
+            # Patched ports should not be deleted.
+            patched_ports = self._get_patched_ports()
+
+            if params[0] in patched_ports:
+                print("Cannot delete patched port '%s'." % params[0])
+            else:
+                req_params = {'action': 'del', 'port': params[0]}
+                res = self.spp_ctl_cli.put('primary/ports', req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        print('Delete %s.' % params[0])
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
+
+    def _run_forward_or_stop(self, cmd):
+        """Run `forward` or `stop` command."""
+
+        if cmd == 'forward':
+            req_params = {'action': 'start'}
+        elif cmd == 'stop':
+            req_params = {'action': 'stop'}
+        else:
+            print('Unknown command. "forward" or "stop"?')
+
+        res = self.spp_ctl_cli.put('primary/forward', req_params)
+
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                if cmd == 'forward':
+                    print('Start forwarding.')
+                else:
+                    print('Stop forwarding.')
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
+
+    def _run_patch(self, params):
+        """Run `patch` command."""
+
+        if len(params) == 0:
+            print('Params are required!')
+        elif params[0] == 'reset':
+            res = self.spp_ctl_cli.delete('primary/patches')
+            if res is not None:
+                error_codes = self.spp_ctl_cli.rest_common_error_codes
+                if res.status_code == 204:
+                    print('Clear all of patches.')
+                elif res.status_code in error_codes:
+                    pass
+                else:
+                    print('Error: unknown response.')
+        else:
+            if len(params) < 2:
+                print('Dst port is required!')
+            else:
+                req_params = {'src': params[0], 'dst': params[1]}
+                res = self.spp_ctl_cli.put('primary/patches',
+                                           req_params)
+                if res is not None:
+                    error_codes = self.spp_ctl_cli.rest_common_error_codes
+                    if res.status_code == 204:
+                        print('Patch ports (%s -> %s).' % (
+                            params[0], params[1]))
+                    elif res.status_code in error_codes:
+                        pass
+                    else:
+                        print('Error: unknown response.')
 
     def _run_launch(self, params, wait_time):
         """Launch secondary process.
