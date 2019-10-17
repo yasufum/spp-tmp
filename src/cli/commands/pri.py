@@ -569,10 +569,11 @@ class SppPrimary(object):
     def _compl_del(self, sub_tokens):
         """Complete `del` command."""
 
+        res = []
         # Del command consists of two tokens max, for instance,
         # `nfv 1; del ring:1`.
         if len(sub_tokens) < 3:
-            res = []
+            tmp_ary = []
 
             self.ports, self.patches = self._get_ports_and_patches()
 
@@ -582,18 +583,20 @@ class SppPrimary(object):
             # Remove ports already used from candidate.
             for kw in self.ports:
                 if not (kw in patched_ports):
-                    if kw.startswith(sub_tokens[1]):
+                    if sub_tokens[1] == '':
+                        tmp_ary.append(kw)
+                    elif kw.startswith(sub_tokens[1]):
                         if ':' in sub_tokens[1]:  # exp, 'ring:' or 'ring:0'
-                            res.append(kw.split(':')[1])
+                            tmp_ary.append(kw.split(':')[1])
                         else:
-                            res.append(kw)
+                            tmp_ary.append(kw)
 
             # Physical port cannot be removed.
-            for p in res:
-                if p.startswith('phy:'):
-                    res.remove(p)
+            for p in tmp_ary:
+                if not p.startswith('phy:'):
+                    res.append(p)
 
-            return res
+        return res
 
     # TODO(yasufum): consider to merge nfv's.
     def _compl_patch(self, sub_tokens):
