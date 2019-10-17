@@ -111,7 +111,9 @@ class SppPrimary(object):
         long.
 
             {
-                "lcores": [0, 3],
+                "master-lcore": 0,
+                "lcores": [0,1],
+                "forwarder" {...},   # exists if slave thread is running
                 "phy_ports": [
                     {
                         "eth": "56:48:4f:12:34:00",
@@ -136,39 +138,80 @@ class SppPrimary(object):
 
         It is formatted to be simple and more understandable.
 
-            - lcores:
-                [0, 3]
-            - physical ports:
-                ID          rx          tx     tx_drop  mac_addr
-                 0    78932932    78932931           1  56:48:4f:53:54:00
-            - ring ports:
-                ID          rx          tx     rx_drop     tx_drop
-                 0       89283       89283           0           0
-                 ...
+            - lcore_ids:
+                - master: 0
+                - slave: 1
+            - forwarder:
+              - status: running
+              - ports:
+                - phy:0 -> phy:1
+                - phy:1
+            - stats
+              - physical ports:
+                  ID          rx          tx     tx_drop  mac_addr
+                   0    78932932    78932931           1  56:48:4f:53:54:00
+                   ...
+              - ring ports:
+                  ID          rx          tx     rx_drop     tx_drop
+                   0       89283       89283           0           0
+                   ...
         """
 
-        if 'lcores' in json_obj:
-            print('- lcores:')
-            print('  - {}'.format(json_obj['lcores']))
+        try:
+            if 'lcores' in json_obj:
+                print('- lcore_ids:')
+                print('  - master: {}'.format(json_obj['lcores'][0]))
+                if len(json_obj['lcores']) > 1:
+                    if len(json_obj['lcores']) == 2:
+                        print('  - slave: {}'.format(json_obj['lcores'][1]))
+                    else:
+                        lcores = ', '.join([str(i)
+                            for i in json_obj['lcores'][1:]])
+                        print('  - slaves: [{}]'.format(lcores))
 
-        if 'phy_ports' in json_obj:
-            print('- physical ports:')
-            print('    ID          rx          tx     tx_drop  mac_addr')
+            sep = ' '
+            if 'forwarder' in json_obj:
+                print('- forwarder:')
+                print('  - status: {}'.format(json_obj['forwarder']['status']))
 
-            temp = '    {portid:2}  {rx:10}  {tx:10}  {tx_drop:10}  {eth}'
-            for pports in json_obj['phy_ports']:
-                print(temp.format(
-                    portid=pports['id'], rx=pports['rx'], tx=pports['tx'],
-                    tx_drop=pports['tx_drop'], eth=pports['eth']))
+                print('  - ports:')
+                for port in json_obj['forwarder']['ports']:
+                    dst = None
+                    for patch in json_obj['forwarder']['patches']:
+                        if patch['src'] == port:
+                            dst = patch['dst']
 
-        if 'ring_ports' in json_obj:
-            print('- ring ports:')
-            print('    ID          rx          tx     rx_drop     tx_drop')
-            temp = '    {rid:2}  {rx:10}  {tx:10}  {rx_drop:10}  {tx_drop:10}'
-            for rports in json_obj['ring_ports']:
-                print(temp.format(
-                    rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
-                    rx_drop=rports['rx_drop'], tx_drop=rports['tx_drop']))
+                    if dst is None:
+                        print('    - {}'.format(port))
+                    else:
+                        print('    - {} -> {}'.format(port, dst))
+
+            if ('phy_ports' in json_obj) or ('ring_ports' in json_obj):
+                print('- stats')
+
+            if 'phy_ports' in json_obj:
+                print('  - physical ports:')
+                print('{s6}ID{s10}rx{s10}tx{s4}tx_drop  mac_addr'.format(
+                      s4=sep*4, s6=sep*6, s10=sep*10))
+
+                temp = '{s6}{portid:2}  {rx:10}  {tx:10}  {tx_d:10}  {eth}'
+                for pports in json_obj['phy_ports']:
+                    print(temp.format(s6=sep*6,
+                        portid=pports['id'], rx=pports['rx'], tx=pports['tx'],
+                        tx_d=pports['tx_drop'], eth=pports['eth']))
+
+            if 'ring_ports' in json_obj:
+                print('  - ring ports:')
+                print('{s6}ID{s10}rx{s10}tx{s5}rx_drop{s5}tx_drop'.format(
+                      s6=sep*6, s5=sep*5, s10=sep*10))
+                temp = '{s6}{rid:2}  {rx:10}  {tx:10}  {rx_d:10}  {tx_d:10}'
+                for rports in json_obj['ring_ports']:
+                    print(temp.format(s6=sep*6,
+                        rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
+                        rx_d=rports['rx_drop'], tx_d=rports['tx_drop']))
+
+        except KeyError as e:
+            logger.error('{} is not defined!'.format(e))
 
     # TODO(yasufum) make methods start with '_get' to be shared
     # because it is similar to nfv. _get_ports(self) is changed as
