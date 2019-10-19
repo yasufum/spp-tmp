@@ -4,8 +4,8 @@
 
 .. _spp_ctl_rest_api__spp_vf:
 
-API for spp_vf
-==============
+spp_vf
+======
 
 GET /v1/vfs/{client_id}
 -----------------------

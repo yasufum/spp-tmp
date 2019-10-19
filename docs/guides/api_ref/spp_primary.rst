@@ -4,8 +4,8 @@
 
 .. _spp_ctl_rest_api_spp_primary:
 
-API for spp_primary
-===================
+spp_primary
+===========
 
 GET /v1/primary/status
 ----------------------
@@ -136,6 +136,46 @@ Response example
     }
 
 
+PUT /v1/primary/forward
+-----------------------
+
+Start or stop forwarding.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X PUT -H 'application/json' -d '{"action": "start"}' \
+      http://127.0.0.1:7777/v1/primary/forward
+
+
+Response
+~~~~~~~~
+
+There is no body content for the response of a successful ``PUT`` request.
+
+
+Equivalent CLI command
+~~~~~~~~~~~~~~~~~~~~~~
+
+Action is ``start``.
+
+.. code-block:: none
+
+    spp > pri; forward
+
+Action is ``stop``.
+
+.. code-block:: none
+
+    spp > pri; stop
+
+
 PUT /v1/primary/ports
 ---------------------
 
@@ -207,6 +247,88 @@ Response
 There is no body content for the response of a successful ``DELETE`` request.
 
 
+PUT /v1/primary/patches
+-----------------------
+
+Add a patch.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+
+Request (body)
+~~~~~~~~~~~~~~
+
+.. _table_spp_ctl_spp_primary_ports_patches_body:
+
+.. table:: Request body params of patches of ``spp_primary``.
+
+    +------+--------+------------------------------------+
+    | Name | Type   | Description                        |
+    |      |        |                                    |
+    +======+========+====================================+
+    | src  | string | Source port id.                    |
+    +------+--------+------------------------------------+
+    | dst  | string | Destination port id.               |
+    +------+--------+------------------------------------+
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X PUT -H 'application/json' \
+      -d '{"src": "ring:0", "dst": "ring:1"}' \
+      http://127.0.0.1:7777/v1/primary/patches
+
+
+Response
+~~~~~~~~
+
+There is no body content for the response of a successful ``PUT`` request.
+
+
+Equivalent CLI command
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: none
+
+    spp > pri; patch {src} {dst}
+
+
+DELETE /v1/primary/patches
+--------------------------
+
+Reset patches.
+
+* Normal response codes: 204
+* Error response codes: 400, 404
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X DELETE -H 'application/json' \
+      http://127.0.0.1:7777/v1/primary/patches
+
+
+Response
+~~~~~~~~
+
+There is no body content for the response of a successful ``DELETE`` request.
+
+
+Equivalent CLI command
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: none
+
+    spp > pri; patch reset
+
+
 DELETE /v1/primary
 ------------------
 
@@ -237,12 +359,6 @@ Launch a secondary process.
 
 * Normal response codes: 204
 * Error response codes: 400, 404
-
-
-Request (path)
-~~~~~~~~~~~~~~
-
-There is no params in this API.
 
 
 Request (body)

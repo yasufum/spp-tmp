@@ -4,8 +4,8 @@
 .. _spp_ctl_rest_api_spp_mirror:
 
 
-API for spp_mirror
-==================
+spp_mirror
+==========
 
 GET /v1/mirrors/{client_id}
 ---------------------------

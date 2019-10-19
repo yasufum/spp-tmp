@@ -4,8 +4,8 @@
 
 .. _spp_ctl_rest_api_spp_nfv:
 
-API for spp_nfv
-===============
+spp_nfv
+=======
 
 GET /v1/nfvs/{client_id}
 ------------------------

@@ -4,8 +4,8 @@
 
 .. _spp_ctl_rest_api_spp_pcap:
 
-API for spp_pcap
-================
+spp_pcap
+========
 
 GET /v1/pcaps/{client_id}
 -------------------------
