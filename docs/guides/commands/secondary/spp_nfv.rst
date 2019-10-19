@@ -72,14 +72,14 @@ For example, adding ``ring:0`` by
 
 .. code-block:: console
 
-    spp> nfv 1; add ring:0
+    spp > nfv 1; add ring:0
     Add ring:0.
 
 Or adding ``vhost:0`` by
 
 .. code-block:: console
 
-    spp> nfv 1; add vhost:0
+    spp > nfv 1; add vhost:0
     Add vhost:0.
 
 
@@ -154,7 +154,7 @@ Delete a port from the secondary.
 
 .. code-block:: console
 
-    spp> nfv 1; del ring:0
+    spp > nfv 1; del ring:0
     Delete ring:0.
 
 
@@ -168,4 +168,4 @@ use ``bye sec`` command instead of it.
 
 .. code-block:: console
 
-    spp> nfv 1; exit
+    spp > nfv 1; exit

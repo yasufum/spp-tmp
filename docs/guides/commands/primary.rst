@@ -44,22 +44,49 @@ All of Sub commands are referred with ``help`` command.
 status
 ------
 
-Show status fo spp_primary and forwarding statistics of each of ports.
+Show status fo ``spp_primary`` and forwarding statistics of each of ports.
 
 .. code-block:: console
 
     spp > pri; status
-    - lcores:
-      - [0]
-    - physical ports:
-        ID          rx          tx     tx_drop  mac_addr
-         0           0           0           0  56:48:4f:53:54:00
-         1           0           0           0  56:48:4f:53:54:01
-    - ring Ports:
-        ID          rx          tx     rx_drop     tx_drop
-         0           0           0           0           0
-         1           0           0           0           0
-         ...
+    - lcore_ids:
+      - master: 0
+    - stats
+      - physical ports:
+          ID          rx          tx    tx_drop  mac_addr
+           0           0           0           0  56:48:4f:53:54:00
+           1           0           0           0  56:48:4f:53:54:01
+      - ring ports:
+          ID          rx          tx     rx_drop     tx_drop
+           0           0           0           0           0
+           1           0           0           0           0
+           2           0           0           0           0
+           ...
+
+If you run ``spp_primary`` with forwarder thread, status of the forwarder is
+also displayed.
+
+.. code-block:: console
+
+    spp > pri; status
+    - lcore_ids:
+      - master: 0
+      - slave: 1
+    - forwarder:
+      - status: idling
+      - ports:
+        - phy:0
+        - phy:1
+    - stats
+      - physical ports:
+          ID          rx          tx    tx_drop  mac_addr
+           0           0           0           0  56:48:4f:53:54:00
+           1           0           0           0  56:48:4f:53:54:01
+      - ring ports:
+          ID          rx          tx     rx_drop     tx_drop
+           0           0           0           0           0
+           1           0           0           0           0
+           ...
 
 
 .. _commands_primary_clear:
@@ -75,12 +102,119 @@ Clear statistics.
     Clear port statistics.
 
 
+.. _commands_primary_add:
+
+add
+---
+
+Add a port with resource ID.
+
+For example, adding ``ring:0`` by
+
+.. code-block:: console
+
+    spp > pri; add ring:0
+    Add ring:0.
+
+Or adding ``vhost:0`` by
+
+.. code-block:: console
+
+    spp > pri; add vhost:0
+    Add vhost:0.
+
+
+.. _commands_primary_patch:
+
+patch
+------
+
+Create a path between two ports, source and destination ports.
+This command just creates a path and does not start forwarding.
+
+.. code-block:: console
+
+    spp > pri; patch phy:0 ring:0
+    Patch ports (phy:0 -> ring:0).
+
+
+.. _commands_primary_forward:
+
+forward
+-------
+
+Start forwarding.
+
+.. code-block:: console
+
+    spp > pri; forward
+    Start forwarding.
+
+Running status is changed from ``idling`` to ``running`` by
+executing it.
+
+.. code-block:: console
+
+    spp > pri; status
+    - lcore_ids:
+      - master: 0
+      - slave: 1
+    - forwarder:
+      - status: running
+      - ports:
+        - phy:0
+        - phy:1
+    ...
+
+
+.. _commands_primary_stop:
+
+stop
+----
+
+Stop forwarding.
+
+.. code-block:: console
+
+    spp > pri; stop
+    Stop forwarding.
+
+Running status is changed from ``running`` to ``idling`` by
+executing it.
+
+.. code-block:: console
+
+    spp > pri; status
+    - lcore_ids:
+      - master: 0
+      - slave: 1
+    - forwarder:
+      - status: idling
+      - ports:
+        - phy:0
+        - phy:1
+    ...
+
+
+.. _commands_primary_del:
+
+del
+---
+
+Delete a port of given resource UID.
+
+.. code-block:: console
+
+    spp > pri; del ring:0
+    Delete ring:0.
+
+
 .. _commands_primary_launch:
 
 launch
 ------
 
-Launch secondary process.
+Launch a secondary process.
 
 Spp_primary is able to launch a secondary process with given type, secondary
 ID and options of EAL and application itself. This is a list of supported type
