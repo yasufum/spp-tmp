@@ -335,7 +335,7 @@ To launch SPP primary, run ``spp_primary`` with specific options.
 
     # terminal 3
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
-        -l 1 -n 4 \
+        -l 0 -n 4 \
         --socket-mem 512,512 \
         --huge-dir /dev/hugepages \
         --proc-type primary \
@@ -349,9 +349,9 @@ SPP primary takes EAL options and application specific options.
 
 Core list option ``-l`` is for assigining cores and SPP primary requires just
 one core. You can use core mask option ``-c`` instead of ``-l``.
-You can use ``-m 1024`` for memory reservation instead of
-``--socket-mem 1024,0`` if you use single NUMA node. In this case, 512 MB is
-reserved on each of nodes.
+For memory, this example is for reserving 512 MB on each of two NUMA nodes
+hardware, so you use ``-m 1024`` simply, or ``--socket-mem 1024,0``
+if you run the process on single NUMA node.
 
 .. note::
 
@@ -372,15 +372,25 @@ reserved on each of nodes.
    If you use DPDK v18.11 or later, ``--base-virtaddr 0x100000000`` is enabled
    in default. You need to use this option only for changing the default value.
 
+If ``spp_primary`` is launched with two or more lcores, forwarder or monitor
+is activated. The default is forwarder and monitor is optional in this case.
+If you use monitor thread, additional option ``--disp-stat`` is required.
+Here is an example for launching ``spp_primary`` with monitor thread.
 
-In general, one lcore is enough for ``spp_primary``. If you give two or
-more, it uses second lcore to display statistics periodically and does not
-use others.
+.. code-block:: console
 
-.. note::
-
-    Anyway, you can get statistics in SPP CLI with ``pri; status`` command
-    actually even if you give only one core.
+    # terminal 3
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 0-1 -n 4 \   # two lcores
+        --socket-mem 512,512 \
+        --huge-dir /dev/hugepages \
+        --proc-type primary \
+        --base-virtaddr 0x100000000
+        -- \
+        -p 0x03 \
+        -n 10 \
+        -s 192.168.1.100:5555
+        --disp-stats
 
 Primary process sets up physical ports of given port mask with ``-p`` option
 and ring ports of the number of ``-n`` option. Ports of  ``-p`` option is for
@@ -393,7 +403,7 @@ secondary processes.
 
     # terminal 3
     $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
-        -l 1 -n 4 \
+        -l 0 -n 4 \
         --socket-mem 512,512 \
         --huge-dir=/dev/hugepages \
         --vdev eth_vhost1,iface=/tmp/sock1  # used as 1st phy port
@@ -412,6 +422,7 @@ secondary processes.
   - ``--huge-dir``: Path of hugepage dir.
   - ``--proc-type``: Process type.
   - ``--base-virtaddr``: Specify base virtual address.
+  - ``--disp-stats``: Show statistics periodically.
 
 - Application options:
 
@@ -476,7 +487,7 @@ spp_vf
 .. code-block:: console
 
     $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
-      -l 0,2-13 -n 4 \
+      -l 2-13 -n 4 \
       --proc-type secondary \
       -- \
       --client-id 1 \
@@ -500,7 +511,7 @@ and options are same as ``spp_vf``.
 .. code-block:: console
 
     $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/spp_mirror \
-      -l 1,2 -n 4 \
+      -l 2,3 -n 4 \
       --proc-type secondary \
       -- \
       --client-id 1 \
@@ -526,7 +537,7 @@ SPP provides ``spp_pcap`` for capturing comparatively heavy traffic.
 .. code-block:: console
 
     $ sudo ./src/pcap/x86_64-native-linuxapp-gcc/spp_pcap \
-      -l 0-3 -n 4 \
+      -l 2-5 -n 4 \
       --proc-type secondary \
       -- \
       --client-id 1 \

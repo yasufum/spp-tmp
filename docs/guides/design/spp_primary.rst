@@ -37,8 +37,8 @@ as worker, and running on slave lcore. Only slave thread requires
 dedicated core for running in pole mode, and launched from
 ``rte_eal_remote_launch()`` or ``rte_eal_mp_remote_launch()``.
 
-``spp_primary`` is able to run with or without worker thread selectively
-, and requires at least one lcore for server process.
+``spp_primary`` is able to run with or without worker thread selectively,
+and requires at least one lcore for server process.
 Using worker thread or not depends on your usecases.
 ``spp_primary`` provides two types of workers currently.
 
