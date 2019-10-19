@@ -2,6 +2,8 @@
     Copyright(c) 2010-2014 Intel Corporation
 
 
+.. _spp_design_impl_index:
+
 Implementation
 ==============
 

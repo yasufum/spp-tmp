@@ -2,6 +2,8 @@
     Copyright(c) 2010-2014 Intel Corporation
     Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
 
+.. _spp_design_index:
+
 Design
 ======
 

@@ -1,6 +1,8 @@
 ..  SPDX-License-Identifier: BSD-3-Clause
     Copyright(c) 2018-2019 Nippon Telegraph and Telephone Corporation
 
+.. _spp_api_ref_index:
+
 API Reference
 =============
 
