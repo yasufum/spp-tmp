@@ -910,8 +910,9 @@ parse_command(char *str)
 	int max_token = 0;
 	uint16_t dev_id;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
-	char result[16] = { 0 };  /* succeeded or failed. */
-	char port_set[32] = { 0 };
+	char result[16] = { 0 };  /* "succeeded" or "failed". */
+	char port_uid[20] = { 0 };  /* "\"%s:%d\"" */
+	char patch_set[64] = { 0 };  /* "{\"src\":\"%s:%d\",\"dst\":...}" */
 	char *p_type;
 	int p_id;
 
@@ -994,12 +995,12 @@ parse_command(char *str)
 		} else
 			sprintf(result, "%s", "\"succeeded\"");
 
-		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		sprintf(port_uid, "\"%s:%d\"", p_type, p_id);
 		memset(str, '\0', MSG_SIZE);
 		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
 				"\"result\"", result,
 				"\"command\"", "\"add\"",
-				"\"port\"", port_set);
+				"\"port\"", port_uid);
 
 	} else if (!strcmp(token_list[0], "del")) {
 		RTE_LOG(DEBUG, PRIMARY, "Received del command\n");
@@ -1016,12 +1017,12 @@ parse_command(char *str)
 		} else
 			sprintf(result, "%s", "\"succeeded\"");
 
-		sprintf(port_set, "\"%s:%d\"", p_type, p_id);
+		sprintf(port_uid, "\"%s:%d\"", p_type, p_id);
 		memset(str, '\0', MSG_SIZE);
 		sprintf(str, "{%s:%s,%s:%s,%s:%s}",
 				"\"result\"", result,
 				"\"command\"", "\"del\"",
-				"\"port\"", port_set);
+				"\"port\"", port_uid);
 
 	} else if (!strcmp(token_list[0], "patch")) {
 		RTE_LOG(DEBUG, PRIMARY, "patch\n");
@@ -1088,7 +1089,7 @@ parse_command(char *str)
 				sprintf(result, "%s", "\"failed\"");
 			}
 
-			sprintf(port_set,
+			sprintf(patch_set,
 				"{\"src\":\"%s:%d\",\"dst\":\"%s:%d\"}",
 				in_p_type, in_p_id, out_p_type, out_p_id);
 
@@ -1096,7 +1097,7 @@ parse_command(char *str)
 			sprintf(str, "{%s:%s,%s:%s,%s:%s}",
 					"\"result\"", result,
 					"\"command\"", "\"patch\"",
-					"\"ports\"", port_set);
+					"\"ports\"", patch_set);
 
 			ret = 0;
 		}
