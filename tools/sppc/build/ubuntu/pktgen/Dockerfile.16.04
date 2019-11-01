@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM yasufum/pktgen-base:16.04
 
 ARG rte_sdk
 ARG rte_target
@@ -18,23 +18,6 @@ ENV RTE_TARGET ${rte_target}
 ENV PKTGEN_DIR ${pktgen_dir}
 ENV PATH ${rte_sdk}/${rte_target}/app:${PATH}
 ENV PATH ${home_dir}/${pktgen_dir}/app/${rte_target}/:${PATH}
-
-RUN apt-get update && apt-get install -y \
-    git \
-    gcc \
-    python \
-    pciutils \
-    make \
-    libnuma-dev \
-    gcc-multilib \
-    libarchive-dev \
-    linux-headers-$(uname -r) \
-    libpcap-dev \
-    liblua5*-dev \
-    pkg-config \
-    wget \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $home_dir
 RUN git clone ${dpdk_branch} ${dpdk_repo}

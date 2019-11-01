@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM yasufum/spp-base:16.04
 
 ARG rte_sdk
 ARG rte_target
@@ -20,23 +20,6 @@ ENV PATH ${home_dir}/${spp_dir}/src/primary/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/nfv/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/vf/${rte_target}/:${PATH}
 ENV PATH ${home_dir}/${spp_dir}/src/vm/${rte_target}/:${PATH}
-
-RUN apt-get update && apt-get install -y \
-    git \
-    gcc \
-    python \
-    pciutils \
-    make \
-    libnuma-dev \
-    gcc-multilib \
-    libarchive-dev \
-    linux-headers-$(uname -r) \
-    libpcap-dev \
-    liblz4-dev \
-    liblz4-tool \
-    pkg-config \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $home_dir
 RUN git clone ${dpdk_branch} ${dpdk_repo}

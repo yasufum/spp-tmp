@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM yasufum/suricata-base:latest
 
 ARG rte_sdk
 ARG rte_target
@@ -34,35 +34,6 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV SURICATA_SRCDIR suricata-4.1.4
 ENV SURICATA_TGZ ${SURICATA_SRCDIR}.tar.gz
 ENV SURICATA_DOWNLOAD https://www.openinfosecfoundation.org/download/${SURICATA_TGZ}
-
-RUN apt-get update && apt-get install -y \
-    git \
-    gcc \
-    python \
-    pciutils \
-    make \
-    libnuma-dev \
-    gcc-multilib \
-    libarchive-dev \
-    linux-headers-$(uname -r) \
-    libpcap-dev \
-    pkg-config \
-    vim \
-    curl \
-    wget \
-    automake \
-    liblz4-dev \
-    libpcre3 libpcre3-dbg libpcre3-dev build-essential libpcap-dev \
-    libnet1-dev libyaml-0-2 libyaml-dev pkg-config zlib1g zlib1g-dev \
-    libcap-ng-dev libcap-ng0 make libmagic-dev libjansson-dev \
-    libnss3-dev libgeoip-dev liblua5.1-dev libhiredis-dev libevent-dev \
-    libpcre3 libpcre3-dbg libpcre3-dev build-essential libpcap-dev \
-    libnet1-dev libyaml-0-2 libyaml-dev pkg-config zlib1g zlib1g-dev \
-    libcap-ng-dev libcap-ng0 make libmagic-dev libjansson-dev \
-    libnss3-dev libgeoip-dev liblua5.1-dev libhiredis-dev libevent-dev \
-    python-yaml rustc cargo \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $home_dir
 RUN git clone ${dpdk_branch} ${dpdk_repo}

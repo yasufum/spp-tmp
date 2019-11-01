@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM yasufum/dpdk-base:latest
 
 ARG rte_sdk
 ARG rte_target
@@ -13,21 +13,6 @@ ENV no_proxy ${no_proxy}
 ENV RTE_SDK ${rte_sdk}
 ENV RTE_TARGET ${rte_target}
 ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update && apt-get install -y \
-    git \
-    gcc \
-    python \
-    pciutils \
-    make \
-    libnuma-dev \
-    gcc-multilib \
-    libarchive-dev \
-    linux-headers-$(uname -r) \
-    libpcap-dev \
-    pkg-config \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $home_dir
 RUN git clone $dpdk_branch $dpdk_repo
