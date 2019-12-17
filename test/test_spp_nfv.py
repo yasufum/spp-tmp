@@ -126,6 +126,14 @@ class TestSppNfv(unittest.TestCase):
                 sec_id=self.default_sec_id)
         requests.delete(url)
 
+    def _get_pri_status(self):
+        """Get status of spp_primary"""
+
+        url = "{baseurl}/primary/status".format(
+                baseurl=self.base_url)
+        response = requests.get(url)
+        return response.json()
+
     # Test methods for testing spp_nfv from here.
     def test_sec_id(self):
         """Confirm sec ID is expected value."""
@@ -177,3 +185,42 @@ class TestSppNfv(unittest.TestCase):
         self._reset_patches()
         nfv = self._get_status()
         self.assertEqual(nfv['patches'], [])
+
+        for port in ports:
+            self._del_port(port)
+
+    def test_forwarding(self):
+        """Check if forwarding packet is counted up.
+
+        This test confirm that packet counter on ring PMD is counted up
+        after forwarding is started. It waits about 1sec so that
+        certain amount of packets are forwarded.
+        """
+
+        wait_time = 1  # sec, wait for forwarding
+        ring_idx = 1
+        ports = {
+                'src': 'nullpmd:1',
+                'dst': 'nullpmd:2',
+                'ring': 'ring:{}'.format(ring_idx)
+                }
+
+        for port in ports.values():
+            self._add_port(port)
+
+        self._patch(ports['src'], ports['ring'])
+        self._patch(ports['ring'], ports['dst'])
+        self._set_forwarding_status('start')
+
+        # NOTE: this test is failed if sleep time is too small.
+        time.sleep(wait_time)  # wait to start forwarding
+
+        self._set_forwarding_status('stop')
+        self._reset_patches()
+        for port in ports.values():
+            self._del_port(port)
+
+        pri = self._get_pri_status()
+
+        self.assertTrue(pri['ring_ports'][ring_idx]['rx'] > 0)
+        self.assertTrue(pri['ring_ports'][ring_idx]['tx'] > 0)
