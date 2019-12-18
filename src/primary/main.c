@@ -118,7 +118,7 @@ do_stats_display(void)
 			" tx_drop: %9"PRIu64"\n",
 			ports->id[i], ports->port_stats[i].rx,
 			ports->port_stats[i].tx,
-			ports->client_stats[i].tx_drop);
+			ports->port_stats[i].tx_drop);
 	}
 
 	printf("\nCLIENTS\n");
@@ -644,7 +644,7 @@ phy_port_stats_json(char *str)
 				get_printable_mac_addr(ports->id[i]),
 				ports->port_stats[i].rx,
 				ports->port_stats[i].tx,
-				ports->client_stats[i].tx_drop);
+				ports->port_stats[i].tx_drop);
 
 		int cur_buf_size = (int)strlen(buf_phy_ports) +
 			(int)strlen(phy_port);
@@ -827,7 +827,12 @@ add_port(char *p_type, int p_id)
 	port_id = (uint16_t) res;
 	port_map[port_id].id = p_id;
 	port_map[port_id].port_type = port_id_list[cnt].type;
-	port_map[port_id].stats = &ports->client_stats[p_id];
+	if (port_map[port_id].port_type == RING)
+		port_map[port_id].stats = &ports->client_stats[p_id];
+	/* NOTE: port_map[].stats points to &port_map[].default_stats
+	 * other than RING. There is no support to show/clear this stats
+	 * at the moment.
+	 */
 
 	/* Update ports_fwd_array with port id */
 	ports_fwd_array[port_id].in_port_id = port_id;

@@ -88,7 +88,12 @@ do_add(char *p_type, int p_id)
 	port_id = (uint16_t) res;
 	port_map[port_id].id = p_id;
 	port_map[port_id].port_type = type;
-	port_map[port_id].stats = &ports->client_stats[p_id];
+	if (type == RING)
+		port_map[port_id].stats = &ports->client_stats[p_id];
+	/* NOTE: port_map[].stats points to &port_map[].default_stats
+	 * other than RING. There is no support to show/clear this stats
+	 * at the moment.
+	 */
 
 	/* Update ports_fwd_array with port id */
 	ports_fwd_array[port_id].in_port_id = port_id;
