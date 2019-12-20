@@ -145,17 +145,28 @@ If you do not have physical NICs on your server, activate
 physical.
 
 ```sh
-SPP_HOST_IP=127.0.0.1
+SPP_CTL_IP=127.0.0.1
+SPP_FILE_PREFIX=spp  # used for --file-prefix option
+
 SPP_HUGEPAGES=/dev/hugepages
 
 # spp_primary options
 LOGLEVEL=7  # change to 8 if you refer debug messages.
-PRI_CORE_LIST=0  # required one lcore usually.
+PRI_CORE_LIST=0,1  # required one lcore usually.
 PRI_MEM=1024
 PRI_MEMCHAN=4  # change for your memory channels.
 NUM_RINGS=8
 PRI_PORTMASK=0x03  # total num of ports of spp_primary.
-#PRI_VHOST_IDS=(11 12)  # you use if you have no phy ports.
+
+# Vdevs of spp_primary
+#PRI_VHOST_VDEVS=(11 12)  # IDs of `eth_vhost`
+#PRI_RING_VDEVS=(1 2)  # IDs of `net_ring`
+#PRI_TAP_VDEVS=(1 2)  # IDs of `net_tap`
+# You can give whole of vdev options here.
+#PRI_VDEVS=(
+#eth_vhost11,iface=/tmp/sock13,queues=1
+#eth_vhost12,iface=/tmp/sock14,queues=1
+#)
 ```
 
 After you edit configuration, you can launch `spp-ctl`,
