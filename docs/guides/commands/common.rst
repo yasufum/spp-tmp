@@ -230,6 +230,23 @@ You cannot unregister node under the control, or switch to other one before.
     Cannot del server "1" in use!
 
 
+.. _commands_common_env:
+
+env
+---
+
+Show environmental variables. It is mainly used to find variables related to
+SPP.
+
+.. code-block:: console
+
+    # show all env varibles.
+    spp > env
+
+    # show env varibles starts with `SPP`.
+    spp > env SPP
+
+
 .. _commands_common_pwd:
 
 pwd
