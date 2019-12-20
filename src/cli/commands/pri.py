@@ -4,6 +4,7 @@
 from .. import spp_common
 from ..shell_lib import common
 from ..spp_common import logger
+import os
 import time
 
 
@@ -21,6 +22,8 @@ class SppPrimary(object):
     PRI_CMDS = ['status', 'add', 'del', 'forward', 'stop', 'patch',
                 'launch', 'clear']
 
+    ENV_FILE_PREF = 'SPP_FILE_PREFIX'
+
     def __init__(self, spp_ctl_cli):
         self.spp_ctl_cli = spp_ctl_cli
 
@@ -29,9 +32,14 @@ class SppPrimary(object):
 
         # Default args for `pri; launch`, used if given cli_config is invalid
 
+        # used for secondary's --file-prefix option if defined
+        file_prefix = os.getenv(self.ENV_FILE_PREF)
+
         # Setup template of args for `pri; launch`
         temp = "-l {m_lcore},{s_lcores} "
         temp = temp + "{mem} "
+        if file_prefix:
+            temp = temp + "--file-prefix {} ".format(file_prefix)
         temp = temp + "-- "
         temp = temp + "{opt_sid} {sid} "  # '-n 1' or '--client-id 1'
         temp = temp + "-s {sec_addr} "  # '-s 192.168.1.100:6666'
@@ -166,7 +174,7 @@ class SppPrimary(object):
                         print('  - slave: {}'.format(json_obj['lcores'][1]))
                     else:
                         lcores = ', '.join([str(i)
-                            for i in json_obj['lcores'][1:]])
+                                            for i in json_obj['lcores'][1:]])
                         print('  - slaves: [{}]'.format(lcores))
 
             sep = ' '
@@ -197,8 +205,10 @@ class SppPrimary(object):
                 temp = '{s6}{portid:2}  {rx:10}  {tx:10}  {tx_d:10}  {eth}'
                 for pports in json_obj['phy_ports']:
                     print(temp.format(s6=sep*6,
-                        portid=pports['id'], rx=pports['rx'], tx=pports['tx'],
-                        tx_d=pports['tx_drop'], eth=pports['eth']))
+                                      portid=pports['id'], rx=pports['rx'],
+                                      tx=pports['tx'],
+                                      tx_d=pports['tx_drop'],
+                                      eth=pports['eth']))
 
             if 'ring_ports' in json_obj:
                 print('  - ring ports:')
@@ -207,7 +217,7 @@ class SppPrimary(object):
                 temp = '{s6}{rid:2}  {rx:10}  {tx:10}  {rx_d:10}  {tx_d:10}'
                 for rports in json_obj['ring_ports']:
                     print(temp.format(s6=sep*6,
-                        rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
+                          rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
                         rx_d=rports['rx_drop'], tx_d=rports['tx_drop']))
 
         except KeyError as e:
@@ -461,7 +471,8 @@ class SppPrimary(object):
                 if has_invalid_param is False:
                     candidates = [self.launch_template.format(
                         m_lcore=master_lcore, s_lcores=slave_lcores,
-                        mem=sec_mem, opt_sid=opt_sid, sid=sid,
+                        mem=sec_mem,
+                        opt_sid=opt_sid, sid=sid,
                         sec_addr=server_addr,
                         vhost_cli=vhost_client)]
                 else:
