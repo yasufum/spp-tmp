@@ -55,6 +55,10 @@ function setup_vdevs() {
 function spp_pri() {
     SPP_PRI_BIN=${SPP_DIR}/src/primary/${RTE_TARGET}/spp_primary
 
+    if [ ${SPP_FILE_PREFIX} ]; then
+        FILE_PREFIX_OPT="--file-prefix ${SPP_FILE_PREFIX}"
+    fi
+
     cmd="sudo ${SPP_PRI_BIN} \
         -l ${PRI_CORE_LIST} \
         -n ${PRI_MEMCHAN} \
@@ -62,6 +66,7 @@ function spp_pri() {
         --huge-dir ${SPP_HUGEPAGES} \
         --proc-type primary \
         --base-virtaddr 0x100000000 \
+        ${FILE_PREFIX_OPT} \
         --log-level ${LOGLEVEL} \
         ${SPP_PRI_VHOST} \
         ${SPP_PRI_RING} \
@@ -70,7 +75,7 @@ function spp_pri() {
         -- \
         -p ${PRI_PORTMASK} \
         -n ${NUM_RINGS} \
-        -s ${SPP_HOST_IP}:5555"
+        -s ${SPP_CTL_IP}:5555"
 
     if [ ${DRY_RUN} ]; then
         echo ${cmd}

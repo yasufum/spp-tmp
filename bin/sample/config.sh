@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2019 Nippon Telegraph and Telephone Corporation
 
-SPP_HOST_IP=127.0.0.1
+SPP_CTL_IP=127.0.0.1
+SPP_FILE_PREFIX=spp  # used for --file-prefix option
+
 SPP_HUGEPAGES=/dev/hugepages
 
 # spp_primary options

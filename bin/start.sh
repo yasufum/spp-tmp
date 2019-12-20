@@ -29,7 +29,7 @@ do
 done
 
 function start_spp_ctl() {
-    cmd="python3 ${SPP_DIR}/src/spp-ctl/spp-ctl -b ${SPP_HOST_IP}"
+    cmd="python3 ${SPP_DIR}/src/spp-ctl/spp-ctl -b ${SPP_CTL_IP}"
     if [ ${DRY_RUN} ]; then
         echo ${cmd}
     else
@@ -65,5 +65,7 @@ start_spp_pri
 
 if [ ! ${DRY_RUN} ]; then
     sleep 1  # wait for spp-ctl is ready
-    python3 ${SPP_DIR}/src/spp.py -b ${SPP_HOST_IP} --wait-pri
+    SPP_CTL_IP=${SPP_CTL_IP} \
+    SPP_FILE_PREFIX=${SPP_FILE_PREFIX} \
+    python3 ${SPP_DIR}/src/spp.py -b ${SPP_CTL_IP} --wait-pri
 fi
