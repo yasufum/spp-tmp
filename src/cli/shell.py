@@ -317,6 +317,17 @@ class Shell(cmd.Cmd, object):
         """Print help message of status command."""
         print(help_msg.cmds['status'])
 
+    def do_env(self, key):
+        """Display environmental variables."""
+
+        for k, v in sorted(os.environ.items()):
+            if k.startswith(key):
+                print("{}: {}".format(k, v))
+
+    def help_env(self):
+        """Print help message of env command."""
+        print(help_msg.cmds['env'])
+
     def do_pri(self, command):
         """Send a command to primary process."""
 

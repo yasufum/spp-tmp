@@ -8,6 +8,16 @@ cmds = {
         spp > status
         """,
 
+        'env':
+        """Show environmental variables.
+
+        # show all env varibles.
+        spp > env
+
+        # show env varibles starts with `SPP`.
+        spp > env SPP
+        """,
+
         'record':
         """Save commands as a recipe file.
 
