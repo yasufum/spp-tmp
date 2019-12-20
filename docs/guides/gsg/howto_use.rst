@@ -15,6 +15,21 @@ You should keep in mind the order of launching processes if you do it
 manually, or you can use startup script. This start script is for launching
 ``spp-ctl``, ``spp_primary`` and SPP CLI.
 
+Before starting, you should define environmental variable ``SPP_FILE_PREFIX``
+for using the same prefix among SPP processes. ``--file-prefix`` is an EAL
+option for using a different shared data file prefix for a DPDK process.
+
+.. code-block:: console
+
+    $ export SPP_FILE_PREFIX=spp
+
+This option is used for running several DPDK processes because it is not
+allowed different processes to have the same name of share data file, although
+each process of multi-process application should have the same prefix on the
+contrary.
+Even if you do not run several DPDK applications, you do not need to define
+actually. However, it is a good practice because SPP is used for connecting
+DPDK applications in actual usecases.
 
 .. _spp_gsg_howto_quick_start:
 
@@ -53,22 +68,30 @@ Confirm that the status is ``running``.
 
 Now you are ready to launch secondary processes from ``pri; launch``
 command, or another terminal. Here is an example for launching ``spp_nfv``
-with options from ``pri; launch``. Log file of this process is created as
-``log/spp_nfv1.log``.
+with options from ``pri; launch``.
+Log file of this process is created as ``log/spp_nfv1.log``.
 
 .. code-block:: none
 
-    spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 127.0.0.1:6666
+    spp > pri; launch nfv 1 -l 1,2 -m 512 --file-prefix spp -- -n 1 -s ...
 
 This ``launch`` command supports TAB completion. Parameters for ``spp_nfv``
 are completed after secondary ID ``1``.
+
+You might notice ``--file-prefix spp`` which should be the same value among
+primary and secondary processes. SPP CLI expects that this value can be
+referred as environmental variable ``SPP_FILE_PREFIX``, and spp_primary is
+launched with the same ``--file-prefix spp``.
+If you run SPP from ``bin/start.sh``, you do no need to define the variable
+by yourself because it is defined in ``bin/config.sh`` so that spp_primary is
+launched with the prefix.
 
 .. code-block:: none
 
     spp > pri; launch nfv 1
 
     # Press TAB
-    spp > pri; launch nfv 1 -l 1,2 -m 512 -- -n 1 -s 127.0.0.1:6666
+    spp > pri; launch nfv 1 -l 1,2 -m 512 --file-prefix spp -- -n 1 -s ...
 
 
 It is same as following options launching from terminal.
@@ -78,6 +101,7 @@ It is same as following options launching from terminal.
     $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
         -l 1,2 -n 4 -m 512 \
         --proc-type secondary \
+        --file-prefix spp \
         -- \
         -n 1 \
         -s 127.0.0.1:6666
@@ -100,8 +124,8 @@ If you just patch two DPDK applications on host, it is enough to use one
 
 .. code-block:: none
 
-    spp > pri; launch nfv 2 -l 1,3 -m 512 -- -n 2 -s 127.0.0.1:6666
-    spp > pri; launch vf 3 -l 1,4,5,6 -m 512 -- -n 3 -s 127.0.0.1:6666
+    spp > pri; launch nfv 2 -l 1,3 -m 512 --file-prefix spp -- -n 2 -s ...
+    spp > pri; launch vf 3 -l 1,4,5,6 -m 512 --file-prefix spp -- -n 3 -s ...
     ...
 
 If you launch processes by yourself, ``spp_primary`` must be launched
@@ -339,6 +363,7 @@ To launch SPP primary, run ``spp_primary`` with specific options.
         --socket-mem 512,512 \
         --huge-dir /dev/hugepages \
         --proc-type primary \
+        --file-prefix $SPP_FILE_PREFIX \
         --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
@@ -385,6 +410,7 @@ Here is an example for launching ``spp_primary`` with monitor thread.
         --socket-mem 512,512 \
         --huge-dir /dev/hugepages \
         --proc-type primary \
+        --file-prefix $SPP_FILE_PREFIX \
         --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
@@ -409,6 +435,7 @@ secondary processes.
         --vdev eth_vhost1,iface=/tmp/sock1  # used as 1st phy port
         --vdev eth_vhost2,iface=/tmp/sock2  # used as 2nd phy port
         --proc-type=primary \
+        --file-prefix $SPP_FILE_PREFIX \
         --base-virtaddr 0x100000000
         -- \
         -p 0x03 \
@@ -455,6 +482,7 @@ as ``l2fwd``.
     $ sudo ./src/nfv/x86_64-native-linuxapp-gcc/spp_nfv \
         -l 2-3 -n 4 \
         --proc-type secondary \
+        --file-prefix $SPP_FILE_PREFIX \
         -- \
         -n 1 \
         -s 192.168.1.100:6666
@@ -487,12 +515,13 @@ spp_vf
 .. code-block:: console
 
     $ sudo ./src/vf/x86_64-native-linuxapp-gcc/spp_vf \
-      -l 2-13 -n 4 \
-      --proc-type secondary \
-      -- \
-      --client-id 1 \
-      -s 192.168.1.100:6666 \
-      --vhost-client
+        -l 2-13 -n 4 \
+        --proc-type secondary \
+        --file-prefix $SPP_FILE_PREFIX \
+        -- \
+        --client-id 1 \
+        -s 192.168.1.100:6666 \
+        --vhost-client
 
 EAL options are the same as primary process. Here is a list of application
 options of ``spp_vf``.
@@ -511,12 +540,13 @@ and options are same as ``spp_vf``.
 .. code-block:: console
 
     $ sudo ./src/mirror/x86_64-native-linuxapp-gcc/spp_mirror \
-      -l 2,3 -n 4 \
-      --proc-type secondary \
-      -- \
-      --client-id 1 \
-      -s 192.168.1.100:6666 \
-      --vhost-client
+        -l 2,3 -n 4 \
+        --proc-type secondary \
+        --file-prefix $SPP_FILE_PREFIX \
+        -- \
+        --client-id 1 \
+        -s 192.168.1.100:6666 \
+        --vhost-client
 
 EAL options are the same as primary process. Here is a list of application
 options of ``spp_mirror``.
@@ -537,14 +567,15 @@ SPP provides ``spp_pcap`` for capturing comparatively heavy traffic.
 .. code-block:: console
 
     $ sudo ./src/pcap/x86_64-native-linuxapp-gcc/spp_pcap \
-      -l 2-5 -n 4 \
-      --proc-type secondary \
-      -- \
-      --client-id 1 \
-      -s 192.168.1.100:6666 \
-      -c phy:0 \
-      --out-dir /path/to/dir \
-      --fsize 107374182
+        -l 2-5 -n 4 \
+        --proc-type secondary \
+        --file-prefix $SPP_FILE_PREFIX \
+        -- \
+        --client-id 1 \
+        -s 192.168.1.100:6666 \
+        -c phy:0 \
+        --out-dir /path/to/dir \
+        --fsize 107374182
 
 EAL options are the same as primary process. Here is a list of application
 options of ``spp_pcap``.
@@ -758,6 +789,7 @@ launching DPDK processes.
         --huge-dir=/dev/hugepages \
         --proc-type=primary \
         --base-virtaddr 0x100000000
+        --file-prefix $SPP_FILE_PREFIX \
         -- \
         -p 0x03 \
         -n 6 \

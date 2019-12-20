@@ -10,6 +10,11 @@ spp_vf
 ``spp_vf`` is a secondary process for providing L2 classification as a simple
 pusedo SR-IOV features.
 
+.. note::
+
+    ``--file-prefix`` option is not required in this section because there is
+    not DPDK application other than SPP.
+
 .. _spp_usecases_vf_cls_icmp:
 
 Classify ICMP Packets

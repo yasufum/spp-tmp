@@ -7,6 +7,11 @@
 spp_pcap
 ========
 
+.. note::
+
+    ``--file-prefix`` option is not required in this section because there is
+    not DPDK application other than SPP.
+
 Packet Capture
 --------------
 

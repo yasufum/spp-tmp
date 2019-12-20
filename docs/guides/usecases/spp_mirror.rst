@@ -7,6 +7,11 @@
 spp_mirror
 ==========
 
+.. note::
+
+    ``--file-prefix`` option is not required in this section because there is
+    not DPDK application other than SPP.
+
 Duplicate Packets
 -----------------
 
