@@ -43,6 +43,7 @@ function start_spp_pri() {
     setup_vhost_vdevs  # setup vdevs of eth_vhost
     setup_ring_vdevs  # setup vdevs of net_ring
     setup_tap_vdevs  # setup vdevs of net_tap
+    setup_memif_vdevs  # setup vdevs of net_memif
     setup_vdevs  # setup any of vdevs
     spp_pri  # launch spp_primary
 }

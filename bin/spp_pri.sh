@@ -7,19 +7,23 @@
 SPP_PRI_VHOST=""
 SPP_PRI_RING=""
 SPP_PRI_TAP=""
+SPP_PRI_MEMIF=""
 SPP_PRI_VDEVS=""
+
+SOCK_VHOST="/tmp/sock"
+SOCK_MEMIF="/tmp/spp-memif.sock"
 
 function clean_sock_files() {
     # clean /tmp/sock*
-    sudo rm -f /tmp/sock*
+    sudo rm -f ${SOCK_VHOST}*
+    sudo rm -f ${SOCK_MEMIF}
 }
 
 # Add vhost vdevs named as such as `eth_vhost0`.
 function setup_vhost_vdevs() {
     if [ ${PRI_VHOST_VDEVS} ]; then
         for id in ${PRI_VHOST_VDEVS[@]}; do
-            SPP_SOCK="/tmp/sock${id}"
-            SPP_PRI_VHOST="${SPP_PRI_VHOST} --vdev eth_vhost${id},iface=${SPP_SOCK}"
+            SPP_PRI_VHOST="${SPP_PRI_VHOST} --vdev eth_vhost${id},iface=${SOCK_VHOST}${id}"
         done
     fi
 }
@@ -38,6 +42,15 @@ function setup_tap_vdevs() {
     if [ ${PRI_TAP_VDEVS} ]; then
         for id in ${PRI_TAP_VDEVS[@]}; do
             SPP_PRI_TAP="${SPP_PRI_TAP} --vdev net_tap${id},iface=vtap${id}"
+        done
+    fi
+}
+
+# Add memif vdevs named as such as `net_memif`.
+function setup_memif_vdevs() {
+    if [ ${PRI_MEMIF_VDEVS} ]; then
+        for id in ${PRI_MEMIF_VDEVS[@]}; do
+            SPP_PRI_MEMIF="${SPP_PRI_MEMIF} --vdev net_memif${id},id=${id},role=master,socket=${SOCK_MEMIF}"
         done
     fi
 }
@@ -71,6 +84,7 @@ function spp_pri() {
         ${SPP_PRI_VHOST} \
         ${SPP_PRI_RING} \
         ${SPP_PRI_TAP} \
+        ${SPP_PRI_MEMIF} \
         ${SPP_PRI_VDEVS} \
         -- \
         -p ${PRI_PORTMASK} \

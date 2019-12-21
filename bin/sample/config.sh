@@ -15,13 +15,14 @@ NUM_RINGS=8
 PRI_PORTMASK=0x03  # total num of ports of spp_primary.
 
 # Vdevs of spp_primary
+#PRI_MEMIF_VDEVS=(0 1)  # IDs of `net_memif`
 #PRI_VHOST_VDEVS=(11 12)  # IDs of `eth_vhost`
 #PRI_RING_VDEVS=(1 2)  # IDs of `net_ring`
 #PRI_TAP_VDEVS=(1 2)  # IDs of `net_tap`
 # You can give whole of vdev options here.
 #PRI_VDEVS=(
-#eth_vhost11,iface=/tmp/sock13,queues=1
-#eth_vhost12,iface=/tmp/sock14,queues=1
+#net_memif0,socket=/tmp/memif.sock,id=0,role=master
+#net_memif1,socket=/tmp/memif.sock,id=1,role=master
 #)
 
 # You do not need to change usually.
