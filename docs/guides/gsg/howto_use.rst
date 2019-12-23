@@ -36,11 +36,33 @@ DPDK applications in actual usecases.
 Quick Start
 -----------
 
-Run ``bin/start.sh`` with configuration file ``bin/config.sh``.
-First time you run the script, it does not lanch processes but create a
-template configuration file and asks you to edit this file.
-After that, you can run the startup script for launching processes. All of
-options for the processes are defined in the configuration.
+Run ``bin/start.sh`` with configuration file ``bin/config.sh``. However,
+at the first time you run the script, it is failed because this configration
+file does not exist. It create the config from template
+``bin/sample/config.sh`` and asks you to edit this file.
+All of options for launching the processes are defined in the configuration
+file.
+
+Edit the config file before run ``bin/start.sh`` again. It is expected you
+have two physical ports on your server, but it is configurable.
+You can use virtual ports instead of physical.
+The number of ports is defined as ``PRI_PORTMASK=0x03`` as default.
+If you do not have physical ports and use two memif ports instead of physical,
+uncomment ``PRI_MEMIF_VDEVS=(0 1)``.
+You can also use several types of port at once.
+
+.. code-block:: none
+
+    # spp_primary options
+    ...
+    PRI_PORTMASK=0x03  # total num of ports of spp_primary.
+
+    # Vdevs of spp_primary
+    #PRI_MEMIF_VDEVS=(0 1)  # IDs of `net_memif`
+    #PRI_VHOST_VDEVS=(11 12)  # IDs of `eth_vhost`
+    ...
+
+After that, you can run the startup script again for launching processes.
 
 .. code-block:: console
 
@@ -48,7 +70,7 @@ options for the processes are defined in the configuration.
     $ bin/start.sh
     Start spp-ctl
     Start spp_primary
-    Waiting for spp-ctl is ready ...
+    Waiting for spp_primary is ready .................... OK! (8.5[sec])
     Welcome to the SPP CLI. Type `help` or `?` to list commands.
 
     spp >
