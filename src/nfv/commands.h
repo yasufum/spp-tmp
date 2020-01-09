@@ -25,6 +25,7 @@ do_del(char *p_type, int p_id)
 		port_id = find_port_id(p_id, VHOST);
 		if (port_id == PORT_RESET)
 			return -1;
+		rte_eth_dev_stop(port_id);
 		dev_detach_by_port_id(port_id);
 
 	} else if (!strcmp(p_type, "ring")) {
