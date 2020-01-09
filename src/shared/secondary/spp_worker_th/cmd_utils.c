@@ -437,8 +437,12 @@ init_host_port_info(void)
 			p_iface_info->phy[port_id].ethdev_port_id = port_id;
 			break;
 		case VHOST:
-			p_iface_info->vhost[port_id].iface_type = port_type;
-			p_iface_info->vhost[port_id].ethdev_port_id = port_id;
+			/* NOTE: a vhost can be used by one process.
+			 * even if it exists, it is necessary to do
+			 * add_vhost_pmd to setup the device.
+			 * note that it is user responsibility to prevent
+			 * multipul processes use a vhost at the same time.
+			 */
 			break;
 		case RING:
 			p_iface_info->ring[port_id].iface_type = port_type;
