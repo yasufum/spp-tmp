@@ -170,6 +170,14 @@ add_vhost_pmd(int index)
 		return ret;
 	}
 
+	/* NOTE: make sure the eth_dev is stopped.
+	 * it is for the case a secondary process which used the vhost
+	 * was down without stopping the device.
+	 * note that it is still user responsibility to prevent multipul
+	 * processes use a vhost at the same time.
+	 */
+	rte_eth_dev_stop(vhost_port_id);
+
 	ret = rte_eth_dev_configure(vhost_port_id, nr_queues, nr_queues,
 		&port_conf);
 	if (ret < 0) {
