@@ -211,7 +211,12 @@ main(int argc, char *argv[])
 		if (port_type == PHY) {
 			port_id = nof_phy_port;
 			nof_phy_port++;
-		}
+		} else if (port_type == VHOST)
+			continue;
+		/* NOTE: vhost may be used another process. even if no
+		 * process uses, it is necessary to "add vhost" explicitly.
+		 * not display to avoid confusion.
+		 */
 
 		/* Update ports_fwd_array with phy port. */
 		ports_fwd_array[i].in_port_id = i;
