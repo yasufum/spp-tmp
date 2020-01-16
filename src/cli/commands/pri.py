@@ -263,6 +263,7 @@ class SppPrimary(object):
                 pass
             else:
                 print('Error: unknown response for get_ports.')
+            return None
 
     def _get_patches(self):
         """Get all of patched ports as a list of dicts.
@@ -285,6 +286,7 @@ class SppPrimary(object):
                 pass
             else:
                 print('Error: unknown response for get_patches.')
+            return None
 
     def _get_ports_and_patches(self):
         """Get all of ports and patches at once.
@@ -309,7 +311,8 @@ class SppPrimary(object):
             elif res.status_code in error_codes:
                 pass
             else:
-                print('Error: unknown response 3.')
+                print('Error: unknown response.')
+            return None, None
 
     def _get_patched_ports(self):
         """Get all of patched ports as a list.
@@ -619,7 +622,15 @@ class SppPrimary(object):
         if len(sub_tokens) < 3:
             tmp_ary = []
 
+            # Update to current status
             self.ports, self.patches = self._get_ports_and_patches()
+
+            if self.ports is None:
+                self.ports, self.patches = [], []
+                return []
+            elif self.patches is None:
+                self.ports, self.patches = [], []
+                return []
 
             # Patched ports should not be included in the candidate of del.
             patched_ports = self._get_patched_ports()
@@ -635,7 +646,7 @@ class SppPrimary(object):
                         else:
                             tmp_ary.append(kw)
 
-            # Physical port cannot be removed.
+            # Exclude phy ports which cannot be deleted.
             for p in tmp_ary:
                 if not p.startswith('phy:'):
                     res.append(p)
@@ -652,6 +663,13 @@ class SppPrimary(object):
             res = []
 
             self.ports, self.patches = self._get_ports_and_patches()
+
+            if self.ports is None:
+                self.ports, self.patches = [], []
+                return []
+            elif self.patches is None:
+                self.ports, self.patches = [], []
+                return []
 
             # Get patched ports of src and dst to be used for completion.
             src_ports = []
@@ -735,8 +753,6 @@ class SppPrimary(object):
         elif params[0] in self.ports:
             print("'%s' is already added." % params[0])
         else:
-            self.ports = self._get_ports()
-
             req_params = {'action': 'add', 'port': params[0]}
 
             res = self.spp_ctl_cli.put('primary/ports', req_params)
@@ -749,6 +765,11 @@ class SppPrimary(object):
                 else:
                     print('Error: unknown response for add.')
 
+            self.ports = self._get_ports()  # update to current status
+            if self.ports is None:
+                print('Cannot retrieve ports from spp_primary')
+                self.ports = []
+
     def _run_del(self, params):
         """Run `del` command."""
 
@@ -757,8 +778,6 @@ class SppPrimary(object):
         elif 'phy:' in params[0]:
             print("Cannot delete phy port '%s'." % params[0])
         else:
-            self.patches = self._get_patches()
-
             # Patched ports should not be deleted.
             patched_ports = self._get_patched_ports()
 
@@ -775,6 +794,11 @@ class SppPrimary(object):
                         pass
                     else:
                         print('Error: unknown response for del.')
+
+            self.patches = self._get_patches()  # update to current status
+            if self.patches is None:
+                print('Cannot retrieve patches from spp_primary')
+                self.patches = []
 
     def _run_forward_or_stop(self, cmd):
         """Run `forward` or `stop` command."""
