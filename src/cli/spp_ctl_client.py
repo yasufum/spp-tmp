@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
+from .spp_common import logger
 import requests
 
 
@@ -29,17 +30,17 @@ class SppCtlClient(object):
                 # TODO(yasufum) revise print message to more appropriate
                 # for spp.py.
                 if res.status_code == 400:
-                    print('Syntax or lexical error, or SPP returns ' +
-                          'error for the request.')
+                    logger.info('Syntax or lexical error, or SPP '
+                                    'returns error for the request.')
                 elif res.status_code == 404:
-                    print('URL is not supported, or no SPP process ' +
-                          'of client-id in a URL.')
+                    logger.info('URL is not supported, or no SPP '
+                                    'process of client-id in a URL.')
                 elif res.status_code == 500:
-                    print('System error occured in spp-ctl.')
+                    logger.info('System error occured in spp-ctl.')
 
                 return res
             except requests.exceptions.ConnectionError:
-                print('Error: Failed to connect to spp-ctl.')
+                logger.info('Error: Failed to connect to spp-ctl.')
                 return None
         return wrapper
 
@@ -84,7 +85,7 @@ class SppCtlClient(object):
                         if ent['type'] == ptype:
                             ids.append(ent['client-id'])
                 except KeyError as e:
-                    print('Error: {} is not defined!'.format(e))
+                    logger.info('Error: {} is not defined!'.format(e))
         return ids
 
     def get_sec_procs(self, ptype):
