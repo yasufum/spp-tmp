@@ -99,11 +99,11 @@ int parse_dev_name(char *dev_name, int *port_type, int *port_id)
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = VHOST;
 
-	} else if (strncmp(dev_name, VDEV_PCAP,
-			strlen(VDEV_PCAP)) == 0) {
-		dev_str_len = strlen(VDEV_PCAP);
+	} else if (strncmp(dev_name, VDEV_NET_PCAP,
+			strlen(VDEV_NET_PCAP)) == 0) {
+		dev_str_len = strlen(VDEV_NET_PCAP);
 		pid_len = dev_name_len - dev_str_len;
-		strncpy(pid_str, dev_name + strlen(VDEV_PCAP),
+		strncpy(pid_str, dev_name + strlen(VDEV_NET_PCAP),
 				pid_len);
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = PCAP;
@@ -119,11 +119,11 @@ int parse_dev_name(char *dev_name, int *port_type, int *port_id)
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = TAP;
 
-	} else if (strncmp(dev_name, VDEV_NULL,
-			strlen(VDEV_NULL)) == 0) {
-		dev_str_len = strlen(VDEV_NULL);
+	} else if (strncmp(dev_name, VDEV_ETH_NULL,
+			strlen(VDEV_ETH_NULL)) == 0) {
+		dev_str_len = strlen(VDEV_ETH_NULL);
 		pid_len = dev_name_len - dev_str_len;
-		strncpy(pid_str, dev_name + strlen(VDEV_NULL),
+		strncpy(pid_str, dev_name + strlen(VDEV_ETH_NULL),
 				pid_len);
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = PCAP;

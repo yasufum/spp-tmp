@@ -36,10 +36,10 @@
 #define VDEV_NET_RING "net_ring"
 #define VDEV_ETH_VHOST "spp_vhost"
 #define VDEV_NET_VHOST "net_vhost"
-#define VDEV_PCAP "net_pcap"
+#define VDEV_NET_PCAP "net_pcap"
 #define VDEV_ETH_TAP "eth_tap"
 #define VDEV_NET_TAP "net_tap"
-#define VDEV_NULL "eth_null"
+#define VDEV_ETH_NULL "eth_null"
 
 
 /* Command. */
