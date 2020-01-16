@@ -31,10 +31,10 @@ class SppCtlClient(object):
                 # for spp.py.
                 if res.status_code == 400:
                     logger.info('Syntax or lexical error, or SPP '
-                                    'returns error for the request.')
+                                'returns error for the request.')
                 elif res.status_code == 404:
                     logger.info('URL is not supported, or no SPP '
-                                    'process of client-id in a URL.')
+                                'process of client-id in a URL.')
                 elif res.status_code == 500:
                     logger.info('System error occured in spp-ctl.')
 

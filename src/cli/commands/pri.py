@@ -105,9 +105,9 @@ class SppPrimary(object):
         elif subcmd == 'del':
             self._do_if_forwarder_exists(status, self._run_del, params)
 
-        elif subcmd == 'forward' or cmd == 'stop':
+        elif subcmd == 'forward' or subcmd == 'stop':
             self._do_if_forwarder_exists(status,
-                                         self._run_forward_or_stop, params)
+                                         self._run_forward_or_stop, subcmd)
 
         elif subcmd == 'patch':
             self._do_if_forwarder_exists(status, self._run_patch, params)
@@ -818,7 +818,7 @@ class SppPrimary(object):
         elif cmd == 'stop':
             req_params = {'action': 'stop'}
         else:
-            print('Unknown command. "forward" or "stop"?')
+            print('Unknown command {}. "forward" or "stop"?'.format(cmd))
 
         res = self.spp_ctl_cli.put('primary/forward', req_params)
 
