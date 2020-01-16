@@ -46,6 +46,20 @@ class SppPrimary(object):
         temp = temp + "{vhost_cli}"
         self.launch_template = temp
 
+    def _do_if_forwarder_exists(self, status, func, params):
+        """Execute command of func if forwarder thread is existing.
+
+        Params status is a json object, func is a method of this class such
+        as _run_add() or _run_del() or so, and params is a set of given
+        parameters.
+        """
+
+        # It includes `forwarder` if spp_primary runs a forwarder thread.
+        if 'forwarder' in status:
+            func(params)
+        else:
+            print('No forwarder is running.')
+
     def run(self, cmd, cli_config):
         """Called from do_pri() to Send command to primary process."""
 
@@ -60,11 +74,15 @@ class SppPrimary(object):
         # use short name
         common_err_codes = self.spp_ctl_cli.rest_common_error_codes
 
+        # Get status here for inspecting if forwarder exists. Do not run
+        # command such as `add` or `del` if forwarder does not exist.
+        res = self.spp_ctl_cli.get('primary/status')
+        status = res.json()
+
         if subcmd == 'status':
-            res = self.spp_ctl_cli.get('primary/status')
             if res is not None:
                 if res.status_code == 200:
-                    self.print_status(res.json())
+                    self.print_status(status)
                 elif res.status_code in common_err_codes:
                     # Print default error message
                     pass
@@ -72,16 +90,17 @@ class SppPrimary(object):
                     print('Error: unknown response from status.')
 
         elif subcmd == 'add':
-            self._run_add(params)
+            self._do_if_forwarder_exists(status, self._run_add, params)
 
         elif subcmd == 'del':
-            self._run_del(params)
+            self._do_if_forwarder_exists(status, self._run_del, params)
 
         elif subcmd == 'forward' or cmd == 'stop':
-            self._run_forward_or_stop(cmd)
+            self._do_if_forwarder_exists(status,
+                                         self._run_forward_or_stop, params)
 
         elif subcmd == 'patch':
-            self._run_patch(params)
+            self._do_if_forwarder_exists(status, self._run_patch, params)
 
         elif subcmd == 'launch':
             wait_time = float(cli_config['sec_wait_launch']['val'])
@@ -217,8 +236,10 @@ class SppPrimary(object):
                 temp = '{s6}{rid:2}  {rx:10}  {tx:10}  {rx_d:10}  {tx_d:10}'
                 for rports in json_obj['ring_ports']:
                     print(temp.format(s6=sep*6,
-                          rid=rports['id'], rx=rports['rx'], tx=rports['tx'],
-                        rx_d=rports['rx_drop'], tx_d=rports['tx_drop']))
+                                      rid=rports['id'],
+                                      rx=rports['rx'], tx=rports['tx'],
+                                      rx_d=rports['rx_drop'],
+                                      tx_d=rports['tx_drop']))
 
         except KeyError as e:
             logger.error('{} is not defined!'.format(e))
@@ -233,7 +254,11 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                return res.json()['forwarder']['ports']
+                if 'forwarder' in res.json():
+                    return res.json()['forwarder']['ports']
+                else:
+                    # Do nothing if there is no forwarder
+                    pass
             elif res.status_code in error_codes:
                 pass
             else:
@@ -251,7 +276,11 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                return res.json()['forwarder']['patches']
+                if 'forwarder' in res.json():
+                    return res.json()['forwarder']['patches']
+                else:
+                    # Do nothing if there is no forwarder
+                    pass
             elif res.status_code in error_codes:
                 pass
             else:
@@ -270,9 +299,13 @@ class SppPrimary(object):
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 200:
-                ports = res.json()['forwarder']['ports']
-                patches = res.json()['forwarder']['patches']
-                return ports, patches
+                if 'forwarder' in res.json():
+                    ports = res.json()['forwarder']['ports']
+                    patches = res.json()['forwarder']['patches']
+                    return ports, patches
+                else:
+                    # Do nothing if there is no forwarder
+                    pass
             elif res.status_code in error_codes:
                 pass
             else:
