@@ -77,7 +77,17 @@ class SppPrimary(object):
         # Get status here for inspecting if forwarder exists. Do not run
         # command such as `add` or `del` if forwarder does not exist.
         res = self.spp_ctl_cli.get('primary/status')
-        status = res.json()
+
+        # Check if spp_primary is running.
+        error_codes = self.spp_ctl_cli.rest_common_error_codes
+        if res.status_code in error_codes:
+            if res.status_code == 404:
+                print('No spp_primary is running.')
+            else:
+                print('Error: spp_primary is not running normaly.')
+            return None
+        else:
+            status = res.json()
 
         if subcmd == 'status':
             if res is not None:
