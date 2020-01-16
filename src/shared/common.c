@@ -126,7 +126,7 @@ int parse_dev_name(char *dev_name, int *port_type, int *port_id)
 		strncpy(pid_str, dev_name + strlen(VDEV_ETH_NULL),
 				pid_len);
 		*port_id = (int)strtol(pid_str, NULL, 10);
-		*port_type = PCAP;
+		*port_type = NULLPMD;
 
 	/* TODO(yasufum) add checking invalid port type and return -1 */
 	} else {
