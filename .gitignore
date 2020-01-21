@@ -11,6 +11,18 @@ src/*/x86_64-native-linuxapp-icc/
 src/*/i686-native-linuxapp-gcc/
 src/*/i686-native-linuxapp-icc/
 
+src/drivers/*/*.a
+src/drivers/*/*.o
+src/drivers/*/.*.o.d
+src/drivers/*/.*.a.cmd
+src/drivers/*/.*.o.cmd
+src/drivers/*/*.o.pmd.c
+src/drivers/*/*.o.pmd.o
+src/drivers/*/_postbuild
+src/drivers/*/_postinstall
+src/drivers/*/_postclean
+src/drivers/*/x86_64-native-linuxapp-gcc/
+
 src/controller/3rd_party/*
 
 tools/sppc/build/*/*/env.sh
