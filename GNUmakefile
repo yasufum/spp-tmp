@@ -21,15 +21,24 @@ showversion:
 # Compile RST documents
 DOC_ROOT = docs/guides
 
+# Clean all files generated while compilation. It consists of two
+# tasks, _dist-clean and dist-clean. First one is for removing the
+# generated files, and second one is just for removing `_postclean`
+# which is generated after the first task.
 .PHONY: dist-clean
-dist-clean:
+dist-clean: _dist-clean
+	rm -f $(wildcard src/drivers/*/_postclean)
+
+.PHONY: _dist-clean
+_dist-clean:
 	make clean
 	rm -rf $(wildcard src/*/$(RTE_TARGET))
-	rm -rf $(wildcard src/*/*.pyc)
-	rm -rf $(wildcard src/*/__pycache__)
 	rm -rf $(wildcard src/*/shared)
-	rm -rf $(wildcard src/mirror/vf)
-	rm -rf $(wildcard src/pcap/vf)
+	rm -rf $(wildcard src/drivers/*/$(RTE_TARGET))
+	rm -f $(wildcard src/*/*.pyc)
+	rm -f $(wildcard src/*/*/*.pyc)
+	rm -rf $(wildcard src/*/__pycache__)
+	rm -rf $(wildcard src/*/*/__pycache__)
 
 .PHONY: doc
 doc: doc-all
