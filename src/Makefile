@@ -38,6 +38,12 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
+DEPDIRS-primary := drivers
+DEPDIRS-nfv := drivers
+DEPDIRS-vf := drivers
+DEPDIRS-mirror := drivers
+DEPDIRS-pcap := drivers
+
 DIRS-y += drivers
 DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += primary
 DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += nfv
