@@ -11,6 +11,7 @@ struct porttype_map portmap[] = {
 	{ .port_name = "pcap", .port_type = PCAP, },
 	{ .port_name = "nullpmd", .port_type = NULLPMD, },
 	{ .port_name = "tap", .port_type = TAP, },
+	{ .port_name = "memif", .port_type = MEMIF, },
 	{ .port_name = NULL,    .port_type = UNDEF, },
 };
 

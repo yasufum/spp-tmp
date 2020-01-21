@@ -119,6 +119,15 @@ int parse_dev_name(char *dev_name, int *port_type, int *port_id)
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = TAP;
 
+	} else if (strncmp(dev_name, VDEV_NET_MEMIF,
+			strlen(VDEV_NET_MEMIF)) == 0) {
+		dev_str_len = strlen(VDEV_NET_MEMIF);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_NET_MEMIF),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = MEMIF;
+
 	} else if (strncmp(dev_name, VDEV_ETH_NULL,
 			strlen(VDEV_ETH_NULL)) == 0) {
 		dev_str_len = strlen(VDEV_ETH_NULL);
