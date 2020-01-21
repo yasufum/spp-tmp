@@ -13,8 +13,8 @@ import sys
 
 import spp_proc
 
-PORT_TYPES = ["phy", "vhost", "ring", "pcap", "nullpmd", "tap"]
-VF_PORT_TYPES = ["phy", "vhost", "ring"]
+PORT_TYPES = ["phy", "vhost", "ring", "pcap", "nullpmd", "tap", "memif"]
+VF_PORT_TYPES = ["phy", "vhost", "ring"] # TODO(yasufum) add other ports
 # TODO(yasufum) consider PCAP_PORT_TYPES is required.
 
 LOG = logging.getLogger(__name__)
