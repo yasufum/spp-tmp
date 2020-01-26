@@ -13,10 +13,19 @@
 #define VHOST_BACKEND_NAME "spp_vhost%u"
 
 #define PCAP_PMD_DEV_NAME "eth_pcap%u"
+#define MEMIF_PMD_DEV_NAME "net_memif%u"
 #define NULL_PMD_DEV_NAME "eth_null%u"
 
 #define PCAP_IFACE_RX "/tmp/spp-rx%d.pcap"
 #define PCAP_IFACE_TX "/tmp/spp-tx%d.pcap"
+
+/**
+ * SPP provides memif for other processes as "master" role and via socket
+ * file "/tmp/spp-memif.sock". Details of memif is described in here.
+ * https://doc.dpdk.org/guides/nics/memif.html
+ */
+#define MEMIF_ROLE "master"
+#define MEMIF_SOCK "/tmp/spp-memif.sock"
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
@@ -76,6 +85,17 @@ add_vhost_pmd(int index);
  */
 int
 add_pcap_pmd(int index);
+
+/**
+ * Create a memif PMD with given ID.
+ *
+ * @param port_id
+ *   ID of the next possible valid port.
+ * @return
+ *   Unique port ID
+ */
+int
+add_memif_pmd(int index);
 
 /**
  * Create a null PMD with given ID.

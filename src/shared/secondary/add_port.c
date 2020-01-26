@@ -47,6 +47,14 @@ get_pcap_pmd_name(int id)
 }
 
 static inline const char *
+get_memif_pmd_name(int id)
+{
+	static char buffer[sizeof(MEMIF_PMD_DEV_NAME) + 2];
+	snprintf(buffer, sizeof(buffer) - 1, MEMIF_PMD_DEV_NAME, id);
+	return buffer;
+}
+
+static inline const char *
 get_null_pmd_name(int id)
 {
 	static char buffer[sizeof(NULL_PMD_DEV_NAME) + 2];
@@ -308,6 +316,74 @@ add_pcap_pmd(int index)
 	RTE_LOG(DEBUG, SHARED, "pcap port id %d\n", pcap_pmd_port_id);
 
 	return pcap_pmd_port_id;
+}
+
+int
+add_memif_pmd(int index)
+{
+	struct rte_eth_conf port_conf = {
+			.rxmode = { .max_rx_pkt_len = RTE_ETHER_MAX_LEN }
+	};
+
+	struct rte_mempool *mp;
+	const char *name;
+	char devargs[64];
+	char sock_fn[32];
+	uint16_t memif_pmd_port_id;
+	uint16_t nr_queues = 1;
+
+	int ret;
+
+	memset(devargs, '\0', sizeof(devargs));
+	memset(sock_fn, '\0', sizeof(sock_fn));
+
+	mp = rte_mempool_lookup(PKTMBUF_POOL_NAME);
+	if (mp == NULL)
+		rte_exit(EXIT_FAILURE, "Cannon get mempool for mbuf\n");
+
+	name = get_memif_pmd_name(index);
+	sprintf(devargs, "%s,id=%d,role=%s,socket=%s",
+			name, index, MEMIF_ROLE, MEMIF_SOCK);
+	RTE_LOG(DEBUG, SHARED, "Devargs for memif: '%s'.\n", devargs);
+	ret = dev_attach_by_devargs(devargs, &memif_pmd_port_id);
+	if (ret < 0)
+		return ret;
+
+	ret = rte_eth_dev_configure(
+			memif_pmd_port_id, nr_queues, nr_queues,
+			&port_conf);
+	if (ret < 0)
+		return ret;
+
+	/* Allocate and set up 1 RX queue per Ethernet port. */
+	uint16_t q;
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_rx_queue_setup(
+				memif_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(
+					memif_pmd_port_id), NULL, mp);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* Allocate and set up 1 TX queue per Ethernet port. */
+	for (q = 0; q < nr_queues; q++) {
+		ret = rte_eth_tx_queue_setup(
+				memif_pmd_port_id, q, NR_DESCS,
+				rte_eth_dev_socket_id(
+					memif_pmd_port_id),
+				NULL);
+		if (ret < 0)
+			return ret;
+	}
+
+	ret = rte_eth_dev_start(memif_pmd_port_id);
+	if (ret < 0)
+		return ret;
+
+	RTE_LOG(DEBUG, SHARED, "memif port id %d\n", memif_pmd_port_id);
+
+	return memif_pmd_port_id;
 }
 
 int
