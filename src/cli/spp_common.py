@@ -6,7 +6,7 @@ import logging
 import os
 
 # Type definitions.
-PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'nullpmd']
+PORT_TYPES = ['phy', 'ring', 'vhost', 'pcap', 'memif', 'nullpmd']
 SEC_TYPES = ['nfv', 'vf', 'mirror', 'pcap']
 
 # Setup logger object
