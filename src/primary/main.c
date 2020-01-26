@@ -831,6 +831,11 @@ add_port(char *p_type, int p_id)
 		port_id_list[cnt].port_id = p_id;
 		port_id_list[cnt].type = PCAP;
 
+	} else if (!strcmp(p_type, "memif")) {
+		res = add_memif_pmd(p_id);
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = MEMIF;
+
 	} else if (!strcmp(p_type, "nullpmd")) {
 		res = add_null_pmd(p_id);
 		port_id_list[cnt].port_id = p_id;
@@ -902,6 +907,12 @@ del_port(char *p_type, int p_id)
 
 	} else if (!strcmp(p_type, "pcap")) {
 		dev_id = find_ethdev_id(p_id, PCAP);
+		if (dev_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(dev_id);
+
+	} else if (!strcmp(p_type, "memif")) {
+		dev_id = find_ethdev_id(p_id, MEMIF);
 		if (dev_id == PORT_RESET)
 			return -1;
 		dev_detach_by_port_id(dev_id);
