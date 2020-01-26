@@ -41,6 +41,12 @@ do_del(char *p_type, int p_id)
 			return -1;
 		dev_detach_by_port_id(port_id);
 
+	} else if (!strcmp(p_type, "memif")) {
+		port_id = find_port_id(p_id, MEMIF);
+		if (port_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(port_id);
+
 	} else if (!strcmp(p_type, "nullpmd")) {
 		port_id = find_port_id(p_id, NULLPMD);
 		if (port_id == PORT_RESET)
@@ -77,6 +83,10 @@ do_add(char *p_type, int p_id)
 	} else if (!strcmp(p_type, "pcap")) {
 		type = PCAP;
 		res = add_pcap_pmd(p_id);
+
+	} else if (!strcmp(p_type, "memif")) {
+		type = MEMIF;
+		res = add_memif_pmd(p_id);
 
 	} else if (!strcmp(p_type, "nullpmd")) {
 		type = NULLPMD;
