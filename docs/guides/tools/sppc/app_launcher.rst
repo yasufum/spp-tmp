@@ -25,6 +25,7 @@ inside a container.
     |--- pktgen.py
     |--- spp-nfv.py
     |--- spp-primary.py
+    |--- suricata.py
     ---- testpmd.py
 
 
