@@ -29,6 +29,10 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # Check for other mandatory opitons.
+    if args.dev_ids is None:
+        common.error_exit('--dev-ids')
+
     # Setup for vhost devices with given device IDs.
     dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
     sock_files = app_helper.sock_files(dev_ids_list)
