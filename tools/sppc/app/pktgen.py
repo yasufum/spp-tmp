@@ -13,8 +13,6 @@ from conf import env
 from lib import app_helper
 from lib import common
 
-target_name = 'pktgen'
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -69,6 +67,14 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # Container image name such as 'sppc/dpdk-ubuntu:18.04'
+    if args.container_image is not None:
+        container_image = args.container_image
+    else:
+        container_image = common.container_img_name(
+            common.IMG_BASE_NAMES['pktgen'],
+            args.dist_name, args.dist_ver)
+
     # Setup for vhost devices with given device IDs.
     dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
     sock_files = app_helper.sock_files(dev_ids_list)
@@ -80,7 +86,7 @@ def main():
         wd = '/root/pktgen-dpdk'
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(
-            args, target_name, sock_files, wd)
+            args, container_image, sock_files, wd)
 
     # Setup pktgen command
     pktgen_cmd = ['pktgen', '\\']

@@ -2,6 +2,14 @@
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
 
+IMG_BASE_NAMES = {
+    'dpdk': 'sppc/dpdk',
+    'pktgen': 'sppc/pktgen',
+    'spp': 'sppc/spp',
+    'suricata': 'sppc/suricata',
+    }
+
+
 def print_pretty_commands(cmds):
     """Print given command in pretty format."""
 
@@ -13,7 +21,6 @@ def container_img_name(base, dist_name, dist_ver):
 
     Return the name of container image for '-t' of docker command
     such as 'sppc/dpdk-ubuntu:16.04' or 'sppc/spp-ubuntu:18.04'.
-    'base' is defined as 'env.CONTAINER_IMG_NAME' in lib module.
     """
     return '%s-%s:%s' % (base, dist_name, dist_ver)
 

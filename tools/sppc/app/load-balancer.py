@@ -13,8 +13,6 @@ from conf import env
 from lib import app_helper
 from lib import common
 
-target_name = 'dpdk'
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -60,6 +58,14 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # Container image name such as 'sppc/dpdk-ubuntu:18.04'
+    if args.container_image is not None:
+        container_image = args.container_image
+    else:
+        container_image = common.container_img_name(
+            common.IMG_BASE_NAMES['dpdk'],
+            args.dist_name, args.dist_ver)
+
     # Check for other mandatory opitons.
     if args.dev_ids is None:
         common.error_exit('--dev-ids')
@@ -71,7 +77,7 @@ def main():
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(
-        args, target_name, sock_files)
+        args, container_image, sock_files)
 
     app_name = 'load_balancer'
     cmd_path = '%s/examples/%s/%s/%s' % (

@@ -116,7 +116,7 @@ def main():
             work_dir, args.dist_name, args.target)
         # Container image name, for exp 'sppc/dpdk-ubuntu:18.04'
         container_image = common.container_img_name(
-            env.CONTAINER_IMG_NAME[args.target],
+            common.IMG_BASE_NAMES[args.target],
             args.dist_name,
             args.dist_ver)
     else:

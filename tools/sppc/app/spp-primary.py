@@ -9,11 +9,8 @@ import sys
 
 work_dir = os.path.dirname(__file__)
 sys.path.append(work_dir + '/..')
-from conf import env
 from lib import app_helper
 from lib import common
-
-target_name = 'spp'
 
 
 def parse_args():
@@ -62,6 +59,14 @@ def main():
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = []
 
+    # Container image name such as 'sppc/spp-ubuntu:18.04'
+    if args.container_image is not None:
+        container_image = args.container_image
+    else:
+        container_image = common.container_img_name(
+            common.IMG_BASE_NAMES['spp'],
+            args.dist_name, args.dist_ver)
+
     # This container is running in backgroud in defualt.
     if args.foreground is not True:
         docker_opts += ['-d', '\\']
@@ -92,15 +97,6 @@ def main():
                 'guest': '/tmp/sock{}'.format(dev_id)})
     else:
         dev_vhost_ids = []
-
-    if args.container_image is not None:
-        container_image = args.container_image
-    else:
-        # Container image name, for exp 'sppc/dpdk-ubuntu:18.04'
-        container_image = common.container_img_name(
-            env.CONTAINER_IMG_NAME[target_name],
-            args.dist_name,
-            args.dist_ver)
 
     docker_opts += [
         container_image, '\\']

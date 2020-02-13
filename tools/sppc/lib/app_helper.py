@@ -5,10 +5,6 @@ from . import common
 import os
 import sys
 
-work_dir = os.path.dirname(__file__)
-sys.path.append(work_dir + '/..')
-from conf import env
-
 
 def add_eal_args(parser, mem_size=1024, mem_channel=4):
     parser.add_argument(
@@ -143,7 +139,7 @@ def add_sppc_args(parser):
     return parser
 
 
-def setup_docker_opts(args, target_name, sock_files, workdir=None):
+def setup_docker_opts(args, container_image, sock_files, workdir=None):
     docker_opts = []
 
     if args.foreground is True:
@@ -160,15 +156,6 @@ def setup_docker_opts(args, target_name, sock_files, workdir=None):
     for sock in sock_files:
         docker_opts += [
             '-v', '%s:%s' % (sock['host'], sock['guest']), '\\']
-
-    if args.container_image is not None:
-        container_image = args.container_image
-    else:
-        # Container image name, for exp 'sppc/dpdk-ubuntu:18.04'
-        container_image = common.container_img_name(
-            env.CONTAINER_IMG_NAME[target_name],
-            args.dist_name,
-            args.dist_ver)
 
     docker_opts += [
         '-v', '/dev/hugepages:/dev/hugepages', '\\',
