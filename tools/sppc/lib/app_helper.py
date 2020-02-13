@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-import common
+from . import common
 import os
 import sys
 
@@ -215,7 +214,7 @@ def dev_ids_to_list(dev_ids):
     for dev_id_part in dev_ids.split(','):
         if '-' in dev_id_part:
             cl = dev_id_part.split('-')
-            res = res + range(int(cl[0]), int(cl[1])+1)
+            res = res + list(range(int(cl[0]), int(cl[1])+1))
         else:
             res.append(int(dev_id_part))
     return res
@@ -287,7 +286,7 @@ def cores_to_list(core_opt):
         for core_part in core_opt['val'].split(','):
             if '-' in core_part:
                 cl = core_part.split('-')
-                res = res + range(int(cl[0]), int(cl[1])+1)
+                res = res + list(range(int(cl[0]), int(cl[1])+1))
             else:
                 res.append(int(core_part))
     else:
