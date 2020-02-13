@@ -68,12 +68,6 @@ def main():
         container_image, '\\'
     ]
 
-    # This container is running in backgroud in defualt.
-    if args.foreground is not True:
-        docker_run_opt = '-d'
-    else:
-        docker_run_opt = '-it'
-
     # Setup spp_nfv command.
     spp_cmd = ['spp_nfv', '\\']
 
