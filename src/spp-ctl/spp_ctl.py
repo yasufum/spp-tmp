@@ -124,7 +124,7 @@ class Controller(object):
             data = conn.recv(MSG_SIZE)
             if data and len(data) == MSG_SIZE:
                 # could not receive data at once. recieve remining data.
-                data += self._continue_recv(conn)
+                data += Controller._continue_recv(conn)
             if data:
                 data = data.decode()
         except Exception as e:
