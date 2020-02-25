@@ -199,7 +199,8 @@ log_classification(long clsd_idx, struct rte_mbuf *pkt,
 	else
 		sppwk_port_uid(iface_str,
 				clsd_data[clsd_idx].iface_type,
-				clsd_data[clsd_idx].iface_no_global);
+				clsd_data[clsd_idx].iface_no_global,
+				clsd_data[clsd_idx].queue_no);
 
 	RTE_LOG_DP(DEBUG, VF_CLS,
 			"[%s]Classification(%s:%d). d_addr=%s, "
@@ -227,7 +228,8 @@ log_entry(long clsd_idx, uint16_t vid, const char *mac_addr_str,
 	else
 		sppwk_port_uid(iface_str,
 				clsd_data[clsd_idx].iface_type,
-				clsd_data[clsd_idx].iface_no_global);
+				clsd_data[clsd_idx].iface_no_global,
+				clsd_data[clsd_idx].queue_no);
 
 	RTE_LOG_DP(DEBUG, VF_CLS,
 			"[%s]Entry(%s:%d). vid=%hu, mac_addr=%s, iface=%s\n",
@@ -320,6 +322,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 	if (wk_comp_info->nof_rx == 0) {
 		cls_rx_port_info->iface_type = UNDEF;
 		cls_rx_port_info->iface_no = 0;
+		cls_rx_port_info->queue_no = DEFAULT_QUEUE_ID;
 		cls_rx_port_info->iface_no_global = 0;
 		cls_rx_port_info->ethdev_port_id = 0;
 		cls_rx_port_info->nof_pkts = 0;
@@ -327,6 +330,8 @@ init_component_info(struct cls_comp_info *cmp_info,
 		cls_rx_port_info->iface_type =
 			wk_comp_info->rx_ports[0]->iface_type;
 		cls_rx_port_info->iface_no = 0;
+		cls_rx_port_info->queue_no =
+			wk_comp_info->rx_ports[0]->queue_no;
 		cls_rx_port_info->iface_no_global =
 			wk_comp_info->rx_ports[0]->iface_no;
 		cls_rx_port_info->ethdev_port_id =
@@ -344,6 +349,7 @@ init_component_info(struct cls_comp_info *cmp_info,
 		/* store ports information */
 		cls_tx_ports_info[i].iface_type = tx_port->iface_type;
 		cls_tx_ports_info[i].iface_no = i;
+		cls_tx_ports_info[i].queue_no = tx_port->queue_no;
 		cls_tx_ports_info[i].iface_no_global = tx_port->iface_no;
 		cls_tx_ports_info[i].ethdev_port_id = tx_port->ethdev_port_id;
 		cls_tx_ports_info[i].nof_pkts = 0;
@@ -374,10 +380,10 @@ init_component_info(struct cls_comp_info *cmp_info,
 			mac_cls->default_cls_idx = i;
 			RTE_LOG(INFO, VF_CLS,
 					"default classified. vid=%hu, "
-					"iface_type=%d, iface_no=%d, "
+					"iface_type=%d, iface_no=%d, queue_no=%d, "
 					"ethdev_port_id=%d\n",
 					vid, tx_port->iface_type,
-					tx_port->iface_no,
+					tx_port->iface_no, tx_port->queue_no,
 					tx_port->ethdev_port_id);
 			continue;
 		}
@@ -401,9 +407,10 @@ init_component_info(struct cls_comp_info *cmp_info,
 		RTE_LOG(INFO, VF_CLS,
 				"Add entry to classifier table. "
 				"vid=%hu, mac_addr=%s, iface_type=%d, "
-				"iface_no=%d, ethdev_port_id=%d\n",
+				"iface_no=%d, queue_no=%d, ethdev_port_id=%d\n",
 				vid, mac_addr_str, tx_port->iface_type,
-				tx_port->iface_no, tx_port->ethdev_port_id);
+				tx_port->iface_no, tx_port->queue_no,
+				tx_port->ethdev_port_id);
 	}
 
 	return SPPWK_RET_OK;
@@ -422,8 +429,9 @@ transmit_packets(struct cls_port_info *clsd_data)
 			clsd_data->iface_type, clsd_data->iface_no,
 			0, clsd_data->pkts, clsd_data->nof_pkts);
 #else
-	n_tx = sppwk_eth_vlan_tx_burst(clsd_data->ethdev_port_id, 0,
-			clsd_data->pkts, clsd_data->nof_pkts);
+	n_tx = sppwk_eth_vlan_tx_burst(clsd_data->ethdev_port_id,
+			clsd_data->queue_no, clsd_data->pkts,
+			clsd_data->nof_pkts);
 #endif
 
 	/* free cannot transmit packets */
@@ -467,11 +475,12 @@ push_packet(struct rte_mbuf *pkt, struct cls_port_info *clsd_data)
 	if (unlikely(clsd_data->nof_pkts == MAX_PKT_BURST)) {
 		RTE_LOG(DEBUG, VF_CLS,
 				"transmit packets (buffer is filled). "
-				"iface_type=%d, iface_no={%d,%d}, "
+				"iface_type=%d, iface_no={%d,%d}, queue_no=%d, "
 				"tx_port=%hu, nof_pkts=%hu\n",
 				clsd_data->iface_type,
 				clsd_data->iface_no_global,
 				clsd_data->iface_no,
+				clsd_data->queue_no,
 				clsd_data->ethdev_port_id,
 				clsd_data->nof_pkts);
 		transmit_packets(clsd_data);
@@ -754,8 +763,8 @@ classify_packets(int comp_id)
 			clsd_data_rx->iface_type, clsd_data_rx->iface_no,
 			0, rx_pkts, MAX_PKT_BURST);
 #else
-	n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id, 0,
-			rx_pkts, MAX_PKT_BURST);
+	n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id,
+			clsd_data_rx->queue_no, rx_pkts, MAX_PKT_BURST);
 #endif
 	if (unlikely(n_rx == 0))
 		return SPPWK_RET_OK;
@@ -776,8 +785,8 @@ get_classifier_status(unsigned int lcore_id, int id,
 	struct cls_mng_info *mng_info;
 	struct cls_comp_info *cmp_info;
 	struct cls_port_info *port_info;
-	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
-	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx rx_ports[RTE_MAX_QUEUES_PER_PORT];
+	struct sppwk_port_idx tx_ports[RTE_MAX_QUEUES_PER_PORT];
 
 	mng_info = cls_mng_info_list + id;
 	if (!is_used_mng_info(mng_info)) {
@@ -796,6 +805,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 		nof_rx = 1;
 		rx_ports[0].iface_type = cmp_info->rx_port_i.iface_type;
 		rx_ports[0].iface_no = cmp_info->rx_port_i.iface_no_global;
+		rx_ports[0].queue_no = cmp_info->rx_port_i.queue_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
@@ -803,6 +813,7 @@ get_classifier_status(unsigned int lcore_id, int id,
 	for (i = 0; i < nof_tx; i++) {
 		tx_ports[i].iface_type = port_info[i].iface_type;
 		tx_ports[i].iface_no = port_info[i].iface_no_global;
+		tx_ports[i].queue_no = port_info[i].queue_no;
 	}
 
 	/* Set the information with the function specified by the command. */
@@ -840,6 +851,8 @@ add_mac_entry(struct classifier_table_params *params,
 				mac_cls->default_cls_idx)->iface_type;
 		port.iface_no = (port_info +
 				mac_cls->default_cls_idx)->iface_no_global;
+		port.queue_no = (port_info +
+				mac_cls->default_cls_idx)->queue_no;
 
 		LOG_ENT((long)mac_cls->default_cls_idx, vid,
 				SPPWK_TERM_DEFAULT, cmp_info, port_info);
@@ -863,6 +876,7 @@ add_mac_entry(struct classifier_table_params *params,
 
 		port.iface_type = (port_info + (long)data)->iface_type;
 		port.iface_no = (port_info + (long)data)->iface_no_global;
+		port.queue_no = (port_info + (long)data)->queue_no;
 
 		LOG_ENT((long)data, vid, mac_addr_str, cmp_info, port_info);
 

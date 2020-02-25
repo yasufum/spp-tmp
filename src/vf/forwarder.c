@@ -62,8 +62,8 @@ get_forwarder_status(unsigned int lcore_id, int id,
 	const char *component_type = NULL;
 	struct forward_info *fwd_info = &g_forward_info[id];
 	struct forward_path *fwd_path = &fwd_info->path[fwd_info->ref_index];
-	struct sppwk_port_idx rx_ports[RTE_MAX_ETHPORTS];
-	struct sppwk_port_idx tx_ports[RTE_MAX_ETHPORTS];
+	struct sppwk_port_idx rx_ports[RTE_MAX_QUEUES_PER_PORT];
+	struct sppwk_port_idx tx_ports[RTE_MAX_QUEUES_PER_PORT];
 
 	if (unlikely(fwd_path->wk_type == SPPWK_TYPE_NONE)) {
 		RTE_LOG(ERR, FORWARD,
@@ -82,12 +82,14 @@ get_forwarder_status(unsigned int lcore_id, int id,
 	for (cnt = 0; cnt < fwd_path->nof_rx; cnt++) {
 		rx_ports[cnt].iface_type = fwd_path->ports[cnt].rx.iface_type;
 		rx_ports[cnt].iface_no = fwd_path->ports[cnt].rx.iface_no;
+		rx_ports[cnt].queue_no = fwd_path->ports[cnt].rx.queue_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
 	for (cnt = 0; cnt < fwd_path->nof_tx; cnt++) {
 		tx_ports[cnt].iface_type = fwd_path->ports[cnt].tx.iface_type;
 		tx_ports[cnt].iface_no = fwd_path->ports[cnt].tx.iface_no;
+		tx_ports[cnt].queue_no = fwd_path->ports[cnt].tx.queue_no;
 	}
 
 	/* Set the information with the function specified by the command. */
@@ -217,8 +219,8 @@ forward_packets(int id)
 				rx->iface_type, rx->iface_no, 0,
 				bufs, MAX_PKT_BURST);
 #else
-		nb_rx = sppwk_eth_vlan_rx_burst(rx->ethdev_port_id, 0,
-				bufs, MAX_PKT_BURST);
+		nb_rx = sppwk_eth_vlan_rx_burst(rx->ethdev_port_id,
+				rx->queue_no, bufs, MAX_PKT_BURST);
 #endif
 		if (unlikely(nb_rx == 0))
 			continue;
@@ -231,7 +233,7 @@ forward_packets(int id)
 					tx->iface_no, 0, bufs, nb_rx);
 #else
 			nb_tx = sppwk_eth_vlan_tx_burst(tx->ethdev_port_id,
-					0, bufs, nb_rx);
+					tx->queue_no, bufs, nb_rx);
 #endif
 
 		/* Discard remained packets to release mbuf */

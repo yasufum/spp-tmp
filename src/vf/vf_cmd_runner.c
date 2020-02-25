@@ -43,8 +43,9 @@ update_cls_table(enum sppwk_action wk_action,
 	struct sppwk_port_info *port_info;
 
 	RTE_LOG(DEBUG, VF_CMD_RUNNER, "Called __func__ with "
-			"type `mac`, mac_addr `%s`, and port `%d:%d`.\n",
-			mac_str, port->iface_type, port->iface_no);
+			"type `mac`, mac_addr `%s`, and port `%d:%d nq %d`.\n",
+			mac_str, port->iface_type, port->iface_no,
+			port->queue_no);
 
 	mac_int64 = sppwk_convert_mac_str_to_int64(mac_str);
 	if (unlikely(mac_int64 == -1)) {
@@ -54,15 +55,18 @@ update_cls_table(enum sppwk_action wk_action,
 	}
 	mac_uint64 = (uint64_t)mac_int64;
 
-	port_info = get_sppwk_port(port->iface_type, port->iface_no);
+	port_info = get_sppwk_port(port->iface_type, port->iface_no,
+			port->queue_no);
 	if (unlikely(port_info == NULL)) {
-		RTE_LOG(ERR, VF_CMD_RUNNER, "Failed to get port %d:%d.\n",
-				port->iface_type, port->iface_no);
+		RTE_LOG(ERR, VF_CMD_RUNNER, "Failed to get port %d:%d nq %d.\n",
+				port->iface_type, port->iface_no,
+				port->queue_no);
 		return SPPWK_RET_NG;
 	}
 	if (unlikely(port_info->iface_type == UNDEF)) {
-		RTE_LOG(ERR, VF_CMD_RUNNER, "Port %d:%d doesn't exist.\n",
-				port->iface_type, port->iface_no);
+		RTE_LOG(ERR, VF_CMD_RUNNER, "Port %d:%d nq %d doesn't exist.\n",
+				port->iface_type, port->iface_no,
+				port->queue_no);
 		return SPPWK_RET_NG;
 	}
 
@@ -88,15 +92,17 @@ update_cls_table(enum sppwk_action wk_action,
 		if (unlikely(port_info->cls_attrs.vlantag.vid !=
 				ETH_VLAN_ID_MAX)) {
 			/* TODO(yasufum) why two vids are required in msg ? */
-			RTE_LOG(ERR, VF_CMD_RUNNER, "Used port %d:%d, vid %d != %d.\n",
+			RTE_LOG(ERR, VF_CMD_RUNNER, "Used port %d:%d nq %d, vid %d != %d.\n",
 					port->iface_type, port->iface_no,
+					port->queue_no,
 					port_info->cls_attrs.vlantag.vid, vid);
 			return SPPWK_RET_NG;
 		}
 		if (unlikely(port_info->cls_attrs.mac_addr != 0)) {
 			/* TODO(yasufum) why two macs are required in msg ? */
-			RTE_LOG(ERR, VF_CMD_RUNNER, "Used port %d:%d, mac %s != %s.\n",
+			RTE_LOG(ERR, VF_CMD_RUNNER, "Used port %d:%d nq %d, mac %s != %s.\n",
 					port->iface_type, port->iface_no,
+					port->queue_no,
 					port_info->cls_attrs.mac_addr_str,
 					mac_str);
 			return SPPWK_RET_NG;
@@ -277,7 +283,8 @@ update_port(enum sppwk_action wk_action,
 	sppwk_get_mng_data(NULL, &comp_info_base, NULL, NULL,
 			&change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
-	port_info = get_sppwk_port(port->iface_type, port->iface_no);
+	port_info = get_sppwk_port(port->iface_type, port->iface_no,
+			port->queue_no);
 	if (dir == SPPWK_PORT_DIR_RX) {
 		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;
@@ -317,7 +324,7 @@ update_port(enum sppwk_action wk_action,
 			return SPPWK_RET_OK;
 		}
 
-		if (*nof_ports >= RTE_MAX_ETHPORTS) {
+		if (*nof_ports >= RTE_MAX_QUEUES_PER_PORT) {
 			RTE_LOG(ERR, VF_CMD_RUNNER, "Cannot assign port over the "
 				"maximum number.\n");
 			return SPPWK_RET_NG;
@@ -565,7 +572,8 @@ append_classifier_element_value(
 		return ret;
 	}
 
-	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
+	sppwk_port_uid(port_str, port->iface_type, port->iface_no,
+			port->queue_no);
 
 	ret = append_json_str_value(&tmp_buff, "type",
 			CLS_TYPE_A_LIST[cls_type]);
