@@ -260,49 +260,123 @@ class SppNfv(object):
     def _compl_patch(self, sub_tokens):
         """Complete `patch` command."""
 
-        # Patch command consists of three tokens max, for instance,
-        # `nfv 1; patch phy:0 ring:1`.
-        if len(sub_tokens) < 4:
-            res = []
+        res = []
+        candidates = []
+        # index 0 is "port", so from 1
+        index = 1
 
-            if self.use_cache is False:
-                self.ports, self.patches = self._get_ports_and_patches()
+        # compl_phase "src_res_uid" : candidate is src RES_UID or reset
+        # compl_phase "src_nq"      : candidate is nq
+        # compl_phase "src_q_no"    : candidate is queue no
+        # compl_phase "dst_res_uid" : candidate is dst RES_UID
+        # compl_phase "dst_nq"      : candidate is nq
+        # compl_phase "dst_q_no"    : candidate is queue no
+        # compl_phase None          : candidate is None
+        compl_phase = "src_res_uid"
 
-            # Get patched ports of src and dst to be used for completion.
-            src_ports = []
-            dst_ports = []
-            for pt in self.patches:
-                src_ports.append(pt['src'])
-                dst_ports.append(pt['dst'])
+        if self.use_cache is False:
+            self.ports, self.patches = self._get_ports_and_patches()
 
-            # Remove patched ports from candidates.
-            target_idx = len(sub_tokens) - 1  # target is src or dst
-            tmp_ports = self.ports[:]  # candidates
-            if target_idx == 1:  # find src port
-                # If some of ports are patched, `reset` should be included.
-                if self.patches != []:
-                    tmp_ports.append('reset')
-                for pt in src_ports:
-                    tmp_ports.remove(pt)  # remove patched ports
-            else:  # find dst port
-                # If `reset` is given, no need to show dst ports.
-                if sub_tokens[target_idx - 1] == 'reset':
-                    tmp_ports = []
+        # Get patched ports of src and dst to be used for completion.
+        src_ports = []
+        dst_ports = []
+        for pt in self.patches:
+            src_ports.append(pt['src'])
+            dst_ports.append(pt['dst'])
+
+        while index < len(sub_tokens):
+            if compl_phase == "src_nq" or compl_phase == "dst_nq":
+                if sub_tokens[index - 1] == "reset":
+                    candidates = []
+                    compl_phase = None
+                    continue
+
+                queue_no_list = []
+                for port in self.ports:
+                    split_port = port.split()
+                    if len(split_port) != 3:
+                        continue
+                    if sub_tokens[index - 1] != split_port[0]:
+                        continue
+                    queue_no_list.append(split_port[2])
+
+                if len(queue_no_list) == 0:
+                    if compl_phase == "src_nq":
+                        compl_phase = "dst_res_uid"
+                    elif compl_phase == "dst_nq":
+                        compl_phase = None
+
+            if compl_phase == "src_res_uid":
+                candidates = []
+                for port in self.ports:
+                    if port in src_ports:
+                        continue
+                    if port in candidates:
+                        continue
+                    candidates.append(port.split()[0])
+
+                # If some of ports are patched, `reset` should be included
+                if len(self.patches) != 0:
+                    candidates.append("reset")
+
+                compl_phase = "src_nq"
+
+            elif compl_phase == "src_nq":
+                candidates = ["nq"]
+                compl_phase = "src_q_no"
+
+            elif compl_phase == "src_q_no":
+                candidates = []
+                for queue_no in queue_no_list:
+                    res_uid = "{0} nq {1}".format(
+                        sub_tokens[index - 2], queue_no)
+                    if res_uid in src_ports:
+                        continue
+                    candidates.append(queue_no)
+                compl_phase = "dst_res_uid"
+
+            elif compl_phase == "dst_res_uid":
+                candidates = []
+                for port in self.ports:
+                    if port in dst_ports:
+                        continue
+                    if port in candidates:
+                        continue
+                    candidates.append(port.split()[0])
+
+                compl_phase = "dst_nq"
+
+            elif compl_phase == "dst_nq":
+                candidates = ["nq"]
+                compl_phase = "dst_q_no"
+
+            elif compl_phase == "dst_q_no":
+                candidates = []
+                for queue_no in queue_no_list:
+                    res_uid = "{0} nq {1}".format(
+                        sub_tokens[index - 2], queue_no)
+                    if res_uid in dst_ports:
+                        continue
+                    candidates.append(queue_no)
+                compl_phase = None
+
+            else:
+                candidates = []
+                compl_phase = None
+
+            index += 1
+
+        last_index = len(sub_tokens) - 1
+        for candidate in candidates:
+            if candidate.startswith(sub_tokens[last_index]):
+                # Completion does not work correctly if `:` is included in
+                # tokens. Required to create keyword only after `:`.
+                if ':' in sub_tokens[last_index]:  # 'ring:' or 'ring:0'
+                    res.append(candidate.split(':')[1])  # add only after `:`
                 else:
-                    for pt in dst_ports:
-                        tmp_ports.remove(pt)
+                    res.append(candidate)
 
-            # Return candidates.
-            for kw in tmp_ports:
-                if kw.startswith(sub_tokens[target_idx]):
-                    # Completion does not work correctly if `:` is included in
-                    # tokens. Required to create keyword only after `:`.
-                    if ':' in sub_tokens[target_idx]:  # 'ring:' or 'ring:0'
-                        res.append(kw.split(':')[1])  # add only after `:`
-                    else:
-                        res.append(kw)
-
-            return res
+        return res
 
     def _run_status(self):
         """Run `status` command."""
@@ -407,34 +481,73 @@ class SppNfv(object):
     def _run_patch(self, params):
         """Run `patch` command."""
 
+        params_index = 0
+        req_params = {}
+        flg_reset = False
+        flg_mq = False
+
         if len(params) == 0:
-            print('Params are required!')
-        elif params[0] == 'reset':
-            res = self.spp_ctl_cli.delete('nfvs/%d/patches' % self.sec_id)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print('Clear all of patches.')
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            print('Error: Params are required!')
+            return
+
+        while params_index < len(params):
+            if params_index == 0 and params[0] == "reset":
+                flg_reset = True
+                break
+
+            elif params_index == 0:
+                req_params["src"] = params[params_index]
+
+                if params_index + 2 < len(params):
+                    if params[params_index + 1] == "nq":
+                        params_index += 2
+                        req_params["src"] += "nq" + params[params_index]
+                        flg_mq = True
+
+            elif ((params_index == 1 and flg_mq is False) or
+                    (params_index == 3 and flg_mq is True)):
+                req_params["dst"] = params[params_index]
+
+                if params_index + 2 < len(params):
+                    if params[params_index + 1] == "nq":
+                        params_index += 2
+                        req_params["dst"] += "nq" + params[params_index]
+
+            params_index += 1
+
+        if flg_reset is False:
+            if "src" not in req_params:
+                print("Error: Src port is required!")
+                return
+
+            if "dst" not in req_params:
+                print("Error: Dst port is required!")
+                return
+
+        url = "nfvs/{0}/patches".format(self.sec_id)
+        if flg_reset:
+            res = self.spp_ctl_cli.delete(url)
         else:
-            if len(params) < 2:
-                print('Dst port is required!')
-            else:
-                req_params = {'src': params[0], 'dst': params[1]}
-                res = self.spp_ctl_cli.put(
-                        'nfvs/%d/patches' % self.sec_id, req_params)
-                if res is not None:
-                    error_codes = self.spp_ctl_cli.rest_common_error_codes
-                    if res.status_code == 204:
-                        print('Patch ports (%s -> %s).' % (
-                            params[0], params[1]))
-                    elif res.status_code in error_codes:
-                        pass
-                    else:
-                        print('Error: unknown response.')
+            res = self.spp_ctl_cli.put(url, req_params)
+
+        if res is None:
+            return
+
+        error_codes = self.spp_ctl_cli.rest_common_error_codes
+        if res.status_code in error_codes:
+            pass
+        elif res.status_code != 204:
+            print('Error: unknown response.')
+            return
+
+        if flg_reset:
+            print("Clear all of patches.")
+        else:
+            src = (req_params["src"].replace("nq", " nq ")
+                   if "nq" in req_params["src"] else req_params["src"])
+            dst = (req_params["dst"].replace("nq", " nq ")
+                   if "nq" in req_params["dst"] else req_params["dst"])
+            print("Patch ports ({0} -> {1}).".format(src, dst))
 
     def _run_exit(self):
         """Run `exit` command."""
