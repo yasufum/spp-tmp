@@ -34,6 +34,20 @@ class KeyInvalid(bottle.HTTPError):
         super(KeyRequired, self).__init__(400, msg)
 
 
+class RequestJSONDecodeHTTPError(bottle.HTTPError):
+
+    def __init__(self):
+        msg = "Not in json format."
+        super().__init__(400, msg)
+
+
+class ResponseJSONDecodeHTTPError(bottle.HTTPError):
+
+    def __init__(self):
+        msg = "Internal Server Error"
+        super().__init__(500, msg)
+
+
 class BaseHandler(bottle.Bottle):
     """Define common methods for each handler."""
 
@@ -55,7 +69,12 @@ class BaseHandler(bottle.Bottle):
             if_type, if_num = port.split(":")
             if if_type not in PORT_TYPES:
                 raise
-            int(if_num)
+            if if_type == "phy" and "nq" in if_num:
+                port_num, queue_num = if_num.split("nq")
+                int(port_num)
+                int(queue_num)
+            else:
+                int(if_num)
         except Exception:
             raise KeyInvalid('port', port)
 
@@ -75,12 +94,15 @@ class BaseHandler(bottle.Bottle):
         def wrapper(*args, **kwargs):
             req = bottle.request
             if req.method in ["POST", "PUT"]:
-                if req.get_header('Content-Type') == "application/json":
-                    body = req.json
-                else:
-                    body = json.loads(req.body.read().decode())
+                try:
+                    if req.get_header('Content-Type') == "application/json":
+                        body = req.json
+                    else:
+                        body = json.loads(req.body.read().decode())
+                    LOG.info("body: %s", body)
+                except Exception:
+                    raise RequestJSONDecodeHTTPError()
                 kwargs['body'] = body
-                LOG.info("body: %s", body)
             return func(*args, **kwargs)
         return wrapper
 
@@ -103,10 +125,15 @@ class BaseHandler(bottle.Bottle):
             ret = func(*args, **kwargs)
             if ret is None:
                 return bottle.HTTPResponse(status=204)
-            else:
-                r = bottle.HTTPResponse(status=200, body=json.dumps(ret))
-                r.content_type = "application/json"
-                return r
+
+            try:
+                body = json.dumps(ret)
+            except Exception:
+                raise ResponseJSONDecodeHTTPError()
+
+            r = bottle.HTTPResponse(status=200, body=body)
+            r.content_type = "application/json"
+            return r
         return wrapper
 
 
@@ -446,11 +473,15 @@ class V1PrimaryHandler(BaseHandler):
 
     def __init__(self, controller):
         super(V1PrimaryHandler, self).__init__(controller)
+        self._initialize()
 
+    def _initialize(self):
         self.set_route()
 
         self.install(self.make_response)
         self.install(self.get_body)
+
+        self.mount("/flow_rules", V1PrimaryFlowHandler(self.ctrl))
 
     def set_route(self):
         self.route('/status', 'GET', callback=self.get_status)
@@ -554,6 +585,155 @@ class V1PrimaryHandler(BaseHandler):
         proc = self._get_proc()
         self.ctrl.do_exit(proc.type, proc.id)
         proc.do_exit()
+
+
+class V1PrimaryFlowHandler(V1PrimaryHandler):
+
+    def __init__(self, controller):
+        super().__init__(controller)
+
+    def _initialize(self):
+        self.set_route()
+
+        self.install(self.make_response)
+        self.install(self.get_body)
+
+    def set_route(self):
+        self.route('/port_id/<port_id:int>/validate',
+                   'POST', callback=self.post_flow_validate)
+        self.route('/port_id/<port_id:int>',
+                   'POST', callback=self.post_flow_create)
+        self.route('/port_id/<port_id:int>',
+                   'DELETE', callback=self.delete_flow_all_destroy)
+        self.route('/<rule_id:int>/port_id/<port_id:int>',
+                   'DELETE', callback=self.delete_flow_destroy)
+
+    def post_flow_validate(self, port_id, body):
+        self._check_request_body(body)
+        command = self._create_flow_rule_command(
+            port_id, body.get("rule"), "validate")
+
+        proc = self._get_proc()
+        return proc.flow(command)
+
+    def post_flow_create(self, port_id, body):
+        self._check_request_body(body)
+        command = self._create_flow_rule_command(
+            port_id, body.get("rule"), "create")
+
+        proc = self._get_proc()
+        return proc.flow(command)
+
+    def delete_flow_all_destroy(self, port_id):
+        command = self._gen_flow_destroy(port_id)
+
+        proc = self._get_proc()
+        return proc.flow(command)
+
+    def delete_flow_destroy(self, rule_id, port_id):
+        command = self._gen_flow_destroy(port_id, rule_id)
+
+        proc = self._get_proc()
+        return proc.flow(command)
+
+    def _create_flow_rule_command(self, port_id, rule, sub_command):
+        attr_data = {}
+        data = {}
+
+        # `group`,` priority`, and `transfer` in` attrs` are optional and
+        # may be omitted
+        attr_command = "{group}{priority}{transfer}{direction}"
+
+        attr_data["direction"] = rule.get("direction")
+
+        if "group" in rule:
+            attr_data["group"] = "group {0} ".format(rule.get("group"))
+        else:
+            attr_data["group"] = ""
+
+        if "priority" in rule:
+            attr_data["priority"] = "priority {0} ".format(
+                rule.get("priority"))
+        else:
+            attr_data["priority"] = ""
+
+        if "transfer" in rule:
+            attr_data["transfer"] = "transfer " if rule.get("transfer") else ""
+        else:
+            attr_data["transfer"] = ""
+
+        attrs = attr_command.format(**attr_data)
+
+        command = "flow {sub_command} {res_uid} {attrs} "
+        command += "pattern {pattern} / end "
+        command += "actions {actions} / end"
+
+        data["sub_command"] = sub_command
+        data["res_uid"] = "phy:{0}".format(port_id)
+        data["attrs"] = attrs
+        data["pattern"] = " / ".join(rule.get("pattern"))
+        data["actions"] = " / ".join(rule.get("actions"))
+
+        return command.format(**data)
+
+    def _gen_flow_destroy(self, port_id, rule_id=None):
+        """Delete a flow of given rule ID, or all flows if the ID is None."""
+        if rule_id is not None:
+            target = int(rule_id)
+        else:
+            target = "ALL"
+        return "flow destroy phy:{0} {1}".format(port_id, target)
+
+    def _check_request_body(self, body):
+        self._check_request_body_required_param(body, "rule", dict)
+        rule = body.get("rule")
+
+        self._check_request_body_optional_param(rule, "group", int)
+        self._check_request_body_optional_param(rule, "priority", int)
+        self._check_request_body_required_param(rule, "direction", str)
+        self._check_request_body_optional_param(rule, "transfer", bool)
+        self._check_request_body_required_param(rule, "pattern", list)
+        self._check_request_body_required_param(rule, "actions", list)
+
+        dir = rule.get("direction")
+        if dir != "ingress" and dir != "egress":
+            raise KeyInvalid("direction", dir)
+
+        pattern = rule.get("pattern")
+        for obj in pattern:
+            if obj is None or type(obj) != str:
+                raise KeyInvalid("pattern", pattern)
+
+        actions = rule.get("actions")
+        for obj in actions:
+            if obj is None or type(obj) != str:
+                raise KeyInvalid("actions", actions)
+
+    def _check_request_body_optional_param(self, target, key_name, obj_type):
+        """Check for optional parameter.
+
+        If key_name exists in dict, checking obj_type.
+        If invalid, raise error class. Return True if valid.
+        """
+        if key_name not in target:
+            return True
+        return self._check_request_body_required_param(
+            target, key_name, obj_type)
+
+    def _check_request_body_required_param(self, target, key_name, obj_type):
+        """Check for required parameter.
+
+        key_name must be present and check obj_type.
+        If invalid, raise error class. Return True if valid.
+        """
+        if key_name not in target:
+            raise KeyRequired(key_name)
+
+        obj = target.get(key_name)
+        if obj is None or type(obj) != obj_type:
+            raise KeyInvalid(key_name, obj)
+
+        return True
 
 
 class V1PcapHandler(BaseHandler):

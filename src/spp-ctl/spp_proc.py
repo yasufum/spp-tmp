@@ -318,6 +318,10 @@ class PrimaryProc(SppProc):
         return "stop"
 
     @exec_command
+    def flow(self, command):
+        return command
+
+    @exec_command
     def do_launch_sec_proc(self, args):
         proc_name = args['proc_name']
         sec_id = args['client_id']
