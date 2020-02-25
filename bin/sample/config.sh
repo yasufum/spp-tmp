@@ -29,3 +29,18 @@ PRI_PORTMASK=0x03  # total num of ports of spp_primary.
 # Log files are created in 'spp/log/'.
 SPP_CTL_LOG=spp_ctl.log
 PRI_LOG=spp_primary.log
+
+# number of ports for multi-queue setting.
+#PRI_PORT_QUEUE=(
+#    "0 rxq 16 txq 16"
+#)
+
+# Add a PCI device in white list.
+# `dv_flow_en=1` is required for HW offload with Mellanox NIC.
+# Set a nonzero value to enables the DV flow steering assuming it is
+# supported by the driver.
+# https://doc.dpdk.org/guides/nics/mlx5.html
+#PRI_WHITE_LIST=(
+#    "0000:04:00.0,dv_flow_en=1"
+#    "0000:05:00.0"
+#)

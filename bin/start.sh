@@ -45,6 +45,8 @@ function start_spp_pri() {
     setup_tap_vdevs  # setup vdevs of net_tap
     setup_memif_vdevs  # setup vdevs of net_memif
     setup_vdevs  # setup any of vdevs
+    setup_queue_number  # setup port number
+    setup_whitelist  # setup whitelist
     spp_pri  # launch spp_primary
 }
 

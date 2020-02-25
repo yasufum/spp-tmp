@@ -9,6 +9,8 @@ SPP_PRI_RING=""
 SPP_PRI_TAP=""
 SPP_PRI_MEMIF=""
 SPP_PRI_VDEVS=""
+SPP_PRI_PORT_QUEUE=""
+SPP_PRI_WHITE_LIST=""
 
 SOCK_VHOST="/tmp/sock"
 SOCK_MEMIF="/tmp/spp-memif.sock"
@@ -64,6 +66,26 @@ function setup_vdevs() {
     fi
 }
 
+# Add queue number to port
+function setup_queue_number() {
+    if [ ${#PRI_PORT_QUEUE[@]} ]; then
+        for (( i=0; i < ${#PRI_PORT_QUEUE[@]}; i++)); do
+            SPP_PRI_PORT_QUEUE="
+                ${SPP_PRI_PORT_QUEUE} --port-num ${PRI_PORT_QUEUE[${i}]}"
+        done
+    fi
+}
+
+# Add whitelist
+function setup_whitelist() {
+    if [ ${#PRI_WHITE_LIST[@]} ]; then
+        for (( i=0; i < ${#PRI_WHITE_LIST[@]}; i++)); do
+            SPP_PRI_WHITE_LIST="
+                ${SPP_PRI_WHITE_LIST} -w ${PRI_WHITE_LIST[${i}]}"
+        done
+    fi
+}
+
 # Launch spp_primary.
 function spp_pri() {
     SPP_PRI_BIN=${SPP_DIR}/src/primary/${RTE_TARGET}/spp_primary
@@ -86,10 +108,12 @@ function spp_pri() {
         ${SPP_PRI_TAP} \
         ${SPP_PRI_MEMIF} \
         ${SPP_PRI_VDEVS} \
+        ${SPP_PRI_WHITE_LIST} \
         -- \
         -p ${PRI_PORTMASK} \
         -n ${NUM_RINGS} \
-        -s ${SPP_CTL_IP}:5555"
+        -s ${SPP_CTL_IP}:5555 \
+        ${SPP_PRI_PORT_QUEUE}"
 
     if [ ${DRY_RUN} ]; then
         echo ${cmd}
