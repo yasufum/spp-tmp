@@ -46,7 +46,7 @@ def main():
     if args.port_mask is None:
         common.error_exit('--port-mask')
 
-    # Setup for vhost devices with given device IDs.
+    # Setup devices with given device UIDs.
     dev_uids = None
     sock_files = None
     if args.dev_uids is not None:
@@ -69,25 +69,28 @@ def main():
         exit()
 
     # Setup l2fwd command run on container.
-    cmd_path = '{}/examples/l2fwd/{}/l2fwd'.format(
+    cmd_path = '{0:s}/examples/l2fwd/{1:s}/l2fwd'.format(
         env.RTE_SDK, env.RTE_TARGET)
 
     l2fwd_cmd = [cmd_path, '\\']
 
-    file_prefix = app_helper.gen_sppc_file_prefix('l2fwd')
-
+    # Setup EAL options.
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix('l2fwd')
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
+    # Setup l2fwd options.
     l2fwd_opts = ['-p', args.port_mask, '\\']
 
     # Check given number of ports is enough for portmask.
     if (args.port_mask is None) or (args.dev_uids is None):
         pass
     elif app_helper.is_sufficient_ports(args) is not True:
-        print("Error: Not enough ports, {} devs for '{}(=0b{})'.".format(
-            len(args.dev_uids.split(',')),
-            args.port_mask,
-            format(int(args.port_mask, 16), 'b')))
+        print("Error: Not enough ports, {0:d} devs for '{1:s}(=0b{2:s})'.".
+              format(len(args.dev_uids.split(',')), args.port_mask,
+                     format(int(args.port_mask, 16), 'b')))
         exit()
 
     cmds = docker_cmd + docker_opts + l2fwd_cmd + eal_opts + l2fwd_opts
