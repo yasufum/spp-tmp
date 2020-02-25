@@ -17,8 +17,8 @@ SOCK_MEMIF="/tmp/spp-memif.sock"
 
 function clean_sock_files() {
     # clean /tmp/sock*
-    sudo rm -f ${SOCK_VHOST}*
-    sudo rm -f ${SOCK_MEMIF}
+    sudo rm -rf ${SOCK_VHOST}*
+    sudo rm -rf ${SOCK_MEMIF}
 }
 
 # Add vhost vdevs named as such as `eth_vhost0`.
