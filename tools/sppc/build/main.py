@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2018 Nippon Telegraph and Telephone Corporation
 
-from __future__ import absolute_import
 import argparse
 import os
 import subprocess
@@ -86,22 +85,22 @@ def parse_args():
 
 
 def create_env_sh(dst_dir, rte_sdk, target, target_dir):
-    """Create config file for DPDK environment variables
+    """Create config file for DPDK environment variables.
 
     Create 'env.sh' which defines $RTE_SDK and $RTE_TARGET inside a
     container to be referredd from 'run.sh' and Dockerfile.
     """
-    contents = "export RTE_SDK=%s\n" % rte_sdk
-    contents += "export RTE_TARGET=%s\n" % env.RTE_TARGET
+    contents = "export RTE_SDK={:s}\n".format(rte_sdk)
+    contents += "export RTE_TARGET={:s}\n".format(env.RTE_TARGET)
     if target == 'pktgen':
-        contents += "export PKTGEN_DIR=%s" % target_dir
+        contents += "export PKTGEN_DIR={:s}".format(target_dir)
     elif target == 'spp':
-        contents += "export SPP_DIR=%s" % target_dir
+        contents += "export SPP_DIR={:s}".format(target_dir)
     elif target == 'suricata':
-        contents += "export SURICATA_DIR=%s" % target_dir
+        contents += "export SURICATA_DIR={:s}".format(target_dir)
 
     try:
-        f = open('%s/env.sh' % dst_dir, 'w')
+        f = open('{:s}/env.sh'.format(dst_dir), 'w')
         f.write(contents)
         f.close()
     except IOError:
@@ -112,7 +111,7 @@ def main():
     args = parse_args()
 
     if args.target is not None:
-        dockerfile_dir = '%s/%s/%s' % (  # Dockerfile is contained here
+        dockerfile_dir = '{:s}/{:s}/{:s}'.format(  # Dockerfile is here
             work_dir, args.dist_name, args.target)
         # Container image name, for exp 'sppc/dpdk-ubuntu:18.04'
         container_image = common.container_img_name(
@@ -124,7 +123,7 @@ def main():
         exit()
 
     # Decide which of Dockerfile with given base image version
-    dockerfile = '%s/Dockerfile.%s' % (dockerfile_dir, args.dist_ver)
+    dockerfile = '{:s}/Dockerfile.{:s}'.format(dockerfile_dir, args.dist_ver)
 
     # Overwrite container's name if it is given.
     if args.container_image is not None:
@@ -132,22 +131,22 @@ def main():
 
     # Setup branches if user specifies.
     if args.dpdk_branch is not None:
-        dpdk_branch = "-b %s" % args.dpdk_branch
+        dpdk_branch = "-b {:s}".format(args.dpdk_branch)
     else:
         dpdk_branch = ''
 
     if args.pktgen_branch is not None:
-        pktgen_branch = "-b %s" % args.pktgen_branch
+        pktgen_branch = "-b {:s}".format(args.pktgen_branch)
     else:
         pktgen_branch = ''
 
     if args.spp_branch is not None:
-        spp_branch = "-b %s" % args.spp_branch
+        spp_branch = "-b {:s}".format(args.spp_branch)
     else:
         spp_branch = ''
 
     if args.suricata_branch is not None:
-        suricata_branch = "-b %s" % args.suricata_branch
+        suricata_branch = "-b {:s}".format(args.suricata_branch)
     else:
         suricata_branch = ''
 
@@ -160,11 +159,11 @@ def main():
 
     # NOTE: Suricata has sub-directory as project root.
     suricata_ver = '4.1.4'
-    suricata_dir = '{}/suricata-{}'.format(
+    suricata_dir = '{:s}/suricata-{:s}'.format(
             args.suricata_repo.split('/')[-1].split('.')[0], suricata_ver)
 
     # RTE_SDK is decided with DPDK's dir.
-    rte_sdk = '%s/%s' % (env.HOMEDIR, dpdk_dir)
+    rte_sdk = '{:s}/{:s}'.format(env.HOMEDIR, dpdk_dir)
 
     # Check for just creating env.sh, or run docker build.
     if args.only_envsh is True:
@@ -174,13 +173,14 @@ def main():
             elif args.target == 'spp':
                 create_env_sh(dockerfile_dir, rte_sdk, args.target, spp_dir)
             elif args.target == 'suricata':
-                create_env_sh(dockerfile_dir, rte_sdk, args.target, suricata_dir)
+                create_env_sh(dockerfile_dir, rte_sdk, args.target,
+                              suricata_dir)
             elif args.target == 'dpdk':
                 create_env_sh(dockerfile_dir, rte_sdk, args.target, dpdk_dir)
-            print("Info: '%s/env.sh' created." % dockerfile_dir)
+            print("Info: '{:s}/env.sh' created.".format(dockerfile_dir))
             exit()
         else:
-            print("Info: Nothin done because you gave %s with %s." % (
+            print("Info: Nothin done because you gave {:s} with {:s}.".format(
                 '--only-envsh', '--dry-run'))
             exit()
     else:
@@ -205,35 +205,40 @@ def main():
     for opt in env_opts:
         if opt in os.environ.keys():
             docker_cmd += [
-                '--build-arg', '%s=%s' % (opt, os.environ[opt]), '\\']
+                    '--build-arg', '{:s}={:s}'.
+                    format(opt, os.environ[opt]), '\\']
 
     docker_cmd += [
-        '--build-arg', 'home_dir=%s' % env.HOMEDIR, '\\',
-        '--build-arg', 'rte_sdk=%s' % rte_sdk, '\\',
-        '--build-arg', 'rte_target=%s' % env.RTE_TARGET, '\\',
-        '--build-arg', 'dpdk_repo=%s' % args.dpdk_repo, '\\',
-        '--build-arg', 'dpdk_branch=%s' % dpdk_branch, '\\']
+        '--build-arg', 'home_dir={:s}'.format(env.HOMEDIR), '\\',
+        '--build-arg', 'rte_sdk={:s}'.format(rte_sdk), '\\',
+        '--build-arg', 'rte_target={:s}'.format(env.RTE_TARGET), '\\',
+        '--build-arg', 'dpdk_repo={:s}'.format(args.dpdk_repo), '\\',
+        '--build-arg', 'dpdk_branch={:s}'.format(dpdk_branch), '\\']
 
     if args.target == 'pktgen':
         docker_cmd += [
-            '--build-arg', 'pktgen_repo=%s' % args.pktgen_repo, '\\',
-            '--build-arg', 'pktgen_branch=%s' % pktgen_branch, '\\',
-            '--build-arg', 'pktgen_dir=%s' % pktgen_dir, '\\']
+                '--build-arg', 'pktgen_repo={:s}'.format(
+                    args.pktgen_repo), '\\',
+                '--build-arg', 'pktgen_branch={:s}'.format(
+                    pktgen_branch), '\\',
+                '--build-arg', 'pktgen_dir={:s}'.format(pktgen_dir), '\\']
     elif args.target == 'spp':
         docker_cmd += [
-            '--build-arg', 'spp_repo=%s' % args.spp_repo, '\\',
-            '--build-arg', 'spp_branch=%s' % spp_branch, '\\',
-            '--build-arg', 'spp_dir=%s' % spp_dir, '\\']
+                '--build-arg', 'spp_repo={:s}'.format(args.spp_repo), '\\',
+                '--build-arg', 'spp_branch={:s}'.format(spp_branch), '\\',
+                '--build-arg', 'spp_dir={:s}'.format(spp_dir), '\\']
     elif args.target == 'suricata':
         docker_cmd += [
-            '--build-arg', 'suricata_repo=%s' % args.suricata_repo, '\\',
-            '--build-arg', 'suricata_branch=%s' % suricata_branch, '\\',
-            '--build-arg', 'suricata_dir=%s' % suricata_dir, '\\']
+                '--build-arg', 'suricata_repo={:s}'.format(
+                    args.suricata_repo), '\\',
+                '--build-arg', 'suricata_branch={:s}'.format(
+                    suricata_branch), '\\',
+                '--build-arg', 'suricata_dir={:s}'.format(suricata_dir), '\\']
 
     docker_cmd += [
-        '-f', '%s' % dockerfile, '\\',
-        '-t', container_image, '\\',
-        dockerfile_dir]
+            '-f', '{:s}'.format(dockerfile), '\\',
+            '-t', container_image, '\\',
+            dockerfile_dir]
 
     common.print_pretty_commands(docker_cmd)
 
