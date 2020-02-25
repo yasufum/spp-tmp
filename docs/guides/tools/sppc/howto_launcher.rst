@@ -61,10 +61,10 @@ DPDK Sample App Container
 
 Procedure of App container script is defined in main() and
 consists of three steps of
-(1)parsing options, (2)building docker command and
-(3)application command run inside the container.
+(1) parsing options, (2) setup docker command and
+(3) application command run inside the container.
 
-Here is a sample code of :ref:`sppc_appl_helloworld`.
+Here is a sample code of :ref:`sppc_appl_l2fwd`.
 ``parse_args()`` is defined in each
 of app container scripts to parse all of EAL, docker and application
 specific options.
@@ -78,30 +78,48 @@ for parsing the arguments.
     def main():
         args = parse_args()
 
+        # Container image name such as 'sppc/dpdk-ubuntu:18.04'
+        if args.container_image is not None:
+            container_image = args.container_image
+        else:
+            container_image = common.container_img_name(
+                common.IMG_BASE_NAMES['dpdk'],
+                args.dist_name, args.dist_ver)
+
         # Check for other mandatory opitons.
-        if args.dev_ids is None:
-            common.error_exit('--dev-ids')
+        if args.port_mask is None:
+            common.error_exit('--port-mask')
 
-        # Setup for vhost devices with given device IDs.
-        dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-        sock_files = app_helper.sock_files(dev_ids_list)
+If the name of container is given via ``args.container_image``, it is
+decided as a combination of basename, distribution and its version.
+Basenames are defined as ``IMG_BASE_NAMES`` in ``lib/common.py``.
+In general, You do not need to change for using DPDK sample apps.
 
-Each of options is accessible as ``args.dev_ids`` or
-``args.core_list``.
-Before step (2) and (3), you had better to check given option,
+.. code-block:: python
+
+    # defined in lib/common.py
+    IMG_BASE_NAMES = {
+        'dpdk': 'sppc/dpdk',
+        'pktgen': 'sppc/pktgen',
+        'spp': 'sppc/spp',
+        'suricata': 'sppc/suricata',
+        }
+
+Options can be referred via ``args``. For example, the name of container
+image can be referred via ``args.container_image``.
+
+Before go to step (2) and (3), you had better to check given option,
 expecially mandatory options.
-In this case, ``--dev-ids`` is the mandatory and you should terminate
-the application if it is not given.
 ``common.error_exit()`` is a helper method to print an error message
-for given option and do ``exit()``.
+for given option and do ``exit()``. In this case, ``--port-mask`` must
+be given, or exit with an error message.
 
-Setup of ``dev_ids_list`` and ``sock_files`` is required for launching
-container.
-``lib/app_helper.py`` defines helper functions commonly used
-for app containers.
+Setup of ``sock_files`` is required for creating network interfaces
+for the container. ``sock_files()`` defined in ``lib/app_helper.py`` is
+provided for creating socket files from given device UIDs.
 
 Then, setup docker command and its options as step (2).
-Docker options are setup by using helper method
+Docker options are added by using helper method
 ``setup_docker_opts()`` which generates commonly used options for app
 containers.
 This methods returns a list of a part of options to give it to
@@ -111,73 +129,43 @@ This methods returns a list of a part of options to give it to
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, target_name, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
-You should notice a option ``target_name``.
-It is used as a label to choose which of container image you use.
-The name of container image is defined as a combination of basename,
-distribution name and version.
-Basename is defined as a member of ``CONTAINER_IMG_NAME`` in
-``conf/env.py``.
-
-.. code-block:: python
-
-    # defined in conf/env.py
-    CONTAINER_IMG_NAME = {
-        'dpdk': 'sppc/dpdk',
-        'pktgen': 'sppc/pktgen',
-        'spp': 'sppc/spp'}
-
-This usecase is for DPDK sample app, so you should define target as
-``dpdk``.
-You do not need to change for using DPDK sample apps in general.
-But it can be changed by using other target name.
-For example, if you give target ``pktgen`` and
-use default dist name and verion of ``ubuntu`` and ``latest``,
-The name of image is ``sppc/pktgen-ubuntu:latest``.
-
-For using images other than defined above, you can override it with
-``--container-image`` option.
-It enables to use any of container images and applications.
-
-You also notice that ``docker_cmd`` has ``\\`` at the end of the list.
+You also notice that ``docker_cmd`` has a backslash ``\\`` at the end of
+the list.
 It is only used to format the printed command on the terminal.
-If you do no care about formatting, you do not need to add it.
+If you do no care about formatting, you do not need to add this character.
 
 Next step is (3), to setup the application command.
-You should change ``cmd_path`` and ``file_prefix`` to specify
-the application.
-For ``cmd_path``, ``helloworld`` should be changed to other name of
-application, for example,
+You should change ``cmd_path`` to specify your application.
+In ``app/l2fwd.py``, the application compiled under ``RTE_SDK`` in DPDK's
+directory, but your application might be different.
 
 .. code-block:: python
 
-    # Setup helloworld run on container.
-    cmd_path = '%s/examples/helloworld/%s/helloworld' % (
-        env.RTE_SDK, env.RTE_TARGET)
+    # Setup l2fwd command run on container.
+    cmd_path = '{0:s}/examples/{2:s}/{1:s}/{2:s}'.format(
+        env.RTE_SDK, env.RTE_TARGET, APP_NAME)
 
-    hello_cmd = [cmd_path, '\\']
+    l2fwd_cmd = [cmd_path, '\\']
 
-    file_prefix = 'spp-hello-container%d' % dev_ids_list[0]
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    # Setup EAL options.
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
-    # No application specific options for helloworld
-    hello_opts = []
+    # Setup l2fwd options.
+    l2fwd_opts = ['-p', args.port_mask, '\\']
 
-``file_prefix`` for EAL option should be unique on the system
-because it is used as the name of hugepage file.
-In SPP container, it is a combination of fixed text and vhost device ID
-because this ID is unique in SPP container and cannot be overlapped,
-at least among app containers in SPP container.
-EAL options are also generated by helper method.
+While setting up EAL option in ``setup_eal_opts()``, ``--file-prefix`` is
+generated by using the name of application and a random number. It should
+be unique on the system because it is used as the name of hugepage file.
 
-Finally, combine all of commands and its options and launch
-from ``subprocess.call()``.
+Finally, combine command and all of options before launching from
+``subprocess.call()``.
 
 .. code-block:: python
 
-    cmds = docker_cmd + docker_opts + hello_cmd + eal_opts + hello_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        l2fwd_cmd + eal_opts + l2fwd_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)
@@ -190,20 +178,17 @@ from ``subprocess.call()``.
         cmds.remove('\\')
     subprocess.call(cmds)
 
-All of commands and options are combined in to a list ``cmds``
-to give it to ``subprocess.call()``.
-You can ignore procedures for ``\\`` and
-``common.print_pretty_commands()``
-if you do not care about printing commands in the terminal.
-However, you should not to shortcut for ``args.dry_run`` because
-it is very important for users to check the command syntax
-before running it.
+There are some optional behaviors in the final step.
+``common.print_pretty_commands()`` replaces ``\\`` with a newline character
+and prints command line in pretty format.
+If you give ``--dry-run`` option, this launcher script prints command line
+and exits without launching container.
 
 
-.. _sppc_howto_dpdk_appc_nots:
+.. _sppc_howto_none_dpdk_sample_apps:
 
-App Container not for DPDK Sample
----------------------------------
+None DPDK Sample Applications in Container
+------------------------------------------
 
 There are several application using DPDK but not included in
 `sample applications
@@ -247,61 +232,36 @@ For your application, you can simply add options to ``parser`` object.
     def main():
         args = parse_args()
 
-        # Setup for vhost devices with given device IDs.
-        dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-        sock_files = app_helper.sock_files(dev_ids_list)
-
-        # Setup docker command.
-        docker_cmd = ['sudo', 'docker', 'run', '\\']
-        docker_opts = app_helper.setup_docker_opts(
-            args, target_name, sock_files,
-            '%s/../pktgen-dpdk' % env.RTE_SDK)
-
-        cmd_path = '%s/../pktgen-dpdk/app/%s/pktgen' % (
-            env.RTE_SDK, env.RTE_TARGET)
-
-Setup for docker command is the same as the example.
-The ``terget_name`` might be different from the image you will use,
-but you do not need to care about which of container image is used
-because it is overriden with given image with ``--container-image``
-option.
-However, you should care about the path of application ``cmd_path``
-which is run in the container.
-
-Then, you should decide ``file_prefix`` to your application container
-be unique on the system.
-The ``file_prefix`` of SPP container is named as
-``spp-[APP_NAME]-container[VHOST_ID]`` convensionally to it be unique.
+Setup of socket files for network interfaces is the same as DPDK sample apps.
+However, you might need to change paht of command  which is run in the
+container. In ``app/pktgen.py``, directory of ``pktgen`` is defined as
+``wd``, and the name of application s defined as ``APP_NAME``.
+This directory can be changed with ``--workdir`` option.
 
 .. code-block:: python
+
+    # Setup docker command.
+    if args.workdir is not None:
+        wd = args.workdir
+    else:
+        wd = '/root/pktgen-dpdk'
+    docker_cmd = ['sudo', 'docker', 'run', '\\']
+    docker_opts = app_helper.setup_docker_opts(args, sock_files, None, wd)
 
     # Setup pktgen command
-    pktgen_cmd = [cmd_path, '\\']
+    pktgen_cmd = [APP_NAME, '\\']
 
-    file_prefix = 'spp-pktgen-container%d' % dev_ids_list[0]
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    # Setup EAL options.
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
-You should check the arguments for the application.
-
-.. code-block:: python
-
-    ...
-    if args.pcap_file is not None:
-        pktgen_opts += ['-s', args.pcap_file, '\\']
-
-    if args.script_file is not None:
-        pktgen_opts += ['-f', args.script_file, '\\']
-
-    if args.log_file is not None:
-        pktgen_opts += ['-l', args.log_file, '\\']
-    ...
 
 Finally, combine all of commands and its options and launch
 from ``subprocess.call()``.
 
 .. code-block:: python
 
-    cmds = docker_cmd + docker_opts + pktgen_cmd + eal_opts + pktgen_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        pktgen_cmd + eal_opts + pktgen_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)
