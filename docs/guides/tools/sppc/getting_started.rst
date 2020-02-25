@@ -86,15 +86,17 @@ All of images are referred from ``docker images`` command.
 
 .. note::
 
-    The Name of containers is defined as a set of target, name and
+    The Name of container image is defined as a set of target, name and
     version of Linux distoribution.
-    For example, container image targetting dpdk apps on Ubuntu 16.04
-    is named as ``sppc/dpdk-ubuntu:16.04``.
+    For example, container image targetting dpdk apps on Ubuntu 18.04
+    is named as ``sppc/dpdk-ubuntu:18.04``.
 
-    Build script understands which of Dockerfile should be used based
+    There are several Dockerfiles for supporting several applications and
+    distro versions under ``build/ubuntu/``.
+    Build script understands which of Dockerfiles should be used based
     on the given options.
-    If you run build script with options for dpdk and Ubuntu 16.04 as
-    below, it finds ``build/ubuntu/dpdk/Dockerfile.16.04`` and runs
+    If you run build script with options for dpdk and Ubuntu 18.04 as
+    below, it finds ``build/ubuntu/dpdk/Dockerfile.18.04`` and runs
     ``docker build``.
     Options for Linux distribution have default value, ``ubuntu`` and
     ``latest``. So, you do not need to specify them if you use default.
@@ -112,14 +114,8 @@ All of images are referred from ``docker images`` command.
         $ python build/main.py -t dpdk --dist-ver 16.04
 
 
-.. warning::
-
-    Currently, the latest version of Ubuntu is 18.04 and DPDK is 18.05.
-    However, SPP is not stable on the latest versions, especially
-    running on containers.
-
-    It is better to use Ubuntu 16.04 and DPDK 18.02 for SPP containers
-    until be stabled.
+    Version of other than distro is also configurable by specifying a branch
+    number via command line options.
 
     .. code-block:: console
 
@@ -134,15 +130,20 @@ All of images are referred from ``docker images`` command.
 Launch SPP and App Containers
 -----------------------------
 
-Before launch containers, you should set IP address of host machine
-as ``SPP_CTL_IP`` environment variable
-for controller to be accessed from inside containers.
-It is better to define this variable in ``$HOME/.bashrc``.
+.. note::
+
+    In usecase described in this chapter, SPP processes other than
+    ``spp-ctl`` and CLI are containerized, but it is available to run as on
+    host for communicating with other container applications.
+
+Before launch containers, you should set IP address of host machine as
+``SPP_CTL_IP`` environment variable for controller to be accessed from
+inside containers.
 
 .. code-block:: console
 
     # Set your host IP address
-    export SPP_CTL_IP=HOST_IPADDR
+    $ export SPP_CTL_IP=YOUR_HOST_IPADDR
 
 
 SPP Controller
@@ -153,14 +154,14 @@ processes.
 
 .. note::
 
-    SPP controller provides ``topo term`` which shows network
-    topology in a terminal.
+    SPP controller also provides ``topo term`` command for containers which
+    shows network topology in a terminal.
 
     However, there are a few terminals supporing this feature.
     ``mlterm`` is the most useful and easy to customize.
     Refer :doc:`../../commands/experimental` for ``topo`` command.
 
-``spp-ctl`` is launched in the termina l.
+``spp-ctl`` is launched in the terminal 1.
 
 .. code-block:: console
 
@@ -180,11 +181,9 @@ processes.
 SPP Primary Container
 ~~~~~~~~~~~~~~~~~~~~~
 
-As ``SPP_CTL_IP`` is activated, you are enalbed to run
-``app/spp-primary.py`` with options of EAL and SPP primary
-in terminal 3.
-In this case, launch spp-primary in background mode using one core
-and two ports.
+As ``SPP_CTL_IP`` is activated, it is able to run ``app/spp-primary.py``
+with options. In this case, launch ``spp_primary`` in background mode using
+one core and two physical ports in terminal 3.
 
 .. code-block:: console
 
@@ -196,12 +195,11 @@ and two ports.
 SPP Secondary Container
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-For secondary process, ``spp_nfv`` is only supported for running on container
-currently.
+``spp_nfv`` is only supported for running on container currently.
 
-Launch ``spp_nfv`` in terminal 3
-with options for secondary ID is ``1`` and
-core list is ``1-2`` for using 2nd and 3rd cores.
+Launch ``spp_nfv`` in terminal 3 with options for secondary ID is
+``1`` and core list is ``1-2`` for using 2nd and 3rd cores.
+It is also run in background mode.
 
 .. code-block:: console
 
@@ -209,7 +207,7 @@ core list is ``1-2`` for using 2nd and 3rd cores.
     $ python app/spp-nfv.py -i 1 -l 1-2
 
 If it is succeeded, container is running in background.
-You can find it with ``docker -ps`` command.
+You can find it with ``docker ps`` command.
 
 
 App Container
@@ -224,39 +222,13 @@ before launching the app container.
 .. code-block:: console
 
     # Terminal 2
-    spp > nfv 1; add vhost 1
-    spp > nfv 1; add vhost 2
+    spp > nfv 1; add vhost:1
+    spp > nfv 1; add vhost:2
 
-``spp_nfv`` of ID 1 running inside container creates
-``vhost:1`` and ``vhost:2``.
-Vhost PMDs are referred as an option ``-d 1,2`` from the
-app container launcher.
-
-.. code-block:: console
-
-    # Terminal 3
-    $ cd /path/to/spp/tools/sppc
-    $ app/testpmd.py -l 3-4 -d 1,2
-    sudo docker run -it \
-    ...
-    EAL: Detected 16 lcore(s)
-    EAL: Auto-detected process type: PRIMARY
-    EAL: Multi-process socket /var/run/.testpmd1_unix
-    EAL: Probing VFIO support...
-    EAL: VFIO support initialized
-    Interactive-mode selected
-    Warning: NUMA should be configured manually by using --port-numa-...
-    testpmd: create a new mbuf pool <mbuf_pool_socket_0>: n=155456,...
-    testpmd: preferred mempool ops selected: ring_mp_mc
-    Configuring Port 0 (socket 0)
-    Port 0: 32:CB:1D:72:68:B9
-    Configuring Port 1 (socket 0)
-    Port 1: 52:73:C3:5B:94:F1
-    Checking link statuses...
-    Done
-    testpmd>
-
-It launches ``testpmd`` in foreground mode.
+``spp_nfv`` of ID 1 running inside container creates ``vhost:1`` and
+``vhost:2``. So assign them to ``testpmd`` with ``-d`` option which is for
+attaching vdevs as a comma separated list of resource UIDs in SPP.
+``testpmd`` is launched in foreground mode with ``-fg`` option in this case.
 
 .. note::
 
@@ -268,10 +240,8 @@ It launches ``testpmd`` in foreground mode.
     ``--pci-blacklist`` EAL option to exclude ports on host. PCI address of
     port can be inspected by using ``dpdk-devbind.py -s``.
 
-If you have ports on host and assign them to SPP, you should to exclude them
-from the app container by specifying PCI addresses of the ports with ``-b``
-or ``--pci-blacklist``.
-
+To exclude ``testpmd`` container tries to own physical ports, you should
+specify PCI addresses of the ports with ``-b`` or ``--pci-blacklist``.
 You can find PCI addresses from ``dpdk-devbind.py -s``.
 
 .. code-block:: console
@@ -294,13 +264,15 @@ with ``-b`` option.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ app/testpmd.py -l 3-4 -d 1,2 \
+    $ app/testpmd.py -l 3-4 \
+      -d vhost:1,vhost:2 \
+      -fg \
       -b 0000:0a:00.0 0000:0a:00.1
-    sudo docker run -it \
-    ...
-    -b 0000:0a:00.0 \
-    -b 0000:0a:00.1 \
-    ...
+     sudo docker run -it \
+     ...
+     -b 0000:0a:00.0 \
+     -b 0000:0a:00.1 \
+     ...
 
 
 .. _sppc_gs_run_apps:
@@ -326,16 +298,19 @@ with it.
 .. code-block:: console
 
     # Terminal 2
-    spp > nfv 1; add ring 0
+    spp > nfv 1; add ring:0
     spp > nfv 1; patch vhost:1 ring:0
     spp > nfv 1; patch ring:0 vhost:2
     spp > nfv 1; forward
     spp > nfv 1; status
-    status: running
-    ports:
-      - 'ring:0 -> vhost:2'
-      - 'vhost:1 -> ring:0'
-      - 'vhost:2'
+    - status: running
+    - lcore_ids:
+      - master: 1
+      - slave: 2
+    - ports:
+      - ring:0 -> vhost:2
+      - vhost:1 -> ring:0
+      - vhost:2
 
 Start forwarding on port 0 by ``start tx_first``.
 

@@ -65,7 +65,7 @@ Then, ``spp.py`` in terminal 2.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 Move to terminal 3, launch app containers of ``spp_primary``
 and ``spp_nfv`` step by step in background mode.
@@ -79,27 +79,27 @@ You can also assign a physical port instead of this vhost device.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dv 1
-    $ python app/spp-nfv.py -i 1 -l 1-2
-    $ python app/spp-nfv.py -i 2 -l 3-4
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 1
+    $ python3 app/spp-nfv.py -i 1 -l 1-2
+    $ python3 app/spp-nfv.py -i 2 -l 3-4
 
 Then, add two vhost PMDs for pktgen app container from SPP CLI.
 
 .. code-block:: console
 
     # Terminal 2
-    spp > nfv 1; add vhost 1
-    spp > nfv 2; add vhost 2
+    spp > nfv 1; add vhost:1
+    spp > nfv 2; add vhost:2
 
 It is ready for launching pktgen app container. In this usecase,
 use five lcores for pktgen. One lcore is used for master, and remaining
 lcores are used for rx and tx evenly.
-Device ID option ``-d 1,2`` is for refferring vhost 1 and 2.
+Device ID option ``-d vhost:1,vhost:2`` is for refferring vhost 1 and 2.
 
 .. code-block:: console
 
     # Terminal 3
-    $ python app/pktgen.py -fg -l 5-9 -d 1,2
+    $ python3 app/pktgen.py -fg -l 5-9 -d vhost:1,vhost:2
 
 Finally, configure network path from SPP controller,
 
@@ -115,7 +115,7 @@ and start forwarding from pktgen.
 
 .. code-block:: console
 
-    # Terminal 2
+    # Terminal 3
     $ Pktgen:/> start 1
 
 You find that packet count of rx of port 0 and tx of port 1
@@ -165,7 +165,7 @@ Then, launch ``spp.py`` in terminal 2.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 In terminal 3, launch ``spp_primary`` and ``spp_nfv`` containers
 in background mode.
@@ -176,11 +176,11 @@ portmask option.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x03
-    $ python app/spp-nfv.py -i 1 -l 1-2
-    $ python app/spp-nfv.py -i 2 -l 3-4
-    $ python app/spp-nfv.py -i 3 -l 5-6
-    $ python app/spp-nfv.py -i 4 -l 7-8
+    $ python3 app/spp-primary.py -l 0 -p 0x03
+    $ python3 app/spp-nfv.py -i 1 -l 1-2
+    $ python3 app/spp-nfv.py -i 2 -l 3-4
+    $ python3 app/spp-nfv.py -i 3 -l 5-6
+    $ python3 app/spp-nfv.py -i 4 -l 7-8
 
 
 .. note::
@@ -196,7 +196,7 @@ portmask option.
 
     .. code-block:: console
 
-        $ python tools/spp-launcher.py -n 4
+        $ python3 tools/spp-launcher.py -n 4
 
     You will find that lcore assignment is the same as below.
     Lcore is assigned from 0 for primary, and next two lcores for the
@@ -204,11 +204,11 @@ portmask option.
 
     .. code-block:: console
 
-        $ python app/spp-primary.py -l 0 -p 0x03
-        $ python app/spp-nfv.py -i 1 -l 1,2
-        $ python app/spp-nfv.py -i 2 -l 3,4
-        $ python app/spp-nfv.py -i 3 -l 5,6
-        $ python app/spp-nfv.py -i 4 -l 7,8
+        $ python3 app/spp-primary.py -l 0 -p 0x03
+        $ python3 app/spp-nfv.py -i 1 -l 1,2
+        $ python3 app/spp-nfv.py -i 2 -l 3,4
+        $ python3 app/spp-nfv.py -i 3 -l 5,6
+        $ python3 app/spp-nfv.py -i 4 -l 7,8
 
     You can also assign lcores with ``--shared`` to master lcore
     be shared among ``spp_nfv`` processes.
@@ -217,18 +217,18 @@ portmask option.
 
     .. code-block:: console
 
-        $ python tools/spp-launcher.py -n 4 --shared
+        $ python3 tools/spp-launcher.py -n 4 --shared
 
     The result of assignment of this command is the same as below.
     Master lcore 1 is shared among secondary processes.
 
     .. code-block:: console
 
-        $ python app/spp-primary.py -l 0 -p 0x03
-        $ python app/spp-nfv.py -i 1 -l 1,2
-        $ python app/spp-nfv.py -i 2 -l 1,3
-        $ python app/spp-nfv.py -i 3 -l 1,4
-        $ python app/spp-nfv.py -i 4 -l 1,5
+        $ python3 app/spp-primary.py -l 0 -p 0x03
+        $ python3 app/spp-nfv.py -i 1 -l 1,2
+        $ python3 app/spp-nfv.py -i 2 -l 1,3
+        $ python3 app/spp-nfv.py -i 3 -l 1,4
+        $ python3 app/spp-nfv.py -i 4 -l 1,5
 
 Add ring PMDs considering which of rings is shared between which of
 containers.
@@ -311,7 +311,7 @@ First of all, launch ``spp-ctl`` and ``spp.py``.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 Then, launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
@@ -322,11 +322,11 @@ Use four of ``spp_nfv`` containers for using four vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
-    $ python app/spp-nfv.py -i 1 -l 1-2
-    $ python app/spp-nfv.py -i 2 -l 3-4
-    $ python app/spp-nfv.py -i 3 -l 5-6
-    $ python app/spp-nfv.py -i 4 -l 7-8
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-nfv.py -i 1 -l 1-2
+    $ python3 app/spp-nfv.py -i 2 -l 3-4
+    $ python3 app/spp-nfv.py -i 3 -l 5-6
+    $ python3 app/spp-nfv.py -i 4 -l 7-8
 
 Assign ring and vhost PMDs. Each of vhost IDs to be the same as
 its secondary ID.
@@ -353,7 +353,7 @@ In this case, ``pktgen`` container owns vhost 1 and 2,
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/pktgen.py -l 9-11 -d 1,2
+    $ python3 app/pktgen.py -l 9-11 -d vhost:1,vhost:2
 
 and ``l2fwd`` container owns vhost 3 and 4.
 
@@ -361,7 +361,7 @@ and ``l2fwd`` container owns vhost 3 and 4.
 
     # Terminal 4
     $ cd /path/to/spp/tools/sppc
-    $ python app/l2fwd.py -l 12-13 -d 3,4
+    $ python app/l2fwd.py -l 12-13 -d vhost:3,vhost:4
 
 
 Then, configure network path by pactching each of ports
@@ -419,7 +419,7 @@ First of all, launch ``spp-ctl`` and ``spp.py``.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 Launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
@@ -430,9 +430,9 @@ Use two of ``spp_nfv`` containers for using four vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
-    $ python app/spp-nfv.py -i 1 -l 1,2
-    $ python app/spp-nfv.py -i 2 -l 1,3
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-nfv.py -i 1 -l 1,2
+    $ python3 app/spp-nfv.py -i 2 -l 1,3
 
 The number of process and CPUs are fewer than previous example.
 You can reduce the number of ``spp_nfv`` processes by assigning
@@ -464,7 +464,7 @@ In this case, ``pktgen`` container uses vhost 1 and 2,
 .. code-block:: console
 
     # Terminal 3
-    $ python app/pktgen.py -l 1,4,5 -d 1,2
+    $ python app/pktgen.py -l 1,4,5 -d vhost:1,vhost:2
 
 and ``l2fwd`` container uses vhost 3 and 4.
 
@@ -472,7 +472,7 @@ and ``l2fwd`` container uses vhost 3 and 4.
 
     # Terminal 4
     $ cd /path/to/spp/tools/sppc
-    $ python app/l2fwd.py -l 1,6 -d 3,4
+    $ python app/l2fwd.py -l 1,6 -d vhost:3,vhost:4
 
 
 Then, configure network path by pactching each of ports
@@ -548,7 +548,7 @@ First of all, launch ``spp-ctl`` and ``spp.py``.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 Launch ``spp_primary`` and ``spp_nfv`` containers in background.
 It does not use physical NICs as similar to
@@ -559,13 +559,13 @@ Use six ``spp_nfv`` containers for using six vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x01 -dv 9
-    $ python app/spp-nfv.py -i 1 -l 1,2
-    $ python app/spp-nfv.py -i 2 -l 1,3
-    $ python app/spp-nfv.py -i 3 -l 1,4
-    $ python app/spp-nfv.py -i 4 -l 1,5
-    $ python app/spp-nfv.py -i 5 -l 1,6
-    $ python app/spp-nfv.py -i 6 -l 1,7
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-nfv.py -i 1 -l 1,2
+    $ python3 app/spp-nfv.py -i 2 -l 1,3
+    $ python3 app/spp-nfv.py -i 3 -l 1,4
+    $ python3 app/spp-nfv.py -i 4 -l 1,5
+    $ python3 app/spp-nfv.py -i 5 -l 1,6
+    $ python3 app/spp-nfv.py -i 6 -l 1,7
 
 Assign ring and vhost PMDs. Each of vhost IDs to be the same as
 its secondary ID.
@@ -624,7 +624,7 @@ For ``pktgen`` container, assign lcores 8-10 and vhost 1-3.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/pktgen.py -l 8-10 -d 1-3 -T
+    $ python3 app/pktgen.py -l 8-10 -d vhost:1,vhost:2,vhost:3 -T
 
 
 For ``load_balancer`` container, assign lcores 12-15 and vhost 4-6.
@@ -636,7 +636,9 @@ or more queues. In this case, assign 4 queues.
 
     # Terminal 4
     $ cd /path/to/spp/tools/sppc
-    $ python app/load_balancer.py -l 11-14 -d 4-6 -fg -nq 4
+    $ python3 app/load_balancer.py -l 11-14 \
+      -d vhost:4,vhost:5,vhost:6 \
+      -fg -nq 4 \
       -rx "(0,0,11),(0,1,11),(0,2,11)" \
       -tx "(0,12),(1,12),(2,12)" \
       -w 13,14 \
