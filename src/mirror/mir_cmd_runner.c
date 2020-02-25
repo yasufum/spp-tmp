@@ -156,7 +156,8 @@ update_port(enum sppwk_action wk_action,
 	sppwk_get_mng_data(NULL, &comp_info_base, NULL, NULL,
 			&change_component, NULL);
 	comp_info = (comp_info_base + comp_lcore_id);
-	port_info = get_sppwk_port(port->iface_type, port->iface_no);
+	port_info = get_sppwk_port(port->iface_type, port->iface_no,
+			port->queue_no);
 	if (dir == SPPWK_PORT_DIR_RX) {
 		nof_ports = &comp_info->nof_rx;
 		ports = comp_info->rx_ports;

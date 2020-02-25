@@ -340,7 +340,8 @@ mirror_proc(int id)
 	nb_rx = sppwk_eth_ring_stats_rx_burst(rx->ethdev_port_id,
 			rx->iface_type, rx->iface_no, 0, bufs, MAX_PKT_BURST);
 #else
-	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PKT_BURST);
+	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, rx->queue_no, bufs,
+			MAX_PKT_BURST);
 #endif
 
 	if (unlikely(nb_rx == 0))
@@ -403,8 +404,8 @@ mirror_proc(int id)
 					tx->ethdev_port_id, tx->iface_type,
 					tx->iface_no, 0, copybufs, cnt);
 #else
-			nb_tx2 = rte_eth_tx_burst(tx->ethdev_port_id, 0,
-					copybufs, cnt);
+			nb_tx2 = rte_eth_tx_burst(tx->ethdev_port_id,
+					tx->queue_no, copybufs, cnt);
 #endif
 	}
 
@@ -415,7 +416,8 @@ mirror_proc(int id)
 		nb_tx1 = sppwk_eth_ring_stats_tx_burst(tx->ethdev_port_id,
 				tx->iface_type, tx->iface_no, 0, bufs, nb_rx);
 #else
-		nb_tx1 = rte_eth_tx_burst(tx->ethdev_port_id, 0, bufs, nb_rx);
+		nb_tx1 = rte_eth_tx_burst(tx->ethdev_port_id, tx->queue_no,
+				bufs, nb_rx);
 #endif
 	nb_tx = nb_tx1;
 
@@ -685,12 +687,14 @@ get_mirror_status(unsigned int lcore_id, int id,
 	for (cnt = 0; cnt < path->nof_rx; cnt++) {
 		rx_ports[cnt].iface_type = path->ports[cnt].rx.iface_type;
 		rx_ports[cnt].iface_no   = path->ports[cnt].rx.iface_no;
+		rx_ports[cnt].queue_no   = path->ports[cnt].rx.queue_no;
 	}
 
 	memset(tx_ports, 0x00, sizeof(tx_ports));
 	for (cnt = 0; cnt < path->nof_tx; cnt++) {
 		tx_ports[cnt].iface_type = path->ports[cnt].tx.iface_type;
 		tx_ports[cnt].iface_no   = path->ports[cnt].tx.iface_no;
+		tx_ports[cnt].queue_no   = path->ports[cnt].tx.queue_no;
 	}
 
 	/* Set the information with the function specified by the command. */
