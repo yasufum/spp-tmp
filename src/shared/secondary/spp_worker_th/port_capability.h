@@ -62,7 +62,7 @@ void sppwk_update_port_dir(const struct sppwk_comp_info *comp);
  * Wrapper function for rte_eth_rx_burst() with VLAN feature.
  *
  * @param[in] port_id Etherdev ID.
- * @param[in] queue_id RX queue ID, but fixed value 0 in SPP.
+ * @param[in] queue_id RX queue ID.
  * @param[in] rx_pkts Pointers to mbuf should be enough to store nb_pkts.
  * @param nb_pkts Maximum number of RX packets.
  * @return Number of RX packets as number of pointers to mbuf.
@@ -74,7 +74,7 @@ uint16_t sppwk_eth_vlan_rx_burst(uint16_t port_id, uint16_t queue_id,
  * Wrapper function for rte_eth_tx_burst() with VLAN feature.
  *
  * @param port_id Etherdev ID.
- * @param[in] queue_id TX queue ID, but fixed value 0 in SPP.
+ * @param[in] queue_id TX queue ID.
  * @param[in] tx_pkts Pointers to mbuf should be enough to store nb_pkts.
  * @param nb_pkts Maximum number of TX packets.
  * @return Number of TX packets as number of pointers to mbuf.

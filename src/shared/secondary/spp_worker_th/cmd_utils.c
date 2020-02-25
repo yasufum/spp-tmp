@@ -154,13 +154,13 @@ stop_process(int signal)
  * if given type is invalid.
  */
 struct sppwk_port_info *
-get_sppwk_port(enum port_type iface_type, int iface_no)
+get_sppwk_port(enum port_type iface_type, int iface_no, int queue_no)
 {
 	struct iface_info *iface_info = g_mng_data.p_iface_info;
 
 	switch (iface_type) {
 	case PHY:
-		return &iface_info->phy[iface_no];
+		return &iface_info->phy[iface_no][queue_no];
 	case VHOST:
 		return &iface_info->vhost[iface_no];
 	case RING:
@@ -229,19 +229,24 @@ log_interface_info(const struct iface_info *iface_info)
 {
 	const struct sppwk_port_info *port = NULL;
 	int cnt = 0;
+	int queue_cnt;
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
-		port = &iface_info->phy[cnt];
-		if (port->iface_type == UNDEF)
-			continue;
+		int max_queue_port = get_port_max_queues(PHY, cnt);
+		for (queue_cnt = 0; queue_cnt < max_queue_port;
+				queue_cnt++) {
+			port = &iface_info->phy[cnt][queue_cnt];
+			if (port->iface_type == UNDEF)
+				continue;
 
-		RTE_LOG(DEBUG, WK_CMD_UTILS,
-				"phy  [%d] type=%d, no=%d, port=%d, "
-				"vid = %u, mac=%08lx(%s)\n",
-				cnt, port->iface_type, port->iface_no,
-				port->ethdev_port_id,
-				port->cls_attrs.vlantag.vid,
-				port->cls_attrs.mac_addr,
-				port->cls_attrs.mac_addr_str);
+			RTE_LOG(DEBUG, WK_CMD_UTILS,
+					"phy [%d] type=%d, no=%d, port=%d, "
+					"queue=%d, vid = %u, mac=%08lx(%s)\n",
+					cnt, port->iface_type, port->iface_no,
+					port->ethdev_port_id, port->queue_no,
+					port->cls_attrs.vlantag.vid,
+					port->cls_attrs.mac_addr,
+					port->cls_attrs.mac_addr_str);
+		}
 	}
 	for (cnt = 0; cnt < RTE_MAX_ETHPORTS; cnt++) {
 		port = &iface_info->vhost[cnt];
@@ -356,21 +361,33 @@ static void
 init_iface_info(void)
 {
 	int port_cnt;  /* increment ether ports */
+	int queue_cnt;  /* increment ether queue per ports */
 	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
 	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		p_iface_info->phy[port_cnt].iface_type = UNDEF;
-		p_iface_info->phy[port_cnt].iface_no = port_cnt;
-		p_iface_info->phy[port_cnt].ethdev_port_id = -1;
-		p_iface_info->phy[port_cnt].cls_attrs.vlantag.vid =
-			ETH_VLAN_ID_MAX;
+		for (queue_cnt = 0; queue_cnt < RTE_MAX_QUEUES_PER_PORT;
+				queue_cnt++) {
+			p_iface_info->phy[port_cnt][queue_cnt].iface_type =
+					UNDEF;
+			p_iface_info->phy[port_cnt][queue_cnt].iface_no =
+					port_cnt;
+			p_iface_info->phy[port_cnt][queue_cnt].queue_no =
+					queue_cnt;
+			p_iface_info->phy[port_cnt][queue_cnt]
+					.ethdev_port_id = -1;
+			p_iface_info->phy[port_cnt][queue_cnt]
+					.cls_attrs.vlantag.vid =
+					ETH_VLAN_ID_MAX;
+		}
 		p_iface_info->vhost[port_cnt].iface_type = UNDEF;
 		p_iface_info->vhost[port_cnt].iface_no = port_cnt;
+		p_iface_info->vhost[port_cnt].queue_no = DEFAULT_QUEUE_ID;
 		p_iface_info->vhost[port_cnt].ethdev_port_id = -1;
 		p_iface_info->vhost[port_cnt].cls_attrs.vlantag.vid =
 			ETH_VLAN_ID_MAX;
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no = port_cnt;
+		p_iface_info->ring[port_cnt].queue_no = DEFAULT_QUEUE_ID;
 		p_iface_info->ring[port_cnt].ethdev_port_id = -1;
 		p_iface_info->ring[port_cnt].cls_attrs.vlantag.vid =
 			ETH_VLAN_ID_MAX;
@@ -411,7 +428,7 @@ static int
 init_host_port_info(void)
 {
 	int port_type, port_id;
-	int i, ret;
+	int i, ret, queue_id;
 	int nof_phys = 0;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	struct iface_info *p_iface_info = g_mng_data.p_iface_info;
@@ -433,8 +450,13 @@ init_host_port_info(void)
 
 		switch (port_type) {
 		case PHY:
-			p_iface_info->phy[port_id].iface_type = port_type;
-			p_iface_info->phy[port_id].ethdev_port_id = port_id;
+			for (queue_id = 0; queue_id < RTE_MAX_QUEUES_PER_PORT;
+					queue_id++) {
+				p_iface_info->phy[port_id][queue_id]
+						.iface_type = port_type;
+				p_iface_info->phy[port_id][queue_id]
+						.ethdev_port_id = port_id;
+			}
 			break;
 		case VHOST:
 			/* NOTE: a vhost can be used by one process.
@@ -526,12 +548,14 @@ int
 sppwk_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
+		int queue_no,
 		enum sppwk_port_dir dir)
 {
 	int cnt, port_cnt, max = 0;
 	struct sppwk_comp_info *component = NULL;
 	struct sppwk_port_info **port_array = NULL;
-	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no,
+			queue_no);
 	struct sppwk_comp_info *component_info =
 					g_mng_data.p_component_info;
 
@@ -567,14 +591,14 @@ set_component_change_port(struct sppwk_port_info *port,
 	int ret = 0;
 	if ((dir == SPPWK_PORT_DIR_RX) || (dir == SPPWK_PORT_DIR_BOTH)) {
 		ret = sppwk_check_used_port(port->iface_type, port->iface_no,
-				SPPWK_PORT_DIR_RX);
+				port->queue_no, SPPWK_PORT_DIR_RX);
 		if (ret >= 0)
 			*(g_mng_data.p_change_component + ret) = 1;
 	}
 
 	if ((dir == SPPWK_PORT_DIR_TX) || (dir == SPPWK_PORT_DIR_BOTH)) {
 		ret = sppwk_check_used_port(port->iface_type, port->iface_no,
-				SPPWK_PORT_DIR_TX);
+				port->queue_no, SPPWK_PORT_DIR_TX);
 		if (ret >= 0)
 			*(g_mng_data.p_change_component + ret) = 1;
 	}
@@ -626,6 +650,28 @@ get_idx_port_info(struct sppwk_port_info *p_info, int nof_ports,
 			ret = cnt;
 	}
 	return ret;
+}
+
+/* Returns a larger number of queues of RX or TX port as the maximum number */
+int
+get_port_max_queues(const enum port_type iface_type, int iface_no)
+{
+	if (unlikely(iface_no > RTE_MAX_ETHPORTS) || unlikely(iface_no < 0))
+		return SPPWK_RET_NG;
+
+	if (iface_type != PHY)
+		return 1;
+
+	const struct port_info *ports = NULL;
+	const struct rte_memzone *mz;
+	mz = rte_memzone_lookup(MZ_PORT_INFO);
+	ports = mz->addr;
+	int max_q_rx = ports->queue_info[iface_no].rxq;
+	int max_q_tx = ports->queue_info[iface_no].txq;
+	if (max_q_rx > max_q_tx)
+		return max_q_rx;
+	else
+		return max_q_tx;
 }
 
 /* Delete given port info from the port info array. */
@@ -716,8 +762,9 @@ update_lcore_info(void)
 	}
 }
 
-/* Return port uid such as `phy:0`, `ring:1` or so. */
-int sppwk_port_uid(char *port_uid, enum port_type p_type, int iface_no)
+/* Return port uid such as `phy:0nq0`, `ring:1` or so. */
+int sppwk_port_uid(char *port_uid, enum port_type p_type, int iface_no,
+			int queue_no)
 {
 	const char *p_type_str;
 
@@ -735,7 +782,15 @@ int sppwk_port_uid(char *port_uid, enum port_type p_type, int iface_no)
 		return SPPWK_RET_NG;
 	}
 
-	sprintf(port_uid, "%s:%d", p_type_str, iface_no);
+	int max_queue_port = get_port_max_queues(p_type, iface_no);
+	if (unlikely(max_queue_port == SPPWK_RET_NG))
+		return SPPWK_RET_NG;
+
+	if (max_queue_port <= 1)
+		sprintf(port_uid, "%s:%d", p_type_str, iface_no);
+	else
+		sprintf(port_uid, "%s:%d nq %d",
+			p_type_str, iface_no, queue_no);
 
 	return SPPWK_RET_OK;
 }

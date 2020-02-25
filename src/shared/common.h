@@ -10,7 +10,23 @@
 #include <unistd.h>
 #include <rte_ethdev_driver.h>
 
-#define MSG_SIZE 2048  /* socket buffer len */
+/*
+ * TODO(tx_h-yamashita): Remove this definition because it was used from
+ * spp_primary and spp_nfv and its value was 2048, but the value should
+ * be changed to 32KiB for containing status of spp_primary.
+ * For spp_nfv, 2048 is still enough. This buff len should be defined in
+ * each of spp_primary and spp_nfv as appropriate size.
+ */
+/*
+ * NOTE: The size of 32768(32Kbyte) is enough to set maximum size of JSON
+ * response string. This maximum size comes from primary`s `status` command
+ * response which includes `LCORE`, `PHY` and `RING` information.
+ * For supporting rte_flow API, `PHY` information may contain a lot of
+ * flow data which defined by user. Our design choice is that `PHY`
+ * information size would be 30Kbyte and `LCORE` size plus `PHY` size
+ * would be 2Kbyte.
+ */
+#define MSG_SIZE 32768  /* socket buffer max len */
 
 #define SOCK_RESET  -1
 #define PORT_RESET  UINT16_MAX
@@ -70,11 +86,19 @@ struct stats {
 	uint64_t tx_drop;
 } __rte_cache_aligned;
 
+/* rx_queue and tx_queue set to port. */
+struct port_queue {
+	uint16_t rxq;
+	uint16_t txq;
+};
+
 struct port_info {
 	uint16_t num_ports;
 	uint16_t id[RTE_MAX_ETHPORTS];
 	struct stats port_stats[RTE_MAX_ETHPORTS];
 	struct stats client_stats[MAX_CLIENT];
+	/* num of queues per port */
+	struct port_queue queue_info[RTE_MAX_ETHPORTS];
 };
 
 enum port_type {
@@ -93,11 +117,15 @@ struct port_map {
 	enum port_type port_type;
 	struct stats *stats;
 	struct stats default_stats;
+	/* num of queues per port */
+	struct port_queue *queue_info;
 };
 
 struct port {
 	uint16_t in_port_id;
+	uint16_t in_queue_id;
 	uint16_t out_port_id;
+	uint16_t out_queue_id;
 	uint16_t (*rx_func)(uint16_t, uint16_t, struct rte_mbuf **, uint16_t);
 	uint16_t (*tx_func)(uint16_t, uint16_t, struct rte_mbuf **, uint16_t);
 };

@@ -15,8 +15,16 @@
 #define SPPWK_VHOST_STR "vhost"
 #define SPPWK_RING_STR "ring"
 
+/*
+ * Delimiter for phy port supporting multi queue.
+ * Example of phy port supporting multi-queue: `phy: 0nq1`.
+ */
+#define DELIM_PHY_MQ "nq"
+
 /* TODO(yasufum) confirm usage of this value and why it is 4. */
 #define PORT_CAPABL_MAX 4  /* Max num of port abilities. */
+
+#define DEFAULT_QUEUE_ID 0  /* Queue ID is counted up from 0. */
 
 /* Status of a component on lcore. */
 enum sppwk_lcore_status {
@@ -89,6 +97,7 @@ struct sppwk_cls_attrs {
 struct sppwk_port_idx {
 	enum port_type iface_type;  /**< phy, vhost or ring. */
 	int iface_no;
+	int queue_no;
 };
 
 /* Define detailed port params in addition to `sppwk_port_idx`. */
@@ -96,6 +105,7 @@ struct sppwk_port_info {
 	enum port_type iface_type;  /**< phy, vhost or ring */
 	int iface_no;
 	int ethdev_port_id;  /**< Consistent ID of ethdev */
+	int queue_no;
 	struct sppwk_cls_attrs cls_attrs;
 	struct sppwk_port_attrs port_attrs[PORT_CAPABL_MAX];
 };
@@ -108,8 +118,10 @@ struct sppwk_comp_info {
 	int comp_id;  /**< Component ID */
 	int nof_rx;  /**< The number of rx ports */
 	int nof_tx;  /**< The number of tx ports */
-	struct sppwk_port_info *rx_ports[RTE_MAX_ETHPORTS]; /**< rx ports */
-	struct sppwk_port_info *tx_ports[RTE_MAX_ETHPORTS]; /**< tx ports */
+	/**< rx ports */
+	struct sppwk_port_info *rx_ports[RTE_MAX_QUEUES_PER_PORT];
+	/**< tx ports */
+	struct sppwk_port_info *tx_ports[RTE_MAX_QUEUES_PER_PORT];
 };
 
 /* Manage number of interfaces  and port information as global variable. */
@@ -120,7 +132,7 @@ struct sppwk_comp_info {
  * or not.
  */
 struct iface_info {
-	struct sppwk_port_info phy[RTE_MAX_ETHPORTS];
+	struct sppwk_port_info phy[RTE_MAX_ETHPORTS][RTE_MAX_QUEUES_PER_PORT];
 	struct sppwk_port_info vhost[RTE_MAX_ETHPORTS];
 	struct sppwk_port_info ring[RTE_MAX_ETHPORTS];
 };

@@ -79,9 +79,10 @@ append_error_details_value(const char *name, char **output, void *tmp)
 
 /* Check if port is already flushed. */
 static int
-is_port_flushed(enum port_type iface_type, int iface_no)
+is_port_flushed(enum port_type iface_type, int iface_no, int queue_no)
 {
-	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no,
+			queue_no);
 	return port->ethdev_port_id >= 0;
 }
 
@@ -89,23 +90,43 @@ is_port_flushed(enum port_type iface_type, int iface_no)
 int
 append_interface_array(char **output, const enum port_type type)
 {
-	int i, port_cnt = 0;
+	int port_cnt, str_cnt = 0;
+	uint16_t queue_cnt;
 	char tmp_str[CMD_TAG_APPEND_SIZE];
 
-	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
-		if (!is_port_flushed(type, i))
-			continue;
-
-		sprintf(tmp_str, "%s%d", JSON_APPEND_COMMA(port_cnt), i);
-
-		*output = spp_strbuf_append(*output, tmp_str, strlen(tmp_str));
-		if (unlikely(*output == NULL)) {
-			RTE_LOG(ERR, WK_CMD_RES_FMT,
-				/* TODO(yasufum) replace %d to string. */
-				"Failed to add index for type `%d`.\n", type);
+	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
+		int max_queue_port = get_port_max_queues(type, port_cnt);
+		if (unlikely(max_queue_port < 0))
 			return SPPWK_RET_NG;
+
+		for (queue_cnt = 0; queue_cnt < max_queue_port;
+			queue_cnt++) {
+			if (!is_port_flushed(type, port_cnt, queue_cnt))
+				continue;
+
+			if (max_queue_port <= 1) {
+				sprintf(tmp_str, "%s\"%d\"",
+						JSON_APPEND_COMMA(str_cnt),
+						port_cnt);
+			} else {
+				sprintf(tmp_str, "%s\"%d nq %d\"",
+						JSON_APPEND_COMMA(str_cnt),
+						port_cnt, queue_cnt);
+			}
+
+			*output = spp_strbuf_append(*output,
+					tmp_str, strlen(tmp_str));
+			if (unlikely(*output == NULL)) {
+				RTE_LOG(ERR, WK_CMD_RES_FMT,
+					/**
+					 * TODO(yasufum) replace %d to string.
+					 */
+					"Failed to add index for type `%d`.\n",
+							type);
+				return SPPWK_RET_NG;
+			}
+			str_cnt++;
 		}
-		port_cnt++;
 	}
 	return SPPWK_RET_OK;
 }
@@ -195,14 +216,14 @@ append_vlan_block(const char *name, char **output,
  * It returns a port ID, or error code if it's failed to.
  */
 static int
-get_ethdev_port_id(enum port_type iface_type, int iface_no)
+get_ethdev_port_id(enum port_type iface_type, int iface_no, int queue_no)
 {
 	struct iface_info *iface_info = NULL;
 
 	sppwk_get_mng_data(&iface_info, NULL, NULL, NULL, NULL, NULL);
 	switch (iface_type) {
 	case PHY:
-		return iface_info->phy[iface_no].ethdev_port_id;
+		return iface_info->phy[iface_no][queue_no].ethdev_port_id;
 	case RING:
 		return iface_info->ring[iface_no].ethdev_port_id;
 	case VHOST:
@@ -227,15 +248,17 @@ append_port_block(char **output, const struct sppwk_port_idx *port,
 		return SPPWK_RET_NG;
 	}
 
-	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
+	sppwk_port_uid(port_str, port->iface_type, port->iface_no,
+			port->queue_no);
 	ret = append_json_str_value(&tmp_buff, "port", port_str);
 	if (unlikely(ret < SPPWK_RET_OK))
 		return SPPWK_RET_NG;
 
 	ret = append_vlan_block("vlan", &tmp_buff,
 			get_ethdev_port_id(
-				port->iface_type, port->iface_no),
-			dir);
+				port->iface_type, port->iface_no,
+				port->queue_no),
+				dir);
 	if (unlikely(ret < SPPWK_RET_OK))
 		return SPPWK_RET_NG;
 
@@ -519,7 +542,7 @@ add_client_id(const char *name, char **output,
 	return append_json_int_value(output, name, get_client_id());
 }
 
-/* Add entry of port to a response in JSON such as "phy:0". */
+/* Add entry of port to a response in JSON such as "phy:0nq0". */
 int
 add_interface(const char *name, char **output,
 		void *tmp __attribute__ ((unused)))

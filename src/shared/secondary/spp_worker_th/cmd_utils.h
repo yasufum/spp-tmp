@@ -174,7 +174,7 @@ void stop_process(int signal);
 
 /* Return sppwk_port_info of given type and num of interface. */
 struct sppwk_port_info *
-get_sppwk_port(enum port_type iface_type, int iface_no);
+get_sppwk_port(enum port_type iface_type, int iface_no, int queue_no);
 
 /* Output log message for core information */
 void log_core_info(const struct core_mng_info *core_info);
@@ -221,6 +221,7 @@ int sppwk_is_lcore_updated(unsigned int lcore_id);
  *
  * @param iface_type Interface type to be validated.
  * @param iface_no Interface number to be validated.
+ * @param queue_no Queue number of interface to be validated.
  * @param rxtx Value of spp_port_rxtx to be validated.
  * @retval 0~127      If match component ID
  * @retval SPPWK_RET_NG If failed.
@@ -228,6 +229,7 @@ int sppwk_is_lcore_updated(unsigned int lcore_id);
 int sppwk_check_used_port(
 		enum port_type iface_type,
 		int iface_no,
+		int queue_no,
 		enum sppwk_port_dir dir);
 
 /**
@@ -270,6 +272,15 @@ int get_idx_port_info(struct sppwk_port_info *p_info, int nof_ports,
 		struct sppwk_port_info *p_info_ary[]);
 
 /**
+ * Returns max queue number of the target port.
+ *
+ * @param[in] iface_type Interface type such as PHY or so.
+ * @param[in] iface_no Interface number.
+ * @return Max queue number if succeeded, or SPPWK_RET_NG if failed.
+ */
+int get_port_max_queues(const enum port_type iface_type, int iface_no);
+
+/**
  *  search matched port_info from array and delete it.
  *
  * @param[in] p_info Target port to be deleted.
@@ -294,15 +305,17 @@ int update_port_info(void);
 void update_lcore_info(void);
 
 /**
- * Return port uid such as `phy:0`, `ring:1` or so.
+ * Return port uid such as `phy:0nq0`, `ring:1` or so.
  *
  * @param[in,out] port_uid String of port type to be converted.
  * @param[in] iface_type Interface type such as PHY or so.
  * @param[in] iface_no Interface number.
+ * @param[in] queue_no Queue number of interface.
  * @return SPPWK_RET_OK If succeeded, or SPPWK_RET_NG if failed.
  */
 int
-sppwk_port_uid(char *port_uid, enum port_type iface_type, int iface_no);
+sppwk_port_uid(char *port_uid, enum port_type iface_type, int iface_no,
+		int queue_no);
 
 /**
  * Change string of MAC address to int64.

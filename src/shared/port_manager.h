@@ -17,20 +17,25 @@ struct porttype_map {
 };
 
 /* initialize forward array with default value */
-void forward_array_init_one(unsigned int i);
+void forward_array_init_one(unsigned int i, unsigned int j);
 void forward_array_init(void);
 void forward_array_reset(void);
-void forward_array_remove(int port_id);
+void forward_array_remove(int port_id, uint16_t queue_id);
 
 void port_map_init_one(unsigned int i);
 void port_map_init(void);
 
 enum port_type get_port_type(char *portname);
 
-int add_patch(uint16_t in_port, uint16_t out_port);
+int add_patch(uint16_t in_port, uint16_t in_queue,
+	uint16_t out_port, uint16_t out_queue);
 
 uint16_t find_port_id(int id, enum port_type type);
 
-int is_valid_port(uint16_t port_id);
+int is_valid_port(uint16_t port_id, uint16_t queue_id);
+int is_valid_port_rxq(uint16_t port_id, uint16_t rxq);
+int is_valid_port_txq(uint16_t port_id, uint16_t txq);
+
+uint16_t get_port_max_queues(uint16_t port_id);
 
 #endif  // __SHARED_PORT_MANAGER_H__

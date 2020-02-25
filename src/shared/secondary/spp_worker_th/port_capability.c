@@ -378,11 +378,11 @@ vlan_operation(uint16_t port_id, struct rte_mbuf **pkts, const uint16_t nb_pkts,
 /* Wrapper function for rte_eth_rx_burst() with VLAN feature. */
 uint16_t
 sppwk_eth_vlan_rx_burst(uint16_t port_id,
-		uint16_t queue_id __attribute__ ((unused)),
+		uint16_t queue_id,
 		struct rte_mbuf **rx_pkts, const uint16_t nb_pkts)
 {
 	uint16_t nb_rx;
-	nb_rx = rte_eth_rx_burst(port_id, 0, rx_pkts, nb_pkts);
+	nb_rx = rte_eth_rx_burst(port_id, queue_id, rx_pkts, nb_pkts);
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
 
@@ -393,7 +393,7 @@ sppwk_eth_vlan_rx_burst(uint16_t port_id,
 /* Wrapper function for rte_eth_tx_burst() with VLAN feature. */
 uint16_t
 sppwk_eth_vlan_tx_burst(uint16_t port_id,
-		uint16_t queue_id __attribute__ ((unused)),
+		uint16_t queue_id,
 		struct rte_mbuf **tx_pkts, uint16_t nb_pkts)
 {
 	uint16_t nb_tx;
@@ -404,7 +404,7 @@ sppwk_eth_vlan_tx_burst(uint16_t port_id,
 	if (unlikely(nb_tx == 0))
 		return SPPWK_RET_OK;
 
-	return rte_eth_tx_burst(port_id, 0, tx_pkts, nb_tx);
+	return rte_eth_tx_burst(port_id, queue_id, tx_pkts, nb_tx);
 }
 
 #ifdef SPP_RINGLATENCYSTATS_ENABLE

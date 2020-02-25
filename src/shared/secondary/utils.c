@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "shared/common.h"
 #include "shared/secondary/utils.h"
+#include "shared/secondary/spp_worker_th/data_types.h"
 
 #define RTE_LOGTYPE_SHARED RTE_LOGTYPE_USER1
 
@@ -66,15 +67,18 @@ parse_client_id(int *cli_id, const char *cli_id_str)
 }
 
 /**
- * Retieve port type and ID from resource UID. For example, resource UID
- * 'ring:0' is  parsed to retrieve port tyep 'ring' and ID '0'.
+ * Retieve port type, ID and queue id from resource UID. For example,
+ * resource UID 'ring:0' is  parsed to retrieve port type 'ring' and ID '0'.
  */
 int
-parse_resource_uid(char *str, char **port_type, int *port_id)
+parse_resource_uid(char *str, char **port_type, int *port_id,
+		uint16_t *queue_id)
 {
 	char *token;
 	char delim[] = ":";
 	char *endp;
+	uint16_t default_queue = DEFAULT_QUEUE_ID;
+	char *queue_id_str = NULL;
 
 	RTE_LOG(DEBUG, SHARED, "Parsing resource UID: '%s'\n", str);
 	if (strstr(str, delim) == NULL) {
@@ -86,11 +90,25 @@ parse_resource_uid(char *str, char **port_type, int *port_id)
 	*port_type = strtok(str, delim);
 
 	token = strtok(NULL, delim);
+	queue_id_str = strstr(token, DELIM_PHY_MQ);
 	*port_id = strtol(token, &endp, 10);
-
-	if (*endp) {
+	if ((queue_id_str == NULL && *endp) ||
+		(queue_id_str != NULL && endp != queue_id_str)) {
 		RTE_LOG(ERR, SHARED, "Bad integer value: %s\n", str);
 		return -1;
+	}
+
+	if (queue_id_str == NULL) {
+		*queue_id = default_queue;
+	} else {
+		*queue_id = strtol(&queue_id_str[strlen(DELIM_PHY_MQ)],
+			&endp, 10);
+
+		if (*endp) {
+			RTE_LOG(ERR, SHARED,
+				"queue_id is bad integer value: %s\n", str);
+			return -1;
+		}
 	}
 
 	return 0;

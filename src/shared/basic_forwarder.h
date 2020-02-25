@@ -8,7 +8,7 @@
 #include "shared/common.h"
 
 struct port_map port_map[RTE_MAX_ETHPORTS];
-struct port ports_fwd_array[RTE_MAX_ETHPORTS];
+struct port ports_fwd_array[RTE_MAX_ETHPORTS][RTE_MAX_QUEUES_PER_PORT];
 
 void forward(void);
 

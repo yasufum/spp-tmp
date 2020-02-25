@@ -120,10 +120,10 @@ const char *PORT_ABILITY_LIST[] = {
 static int
 is_used_with_addr(
 		int vid, uint64_t mac_addr,
-		enum port_type iface_type, int iface_no)
+		enum port_type iface_type, int iface_no, int queue_no)
 {
 	struct sppwk_port_info *wk_port = get_sppwk_port(
-			iface_type, iface_no);
+			iface_type, iface_no, queue_no);
 
 	return ((mac_addr == wk_port->cls_attrs.mac_addr) &&
 		(vid == wk_port->cls_attrs.vlantag.vid));
@@ -131,25 +131,32 @@ is_used_with_addr(
 
 /* Return 1 as true if given port is already used. */
 static int
-is_added_port(enum port_type iface_type, int iface_no)
+is_added_port(enum port_type iface_type, int iface_no, int queue_no)
 {
-	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no);
+	struct sppwk_port_info *port = get_sppwk_port(iface_type, iface_no,
+			queue_no);
 	return port->iface_type != UNDEF;
 }
 
 /**
- * Separate resource UID of combination of iface type and number and assign to
- * given argument, iface_type and iface_no. For instance, 'ring:0' is separated
- * to 'ring' and '0'. The supported types are `phy`, `vhost` and `ring`.
+ * Extract `iface_type`, `iface_no` and `queue_no` from `res_uid`.
+ * Only phy port has `queue_no`, such as 'phy:0nq1', if using multi-queue.
+ * For other port types other than `phy`,
+ * it returnes `DEFAULT_QUEUE_ID` as `queue_no`.
  */
 static int
 parse_resource_uid(const char *res_uid,
-		    enum port_type *iface_type,
-		    int *iface_no)
+			enum port_type *iface_type,
+			int *iface_no,
+			int *queue_no)
 {
 	enum port_type ptype = UNDEF;
+	const char *iface_no_and_queue_no_str = NULL;
+	const char *queue_no_with_separator_str = NULL;
 	const char *iface_no_str = NULL;
-	char *endptr = NULL;
+	char *queue_no_endptr = NULL;
+	char *iface_no_endptr = NULL;
+	int queue_id, multi_queue_flg;
 
 	/**
 	 * TODO(yasufum) consider this checking of zero value is recommended
@@ -158,33 +165,84 @@ parse_resource_uid(const char *res_uid,
 	if (strncmp(res_uid, SPPWK_PHY_STR ":",
 			strlen(SPPWK_PHY_STR)+1) == 0) {
 		ptype = PHY;
-		iface_no_str = &res_uid[strlen(SPPWK_PHY_STR)+1];
+		iface_no_and_queue_no_str = &res_uid[strlen(SPPWK_PHY_STR)+1];
 	} else if (strncmp(res_uid, SPPWK_VHOST_STR ":",
 			strlen(SPPWK_VHOST_STR)+1) == 0) {
 		ptype = VHOST;
-		iface_no_str = &res_uid[strlen(SPPWK_VHOST_STR)+1];
+		iface_no_and_queue_no_str = &res_uid[strlen(SPPWK_VHOST_STR)+1];
 	} else if (strncmp(res_uid, SPPWK_RING_STR ":",
 			strlen(SPPWK_RING_STR)+1) == 0) {
 		ptype = RING;
-		iface_no_str = &res_uid[strlen(SPPWK_RING_STR)+1];
+		iface_no_and_queue_no_str = &res_uid[strlen(SPPWK_RING_STR)+1];
 	} else {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Unexpected port type in '%s'.\n",
 				res_uid);
 		return SPPWK_RET_NG;
 	}
 
-	int port_id = strtol(iface_no_str, &endptr, 0);
-	if (unlikely(iface_no_str == endptr) || unlikely(*endptr != '\0')) {
-		RTE_LOG(ERR, WK_CMD_PARSER, "No interface number in '%s'.\n",
+	/* Parse queue number. */
+	queue_no_with_separator_str = strstr(iface_no_and_queue_no_str,
+			DELIM_PHY_MQ);
+	if (queue_no_with_separator_str == NULL) {
+		iface_no_str = iface_no_and_queue_no_str;
+		queue_id = DEFAULT_QUEUE_ID;
+		multi_queue_flg = 0;
+	} else if (ptype == PHY) {
+		const char *queue_no_str =
+				&queue_no_with_separator_str[
+				strlen(DELIM_PHY_MQ)];
+		queue_id = strtol(queue_no_str, &queue_no_endptr, 0);
+		if (unlikely(queue_no_str == queue_no_endptr) ||
+				unlikely(*queue_no_endptr != '\0')) {
+			RTE_LOG(ERR, WK_CMD_PARSER, "No queue number in '%s'.\n",
+					res_uid);
+			return SPPWK_RET_NG;
+		}
+		iface_no_str = iface_no_and_queue_no_str;
+		multi_queue_flg = 1;
+	} else {
+		RTE_LOG(ERR, WK_CMD_PARSER, "Unexpected port type in '%s'.\n",
 				res_uid);
 		return SPPWK_RET_NG;
 	}
 
+	/* Parse interface number. */
+	int port_id = strtol(iface_no_str, &iface_no_endptr, 0);
+	if (unlikely(iface_no_str == iface_no_endptr) ||
+		(unlikely(*iface_no_endptr != '\0') &&
+		(unlikely(strstr(iface_no_endptr,
+			DELIM_PHY_MQ) != iface_no_endptr)))) {
+		RTE_LOG(ERR, WK_CMD_PARSER, "No interface number in '%s'.\n",
+				res_uid);
+		return SPPWK_RET_NG;
+	}
+	if (unlikely(port_id > RTE_MAX_ETHPORTS) || unlikely(port_id < 0)) {
+		RTE_LOG(ERR, WK_CMD_PARSER, "Unexpected interface number in '%s'.\n",
+				res_uid);
+		return SPPWK_RET_NG;
+	}
+
+	/**
+	 * Check whether the queue number is specified according
+	 * to the port format.
+	 */
+	if (ptype == PHY) {
+		int port_multi_queue_flg =
+			(get_port_max_queues(ptype, port_id) > 1);
+		if (unlikely(multi_queue_flg != port_multi_queue_flg)) {
+			RTE_LOG(ERR, WK_CMD_PARSER,
+					"Unexpected queue number format in"
+					" '%s'.\n", res_uid);
+			return SPPWK_RET_NG;
+		}
+	}
+
 	*iface_type = ptype;
 	*iface_no = port_id;
+	*queue_no = queue_id;
 
-	RTE_LOG(DEBUG, WK_CMD_PARSER, "Parsed '%s' to '%d' and '%d'.\n",
-			res_uid, *iface_type, *iface_no);
+	RTE_LOG(DEBUG, WK_CMD_PARSER, "Parsed '%s' to '%d' and '%d' and '%d'.\n",
+			res_uid, *iface_type, *iface_no, *queue_no);
 	return SPPWK_RET_OK;
 }
 
@@ -302,7 +360,8 @@ parse_port_uid(void *output, const char *arg_val)
 {
 	int ret;
 	struct sppwk_port_idx *port = output;
-	ret = parse_resource_uid(arg_val, &port->iface_type, &port->iface_no);
+	ret = parse_resource_uid(arg_val, &port->iface_type, &port->iface_no,
+			&port->queue_no);
 	if (unlikely(ret != 0)) {
 		RTE_LOG(ERR, WK_CMD_PARSER,
 				"Invalid resource UID '%s'.\n", arg_val);
@@ -465,9 +524,11 @@ parse_port(void *output, const char *arg_val, int allow_override)
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(sppwk_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
+						tmp_port.queue_no,
 						SPPWK_PORT_DIR_RX) >= 0) &&
 				(sppwk_check_used_port(tmp_port.iface_type,
 						tmp_port.iface_no,
+						tmp_port.queue_no,
 						SPPWK_PORT_DIR_TX) >= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port `%s` is already used.\n",
@@ -478,6 +539,7 @@ parse_port(void *output, const char *arg_val, int allow_override)
 
 	port->port.iface_type = tmp_port.iface_type;
 	port->port.iface_no   = tmp_port.iface_no;
+	port->port.queue_no   = tmp_port.queue_no;
 	return SPPWK_RET_OK;
 }
 
@@ -495,11 +557,36 @@ parse_port_direction(void *output, const char *arg_val, int allow_override)
 		return SPPWK_RET_NG;
 	}
 
-	/* add vlantag command check */
+	/* Add queue number command check. */
+	if ((port->wk_action == SPPWK_ACT_ADD) &&
+			(port->port.iface_type == PHY)) {
+		const struct port_info *ports = NULL;
+		const struct rte_memzone *mz;
+		mz = rte_memzone_lookup(MZ_PORT_INFO);
+		ports = mz->addr;
+		int max_port_queue = -1;
+		if (ret == SPPWK_PORT_DIR_RX)
+			max_port_queue = ports->queue_info
+					[port->port.iface_no].rxq - 1;
+		else if (ret == SPPWK_PORT_DIR_TX)
+			max_port_queue = ports->queue_info
+					[port->port.iface_no].txq - 1;
+		if (unlikely(port->port.queue_no > max_port_queue)) {
+			RTE_LOG(ERR, WK_CMD_PARSER,
+					"The queue number exceeds the %s max value."
+					" queue=%d, max=%d.\n",
+					PORT_DIR_LIST[ret], port->port.queue_no,
+					max_port_queue);
+			return SPPWK_RET_NG;
+		}
+	}
+
+	/* Add vlantag command check. */
 	if (allow_override == 0) {
 		if ((port->wk_action == SPPWK_ACT_ADD) &&
 				(sppwk_check_used_port(port->port.iface_type,
-					port->port.iface_no, ret) >= 0)) {
+					port->port.iface_no,
+					port->port.queue_no, ret) >= 0)) {
 			RTE_LOG(ERR, WK_CMD_PARSER,
 				"Port in used. (port command) val=%s\n",
 				arg_val);
@@ -726,7 +813,8 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 	if (ret < SPPWK_RET_OK)
 		return SPPWK_RET_NG;
 
-	if (is_added_port(tmp_port.iface_type, tmp_port.iface_no) == 0) {
+	if (is_added_port(tmp_port.iface_type, tmp_port.iface_no,
+			tmp_port.queue_no) == 0) {
 		RTE_LOG(ERR, WK_CMD_PARSER, "Port not added. val=%s\n",
 				arg_val);
 		return SPPWK_RET_NG;
@@ -737,7 +825,8 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 
 	if (unlikely(cls_attrs->wk_action == SPPWK_ACT_ADD)) {
 		if (!is_used_with_addr(ETH_VLAN_ID_MAX, 0,
-				tmp_port.iface_type, tmp_port.iface_no)) {
+				tmp_port.iface_type, tmp_port.iface_no,
+				tmp_port.queue_no)) {
 			RTE_LOG(ERR, WK_CMD_PARSER, "Port in used. "
 					"(classifier_table command) val=%s\n",
 					arg_val);
@@ -750,7 +839,8 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 
 		if (!is_used_with_addr(cls_attrs->vid,
 				(uint64_t)mac_addr,
-				tmp_port.iface_type, tmp_port.iface_no)) {
+				tmp_port.iface_type, tmp_port.iface_no,
+				tmp_port.queue_no)) {
 			RTE_LOG(ERR, WK_CMD_PARSER, "Port in used. "
 					"(classifier_table command) val=%s\n",
 					arg_val);
@@ -760,6 +850,7 @@ parse_cls_port(void *cls_cmd_attr, const char *arg_val,
 
 	cls_attrs->port.iface_type = tmp_port.iface_type;
 	cls_attrs->port.iface_no   = tmp_port.iface_no;
+	cls_attrs->port.queue_no   = tmp_port.queue_no;
 	return SPPWK_RET_OK;
 }
 

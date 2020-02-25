@@ -5,7 +5,8 @@
 #ifndef _SHARED_SECONDARY_UTILS_H_
 #define _SHARED_SECONDARY_UTILS_H_
 
-int parse_resource_uid(char *str, char **port_type, int *port_id);
+int parse_resource_uid(char *str, char **port_type, int *port_id,
+	uint16_t *queue_id);
 
 int spp_atoi(const char *str, int *val);
 
