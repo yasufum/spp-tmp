@@ -3,10 +3,17 @@
 
 from . import common
 import os
+import secrets
 import sys
 
 
+# Supported vdev types of SPP Container.
+VDEV_TYPES = ['vhost', 'memif']
+
+
 def add_eal_args(parser, mem_size=1024, mem_channel=4):
+    """Add EAL args to app."""
+
     parser.add_argument(
         '-l', '--core-list',
         type=str,
@@ -20,6 +27,10 @@ def add_eal_args(parser, mem_size=1024, mem_channel=4):
         type=int,
         default=mem_size,
         help='Memory size (default is %s)' % mem_size)
+    parser.add_argument(
+        '--vdev',
+        nargs='*', type=str,
+        help='Virtual device in the format of DPDK')
     parser.add_argument(
         '--socket-mem',
         type=str,
@@ -42,6 +53,80 @@ def add_eal_args(parser, mem_size=1024, mem_channel=4):
         default=mem_channel,
         help='Number of memory channels (default is %s)' % mem_channel)
     return parser
+
+
+def add_sppc_args(parser):
+    """Add args of SPP Container to app."""
+
+    parser.add_argument(
+        '--dist-name',
+        type=str,
+        default='ubuntu',
+        help="Name of Linux distribution")
+    parser.add_argument(
+        '--dist-ver',
+        type=str,
+        default='latest',
+        help="Version of Linux distribution")
+    parser.add_argument(
+        '--workdir',
+        type=str,
+        help="Path of directory in which the command is launched")
+    parser.add_argument(
+        '-ci', '--container-image',
+        type=str,
+        help="Name of container image")
+    parser.add_argument(
+        '-fg', '--foreground',
+        action='store_true',
+        help="Run container as foreground mode")
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help="Only print matrix, do not run, and exit")
+    return parser
+
+
+def add_appc_args(parser):
+    """Add docker options and other common args."""
+
+    parser.add_argument(
+        '-d', '--dev-uids',
+        type=str,
+        help='Virtual devices of SPP in resource UID format')
+    parser.add_argument(
+        '-v', '--volume',
+        nargs='*', type=str,
+        help='Bind mount a volume (for docker)')
+    parser.add_argument(
+        '-nq', '--nof-queues',
+        type=int,
+        default=1,
+        help="Number of queues of virtio (default is 1)")
+    parser.add_argument(
+        '--no-privileged',
+        action='store_true',
+        help="Disable docker's privileged mode if it's needed")
+    return parser
+
+
+def is_valid_dev_uids(dev_uids):
+    """Return True if value of --dev-uids is valid.
+
+    dev_uids should be a list of resource UIDs separated with ',', for example
+    'vhost:0,vhost:1'.
+
+    If given port type is not supported in SPP Container, it returns False.
+    """
+
+    if dev_uids is None:
+        return False
+
+    for dev_uid in dev_uids.split(','):
+        if dev_uid.split(':')[0] not in VDEV_TYPES:
+            return False
+
+    return True
 
 
 def get_core_opt(args):
@@ -74,21 +159,22 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', hugedir=None):
         mem_opt['attr'], mem_opt['val'], '\\',
         '--proc-type', proc_type, '\\']
 
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
-    else:
-        dev_ids = dev_ids_to_list(args.dev_ids)
+    if args.dev_uids is not None:
+        dev_uids_list = args.dev_uids.split(',')
 
-    socks = []
-    for dev_id in dev_ids:
-        socks.append({
-            'host': '/tmp/sock%d' % dev_id,
-            'guest': '/var/run/usvhost%d' % dev_id})
+        socks = sock_files(dev_uids_list)
 
-    for i in range(len(dev_ids)):
-        eal_opts += [
-            '--vdev', 'virtio_user%d,queues=%d,path=%s' % (
-                dev_ids[i], args.nof_queues, socks[i]['guest']), '\\']
+        # Configure '--vdev' options
+        for i in range(len(dev_uids_list)):
+            dev_uid = dev_uids_list[i].split(':')
+            if dev_uid[0] == 'vhost':
+                eal_opts += [
+                    '--vdev', 'virtio_user{},queues={},path={}'.format(
+                        dev_uid[1], args.nof_queues, socks[i]['guest']), '\\']
+            elif dev_uid[0] == 'memif':  # Only 'slave' role is supported.
+                eal_opts += [
+                    '--vdev', 'net_memif{0},id={0},socket={1}'.format(
+                        dev_uid[1], socks[0]['guest']), '\\']
 
     if (args.pci_blacklist is not None) and (args.pci_whitelist is not None):
         common.error_exit("Cannot use both of '-b' and '-w' at once")
@@ -109,36 +195,6 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', hugedir=None):
     return eal_opts
 
 
-def add_sppc_args(parser):
-    parser.add_argument(
-        '--dist-name',
-        type=str,
-        default='ubuntu',
-        help="Name of Linux distribution")
-    parser.add_argument(
-        '--dist-ver',
-        type=str,
-        default='latest',
-        help="Version of Linux distribution")
-    parser.add_argument(
-        '--workdir',
-        type=str,
-        help="Path of directory in which the command is launched")
-    parser.add_argument(
-        '-ci', '--container-image',
-        type=str,
-        help="Name of container image")
-    parser.add_argument(
-        '-fg', '--foreground',
-        action='store_true',
-        help="Run container as foreground mode")
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help="Only print matrix, do not run, and exit")
-    return parser
-
-
 def setup_docker_opts(args, container_image, sock_files, workdir=None):
     docker_opts = []
 
@@ -153,9 +209,10 @@ def setup_docker_opts(args, container_image, sock_files, workdir=None):
     if args.no_privileged is not True:
         docker_opts += ['--privileged', '\\']
 
-    for sock in sock_files:
-        docker_opts += [
-            '-v', '%s:%s' % (sock['host'], sock['guest']), '\\']
+    if sock_files is not None:
+        for sock in sock_files:
+            docker_opts += [
+                '-v', '%s:%s' % (sock['host'], sock['guest']), '\\']
 
     docker_opts += [
         '-v', '/dev/hugepages:/dev/hugepages', '\\',
@@ -164,73 +221,57 @@ def setup_docker_opts(args, container_image, sock_files, workdir=None):
     return docker_opts
 
 
-def add_appc_args(parser):
-    parser.add_argument(
-        '-d', '--dev-ids',
-        type=str,
-        help='two or more even vhost device IDs')
-    parser.add_argument(
-        '-nq', '--nof-queues',
-        type=int,
-        default=1,
-        help="Number of queues of virtio (default is 1)")
-    parser.add_argument(
-        '--no-privileged',
-        action='store_true',
-        help="Disable docker's privileged mode if it's needed")
-    return parser
+def is_sufficient_ports(args):
+    """Check if ports can be reserved.
 
-
-def uniq(dup_list):
-    """Remove duplicated elements in a list and return a unique list
-
-    Example: [1,1,2,2,3,3] #=> [1,2,3]
+    Return True if the number of vdevs is enogh for given ports.
     """
 
-    return list(set(dup_list))
-
-
-def dev_ids_to_list(dev_ids):
-    """Parse vhost device IDs and return as a list.
-
-    Example:
-    '1,3-5' #=> [1,3,4,5]
-    """
-
-    res = []
-    for dev_id_part in dev_ids.split(','):
-        if '-' in dev_id_part:
-            cl = dev_id_part.split('-')
-            res = res + list(range(int(cl[0]), int(cl[1])+1))
-        else:
-            res.append(int(dev_id_part))
-    return res
-
-
-def is_sufficient_dev_ids(dev_ids, port_mask):
-    """Check if ports can be reserved for dev_ids
-
-    Return true if the number of dev IDs equals or more than given ports.
-    'dev_ids' is a value of '-d' or '--dev-ids' such as '1,2'.
-    """
-
-    dev_ids_list = dev_ids_to_list(dev_ids)
-    if not ('0x' in port_mask):  # invalid port mask
+    # TODO(yasufum): It doesn't check if no given portmask and dev_uids, so
+    # add this additional check.
+    if (args.port_mask is None) or (args.dev_uids is None):
+        return False
+    elif not ('0x' in args.port_mask):  # invalid port mask
         return False
 
-    ports_in_binary = format(int(port_mask, 16), 'b')
-    if len(dev_ids_list) >= len(ports_in_binary):
+    dev_uids_list = args.dev_uids.split(',')
+
+    ports_in_binary = format(int(args.port_mask, 16), 'b')
+    if len(dev_uids_list) >= len(ports_in_binary):
         return True
     else:
         return False
 
 
-def sock_files(dev_ids_list):
+def sock_files(dev_uids_list):
+    """Return list of socket files on host and containers.
+
+    The name of socket files is defined with a conventional ones described
+    in DPDK doc, though you can use any name actually.
+
+    Here is an example of two vhost devices.
+        [vhost:0, vhost:1]
+        => [
+              {'host': '/tmp/sock0, 'guest': '/var/run/usvhost0'},
+              {'host': '/tmp/sock1, 'guest': '/var/run/usvhost1'}
+            ]
+    """
     socks = []
-    for dev_id in dev_ids_list:
-        socks.append({
-            'host': '/tmp/sock%d' % dev_id,
-            'guest': '/var/run/usvhost%d' % dev_id})
+    for dev_uid in dev_uids_list:
+        dev_uid = dev_uid.split(':')
+        if dev_uid[0] == 'vhost':
+            socks.append({
+                'host': '/tmp/sock{}'.format(dev_uid[1]),
+                'guest': '/var/run/usvhost{}'.format(dev_uid[1])})
+        elif dev_uid[0] == 'memif':
+            # Single sock file is enough for memif because it is just used for
+            # negotiation between master and slaves processes.
+            socks.append({
+                'host': '/tmp/spp-memif.sock',
+                'guest': '/var/run/spp-memif.sock'})
+            break
+        else:
+            break
     return socks
 
 
@@ -278,6 +319,21 @@ def cores_to_list(core_opt):
                 res.append(int(core_part))
     else:
         pass
-    res = uniq(res)
+    res = _uniq(res)
     res.sort()
     return res
+
+
+def gen_sppc_file_prefix(app_name):
+    """Generate a unique file prefix of DPDK for SPP Container app."""
+
+    return 'sppc-{}-{}'.format(app_name, secrets.token_hex(8))
+
+
+def _uniq(dup_list):
+    """Remove duplicated elements in a list and return a unique list.
+
+    Example: [1,1,2,2,3,3] #=> [1,2,3]
+    """
+
+    return list(set(dup_list))
