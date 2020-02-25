@@ -160,7 +160,9 @@ init(int argc, char *argv[])
 	/* now initialise the ports we will use */
 	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
 		for (count = 0; count < ports->num_ports; count++) {
-			retval = init_port(ports->id[count], pktmbuf_pool);
+			retval = init_port(ports->id[count], pktmbuf_pool,
+				ports->queue_info[count].rxq,
+				ports->queue_info[count].txq);
 			if (retval != 0)
 				rte_exit(EXIT_FAILURE,
 					"Cannot initialise port %d\n", count);
@@ -254,7 +256,8 @@ check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
  * - start the port and report its status to stdout
  */
 int
-init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
+init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool,
+	uint16_t rx_rings, uint16_t tx_rings)
 {
 	/* for port configuration all features are off by default */
 	const struct rte_eth_conf port_conf = {
@@ -262,7 +265,6 @@ init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool)
 			.mq_mode = ETH_MQ_RX_RSS,
 		},
 	};
-	const uint16_t rx_rings = 1, tx_rings = 1;
 	const uint16_t rx_ring_size = RTE_MP_RX_DESC_DEFAULT;
 	const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
 	uint16_t q;

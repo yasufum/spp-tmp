@@ -13,6 +13,9 @@ extern uint16_t num_rings;
 extern char *server_ip;
 extern int server_port;
 
+/* Return value definition for getopt_long(). Only for long option. */
+#define SPP_LONGOPT_RETVAL_PORT_NUM 1 /* For `--port-num` */
+
 /**
  * Set flg from given argument.
  *

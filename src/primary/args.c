@@ -29,10 +29,12 @@ int do_forwarding;
 enum {
 	CMD_LINE_OPT_MIN_NUM = 256,
 	CMD_OPT_DISP_STATS,
+	CMD_OPT_PORT_NUM, /* For `--port-num` */
 };
 
 struct option lgopts[] = {
 	{"disp-stats", no_argument, NULL, CMD_OPT_DISP_STATS},
+	{"port-num", required_argument, NULL, CMD_OPT_PORT_NUM},
 	{0}
 };
 
@@ -45,9 +47,14 @@ static void
 usage(void)
 {
 	RTE_LOG(INFO, PRIMARY,
-	    "%s [EAL options] -- -p PORTMASK -n NUM_CLIENTS [-s NUM_SOCKETS]\n"
+	    "%s [EAL options] -- -p PORTMASK -n NUM_CLIENTS [-s NUM_SOCKETS]"
+		" [--port-num NUM_PORT"
+		" rxq NUM_RX_QUEUE txq NUM_TX_QUEUE]...\n"
 	    " -p PORTMASK: hexadecimal bitmask of ports to use\n"
 	    " -n NUM_RINGS: number of ring ports used from secondaries\n"
+		" --port-num NUM_PORT: number of ports for multi-queue setting\n"
+		" rxq NUM_RX_QUEUE: number of receive queues\n"
+		" txq NUM_TX_QUEUE number of transmit queues\n"
 	    , progname);
 }
 
@@ -131,6 +138,120 @@ parse_nof_rings(uint16_t *num_clients, const char *clients)
 	return 0;
 }
 
+/* Extract the number of queues from startup option. */
+static int
+parse_nof_queues(struct port_queue *arg_queues, const char *str_port_num,
+		int option_index, uint16_t max_ports, int argc, char *argv[])
+{
+	char *end = NULL;
+	unsigned long temp;
+	uint16_t port_num, rxq, txq;
+
+
+	if (str_port_num == NULL || *str_port_num == '\0') {
+		RTE_LOG(ERR, PRIMARY,
+			"PORT_NUM is not specified(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+
+	/* Parameter check of port_num */
+	temp = strtoul(str_port_num, &end, 10);
+	if (end == NULL || *end != '\0') {
+		RTE_LOG(ERR, PRIMARY,
+			"PORT_NUM is not a number(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+	port_num = (uint16_t)temp;
+
+	if (port_num > max_ports) {
+		RTE_LOG(ERR, PRIMARY,
+			"PORT_NUM exceeds the number of available ports"
+			"(%s:%d)\n",
+			__func__, __LINE__);
+		return 1;
+	}
+
+	/* Check if both 'rxq' and 'txq' are inclued in parameter string. */
+	if (option_index + 3 > argc) {
+		RTE_LOG(ERR, PRIMARY,
+			"rxq NUM_RX_QUEUE txq NUM_TX_QUEUE is not specified"
+			"(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+
+	if (strcmp(argv[option_index], "rxq")) {
+		RTE_LOG(ERR, PRIMARY,
+			"rxq is not specified in the --port_num option"
+			"(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+
+	/* Parameter check of rxq */
+	temp = strtoul(argv[option_index + 1], &end, 10);
+	if (end == NULL || *end != '\0' || temp == 0) {
+		RTE_LOG(ERR, PRIMARY,
+			"NUM_RX_QUEUE is not a number(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+	rxq = (uint16_t)temp;
+
+	if (strcmp(argv[option_index + 2], "txq")) {
+		RTE_LOG(ERR, PRIMARY,
+			"txq is not specified in the --port_num option"
+			"(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+
+	/* Parameter check of txq */
+	temp = strtoul(argv[option_index + 3], &end, 10);
+	if (end == NULL || *end != '\0' || temp == 0) {
+		RTE_LOG(ERR, PRIMARY,
+			"NUM_TX_QUEUE is not a number(%s:%d)\n",
+			__func__, __LINE__);
+		return -1;
+	}
+	txq = (uint16_t)temp;
+
+	arg_queues[port_num].rxq = rxq;
+	arg_queues[port_num].txq = txq;
+
+	return 0;
+}
+
+/**
+ * Set the number of queues for port_id.
+ * If not specified number of queue is set as 1.
+ */
+static int
+set_nof_queues(struct port_info *ports, struct port_queue *arg_queues)
+{
+	int index;
+	uint16_t port_id, rxq, txq;
+
+	for (index = 0; index < ports->num_ports; index++) {
+		port_id = ports->id[index];
+
+		if (arg_queues[port_id].rxq == 0 ||
+			arg_queues[port_id].txq == 0) {
+			rxq = 1;
+			txq = 1;
+		} else {
+			rxq = arg_queues[port_id].rxq;
+			txq = arg_queues[port_id].txq;
+		}
+
+		ports->queue_info[index].rxq = rxq;
+		ports->queue_info[index].txq = txq;
+	}
+	return 0;
+}
+
 /**
  * The application specific arguments follow the DPDK-specific
  * arguments which are stripped by the DPDK init. This function
@@ -143,6 +264,7 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 	int option_index, opt;
 	char **argvopt = argv;
 	int ret;
+	struct port_queue arg_queues[RTE_MAX_ETHPORTS] = { 0 };
 
 	progname = argv[0];
 
@@ -171,6 +293,14 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 				return -1;
 			}
 			break;
+		case CMD_OPT_PORT_NUM:
+			ret = parse_nof_queues(arg_queues, optarg, optind,
+					max_ports, argc, argv);
+			if (ret != 0) {
+				usage();
+				return -1;
+			}
+			break;
 		default:
 			RTE_LOG(ERR,
 				PRIMARY, "ERROR: Unknown option '%c'\n", opt);
@@ -180,6 +310,12 @@ parse_app_args(uint16_t max_ports, int argc, char *argv[])
 	}
 
 	if (ports->num_ports == 0 || num_rings == 0) {
+		usage();
+		return -1;
+	}
+
+	ret = set_nof_queues(ports, arg_queues);
+	if (ret != 0) {
 		usage();
 		return -1;
 	}

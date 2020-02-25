@@ -20,12 +20,22 @@ APP = spp_primary
 
 # TODO: revise to not use functions in secondary's.
 SPP_SEC_DIR = ../shared/secondary
+SPP_FLOW_DIR = ./flow
+SPP_FLOW_SRC = flow.c attr.c common.c
+SPP_FLOW_PTN_DIR = $(SPP_FLOW_DIR)/pattern
+SPP_FLOW_PTN_SRC = eth.c vlan.c
+SPP_FLOW_ACT_DIR = $(SPP_FLOW_DIR)/action
+SPP_FLOW_ACT_SRC = jump.c queue.c of_push_vlan.c of_set_vlan_vid.c
+SPP_FLOW_ACT_SRC += of_set_vlan_pcp.c
 
 # all source are stored in SRCS-y
 SRCS-y := main.c init.c args.c
 SRCS-y += ../shared/common.c ../shared/basic_forwarder.c ../shared/port_manager.c
 SRCS-y += $(SPP_SEC_DIR)/add_port.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c
+SRCS-y += $(addprefix $(SPP_FLOW_DIR)/,$(SPP_FLOW_SRC))
+SRCS-y += $(addprefix $(SPP_FLOW_PTN_DIR)/,$(SPP_FLOW_PTN_SRC))
+SRCS-y += $(addprefix $(SPP_FLOW_ACT_DIR)/,$(SPP_FLOW_ACT_SRC))
 
 INC := $(wildcard *.h)
 

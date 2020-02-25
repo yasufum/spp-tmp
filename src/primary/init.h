@@ -50,6 +50,7 @@ int init(int argc, char *argv[]);
 void check_all_ports_link_status(struct port_info *ports, uint16_t port_num,
 		uint32_t port_mask);
 
-int init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool);
+int init_port(uint16_t port_num, struct rte_mempool *pktmbuf_pool,
+		uint16_t rx_rings, uint16_t tx_rings);
 
 #endif /* ifndef _PRIMARY_INIT_H_ */

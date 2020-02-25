@@ -16,6 +16,7 @@
 #include "args.h"
 #include "init.h"
 #include "primary.h"
+#include "primary/flow/flow.h"
 
 #include "shared/port_manager.h"
 #include "shared/secondary/add_port.h"
@@ -23,10 +24,10 @@
 
 /*
  * Buffer sizes of status message of primary. Total number of size
- * must be equal to MSG_SIZE 2048 defined in `shared/common.h`.
+ * must be equal to MSG_SIZE 32768 defined in `shared/common.h`.
  */
 #define PRI_BUF_SIZE_LCORE 128
-#define PRI_BUF_SIZE_PHY 512
+#define PRI_BUF_SIZE_PHY 30720
 #define PRI_BUF_SIZE_RING (MSG_SIZE - PRI_BUF_SIZE_LCORE - PRI_BUF_SIZE_PHY)
 
 #define SPP_PATH_LEN 1024  /* seems enough for path of spp procs */
@@ -639,9 +640,10 @@ forwarder_status_json(char *str)
 static int
 phy_port_stats_json(char *str)
 {
-	int i;
-	int buf_size = 256;  /* size of temp buffer */
-	char phy_port[buf_size];
+	int i, ret;
+	int buf_size = PRI_BUF_SIZE_PHY - 512;  /* size of temp buffer */
+	char phy_port[PRI_BUF_SIZE_PHY];
+	char flow[buf_size];
 	char buf_phy_ports[PRI_BUF_SIZE_PHY];
 	memset(phy_port, '\0', sizeof(phy_port));
 	memset(buf_phy_ports, '\0', sizeof(buf_phy_ports));
@@ -651,16 +653,29 @@ phy_port_stats_json(char *str)
 		RTE_LOG(DEBUG, PRIMARY, "Size of buf_phy_ports str: %d\n",
 				(int)strlen(buf_phy_ports));
 
-		memset(phy_port, '\0', buf_size);
+		memset(phy_port, '\0', PRI_BUF_SIZE_PHY);
+		memset(flow, '\0', buf_size);
+
+		ret = append_flow_json(i, buf_size, flow);
+		if (ret != 0) {
+			sprintf(buf_phy_ports + strlen(buf_phy_ports) - 1,
+					"%s", "");
+			break;
+		}
 
 		sprintf(phy_port, "{\"id\":%u,\"eth\":\"%s\","
 				"\"rx\":%"PRIu64",\"tx\":%"PRIu64","
-				"\"tx_drop\":%"PRIu64"}",
+				"\"tx_drop\":%"PRIu64","
+				"\"nof_queues\":{\"rx\":%d,\"tx\":%d},"
+				"\"flow\":%s}",
 				ports->id[i],
 				get_printable_mac_addr(ports->id[i]),
 				ports->port_stats[i].rx,
 				ports->port_stats[i].tx,
-				ports->port_stats[i].tx_drop);
+				ports->port_stats[i].tx_drop,
+				ports->queue_info[i].rxq,
+				ports->queue_info[i].txq,
+				flow);
 
 		int cur_buf_size = (int)strlen(buf_phy_ports) +
 			(int)strlen(phy_port);
@@ -948,8 +963,10 @@ parse_command(char *str)
 	char patch_set[64] = { 0 };  /* "{\"src\":\"%s:%d\",\"dst\":...}" */
 	char *p_type;
 	int p_id;
+	char tmp_response[MSG_SIZE];
 
 	memset(sec_name, '\0', 16);
+	memset(tmp_response, '\0', MSG_SIZE);
 
 	/* tokenize the user commands from controller */
 	token_list[max_token] = strtok(str, " ");
@@ -1150,6 +1167,13 @@ parse_command(char *str)
 		sprintf(str, "{%s:%s,%s:%s}",
 				"\"result\"", "\"succeeded\"",
 				"\"command\"", "\"clear\"");
+
+	} else if (!strcmp(token_list[0], "flow")) {
+		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
+				token_list[0]);
+		ret = parse_flow(token_list, tmp_response);
+		memset(str, '\0', MSG_SIZE);
+		strncpy(str, tmp_response, MSG_SIZE-1);
 	}
 
 	return ret;
