@@ -58,8 +58,8 @@ Then, ``spp.py`` in terminal 2.
 
 Move to terminal 3, launch app containers of ``spp_primary``
 and ``spp_nfv`` step by step in background mode.
-You notice that vhost device is attached with ``-dv 1`` which is not used
-actually.
+You notice that vhost device is attached with ``-d tap:1`` which is not
+required if you have physical ports on host.
 It is because that SPP primary requires at least one port even if
 it is no need.
 You can also assign a physical port instead of this vhost device.
@@ -68,7 +68,7 @@ You can also assign a physical port instead of this vhost device.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 1
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -d tap:1
     $ python3 app/spp-nfv.py -i 1 -l 1-2
     $ python3 app/spp-nfv.py -i 2 -l 3-4
 
@@ -311,7 +311,7 @@ Use four of ``spp_nfv`` containers for using four vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -d tap:1
     $ python3 app/spp-nfv.py -i 1 -l 1-2
     $ python3 app/spp-nfv.py -i 2 -l 3-4
     $ python3 app/spp-nfv.py -i 3 -l 5-6
@@ -419,7 +419,7 @@ Use two of ``spp_nfv`` containers for using four vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -d tap:1
     $ python3 app/spp-nfv.py -i 1 -l 1,2
     $ python3 app/spp-nfv.py -i 2 -l 1,3
 
@@ -548,7 +548,7 @@ Use six ``spp_nfv`` containers for using six vhost PMDs.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python3 app/spp-primary.py -l 0 -p 0x01 -dv 9
+    $ python3 app/spp-primary.py -l 0 -p 0x01 -d tap:1
     $ python3 app/spp-nfv.py -i 1 -l 1,2
     $ python3 app/spp-nfv.py -i 2 -l 1,3
     $ python3 app/spp-nfv.py -i 3 -l 1,4
