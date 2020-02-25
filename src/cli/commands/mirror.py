@@ -56,7 +56,8 @@ class SppMirror(object):
             self.unused_core_ids = core_ids  # used while completion to exclude
 
             self.workers = mirror_status['workers']
-            self.worker_names = [attr['name'] for attr in mirror_status['workers']]
+            self.worker_names = [attr['name']
+                                 for attr in mirror_status['workers']]
 
         cmd = cmdline.split(' ')[0]
         params = cmdline.split(' ')[1:]
@@ -184,8 +185,9 @@ class SppMirror(object):
 
         To update status of the instance of SppMirror, get the status from
         spp-ctl. This method returns the result as a dict. For considering
-        behaviour of spp_mirror, it is enough to return worker's name and core
-        IDs as the status, but might need to be update for future updates.
+        behaviour of spp_mirror, it is enough to return worker's name, core
+        IDs and ports as the status, but might need to be update for future
+        updates.
 
         # return worker's name and used core IDs, and all of core IDs.
         {
@@ -194,12 +196,13 @@ class SppMirror(object):
             {'name': 'mr2', 'core_id': 6},
             ...
           ],
-          'core_ids': [5, 6, 7, ...]
+          'core_ids': [5, 6, 7, ...],
+          'ports': ['phy:0', 'phy:1', ...]
         }
 
         """
 
-        status = {'workers': [], 'core_ids': []}
+        status = {'workers': [], 'core_ids': [], 'ports': []}
         res = self.spp_ctl_cli.get('mirrors/%d' % self.sec_id)
         if res is not None:
             if res.status_code == 200:
@@ -214,7 +217,44 @@ class SppMirror(object):
                                             'core_id': wk['core']})
                             status['core_ids'].append(wk['core'])
 
+                if 'ports' in json_obj:
+                    status['ports'] = json_obj.get('ports')
+
         return status
+
+    def _get_candidate_phy_queue_no(self, res_uid):
+        """Get phy queue_no candidate.
+
+        If res_uid is phy and multi-queue, return queue_no in list type.
+        Otherwise returns None.
+        """
+
+        try:
+            port, _ = res_uid.split(":")
+        except Exception as _:
+            return None
+
+        if port != "phy":
+            return None
+
+        status = self._get_status(self.sec_id)
+
+        queue_no_list = []
+        for port in status["ports"]:
+            if not port.startswith(res_uid):
+                continue
+
+            try:
+                _, queue_no = port.split("nq")
+            except Exception as _:
+                continue
+
+            queue_no_list.append(queue_no.strip(" "))
+
+        if len(queue_no_list) == 0:
+            return None
+
+        return queue_no_list
 
     def _run_status(self):
         res = self.spp_ctl_cli.get('mirrors/%d' % self.sec_id)
@@ -267,20 +307,45 @@ class SppMirror(object):
                     print('Error: unknown response.')
 
     def _run_port(self, params):
-        if len(params) == 4:
-            if params[0] == 'add':
-                action = 'attach'
-            elif params[0] == 'del':
-                action = 'detach'
-            else:
-                print('Error: Invalid action.')
-                return None
+        params_index = 0
+        req_params = {}
+        name = None
+        flg_mq = False
 
-            req_params = {'action': action, 'port': params[1],
-                          'dir': params[2]}
+        while params_index < len(params):
+            if params_index == 0:
+                if params[params_index] == 'add':
+                    req_params["action"] = 'attach'
+                elif params[params_index] == 'del':
+                    req_params["action"] = 'detach'
+                else:
+                    print('Error: Invalid action.')
+                    return None
+
+            elif params_index == 1:
+                req_params["port"] = params[params_index]
+
+                if params_index + 2 < len(params):
+                    if params[params_index + 1] == "nq":
+                        params_index += 2
+                        req_params["port"] += "nq" + params[params_index]
+                        flg_mq = True
+                else:
+                    print("Error: Not enough parameters.")
+                    return None
+
+            elif ((params_index == 2 and flg_mq is False) or
+                    (params_index == 4 and flg_mq is True)):
+                req_params["dir"] = params[params_index]
+
+            elif ((params_index == 3 and flg_mq is False) or
+                    (params_index == 5 and flg_mq is True)):
+                name = params[params_index]
+
+            params_index += 1
 
         res = self.spp_ctl_cli.put('mirrors/%d/components/%s/ports'
-                                   % (self.sec_id, params[3]), req_params)
+                                   % (self.sec_id, name), req_params)
         if res is not None:
             error_codes = self.spp_ctl_cli.rest_common_error_codes
             if res.status_code == 204:
@@ -334,28 +399,62 @@ class SppMirror(object):
             return res
 
     def _compl_port(self, sub_tokens):
-        if len(sub_tokens) < 9:
-            subsub_cmds = ['add', 'del']
-            res = []
-            if len(sub_tokens) == 2:
-                for kw in subsub_cmds:
-                    if kw.startswith(sub_tokens[1]):
-                        res.append(kw)
-            elif len(sub_tokens) == 3:
-                if sub_tokens[1] in subsub_cmds:
-                    if 'RES_UID'.startswith(sub_tokens[2]):
-                        res.append('RES_UID')
-            elif len(sub_tokens) == 4:
-                if sub_tokens[1] in subsub_cmds:
-                    for direction in ['rx', 'tx']:
-                        if direction.startswith(sub_tokens[3]):
-                            res.append(direction)
-            elif len(sub_tokens) == 5:
-                if sub_tokens[1] in subsub_cmds:
-                    for kw in self.worker_names:
-                        if kw.startswith(sub_tokens[4]):
-                            res.append(kw)
-            return res
+        res = []
+        index = 0
+
+        # compl_phase "add_del" : candidate is add or del
+        # compl_phase "res_uid" : candidate is RES_UID
+        # compl_phase "nq"      : candidate is nq
+        # compl_phase "queue_no": candidate is queue no
+        # compl_phase "dir"     : candidate is DIR
+        # compl_phase "name"    : candidate is NAME
+        # compl_phase None      : candidate is None
+        compl_phase = "add_del"
+
+        while index < len(sub_tokens):
+            if compl_phase == "nq":
+                queue_no_list = self._get_candidate_phy_queue_no(
+                    sub_tokens[index - 1])
+
+                if queue_no_list is None:
+                    compl_phase = "dir"
+
+            if ((compl_phase == "add_del") and
+                    (sub_tokens[index - 1] == "port")):
+                res = ["add", "del"]
+                compl_phase = "res_uid"
+
+            elif ((compl_phase == "res_uid") and
+                    (sub_tokens[index - 1] == "add" or
+                     sub_tokens[index - 1] == "del")):
+                res = ["RES_UID"]
+                compl_phase = "nq"
+
+            elif compl_phase == "nq":
+                res = ["nq"]
+                compl_phase = "queue_no"
+
+            elif compl_phase == "queue_no":
+                res = queue_no_list
+                compl_phase = "dir"
+
+            elif compl_phase == "dir":
+                res = ["rx", "tx"]
+                compl_phase = "name"
+
+            elif compl_phase == "name":
+                res = ["NAME"]
+                compl_phase = None
+
+            else:
+                res = []
+
+            index += 1
+
+        res = [p for p in res
+               if p.startswith(sub_tokens[len(sub_tokens) - 1])]
+
+        return res
 
     @classmethod
     def help(cls):
