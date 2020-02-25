@@ -62,6 +62,7 @@ def main():
 
     # Setup devices with given device UIDs.
     dev_uids_list = None
+    # TODO(yasufum) Remove no need sock_files
     sock_files = []
     if args.dev_uids is not None:
         if app_helper.is_valid_dev_uids(args.dev_uids) is False:

@@ -18,6 +18,7 @@ def parse_args():
         description="Launcher for spp-nfv application container")
 
     parser = app_helper.add_eal_args(parser)
+    parser = app_helper.add_appc_args(parser)
 
     # Application specific arguments
     parser.add_argument(
@@ -35,16 +36,16 @@ def parse_args():
         help="Port for secondary of spp-ctl")
 
     parser = app_helper.add_sppc_args(parser)
-
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
+    app_name = 'spp_nfv'
+
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = []
 
     # Container image name such as 'sppc/spp-ubuntu:18.04'
     if args.container_image is not None:
@@ -54,33 +55,28 @@ def main():
             common.IMG_BASE_NAMES['spp'],
             args.dist_name, args.dist_ver)
 
-    # This container is running in backgroud in defualt.
-    if args.foreground is not True:
-        docker_opts += ['-d', '\\']
-    else:
-        docker_opts += ['-it', '\\']
-
-    docker_opts += [
-        '--privileged', '\\',  # should be privileged
-        '-v', '/dev/hugepages:/dev/hugepages', '\\',
+    app_opts = [
         '-v', '/var/run/:/var/run/', '\\',
-        '-v', '/tmp/:/tmp/', '\\',
-        container_image, '\\'
-    ]
+        '-v', '/tmp/:/tmp/', '\\']
+
+    docker_opts = app_helper.setup_docker_opts(
+            args, None, app_opts)
 
     # Setup spp_nfv command.
-    spp_cmd = ['spp_nfv', '\\']
+    spp_cmd = [app_name, '\\']
 
     # Do not use 'app_helper.setup_eal_opts()' because spp_nfv does
     # not use virtio.
-    core_opt = app_helper.get_core_opt(args)
-    mem_opt = app_helper.get_mem_opt(args)
-    eal_opts = [
-        core_opt['attr'], core_opt['val'], '\\',
-        '-n', str(args.nof_memchan), '\\',
-        mem_opt['attr'], mem_opt['val'], '\\',
-        '--proc-type', 'secondary', '\\',
-        '--', '\\']
+    #core_opt = app_helper.get_core_opt(args)
+    #mem_opt = app_helper.get_mem_opt(args)
+    #eal_opts = [
+    #    core_opt['attr'], core_opt['val'], '\\',
+    #    '-n', str(args.nof_memchan), '\\',
+    #    mem_opt['attr'], mem_opt['val'], '\\',
+    #    '--proc-type', 'secondary', '\\',
+    #    '--', '\\']
+    eal_opts = app_helper.setup_eal_opts(args, common.SPPC_FILE_PREFIX,
+                                         proc_type='secondary')
 
     spp_opts = []
     # Check for other mandatory opitons.
@@ -97,7 +93,8 @@ def main():
     else:
         spp_opts += ['-s', '{}:{}'.format(ctl_ip, args.ctl_port), '\\']
 
-    cmds = docker_cmd + docker_opts + spp_cmd + eal_opts + spp_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        spp_cmd + eal_opts + spp_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)
