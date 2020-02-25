@@ -317,22 +317,22 @@ def parse_args():
 
 
 def check_eth_peer(eth_peer):
-    """Check if --eth-peer option is valied
+    """Check if --eth-peer option is valied.
 
     Format of --eth-peer for port X should be 'N,XX:XX:XX:XX:XX:XX'.
     """
 
     xx = '[0-9A-Fa-f][0-9A-Fa-f]'
     ptn = re.compile(
-        r'(\d+),(%s:%s:%s:%s:%s:%s)' % (xx, xx, xx, xx, xx, xx))
+        r'(\d+),({0:s}:{0:s}:{0:s}:{0:s}:{0:s}:{0:s}\Z)'.format(xx))
     m = re.match(ptn, eth_peer)
     if m is None:
-            return False
+        return False
     return True
 
 
 def check_pkt_filter_mode(mode):
-    """Check if Flow Director mode is valid
+    """Check if Flow Director mode is valid.
 
     There are three modes for Flow Director.
       * none (default)
@@ -347,7 +347,7 @@ def check_pkt_filter_mode(mode):
 
 
 def check_pkt_filter_report_hash(mode):
-    """Check if Flow Director hash match reporting mode is valid
+    """Check if Flow Director hash match reporting mode is valid.
 
     There are three modes for the reporting mode.
       * none
@@ -362,7 +362,7 @@ def check_pkt_filter_report_hash(mode):
 
 
 def check_pkt_filter_size(pkt_size):
-    """Check if Flow Director size is valid
+    """Check if Flow Director size is valid.
 
     Packet size should be 64K, 128K or 256K
     """
@@ -406,7 +406,7 @@ def check_port_topology(mode):
 
 def check_forward_mode(mode):
     modes = ['io', 'mac', 'macswap', 'flowgen', 'rxonly', 'txonly', 'csum',
-            'icmpecho', 'ieee1588', 'tm', 'noisy']
+             'icmpecho', 'ieee1588', 'tm', 'noisy']
     if mode in modes:
         return True
     else:
@@ -441,7 +441,7 @@ def check_ring_numa_config(rnconf):
     return True
 
 
-def error_exit(opt):
+def invalid_opt_exit(opt):
     print("Error: invalid '{}' option".format(opt))
     exit()
 
@@ -462,13 +462,16 @@ def main():
             common.IMG_BASE_NAMES['dpdk'],
             args.dist_name, args.dist_ver)
 
-    # Check for other mandatory opitons.
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
+    # Setup devices with given device UIDs.
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
 
-    # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
@@ -480,8 +483,11 @@ def main():
     # Setup testpmd command.
     testpmd_cmd = [cmd_path, '\\']
 
-    # Setup EAL options
-    file_prefix = 'spp-testpmd-container%d' % dev_ids_list[0]
+    # Setup EAL options.
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix('testpmd')
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
     # Setup testpmd options
@@ -497,7 +503,7 @@ def main():
         if args.interactive is not True:
             testpmd_opts += ['--tx-first', '\\']
         else:
-            print("Error: '%s' cannot be used in interactive mode" % (
+            print("Error: '{}' cannot be used in interactive mode".format(
                 '--tx-first'))
             exit()
 
@@ -505,13 +511,13 @@ def main():
         testpmd_opts += ['--stats-period', str(args.stats_period), '\\']
 
     if args.nb_cores is not None:
-        testpmd_opts += ['--nb-cores=%d' % args.nb_cores, '\\']
+        testpmd_opts += ['--nb-cores={:d}'.format(args.nb_cores), '\\']
 
     if args.coremask is not None:
-        testpmd_opts += ['--coremask=%s' % args.coremask, '\\']
+        testpmd_opts += ['--coremask={:s}'.format(args.coremask), '\\']
 
     if args.portmask is not None:
-        testpmd_opts += ['--portmask=%s' % args.portmask, '\\']
+        testpmd_opts += ['--portmask={:s}'.format(args.portmask), '\\']
 
     if args.no_numa is True:
         testpmd_opts += ['--no-numa', '\\']
@@ -519,66 +525,64 @@ def main():
     if args.port_numa_config is not None:
         if check_port_numa_config(args.port_numa_config) is True:
             testpmd_opts += [
-                    '--port-numa-config={}'.format(
-                        args.port_numa_config),
-                    '\\']
+                    '--port-numa-config={:s}'.format(
+                        args.port_numa_config), '\\']
 
     if args.ring_numa_config is not None:
         if check_ring_numa_config(args.ring_numa_config) is True:
             testpmd_opts += [
-                    '--ring-numa-config={}'.format(
-                        args.ring_numa_config),
-                    '\\']
+                    '--ring-numa-config={:s}'.format(
+                        args.ring_numa_config), '\\']
 
     if args.socket_num is not None:
-        testpmd_opts += ['%s=%d' % (
+        testpmd_opts += ['{0:s}={1:d}'.format(
             '--socket-num', args.socket_num), '\\']
 
     if args.mbuf_size is not None:
         mbuf_limit = 65536
         if args.mbuf_size > mbuf_limit:
-            print("Error: '%s' should be less than %d" % (
+            print("Error: '{0:s}' should be less than {1:d}".format(
                 '--mbuf-size', mbuf_limit))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % (
+            testpmd_opts += ['{0:s}={1:d}'.format(
                 '--mbuf-size', args.mbuf_size), '\\']
 
     if args.total_num_mbufs is not None:
         nof_mbuf_limit = 1024
         if args.total_num_mbufs <= nof_mbuf_limit:
-            print("Error: '%s' should be more than %d" % (
+            print("Error: '{}' should be more than {}".format(
                 '--total-num-mbufs', nof_mbuf_limit))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % (
+            testpmd_opts += ['{0:s}={1:d}'.format(
                 '--total-num-mbufs', args.total_num_mbufs), '\\']
 
     if args.max_pkt_len is not None:
         pkt_len_limit = 64
         if args.max_pkt_len < pkt_len_limit:
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--max-pkt-len', pkt_len_limit))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % (
+            testpmd_opts += ['{0:s}={1:d}'.format(
                 '--max-pkt-len', args.max_pkt_len), '\\']
 
     if args.eth_peers_configfile is not None:
-        testpmd_opts += ['%s=%s' % (
+        testpmd_opts += ['{0:s}={1:s}'.format(
             '--eth-peers-configfile',
             args.eth_peers_configfile), '\\']
 
     if args.eth_peer is not None:
         if check_eth_peer(args.eth_peer) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--eth-peer', args.eth_peer), '\\']
         else:
-            error_exit('--eth-peer')
+            invalid_opt_exit('--eth-peer')
 
     if args.pkt_filter_mode is not None:
         if check_pkt_filter_mode(args.pkt_filter_mode) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--pkt-filter-mode', args.pkt_filter_mode), '\\']
         else:
             print("Error: '--pkt-filter-mode' should be " +
@@ -587,7 +591,7 @@ def main():
 
     if args.pkt_filter_report_hash is not None:
         if check_pkt_filter_report_hash(args.pkt_filter_report_hash) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--pkt-filter-report-hash',
                 args.pkt_filter_report_hash), '\\']
         else:
@@ -597,16 +601,12 @@ def main():
 
     if args.pkt_filter_size is not None:
         if check_pkt_filter_size(args.pkt_filter_size) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--pkt-filter-size', args.pkt_filter_size), '\\']
         else:
             print("Error: '--pkt-filter-size' should be " +
                   "'64K', '128K' or '256K'")
             exit()
-
-    # TODO(yasufum) Confirm this option is supported in dpdk 18.02
-    if args.pkt_filter_flexbytes_offset is not None:
-        not_supported_exit('--pkt-filter-flexbytes-offset')
 
     # It causes 'unrecognized option' error.
     # if args.pkt_filter_flexbytes_offset is not None:
@@ -614,16 +614,16 @@ def main():
     #     f_offset_min = 0
     #     f_offset_max = 32
     #     if (f_offset < f_offset_min) or (f_offset > f_offset_max):
-    #         print("Error: '%s' should be %d-%d" % (
+    #         print("Error: '{0:s}' should be {1:d}-{2:d}".format(
     #             '--pkt-filter-flexbytes-offset',
     #             f_offset_min, f_offset_max))
     #         exit()
     #     else:
-    #         testpmd_opts += ['%s=%d' % (
+    #         testpmd_opts += ['{0:s}={1:d}'.format(
     #             '--pkt-filter-flexbytes-offset', f_offset), '\\']
 
     if args.pkt_filter_drop_queue is not None:
-        testpmd_opts += ['%s=%d' % (
+        testpmd_opts += ['{0:s}={1:d}'.format(
             '--pkt-filter-drop-queue', args.pkt_filter_drop_queue), '\\']
 
     if args.disable_crc_strip is True:
@@ -659,16 +659,16 @@ def main():
     if args.port_topology is not None:
         if check_port_topology(args.port_topology) is True:
             testpmd_opts += [
-                    '--port-topology={}'.format(args.port_topology), '\\']
+                    '--port-topology={:s}'.format(args.port_topology), '\\']
         else:
-            error_exit('--port-topology')
+            invalid_opt_exit('--port-topology')
 
     if args.forward_mode is not None:
         if check_forward_mode(args.forward_mode) is True:
             testpmd_opts += [
-                    '--forward-mode={}'.format(args.forward_mode), '\\']
+                    '--forward-mode={:s}'.format(args.forward_mode), '\\']
         else:
-            error_exit('--forward-mode')
+            invalid_opt_exit('--forward-mode')
 
     if args.rss_ip is True:
         testpmd_opts += ['--rss-ip', '\\']
@@ -680,77 +680,79 @@ def main():
         nof_q_min = 1
         nof_q_max = 65535
         if (args.rxq < nof_q_min) or (nof_q_max < args.rxq):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--rxq', nof_q_min, nof_q_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxq', args.rxq), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxq', args.rxq), '\\']
 
     if args.rxd is not None:
         nof_d_min = 1
         if (args.rxd < nof_d_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--rxd', nof_d_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxd', args.rxd), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxd', args.rxd), '\\']
 
     if args.txq is not None:
         nof_q_min = 1
         nof_q_max = 65535
         if (args.txq < nof_q_min) or (nof_q_max < args.txq):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--txq', nof_q_min, nof_q_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txq', args.txq), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txq', args.txq), '\\']
 
     if args.txd is not None:
         nof_d_min = 1
         if (args.txd < nof_d_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--txd', nof_d_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txd', args.txd), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txd', args.txd), '\\']
 
     if args.burst is not None:
         b_min = 1
         b_max = 512
         if (args.burst < b_min) or (b_max < args.burst):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--burst', b_min, b_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--burst', args.burst), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--burst', args.burst),
+                             '\\']
 
     if args.mbcache is not None:
         mb_min = 0
         mb_max = 512
         if (args.mbcache < mb_min) or (mb_max < args.mbcache):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--mbcache', mb_min, mb_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--mbcache', args.mbcache), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--mbcache', args.mbcache),
+                             '\\']
 
     if args.rxpt is not None:
         nof_p_min = 0
         if (args.rxpt < nof_p_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--rxpt', nof_p_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxpt', args.rxpt), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxpt', args.rxpt), '\\']
 
     if args.rxht is not None:
         nof_h_min = 0
         if (args.rxht < nof_h_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--rxht', nof_h_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxht', args.rxht), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxht', args.rxht), '\\']
 
     if args.rxfreet is not None:
         nof_f_min = 0
@@ -759,47 +761,48 @@ def main():
         else:
             nof_f_max = 128 - 1  # as default of rxd - 1
         if (args.rxfreet < nof_f_min) or (nof_f_max < args.rxfreet):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--rxfreet', nof_f_min, nof_f_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxfreet', args.rxfreet), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxfreet', args.rxfreet),
+                             '\\']
 
     if args.rxwt is not None:
         nof_w_min = 0
         if (args.rxwt < nof_w_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--rxwt', nof_w_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--rxwt', args.rxwt), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--rxwt', args.rxwt), '\\']
 
     if args.txpt is not None:
         nof_p_min = 0
         if (args.txpt < nof_p_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--txpt', nof_p_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txpt', args.txpt), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txpt', args.txpt), '\\']
 
     if args.txht is not None:
         nof_h_min = 0
         if (args.txht < nof_h_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--txht', nof_h_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txht', args.txht), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txht', args.txht), '\\']
 
     if args.txwt is not None:
         nof_w_min = 0
         if (args.txwt < nof_w_min):
-            print("Error: '%s' should be equal or more than %d" % (
+            print("Error: '{0:s}' should be equal or more than {1:d}".format(
                 '--txwt', nof_w_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txwt', args.txwt), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txwt', args.txwt), '\\']
 
     if args.txfreet is not None:
         nof_f_min = 0
@@ -808,11 +811,12 @@ def main():
         else:
             nof_f_max = 512  # as default of txd
         if (args.txfreet < nof_f_min) or (nof_f_max < args.txfreet):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--txfreet', nof_f_min, nof_f_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txfreet', args.txfreet), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txfreet', args.txfreet),
+                             '\\']
 
     if args.txrst is not None:
         nof_r_min = 0
@@ -821,21 +825,21 @@ def main():
         else:
             nof_r_max = 512  # as default of txd
         if (args.txrst < nof_r_min) or (nof_r_max < args.txrst):
-            print("Error: '%s' should be %d-%d" % (
+            print("Error: '{0:s}' should be {1:d}-{2:d}".format(
                 '--txrst', nof_r_min, nof_r_max))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % ('--txrst', args.txrst), '\\']
+            testpmd_opts += ['{0:s}={1:d}'.format('--txrst', args.txrst), '\\']
 
     if args.rx_queue_stats_mapping is not None:
         testpmd_opts += [
-                '--rx-queue-stats-mapping={}'.format(
+                '--rx-queue-stats-mapping={:s}'.format(
                     args.rx_queue_stats_mapping),
                 '\\']
 
     if args.tx_queue_stats_mapping is not None:
         testpmd_opts += [
-                '--tx-queue-stats-mapping={}'.format(
+                '--tx-queue-stats-mapping={:s}'.format(
                     args.tx_queue_stats_mapping),
                 '\\']
 
@@ -844,10 +848,10 @@ def main():
 
     if args.txpkts is not None:
         if check_txpkts(args.txpkts) is True:
-            testpmd_opts += ['%s=%s' % (
-                '--txpkts', args.txpkts), '\\']
+            testpmd_opts += ['{0:s}={1:s}'.format('--txpkts', args.txpkts),
+                             '\\']
         else:
-            error_exit('--txpkts')
+            invalid_opt_exit('--txpkts')
 
     if args.disable_link_check is True:
         testpmd_opts += ['--disable-link-check', '\\']
@@ -862,7 +866,7 @@ def main():
         # --bitrate-stats can be several
         for stat in args.bitrate_stats:
             if stat[0] >= 0:
-                testpmd_opts += ['%s=%d' % (
+                testpmd_opts += ['{0:s}={1:d}'.format(
                     '--bitrate-stats', stat[0]), '\\']
             else:
                 print("Error: '--bitrate-stats' should be <= 0")
@@ -870,17 +874,17 @@ def main():
 
     if args.print_event is not None:
         if check_event(args.print_event) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--print-event', args.print_event), '\\']
         else:
-            error_exit('--print-event')
+            invalid_opt_exit('--print-event')
 
     if args.mask_event is not None:
         if check_event(args.mask_event) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--mask-event', args.mask_event), '\\']
         else:
-            error_exit('--mask-event')
+            invalid_opt_exit('--mask-event')
 
     if args.flow_isolate_all is True:
         testpmd_opts += ['--flow-isolate-all', '\\']
@@ -888,10 +892,10 @@ def main():
     if args.tx_offloads is not None:
         ptn = r'^0x[0-9aA-Fa-f]+$'  # should be hexadecimal
         if re.match(ptn, args.tx_offloads) is True:
-            testpmd_opts += ['%s=%s' % (
+            testpmd_opts += ['{0:s}={1:s}'.format(
                 '--tx-offloads', args.tx_offloads), '\\']
         else:
-            error_exit('--tx-offloads')
+            invalid_opt_exit('--tx-offloads')
 
     if args.hot_plug is True:
         testpmd_opts += ['--hot-plug', '\\']
@@ -899,11 +903,11 @@ def main():
     if args.vxlan_gpe_port is not None:
         nof_p_min = 0
         if (args.vxlan_gpe_port < nof_p_min):
-            print("Error: '%s' should be <= %d" % (
+            print("Error: '{0:s}' should be <= {1:d}".format(
                 '--vxlan-gpe-port', nof_p_min))
             exit()
         else:
-            testpmd_opts += ['%s=%d' % (
+            testpmd_opts += ['{0:s}={1:d}'.format(
                 '--vxlan-gpe-port', args.vxlan_gpe_port), '\\']
 
     if args.mlockall is True:
