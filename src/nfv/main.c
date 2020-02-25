@@ -145,13 +145,14 @@ main(int argc, char *argv[])
 	unsigned int nb_ports;
 	int connected = 0;
 	char str[MSG_SIZE] = { 0 };
-	unsigned int i;
+	unsigned int i, j;
 	int flg_exit;  // used as res of parse_command() to exit if -1
 	int ret;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	int port_type;
 	int nof_phy_port = 0;
 	char log_msg[1024] = { 0 };  /* temporary log message */
+	uint16_t max_queue;
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
@@ -218,11 +219,22 @@ main(int argc, char *argv[])
 		 * not display to avoid confusion.
 		 */
 
-		/* Update ports_fwd_array with phy port. */
-		ports_fwd_array[i].in_port_id = i;
 		port_map[i].port_type = port_type;
 		port_map[i].id = port_id;
 		port_map[i].stats = &ports->port_stats[i];
+		port_map[i].queue_info = &ports->queue_info[i];
+
+		/* Update ports_fwd_array with phy port. */
+		if (port_map[i].queue_info->rxq >=
+			port_map[i].queue_info->txq)
+			max_queue = port_map[i].queue_info->rxq;
+		else
+			max_queue = port_map[i].queue_info->txq;
+
+		for (j = 0; j < max_queue; j++) {
+			ports_fwd_array[i][j].in_port_id = i;
+			ports_fwd_array[i][j].in_queue_id = j;
+		}
 
 		/* TODO(yasufum) convert from int of port_type to char */
 		RTE_LOG(DEBUG, SPP_NFV, "Add port, type: %d, id: %d\n",

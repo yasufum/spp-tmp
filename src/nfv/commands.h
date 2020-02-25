@@ -17,7 +17,7 @@
  */
 
 static int
-do_del(char *p_type, int p_id)
+do_del(char *p_type, int p_id, uint16_t queue_id)
 {
 	uint16_t port_id = PORT_RESET;
 
@@ -55,7 +55,7 @@ do_del(char *p_type, int p_id)
 
 	}
 
-	forward_array_remove(port_id);
+	forward_array_remove(port_id, queue_id);
 	port_map_init_one(port_id);
 
 	return 0;
@@ -66,7 +66,7 @@ do_del(char *p_type, int p_id)
  * combination of port type and ID like as 'ring:0'.
  */
 static int
-do_add(char *p_type, int p_id)
+do_add(char *p_type, int p_id, uint16_t queue_id)
 {
 	enum port_type type = UNDEF;
 	uint16_t port_id = PORT_RESET;
@@ -105,9 +105,11 @@ do_add(char *p_type, int p_id)
 	 * other than RING. There is no support to show/clear this stats
 	 * at the moment.
 	 */
+	port_map[port_id].queue_info = NULL;
 
-	/* Update ports_fwd_array with port id */
-	ports_fwd_array[port_id].in_port_id = port_id;
+	/* Update ports_fwd_array with port id and queue id */
+	ports_fwd_array[port_id][queue_id].in_port_id = port_id;
+	ports_fwd_array[port_id][queue_id].in_queue_id = queue_id;
 
 	return 0;
 }
@@ -164,6 +166,7 @@ parse_command(char *str)
 	char port_set[128] = { 0 };
 	char *p_type;
 	int p_id;
+	uint16_t queue_id;
 
 	if (!str)
 		return 0;
@@ -185,12 +188,10 @@ parse_command(char *str)
 		memset(str, '\0', MSG_SIZE);
 		if (cmd == FORWARD)
 			get_sec_stats_json(str, get_client_id(), "running",
-					lcore_id_used,
-					ports_fwd_array, port_map);
+					lcore_id_used);
 		else
 			get_sec_stats_json(str, get_client_id(), "idling",
-					lcore_id_used,
-					ports_fwd_array, port_map);
+					lcore_id_used);
 
 		RTE_ETH_FOREACH_DEV(dev_id) {
 			rte_eth_dev_get_name_by_port(dev_id, dev_name);
@@ -245,11 +246,12 @@ parse_command(char *str)
 	} else if (!strcmp(token_list[0], "add")) {
 		RTE_LOG(DEBUG, SPP_NFV, "Received add command\n");
 
-		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id,
+				&queue_id);
 		if (ret < 0)
 			return ret;
 
-		if (do_add(p_type, p_id) < 0) {
+		if (do_add(p_type, p_id, queue_id) < 0) {
 			RTE_LOG(ERR, SPP_NFV, "Failed to do_add()\n");
 			sprintf(result, "%s", "\"failed\"");
 		} else
@@ -282,13 +284,23 @@ parse_command(char *str)
 			char *out_p_type;
 			int in_p_id;
 			int out_p_id;
+			uint16_t in_queue_id, out_queue_id;
+			int res_uid_str_size = 32;
+			char in_res_uid[res_uid_str_size];
+			char out_res_uid[res_uid_str_size];
 
-			parse_resource_uid(token_list[1], &in_p_type, &in_p_id);
+			strncpy(in_res_uid, token_list[1],
+				res_uid_str_size - 1);
+			strncpy(out_res_uid, token_list[2],
+				res_uid_str_size - 1);
+
+			parse_resource_uid(token_list[1], &in_p_type, &in_p_id,
+					&in_queue_id);
 			in_port = find_port_id(in_p_id,
 					get_port_type(in_p_type));
 
 			parse_resource_uid(token_list[2],
-					&out_p_type, &out_p_id);
+					&out_p_type, &out_p_id, &out_queue_id);
 			out_port = find_port_id(out_p_id,
 					get_port_type(out_p_type));
 
@@ -314,13 +326,27 @@ parse_command(char *str)
 					"Patch not found, out_port",
 					out_p_type, out_p_id);
 				RTE_LOG(ERR, SPP_NFV, "%s\n", err_msg);
+			} else if (is_valid_port_rxq(in_port, in_queue_id)) {
+				RTE_LOG(ERR, SPP_NFV,
+					"Queue number of in_port"
+					" exceeds definition"
+					" %s:%d nq %d(%s:%d)\n",
+					in_p_type, in_p_id, in_queue_id,
+					__func__, __LINE__);
+			} else if (is_valid_port_txq(out_port, out_queue_id)) {
+				RTE_LOG(ERR, SPP_NFV,
+					"Queue number of out_port"
+					" exceeds definition"
+					" %s:%d nq %d(%s:%d)\n",
+					out_p_type, out_p_id, out_queue_id,
+					__func__, __LINE__);
 			}
 
-			if (add_patch(in_port, out_port) == 0) {
+			if (add_patch(in_port, in_queue_id, out_port,
+				out_queue_id) == 0) {
 				RTE_LOG(INFO, SPP_NFV,
-					"Patched '%s:%d' and '%s:%d'\n",
-					in_p_type, in_p_id,
-					out_p_type, out_p_id);
+					"Patched '%s' and '%s'\n",
+					in_res_uid, out_res_uid);
 				sprintf(result, "%s", "\"succeeded\"");
 			} else {
 				RTE_LOG(ERR, SPP_NFV, "Failed to patch\n");
@@ -328,8 +354,8 @@ parse_command(char *str)
 			}
 
 			sprintf(port_set,
-				"{\"src\":\"%s:%d\",\"dst\":\"%s:%d\"}",
-				in_p_type, in_p_id, out_p_type, out_p_id);
+				"{\"src\":\"%s\",\"dst\":\"%s\"}",
+				in_res_uid, out_res_uid);
 
 			memset(str, '\0', MSG_SIZE);
 			sprintf(str, "{%s:%s,%s:%s,%s:%s}",
@@ -345,11 +371,12 @@ parse_command(char *str)
 
 		cmd = STOP;
 
-		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id,
+				&queue_id);
 		if (ret < 0)
 			return ret;
 
-		if (do_del(p_type, p_id) < 0) {
+		if (do_del(p_type, p_id, queue_id) < 0) {
 			RTE_LOG(ERR, SPP_NFV, "Failed to do_del()\n");
 			sprintf(result, "%s", "\"failed\"");
 		} else
