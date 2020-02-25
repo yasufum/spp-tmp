@@ -66,7 +66,7 @@ def parse_args():
 
 
 def check_config_format(config_opt, nof_queues):
-    """Check if config format is valid
+    """Check if config format is valid.
 
     Config options is for Determining which queues from which ports
     are mapped to which cores.
@@ -106,8 +106,8 @@ def check_config_format(config_opt, nof_queues):
             i = i + 1
 
     if nof_tx_queues > nof_queues:
-        print('Error: {}={} should be equal or less than {}={}!'.format(
-              'tx_queues', nof_tx_queues, 'nof_queues', nof_queues))
+        print('Error: {0:s}={1:d} should be equal or less than {2:s}={3:d}!'.
+              format('tx_queues', nof_tx_queues, 'nof_queues', nof_queues))
         print("\tnof_queues is defiend with '-nq' or '--nof-queues' option")
         return False
 
@@ -115,7 +115,7 @@ def check_config_format(config_opt, nof_queues):
 
 
 def check_jumbo_opt(enable_jumbo, max_pkt_len):
-    """Check if jumbo frame option is valid
+    """Check if jumbo frame option is valid.
 
     Jumbo frame is enabled with '--enable-jumbo' and max packet size is
     defined with '--max-pkt-len'.
@@ -128,8 +128,8 @@ def check_jumbo_opt(enable_jumbo, max_pkt_len):
 
     if max_pkt_len is not None:
         if (max_pkt_len < 64) or (max_pkt_len > 9600):
-            print('Error: --max-pkt-len {} should be {}-{}'.format(
-                max_pkt_len, 64, 9600))
+            print('Error: --max-pkt-len {0:d} should be {1:d}-{2:d}'.
+                  format(max_pkt_len, 64, 9600))
             return False
 
     return True
@@ -149,39 +149,46 @@ def main():
     # Check for other mandatory opitons.
     if args.port_mask is None:
         common.error_exit('--port-mask')
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
 
-    # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+    # Setup devices with given device UIDs.
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
+
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(
         args, container_image, sock_files)
 
-    # Parse vhost device IDs and Check the number of devices is
-    # sufficient for port mask.
-    if app_helper.is_sufficient_dev_ids(
-            args.dev_ids, args.port_mask) is not True:
-        print("Error: Cannot reserve ports '{} (= 0b{})' on '{}'.".format(
-            args.port_mask,
-            format(int(args.port_mask, 16), 'b'),
-            args.dev_ids))
+    # Check given number of ports is enough for portmask.
+    if (args.port_mask is None) or (args.dev_uids is None):
+        pass
+    elif app_helper.is_sufficient_ports(args) is not True:
+        print("Error: Not enough ports, {0:d} devs for '{1:s}(=0b{2:s})'.".
+              format(len(args.dev_uids.split(',')), args.port_mask,
+                     format(int(args.port_mask, 16), 'b')))
         exit()
 
     # Setup l3fwd-acl command runs on container.
-    cmd_path = '{}/examples/l3fwd-acl/{}/l3fwd-acl'.format(
+    cmd_path = '{0:s}/examples/l3fwd-acl/{1:s}/l3fwd-acl'.format(
         env.RTE_SDK, env.RTE_TARGET)
 
     l3fwd_cmd = [cmd_path, '\\']
 
     # Setup EAL options.
-    file_prefix = 'spp-l3fwd-acl-container{}'.format(dev_ids_list[0])
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix('l3fwd-acl')
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
-    # Setup l3fwd options.
+    # Setup l3fwd-acl options.
     l3fwd_opts = ['-p', args.port_mask, '\\']
 
     if args.config is None:
@@ -190,7 +197,7 @@ def main():
         print('Invalid config: {}'.format(args.config))
         exit()
     else:
-        l3fwd_opts += ['--config', '"{}"'.format(args.config), '\\']
+        l3fwd_opts += ['--config', '"{:s}"'.format(args.config), '\\']
 
     jumbo_opt_valid = False
     if args.enable_jumbo is True:
@@ -202,13 +209,13 @@ def main():
 
     if args.rule_ipv4 is not None:
         if os.path.exists(args.rule_ipv4):
-            l3fwd_opts += ['--rule_ipv4', '"{}"'.format(args.rule_ipv4), '\\']
+            l3fwd_opts += ['--rule_ipv4', '"{:s}"'.format(args.rule_ipv4), '\\']
         else:
             print('Error: "{}" does not exist'.format(args.rule_ipv4))
             exit()
     if args.rule_ipv6 is not None:
         if os.path.exists(args.rule_ipv6):
-            l3fwd_opts += ['--rule_ipv6', '"{}"'.format(args.rule_ipv6), '\\']
+            l3fwd_opts += ['--rule_ipv6', '"{:s}"'.format(args.rule_ipv6), '\\']
         else:
             print('Error: "{}" does not exist'.format(args.rule_ipv6))
             exit()
@@ -220,7 +227,7 @@ def main():
     if (args.enable_jumbo is not None) and (jumbo_opt_valid is True):
         l3fwd_opts += ['--enable-jumbo', '\\']
         if args.max_pkt_len is not None:
-            l3fwd_opts += ['--max-pkt-len {}'.format(args.max_pkt_len), '\\']
+            l3fwd_opts += ['--max-pkt-len {:d}'.format(args.max_pkt_len), '\\']
     if args.no_numa is True:
         l3fwd_opts += ['--no-numa', '\\']
 
