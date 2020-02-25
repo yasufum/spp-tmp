@@ -103,8 +103,8 @@ def main():
     else:
         spp_opts += ['-s', '{}:{}'.format(ctl_ip, args.ctl_port), '\\']
 
-    cmds = docker_cmd + docker_opts + [container_image] + spp_cmd + \
-        eal_opts + spp_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        spp_cmd + eal_opts + spp_opts
 
     if cmds[-1] == '\\':
         cmds.pop()

@@ -198,8 +198,7 @@ def main():
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, container_image, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
     # Check given number of ports is enough for portmask.
     if (args.port_mask is None) or (args.dev_uids is None):
@@ -285,7 +284,8 @@ def main():
     if args.ipv6 is True:
         l3fwd_opts += ['--ipv6', '\\']
 
-    cmds = docker_cmd + docker_opts + l3fwd_cmd + eal_opts + l3fwd_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        l3fwd_cmd + eal_opts + l3fwd_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)

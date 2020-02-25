@@ -59,8 +59,7 @@ def main():
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, container_image, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
     # Check if the number of ports is even for l2fwd.
     nof_ports = app_helper.count_ports(args.port_mask)
@@ -93,7 +92,8 @@ def main():
                      format(int(args.port_mask, 16), 'b')))
         exit()
 
-    cmds = docker_cmd + docker_opts + l2fwd_cmd + eal_opts + l2fwd_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        l2fwd_cmd + eal_opts + l2fwd_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)

@@ -475,8 +475,7 @@ def main():
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, container_image, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
     cmd_path = 'testpmd'
 
@@ -916,7 +915,8 @@ def main():
     if args.no_mlockall is True:
         testpmd_opts += ['--no-mlockall', '\\']
 
-    cmds = docker_cmd + docker_opts + testpmd_cmd + eal_opts + testpmd_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        testpmd_cmd + eal_opts + testpmd_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)

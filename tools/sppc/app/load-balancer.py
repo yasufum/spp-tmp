@@ -91,8 +91,7 @@ def main():
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, container_image, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
     cmd_path = '{0:s}/examples/{1:s}/{2:s}/{1:s}'.format(
         env.RTE_SDK, app_name, env.RTE_TARGET)
@@ -138,7 +137,8 @@ def main():
     if args.pos_lb is not None:
         lb_opts += ['--pos-lb', str(args.pos_lb)]
 
-    cmds = docker_cmd + docker_opts + lb_cmd + eal_opts + lb_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        lb_cmd + eal_opts + lb_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)

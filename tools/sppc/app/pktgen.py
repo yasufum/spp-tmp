@@ -92,8 +92,7 @@ def main():
     else:
         wd = '/root/pktgen-dpdk'
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-            args, container_image, sock_files, wd)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files, wd)
 
     # Setup pktgen command
     pktgen_cmd = ['pktgen', '\\']
@@ -181,7 +180,8 @@ def main():
     if args.numa is True:
         pktgen_opts += ['-N', '\\']
 
-    cmds = docker_cmd + docker_opts + pktgen_cmd + eal_opts + pktgen_opts
+    cmds = docker_cmd + docker_opts + [container_image, '\\'] + \
+        pktgen_cmd + eal_opts + pktgen_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)
