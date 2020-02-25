@@ -4,6 +4,7 @@
 from .. import spp_common
 from ..shell_lib import common
 from ..spp_common import logger
+from .pri_flow import SppPrimaryFlow
 import os
 import time
 
@@ -20,7 +21,7 @@ class SppPrimary(object):
 
     # All of primary commands used for validation and completion.
     PRI_CMDS = ['status', 'add', 'del', 'forward', 'stop', 'patch',
-                'launch', 'clear']
+                'launch', 'clear', 'flow']
 
     ENV_FILE_PREF = 'SPP_FILE_PREFIX'
 
@@ -45,6 +46,8 @@ class SppPrimary(object):
         temp = temp + "-s {sec_addr} "  # '-s 192.168.1.100:6666'
         temp = temp + "{vhost_cli}"
         self.launch_template = temp
+
+        self.flow = SppPrimaryFlow(spp_ctl_cli)
 
     def _do_if_forwarder_exists(self, status, func, params):
         """Execute command of func if forwarder thread is existing.
@@ -126,6 +129,9 @@ class SppPrimary(object):
                 else:
                     print('Error: unknown response for clear.')
 
+        elif subcmd == 'flow':
+            self._run_flow(params)
+
         else:
             print('Invalid pri command!')
 
@@ -185,8 +191,8 @@ class SppPrimary(object):
                 - phy:1
             - stats
               - physical ports:
-                  ID          rx          tx     tx_drop  mac_addr
-                   0    78932932    78932931           1  56:48:4f:53:54:00
+                  ID          rx          tx     tx_drop  rxq  txq  mac_addr
+                   0    78932932    78932931           1   16   16  56:48:...
                    ...
               - ring ports:
                   ID          rx          tx     rx_drop     tx_drop
@@ -228,15 +234,19 @@ class SppPrimary(object):
 
             if 'phy_ports' in json_obj:
                 print('  - physical ports:')
-                print('{s6}ID{s10}rx{s10}tx{s4}tx_drop  mac_addr'.format(
-                      s4=sep*4, s6=sep*6, s10=sep*10))
+                print('{s6}ID{s10}rx{s10}tx{s5}tx_drop'
+                      '  rxq  txq mac_addr'.format(
+                          s5=sep*5, s6=sep*6, s10=sep*10))
 
-                temp = '{s6}{portid:2}  {rx:10}  {tx:10}  {tx_d:10}  {eth}'
+                temp = '{s6}{portid:2}  {rx:10}  {tx:10}  {tx_d:10}' \
+                    ' {rxq:4} {txq:4} {eth}'
                 for pports in json_obj['phy_ports']:
                     print(temp.format(s6=sep*6,
                                       portid=pports['id'], rx=pports['rx'],
                                       tx=pports['tx'],
                                       tx_d=pports['tx_drop'],
+                                      rxq=pports["nof_queues"]["rx"],
+                                      txq=pports["nof_queues"]["tx"],
                                       eth=pports['eth']))
 
             if 'ring_ports' in json_obj:
@@ -560,9 +570,20 @@ class SppPrimary(object):
                         candidates = self._compl_del(tokens[1:])
                     elif tokens[1] == 'patch':
                         candidates = self._compl_patch(tokens[1:])
+                    elif tokens[1] == 'flow':
+                        candidates = self._compl_flow(tokens[1:])
 
+            completions = []
             if not text:
-                completions = candidates
+                for candidate in candidates:
+                    if not candidate.startswith(tokens[len(tokens) - 1]):
+                        completions.append(candidate)
+                        continue
+
+                    if ":" in tokens[len(tokens) - 1]:
+                        completions.append(candidate.split(":")[1])
+                    else:
+                        completions.append(candidate)
             else:
                 completions = [p for p in candidates
                                if p.startswith(text)
@@ -717,6 +738,10 @@ class SppPrimary(object):
 
             return res
 
+    def _compl_flow(self, tokens):
+        """Complete `flow` command."""
+        return self.flow.complete_flow(tokens)
+
     def _get_sec_ids(self):
         sec_ids = []
         res = self.spp_ctl_cli.get('processes')
@@ -745,6 +770,7 @@ class SppPrimary(object):
         """
         prekey = None
         opts_dict = {}
+        index = 0
         for opt in opts_list:
             if opt.startswith('-'):
                 opts_dict[opt] = None
@@ -752,7 +778,15 @@ class SppPrimary(object):
             else:
                 if prekey is not None:
                     opts_dict[prekey] = opt
+
+                    if (opt.startswith("phy:")
+                            and len(opts_list) > index + 2
+                            and opts_list[index + 1] == "nq"):
+                        opts_dict[prekey] += " nq {0}".format(
+                            opts_list[index + 2])
+
                     prekey = None
+            index += 1
         return opts_dict
 
     def _run_add(self, params):
@@ -979,6 +1013,10 @@ class SppPrimary(object):
                 pass
             else:
                 print('Error: unknown response for launch.')
+
+    def _run_flow(self, params):
+        """Run `flow` command."""
+        self.flow.run_flow(params)
 
     @classmethod
     def help(cls):
