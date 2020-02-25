@@ -87,12 +87,14 @@ void stop_process(int signal);
  *  Interface type to be validated.
  * @param iface_no
  *  Interface number to be validated.
+ * @param queue_no
+ *  Interface queue number to be validated.
  *
  * @retval !NULL  sppwk_port_info.
  * @retval NULL   failed.
  */
 struct sppwk_port_info *
-get_iface_info(enum port_type iface_type, int iface_no);
+get_iface_info(enum port_type iface_type, int iface_no, int queue_no);
 
 /**
  * Setup management info for spp_vf
@@ -105,15 +107,19 @@ struct core_info *get_core_info(unsigned int lcore_id);
 /**
  * Port type to string
  *
+ * TODO(smurakami) Change spp_pcap to use queue_no for supporting multi-queue
+ *
  * @param port String of port type to be converted.
  * @param iface_type Interface type.
  * @param iface_no Interface number.
+ * @param queue_no Queue number of interface.
  * @retval SPPWK_RET_OK If succeeded.
  * @retval SPPWK_RET_NG If failed.
  */
 /* TODO(yasufum) consider to merge to shared. */
 int
-sppwk_port_uid(char *port, enum port_type iface_type, int iface_no);
+sppwk_port_uid(char *port, enum port_type iface_type, int iface_no,
+		int queue_no);
 
 /**
  * Set mange data address
@@ -142,5 +148,14 @@ void spp_get_mng_data_addr(struct iface_info **iface_p,
 			   struct spp_pcap_core_mng_info **core_mng_p,
 			   int **capture_request_p,
 			   int **capture_status_p);
+
+/**
+ * Returns max queue number of the target port.
+ *
+ * @param[in] iface_type Interface type such as PHY or so.
+ * @param[in] iface_no Interface number.
+ * @return Max queue number if succeeded, or SPPWK_RET_NG if failed.
+ */
+int get_port_max_queues(const enum port_type iface_type, int iface_no);
 
 #endif

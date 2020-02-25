@@ -185,7 +185,7 @@ usage(const char *progname)
 		" [--fsize MAX_FILE_SIZE]\n"
 		" --client-id CLIENT_ID: My client ID\n"
 		" -s IPADDR:PORT: IP addr and sec port for spp-ctl\n"
-		" -c: Captured port (e.g. 'phy:0' or 'ring:1')\n"
+		" -c: Captured port (e.g. 'phy:0', 'phy:0 nq 1' or 'ring:1')\n"
 		" --out-dir: Output dir (Default is /tmp)\n"
 		" --fsize: Maximum captured file size (Default is 1GiB)\n"
 		, progname);
@@ -209,12 +209,15 @@ parse_fsize(const char *fsize_str, uint64_t *fsize)
 
 /* Parse `-c` option for captured port and get the port type and ID */
 static int
-parse_captured_port(const char *port_str, enum port_type *iface_type,
-			int *iface_no)
+parse_captured_port(const char *port_str, int option_index,
+			const int argcopt, char *argvopt[],
+			enum port_type *iface_type, int *iface_no,
+			int *queue_no)
 {
 	enum port_type type = UNDEF;
 	const char *no_str = NULL;
 	char *endptr = NULL;
+	int q_no = 0; /* Init value is default queue_no */
 
 	/* Find out which type of interface from resource UID */
 	if (strncmp(port_str, SPPWK_PHY_STR ":",
@@ -243,11 +246,45 @@ parse_captured_port(const char *port_str, enum port_type *iface_type,
 		return SPPWK_RET_NG;
 	}
 
+	/* Convert to numeric if queue_no */
+	if (type == PHY && option_index + 1 <= argcopt &&
+		!strcmp(argvopt[option_index], DELIM_PHY_MQ)) {
+
+		no_str = argvopt[option_index + 1];
+
+		q_no = strtol(no_str, &endptr, 0);
+		if (unlikely(no_str == endptr) || unlikely(*endptr != '\0')) {
+			/* No Queue number */
+			RTE_LOG(ERR, SPP_PCAP,
+				"No queue number. (port = %s)\n", port_str);
+			return SPPWK_RET_NG;
+		}
+
+		/* Check max num of queue_no */
+		if (q_no >= get_port_max_queues(type, ret_no)) {
+			RTE_LOG(ERR, SPP_PCAP,
+				"queue_no exceeds the definition of primary.\n"
+				);
+			return SPPWK_RET_NG;
+		}
+
+	} else {
+		if (get_port_max_queues(type, ret_no) > 1) {
+			RTE_LOG(ERR, SPP_PCAP,
+				"Queue_no is required for the specified "
+				"physical port because of multi-queue.\n"
+				);
+			return SPPWK_RET_NG;
+		}
+	}
+
 	*iface_type = type;
 	*iface_no = ret_no;
+	*queue_no = q_no;
 
-	RTE_LOG(DEBUG, SPP_PCAP, "Port = %s => Type = %d No = %d\n",
-					port_str, *iface_type, *iface_no);
+	RTE_LOG(DEBUG, SPP_PCAP,
+		"Port = %s => Type = %d No = %d\n Queue = %d",
+		port_str, *iface_type, *iface_no, *queue_no);
 	return SPPWK_RET_OK;
 }
 
@@ -322,12 +359,22 @@ parse_app_args(int argc, char *argv[])
 			break;
 		case 'c':  /* captured port */
 			strcpy(cap_port_str, optarg);
-			if (parse_captured_port(optarg,
+			if (parse_captured_port(optarg, optind,
+					argcopt, argvopt,
 					&g_pcap_option.port_cap.iface_type,
-					&g_pcap_option.port_cap.iface_no) !=
+					&g_pcap_option.port_cap.iface_no,
+					&g_pcap_option.port_cap.queue_no) !=
 					SPPWK_RET_OK) {
 				usage(progname);
 				return SPPWK_RET_NG;
+			}
+			if (get_port_max_queues(
+				g_pcap_option.port_cap.iface_type,
+				g_pcap_option.port_cap.iface_no) > 1) {
+				snprintf(cap_port_str, PORT_STR_SIZE,
+					"%s nq %d",
+					optarg,
+					g_pcap_option.port_cap.queue_no);
 			}
 			port_flg = 1;
 			break;
@@ -384,6 +431,7 @@ spp_pcap_get_core_status(
 		memset(rx_ports, 0x00, sizeof(rx_ports));
 		rx_ports[0].iface_type = g_pcap_option.port_cap.iface_type;
 		rx_ports[0].iface_no   = g_pcap_option.port_cap.iface_no;
+		rx_ports[0].queue_no   = g_pcap_option.port_cap.queue_no;
 		rx_num = 1;
 		strcpy(role_type, "receive");
 	}
@@ -472,7 +520,22 @@ static int file_compression_operation(struct pcap_mng_info *info,
 			iface_type_str = SPPWK_PHY_STR;
 		else
 			iface_type_str = SPPWK_RING_STR;
-		snprintf(info->compress_file_name,
+
+		if (get_port_max_queues(
+			g_pcap_option.port_cap.iface_type,
+			g_pcap_option.port_cap.iface_no) > 1)
+			/* If multi-queue, add queue_no */
+			snprintf(info->compress_file_name,
+					PCAP_FNAME_STRLEN - 1,
+					"spp_pcap.%s.%s%dnq%d.%u.%u.pcap.lz4",
+					g_pcap_option.compress_file_date,
+					iface_type_str,
+					g_pcap_option.port_cap.iface_no,
+					g_pcap_option.port_cap.queue_no,
+					info->thread_no,
+					info->file_no);
+		else
+			snprintf(info->compress_file_name,
 					PCAP_FNAME_STRLEN - 1,
 					"spp_pcap.%s.%s%d.%u.%u.pcap.lz4",
 					g_pcap_option.compress_file_date,
@@ -527,7 +590,22 @@ static int file_compression_operation(struct pcap_mng_info *info,
 			iface_type_str = SPPWK_PHY_STR;
 		else
 			iface_type_str = SPPWK_RING_STR;
-		snprintf(info->compress_file_name,
+
+		if (get_port_max_queues(
+			g_pcap_option.port_cap.iface_type,
+			g_pcap_option.port_cap.iface_no) > 1)
+			/* If multi-queue, add queue_no */
+			snprintf(info->compress_file_name,
+					PCAP_FNAME_STRLEN - 1,
+					"spp_pcap.%s.%s%dnq%d.%u.%u.pcap.lz4",
+					g_pcap_option.compress_file_date,
+					iface_type_str,
+					g_pcap_option.port_cap.iface_no,
+					g_pcap_option.port_cap.queue_no,
+					info->thread_no,
+					info->file_no);
+		else
+			snprintf(info->compress_file_name,
 					PCAP_FNAME_STRLEN - 1,
 					"spp_pcap.%s.%s%d.%u.%u.pcap.lz4",
 					g_pcap_option.compress_file_date,
@@ -773,7 +851,8 @@ static int pcap_proc_receive(int lcore_id)
 	nb_rx = sppwk_eth_ring_stats_rx_burst(rx->ethdev_port_id,
 			rx->iface_type, rx->iface_no, 0, bufs, MAX_PCAP_BURST);
 #else
-	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, 0, bufs, MAX_PCAP_BURST);
+	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, rx->queue_no, bufs,
+			MAX_PCAP_BURST);
 #endif
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
@@ -992,7 +1071,8 @@ main(int argc, char *argv[])
 		struct sppwk_port_info *port_cap = &g_pcap_option.port_cap;
 		struct sppwk_port_info *port_info = get_iface_info(
 						port_cap->iface_type,
-						port_cap->iface_no);
+						port_cap->iface_no,
+						port_cap->queue_no);
 		if (port_info == NULL) {
 			RTE_LOG(ERR, SPP_PCAP, "caputre port undefined.\n");
 			break;

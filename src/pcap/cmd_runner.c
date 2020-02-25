@@ -398,7 +398,8 @@ append_port_entry(char **output, const struct sppwk_port_idx *port,
 		return SPPWK_RET_NG;
 	}
 
-	sppwk_port_uid(port_str, port->iface_type, port->iface_no);
+	sppwk_port_uid(port_str, port->iface_type, port->iface_no,
+			port->queue_no);
 	ret = append_json_str_value("port", &tmp_buff, port_str);
 	if (unlikely(ret < SPPWK_RET_OK))
 		return SPPWK_RET_NG;

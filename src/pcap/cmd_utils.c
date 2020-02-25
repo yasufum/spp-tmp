@@ -10,6 +10,7 @@
 
 #include "cmd_utils.h"
 #include "shared/secondary/return_codes.h"
+#include "shared/common.h"
 
 #define RTE_LOGTYPE_PCAP_UTILS RTE_LOGTYPE_USER2
 
@@ -149,13 +150,13 @@ stop_process(int signal)
  * It returns NULL value if given type is invalid.
  */
 struct sppwk_port_info *
-get_iface_info(enum port_type iface_type, int iface_no)
+get_iface_info(enum port_type iface_type, int iface_no, int queue_no)
 {
 	struct iface_info *iface_info = g_mng_data_addr.p_iface_info;
 
 	switch (iface_type) {
 	case PHY:
-		return &iface_info->phy[iface_no];
+		return &iface_info->phy[iface_no][queue_no];
 	case RING:
 		return &iface_info->ring[iface_no];
 	default:
@@ -172,16 +173,27 @@ static void
 init_iface_info(void)
 {
 	int port_cnt;  /* increment ether ports */
+	int queue_cnt;  /* increment queues per port */
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
 	memset(p_iface_info, 0x00, sizeof(struct iface_info));
 	for (port_cnt = 0; port_cnt < RTE_MAX_ETHPORTS; port_cnt++) {
-		p_iface_info->phy[port_cnt].iface_type = UNDEF;
-		p_iface_info->phy[port_cnt].iface_no   = port_cnt;
-		p_iface_info->phy[port_cnt].ethdev_port_id  = -1;
-		p_iface_info->phy[port_cnt].cls_attrs.vlantag.vid =
-				ETH_VLAN_ID_MAX;
+		for (queue_cnt = 0; queue_cnt < RTE_MAX_QUEUES_PER_PORT;
+				queue_cnt++) {
+			p_iface_info->phy[port_cnt][queue_cnt].iface_type =
+					UNDEF;
+			p_iface_info->phy[port_cnt][queue_cnt].iface_no =
+					port_cnt;
+			p_iface_info->phy[port_cnt][queue_cnt].queue_no =
+					queue_cnt;
+			p_iface_info->phy[port_cnt][queue_cnt]
+					.ethdev_port_id = -1;
+			p_iface_info->phy[port_cnt][queue_cnt]
+					.cls_attrs.vlantag.vid =
+					ETH_VLAN_ID_MAX;
+		}
 		p_iface_info->ring[port_cnt].iface_type = UNDEF;
 		p_iface_info->ring[port_cnt].iface_no   = port_cnt;
+		p_iface_info->ring[port_cnt].queue_no   = DEFAULT_QUEUE_ID;
 		p_iface_info->ring[port_cnt].ethdev_port_id  = -1;
 		p_iface_info->ring[port_cnt].cls_attrs.vlantag.vid =
 				ETH_VLAN_ID_MAX;
@@ -206,7 +218,7 @@ static int
 init_host_port_info(void)
 {
 	int port_type, port_id;
-	int i, ret;
+	int i, ret, queue_id;
 	int nof_phys = 0;
 	char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
 	struct iface_info *p_iface_info = g_mng_data_addr.p_iface_info;
@@ -227,8 +239,13 @@ init_host_port_info(void)
 
 		switch (port_type) {
 		case PHY:
-			p_iface_info->phy[port_id].iface_type = port_type;
-			p_iface_info->phy[port_id].ethdev_port_id = port_id;
+			for (queue_id = 0; queue_id < RTE_MAX_QUEUES_PER_PORT;
+					queue_id++) {
+				p_iface_info->phy[port_id][queue_id]
+						.iface_type = port_type;
+				p_iface_info->phy[port_id][queue_id]
+						.ethdev_port_id = port_id;
+			}
 			break;
 		case RING:
 			p_iface_info->ring[port_id].iface_type = port_type;
@@ -263,9 +280,11 @@ init_mng_data(void)
  * Generate a formatted string of combination from interface type and
  * number and assign to given 'port'
  */
-int sppwk_port_uid(char *port, enum port_type iface_type, int iface_no)
+int sppwk_port_uid(char *port, enum port_type iface_type, int iface_no,
+		int queue_no)
 {
 	const char *iface_type_str;
+	int max_queue;
 
 	switch (iface_type) {
 	case PHY:
@@ -278,7 +297,15 @@ int sppwk_port_uid(char *port, enum port_type iface_type, int iface_no)
 		return SPPWK_RET_NG;
 	}
 
-	sprintf(port, "%s:%d", iface_type_str, iface_no);
+	max_queue = get_port_max_queues(iface_type, iface_no);
+	if (unlikely(max_queue == SPPWK_RET_NG))
+		return SPPWK_RET_NG;
+
+	if (max_queue <= 1)
+		sprintf(port, "%s:%d", iface_type_str, iface_no);
+	else
+		sprintf(port, "%s:%d nq %d",
+			iface_type_str, iface_no, queue_no);
 
 	return SPPWK_RET_OK;
 }
@@ -318,4 +345,26 @@ void spp_get_mng_data_addr(struct iface_info **iface_p,
 	if (capture_status_p != NULL)
 		*capture_status_p = g_mng_data_addr.p_capture_status;
 
+}
+
+/* Returns a larger number of queues of RX or TX port as the maximum number */
+int
+get_port_max_queues(const enum port_type iface_type, int iface_no)
+{
+	if (unlikely(iface_no > RTE_MAX_ETHPORTS) || unlikely(iface_no < 0))
+		return SPPWK_RET_NG;
+
+	if (iface_type != PHY)
+		return 1;
+
+	const struct port_info *ports = NULL;
+	const struct rte_memzone *mz;
+	mz = rte_memzone_lookup(MZ_PORT_INFO);
+	ports = mz->addr;
+	int max_q_rx = ports->queue_info[iface_no].rxq;
+	int max_q_tx = ports->queue_info[iface_no].txq;
+	if (max_q_rx > max_q_tx)
+		return max_q_rx;
+	else
+		return max_q_tx;
 }
