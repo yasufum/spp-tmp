@@ -74,8 +74,12 @@ def main():
 
     app_opts = [
         '-v', '/var/run/:/var/run/', '\\',
-        '-v', '/tmp:/tmp', '\\',
-        '--net', 'host', '\\']
+        '-v', '/tmp:/tmp', '\\']
+
+    # Use host network if attaching TAP device to show them on the host.
+    for dev_uid in args.dev_uids.split(','):
+        if 'tap' in dev_uid:
+            app_opts += ['--net', 'host', '\\']
 
     docker_opts = app_helper.setup_docker_opts(
             args, None, app_opts)
@@ -83,9 +87,8 @@ def main():
     # Setup spp primary command.
     spp_cmd = [app_name, '\\']
 
-    eal_opts = app_helper.setup_eal_opts(args, common.SPPC_FILE_PREFIX,
-                                         proc_type='primary',
-                                         is_spp_pri=True)
+    eal_opts = app_helper.setup_eal_opts(args, app_name=None,
+                                         proc_type='primary', is_spp_pri=True)
 
     spp_opts = []
     # Check for other mandatory opitons.

@@ -14,6 +14,9 @@ from lib import app_helper
 from lib import common
 
 
+APP_NAME = 'pktgen'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Launcher for pktgen-dpdk application container")
@@ -92,17 +95,13 @@ def main():
     else:
         wd = '/root/pktgen-dpdk'
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(args, sock_files, wd)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files, None, wd)
 
     # Setup pktgen command
-    pktgen_cmd = ['pktgen', '\\']
+    pktgen_cmd = [APP_NAME, '\\']
 
     # Setup EAL options.
-    if args.name is not None:
-        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
-    else:
-        file_prefix = app_helper.gen_sppc_file_prefix('pktgen')
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
     # Setup matrix for assignment of cores and ports.
     if args.matrix is not None:

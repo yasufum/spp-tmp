@@ -14,6 +14,9 @@ from lib import app_helper
 from lib import common
 
 
+APP_NAME = 'helloworld'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Launcher for l2fwd application container")
@@ -29,7 +32,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    app_name = 'helloworld'
 
     # Container image name such as 'sppc/dpdk-ubuntu:18.04'
     if args.container_image is not None:
@@ -56,15 +58,11 @@ def main():
 
     # Setup helloworld run on container.
     cmd_path = '{0:s}/examples/{2:s}/{1:s}/{2:s}'.format(
-        env.RTE_SDK, env.RTE_TARGET, app_name)
+        env.RTE_SDK, env.RTE_TARGET, APP_NAME)
 
     hello_cmd = [cmd_path, '\\']
 
-    if args.name is not None:
-        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
-    else:
-        file_prefix = app_helper.gen_sppc_file_prefix(app_name)
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
     # No application specific options for helloworld
     hello_opts = []

@@ -15,6 +15,9 @@ from lib import app_helper
 from lib import common
 
 
+APP_NAME = 'testpmd'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Launcher for testpmd application container")
@@ -477,17 +480,13 @@ def main():
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
-    cmd_path = 'testpmd'
+    cmd_path = APP_NAME  # testpmd is included in $PATH on container
 
     # Setup testpmd command.
     testpmd_cmd = [cmd_path, '\\']
 
     # Setup EAL options.
-    if args.name is not None:
-        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
-    else:
-        file_prefix = app_helper.gen_sppc_file_prefix('testpmd')
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
     # Setup testpmd options
     testpmd_opts = []

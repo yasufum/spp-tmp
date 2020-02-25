@@ -159,7 +159,7 @@ def get_mem_opt(args):
     return mem_opt
 
 
-def setup_eal_opts(args, file_prefix, proc_type='auto', is_spp_pri=False,
+def setup_eal_opts(args, app_name=None, proc_type='auto', is_spp_pri=False,
                    hugedir=None):
     core_opt = get_core_opt(args)
     mem_opt = get_mem_opt(args)
@@ -224,6 +224,14 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', is_spp_pri=False,
     if args.single_file_segments is True:
         eal_opts += ['--single-file-segments', '\\']
 
+    # Generate unique --file-prefix value for app container, or use common
+    # value for spp_primary and secondary.
+    if args.name is not None:
+        file_prefix = _gen_sppc_file_prefix(args.name)
+    elif app_name is not None and app_name.__class__ is str:
+        file_prefix = _gen_sppc_file_prefix(app_name)
+    else:
+        file_prefix = common.SPPC_FILE_PREFIX
     eal_opts += [
         '--file-prefix', file_prefix, '\\',
         '--', '\\']
@@ -400,7 +408,7 @@ def cores_to_list(core_opt):
     return res
 
 
-def gen_sppc_file_prefix(app_name):
+def _gen_sppc_file_prefix(app_name):
     """Generate a unique file prefix of DPDK for SPP Container app."""
 
     return 'sppc-{:s}-{:s}'.format(app_name, secrets.token_hex(8))

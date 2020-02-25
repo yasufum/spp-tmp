@@ -65,17 +65,7 @@ def main():
     # Setup spp_nfv command.
     spp_cmd = [app_name, '\\']
 
-    # Do not use 'app_helper.setup_eal_opts()' because spp_nfv does
-    # not use virtio.
-    #core_opt = app_helper.get_core_opt(args)
-    #mem_opt = app_helper.get_mem_opt(args)
-    #eal_opts = [
-    #    core_opt['attr'], core_opt['val'], '\\',
-    #    '-n', str(args.nof_memchan), '\\',
-    #    mem_opt['attr'], mem_opt['val'], '\\',
-    #    '--proc-type', 'secondary', '\\',
-    #    '--', '\\']
-    eal_opts = app_helper.setup_eal_opts(args, common.SPPC_FILE_PREFIX,
+    eal_opts = app_helper.setup_eal_opts(args, app_name=None,
                                          proc_type='secondary')
 
     spp_opts = []

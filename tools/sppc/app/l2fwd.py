@@ -14,6 +14,9 @@ from lib import app_helper
 from lib import common
 
 
+APP_NAME = 'l2fwd'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Launcher for l2fwd application container")
@@ -68,17 +71,13 @@ def main():
         exit()
 
     # Setup l2fwd command run on container.
-    cmd_path = '{0:s}/examples/l2fwd/{1:s}/l2fwd'.format(
-        env.RTE_SDK, env.RTE_TARGET)
+    cmd_path = '{0:s}/examples/{2:s}/{1:s}/{2:s}'.format(
+        env.RTE_SDK, env.RTE_TARGET, APP_NAME)
 
     l2fwd_cmd = [cmd_path, '\\']
 
     # Setup EAL options.
-    if args.name is not None:
-        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
-    else:
-        file_prefix = app_helper.gen_sppc_file_prefix('l2fwd')
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
     # Setup l2fwd options.
     l2fwd_opts = ['-p', args.port_mask, '\\']

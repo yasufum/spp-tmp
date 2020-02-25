@@ -14,6 +14,9 @@ from lib import app_helper
 from lib import common
 
 
+APP_NAME = 'load_balancer'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Launcher for load-balancer application container")
@@ -58,8 +61,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    app_name = 'load_balancer'
-
     # Container image name such as 'sppc/dpdk-ubuntu:18.04'
     if args.container_image is not None:
         container_image = args.container_image
@@ -93,18 +94,14 @@ def main():
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
-    cmd_path = '{0:s}/examples/{1:s}/{2:s}/{1:s}'.format(
-        env.RTE_SDK, app_name, env.RTE_TARGET)
+    cmd_path = '{0:s}/examples/{2:s}/{1:s}/{2:s}'.format(
+        env.RTE_SDK, env.RTE_TARGET, APP_NAME)
 
     # Setup testpmd command.
     lb_cmd = [cmd_path, '\\']
 
     # Setup EAL options.
-    if args.name is not None:
-        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
-    else:
-        file_prefix = app_helper.gen_sppc_file_prefix(app_name)
-    eal_opts = app_helper.setup_eal_opts(args, file_prefix)
+    eal_opts = app_helper.setup_eal_opts(args, APP_NAME)
 
     lb_opts = []
 
