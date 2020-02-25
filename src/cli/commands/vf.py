@@ -206,8 +206,8 @@ class SppVf(object):
 
         To update status of the instance of SppVf, get the status from
         spp-ctl. This method returns the result as a dict. For considering
-        behaviour of spp_vf, it is enough to return worker's name and core
-        IDs as the status, but might need to be update for future updates.
+        behaviour of spp_vf, it is enough to return worker's name, core IDs and
+        ports as the status, but might need to be update for future updates.
 
         # return worker's name and used core IDs, and all of core IDs.
         {
@@ -216,12 +216,13 @@ class SppVf(object):
             {'name': 'mg1', 'core_id': 6},
             ...
           ],
-          'core_ids': [5, 6, 7, ...]
+          'core_ids': [5, 6, 7, ...],
+          'ports': ['phy:0', 'phy:1', ...]
         }
 
         """
 
-        status = {'workers': [], 'core_ids': []}
+        status = {'workers': [], 'core_ids': [], 'ports': []}
         res = self.spp_ctl_cli.get('vfs/%d' % self.sec_id)
         if res is not None:
             if res.status_code == 200:
@@ -235,6 +236,9 @@ class SppVf(object):
                                         {'name': wk['name'],
                                             'core_id': wk['core']})
                             status['core_ids'].append(wk['core'])
+
+                if 'ports' in json_obj:
+                    status['ports'] = json_obj.get('ports')
 
         return status
 
@@ -290,82 +294,136 @@ class SppVf(object):
                     print('Error: unknown response.')
 
     def _run_port(self, params):
-        req_params = None
-        if len(params) == 4:
-            if params[0] == 'add':
-                action = 'attach'
-            elif params[0] == 'del':
-                action = 'detach'
-            else:
-                print('Error: Invalid action.')
-                return None
+        params_index = 0
+        req_params = {}
+        vlan_params = {}
+        name = None
+        flg_mq = False
 
-            req_params = {'action': action, 'port': params[1],
-                          'dir': params[2],
-                          'vlan': {'operation': 'none',
-                                   'id': 'none',
-                                   'pcp': 'none'}}
-
-        elif len(params) == 5:  # delete vlan with 'port add' command
-            # TODO(yasufum) Syntax for deleting vlan should be modified
-            #               because deleting with 'port add' is terrible!
-            action = 'attach'
-            req_params = {'action': action, 'port': params[1],
-                          'dir': params[2],
-                          'vlan': {'operation': 'del',
-                                   'id': 'none',
-                                   'pcp': 'none'}}
-
-        elif len(params) == 7:
-            action = 'attach'
-            if params[4] == 'add_vlantag':
-                op = 'add'
-            elif params[4] == 'del_vlantag':
-                op = 'del'
-            req_params = {'action': action, 'port': params[1],
-                          'dir': params[2],
-                          'vlan': {'operation': op, 'id': int(params[5]),
-                                   'pcp': int(params[6])}}
-        else:
-            print('Error: Invalid syntax.')
-
-        if req_params is not None:
-            res = self.spp_ctl_cli.put('vfs/%d/components/%s/ports'
-                                       % (self.sec_id, params[3]), req_params)
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print("Succeeded to %s port" % params[0])
-                elif res.status_code in error_codes:
-                    pass
+        while params_index < len(params):
+            if params_index == 0:
+                if params[params_index] == 'add':
+                    req_params["action"] = 'attach'
+                elif params[params_index] == 'del':
+                    req_params["action"] = 'detach'
                 else:
-                    print('Error: unknown response.')
+                    print('Error: Invalid action.')
+                    return None
+
+            elif params_index == 1:
+                req_params["port"] = params[params_index]
+
+                # Check Multi queue
+                if params_index + 2 < len(params):
+                    if params[params_index + 1] == "nq":
+                        params_index += 2
+                        req_params["port"] += "nq" + params[params_index]
+                        flg_mq = True
+                else:
+                    print("Error: Not enough parameters.")
+                    return None
+
+            elif ((params_index == 2 and flg_mq is False) or
+                    (params_index == 4 and flg_mq is True)):
+                req_params["dir"] = params[params_index]
+
+            elif ((params_index == 3 and flg_mq is False) or
+                    (params_index == 5 and flg_mq is True)):
+                name = params[params_index]
+
+            elif ((params_index == 4 and flg_mq is False) or
+                    (params_index == 6 and flg_mq is True)):
+                if params[params_index] == "add_vlantag":
+                    vlan_params["operation"] = "add"
+                elif params[params_index] == "del_vlantag":
+                    vlan_params["operation"] = "del"
+                else:
+                    print('Error: vlantag is Only add_vlantag or del_vlantag.')
+                    return None
+
+            elif ((params_index == 5 and flg_mq is False) or
+                    (params_index == 7 and flg_mq is True)):
+                try:
+                    vlan_params["id"] = int(params[params_index])
+                except Exception as _:
+                    print('Error: vid is not a number.')
+                    return None
+
+            elif ((params_index == 6 and flg_mq is False) or
+                    (params_index == 8 and flg_mq is True)):
+                try:
+                    vlan_params["pcp"] = int(params[params_index])
+                except Exception as _:
+                    print('Error: pcp is not a number.')
+                    return None
+
+            params_index += 1
+
+        req_params["vlan"] = vlan_params
+        res = self.spp_ctl_cli.put('vfs/%d/components/%s/ports'
+                                   % (self.sec_id, name), req_params)
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print("Succeeded to %s port" % params[0])
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
 
     def _run_cls_table(self, params):
-        req_params = None
-        if len(params) == 4:
-            req_params = {'action': params[0], 'type': params[1],
-                          'mac_address': params[2], 'port': params[3]}
+        params_index = 0
+        req_params = {}
+        flg_vlan = False
 
-        elif len(params) == 5:
-            req_params = {'action': params[0], 'type': params[1],
-                          'vlan': params[2], 'mac_address': params[3],
-                          'port': params[4]}
-        else:
-            print('Error: Invalid syntax.')
+        # The list elements are:
+        #       action, type, vlan, mac,  port
+        values = [None, None, None, None, None]
+        values_index = 0
 
-        if req_params is not None:
-            req = 'vfs/%d/classifier_table' % self.sec_id
-            res = self.spp_ctl_cli.put(req, req_params)
+        while params_index < len(params):
 
-            if res is not None:
-                error_codes = self.spp_ctl_cli.rest_common_error_codes
-                if res.status_code == 204:
-                    print("Succeeded to %s" % params[0])
-                elif res.status_code in error_codes:
-                    pass
-                else:
-                    print('Error: unknown response.')
+            if params_index == 0:
+                req_params["action"] = params[params_index]
+
+            elif params_index == 1:
+                req_params["type"] = params[params_index]
+                if (req_params["type"] != "vlan" and
+                        req_params["type"] != "mac"):
+                    print("Error: Type is only vlan or mac")
+                    return None
+
+            elif params_index == 2 and req_params["type"] == "vlan":
+                req_params["vlan"] = params[params_index]
+                flg_vlan = True
+
+            elif ((params_index == 2 and flg_vlan is False) or
+                    (params_index == 3 and flg_vlan is True)):
+                req_params["mac_address"] = params[params_index]
+
+            elif ((params_index == 3 and flg_vlan is False) or
+                    (params_index == 4 and flg_vlan is True)):
+                req_params["port"] = params[params_index]
+
+                # Check Multi queue
+                if params_index + 2 < len(params):
+                    if params[params_index + 1] == "nq":
+                        params_index += 2
+                        req_params["port"] += "nq" + params[params_index]
+
+            params_index += 1
+
+        req = 'vfs/%d/classifier_table' % self.sec_id
+        res = self.spp_ctl_cli.put(req, req_params)
+
+        if res is not None:
+            error_codes = self.spp_ctl_cli.rest_common_error_codes
+            if res.status_code == 204:
+                print("Succeeded to %s" % params[0])
+            elif res.status_code in error_codes:
+                pass
+            else:
+                print('Error: unknown response.')
 
     def _run_exit(self):
         """Run `exit` command."""
@@ -411,96 +469,180 @@ class SppVf(object):
             return res
 
     def _compl_port(self, sub_tokens):
-        if len(sub_tokens) < 9:
-            subsub_cmds = ['add', 'del']
-            res = []
-            if len(sub_tokens) == 2:
-                for kw in subsub_cmds:
-                    if kw.startswith(sub_tokens[1]):
-                        res.append(kw)
-            elif len(sub_tokens) == 3:
-                if sub_tokens[1] in subsub_cmds:
-                    if 'RES_UID'.startswith(sub_tokens[2]):
-                        res.append('RES_UID')
-            elif len(sub_tokens) == 4:
-                if sub_tokens[1] in subsub_cmds:
-                    for direction in ['rx', 'tx']:
-                        if direction.startswith(sub_tokens[3]):
-                            res.append(direction)
-            elif len(sub_tokens) == 5:
-                if sub_tokens[1] in subsub_cmds:
-                    for kw in self.worker_names:
-                        if kw.startswith(sub_tokens[4]):
-                            res.append(kw)
-            elif len(sub_tokens) == 6:
-                if sub_tokens[1] == 'add':
-                    for kw in ['add_vlantag', 'del_vlantag']:
-                        if kw.startswith(sub_tokens[5]):
-                            res.append(kw)
-            elif len(sub_tokens) == 7:
-                if sub_tokens[1] == 'add' and sub_tokens[5] == 'add_vlantag':
-                    if 'VID'.startswith(sub_tokens[6]):
-                        res.append('VID')
-            elif len(sub_tokens) == 8:
-                if sub_tokens[1] == 'add' and sub_tokens[5] == 'add_vlantag':
-                    if 'PCP'.startswith(sub_tokens[7]):
-                        res.append('PCP')
-            return res
+        res = []
+        index = 0
+
+        # compl_phase "add_del"  : candidate is add or del
+        # compl_phase "res_uid"  : candidate is RES_UID
+        # compl_phase "nq"       : candidate is nq
+        # compl_phase "queue_no" : candidate is queue no
+        # compl_phase "dir"      : candidate is DIR
+        # compl_phase "name"     : candidate is NAME
+        # compl_phase "vlan_tag" : candidate is vlan tag
+        # compl_phase "vid"      : candidate is vid
+        # compl_phase "pcp"      : candidate is pcp
+        # compl_phase None       : candidate is None
+        compl_phase = "add_del"
+        add_or_del = None
+
+        while index < len(sub_tokens):
+            if compl_phase == "nq":
+                queue_no_list = self._get_candidate_phy_queue_no(
+                    sub_tokens[index - 1])
+
+                if queue_no_list is None:
+                    compl_phase = "dir"
+
+            if ((compl_phase == "add_del") and
+                    (sub_tokens[index - 1] == "port")):
+                res = ["add", "del"]
+                compl_phase = "res_uid"
+
+            elif ((compl_phase == "res_uid") and
+                    (sub_tokens[index - 1] == "add" or
+                     sub_tokens[index - 1] == "del")):
+                res = ["RES_UID"]
+                compl_phase = "nq"
+                add_or_del = sub_tokens[index - 1]
+
+            elif compl_phase == "nq":
+                res = ["nq"]
+                compl_phase = "queue_no"
+
+            elif compl_phase == "queue_no":
+                res = queue_no_list
+                compl_phase = "dir"
+
+            elif compl_phase == "dir":
+                res = ["rx", "tx"]
+                compl_phase = "name"
+
+            elif compl_phase == "name":
+                res = ["NAME"]
+                if add_or_del == "add":
+                    compl_phase = "vlan_tag"
+                else:
+                    compl_phase = None
+
+            elif compl_phase == "vlan_tag":
+                res = ["add_vlantag", "del_vlantag"]
+                compl_phase = "vid"
+
+            elif (compl_phase == "vid" and
+                  sub_tokens[index - 1] == "add_vlantag"):
+                res = ["VID"]
+                compl_phase = "pcp"
+
+            elif compl_phase == "pcp":
+                res = ["PCP"]
+                compl_phase = None
+
+            else:
+                res = []
+
+            index += 1
+
+        res = [p for p in res
+               if p.startswith(sub_tokens[len(sub_tokens) - 1])]
+
+        return res
+
+    def _get_candidate_phy_queue_no(self, res_uid):
+        """Get phy queue_no candidate.
+        If res_uid is phy and multi-queue, return queue_no in list type.
+        Otherwise returns None.
+        """
+
+        try:
+            port, _ = res_uid.split(":")
+        except Exception as _:
+            return None
+
+        if port != "phy":
+            return None
+
+        status = self._get_status(self.sec_id)
+
+        queue_no_list = []
+        for port in status["ports"]:
+            if not port.startswith(res_uid):
+                continue
+
+            try:
+                _, queue_no = port.split("nq")
+            except Exception as _:
+                continue
+
+            queue_no_list.append(queue_no.strip(" "))
+
+        if len(queue_no_list) == 0:
+            return None
+
+        return queue_no_list
 
     def _compl_cls_table(self, sub_tokens):
-        if len(sub_tokens) < 7:
-            subsub_cmds = ['add', 'del']
-            res = []
+        res = []
+        index = 0
 
-            if len(sub_tokens) == 2:
-                for kw in subsub_cmds:
-                    if kw.startswith(sub_tokens[1]):
-                        res.append(kw)
+        # compl_phase "add_del"  : candidate is add or del
+        # compl_phase "vlan_mac" : candidate is vlan or mac
+        # compl_phase "vid"      : candidate is VID
+        # compl_phase "mac_addr" : candidate is MAC_ADDR or default
+        # compl_phase "res_uid"  : candidate is RES_UID
+        # compl_phase "nq"       : candidate is nq
+        # compl_phase "queue_no" : candidate is queue_no
+        # compl_phase None : candidate is None
+        compl_phase = "add_del"
 
-            elif len(sub_tokens) == 3:
-                if sub_tokens[1] in subsub_cmds:
-                    for kw in ['mac', 'vlan']:
-                        if kw.startswith(sub_tokens[2]):
-                            res.append(kw)
+        while index < len(sub_tokens):
 
-            elif len(sub_tokens) == 4:
-                if sub_tokens[1] == 'add':
-                    if sub_tokens[2] == 'mac':
-                        if 'MAC_ADDR'.startswith(sub_tokens[3]):
-                            res.append('MAC_ADDR')
-                    elif sub_tokens[2] == 'vlan':
-                        if 'VID'.startswith('VID'):
-                            res.append('VID')
-                elif sub_tokens[1] == 'del':
-                    if sub_tokens[2] == 'mac':
-                        if 'MAC_ADDR'.startswith(sub_tokens[3]):
-                            res.append('MAC_ADDR')
-                    if sub_tokens[2] == 'vlan':
-                        if 'VID'.startswith(sub_tokens[3]):
-                                res.append('VID')
+            if compl_phase == "vid" and sub_tokens[index - 1] == "mac":
+                compl_phase = "mac_addr"
 
-            elif len(sub_tokens) == 5:
-                if sub_tokens[1] == 'add':
-                    if sub_tokens[2] == 'mac':
-                        if 'RES_UID'.startswith(sub_tokens[4]):
-                            res.append('RES_UID')
-                    elif sub_tokens[2] == 'vlan':
-                        if 'MAC_ADDR'.startswith(sub_tokens[4]):
-                            res.append('MAC_ADDR')
-                if sub_tokens[1] == 'del':
-                    if sub_tokens[2] == 'mac':
-                        if 'RES_UID'.startswith(sub_tokens[4]):
-                            res.append('RES_UID')
-                    elif sub_tokens[2] == 'vlan':
-                        if 'MAC_ADDR'.startswith(sub_tokens[4]):
-                            res.append('MAC_ADDR')
+            if compl_phase == "nq":
+                queue_no_list = self._get_candidate_phy_queue_no(
+                    sub_tokens[index - 1])
+                if queue_no_list is None:
+                    compl_phase = None
 
-            elif len(sub_tokens) == 6:
-                if sub_tokens[1] in subsub_cmds and \
-                        sub_tokens[2] == 'vlan':
-                            if 'RES_UID'.startswith(sub_tokens[5]):
-                                res.append('RES_UID')
-            return res
+            if ((compl_phase == "add_del") and
+                    (sub_tokens[index - 1] == "classifier_table")):
+                res = ["add", "del"]
+                compl_phase = "vlan_mac"
+
+            elif compl_phase == "vlan_mac":
+                res = ["vlan", "mac"]
+                compl_phase = "vid"
+
+            elif compl_phase == "vid" and sub_tokens[index - 1] == "vlan":
+                res = ["VID"]
+                compl_phase = "mac_addr"
+
+            elif compl_phase == "mac_addr":
+                res = ["MAC_ADDR", "default"]
+                compl_phase = "res_uid"
+
+            elif compl_phase == "res_uid":
+                res = ["RES_UID"]
+                compl_phase = "nq"
+
+            elif compl_phase == "nq":
+                res = ["nq"]
+                compl_phase = "queue_no"
+
+            elif compl_phase == "queue_no":
+                res = queue_no_list
+                compl_phase = None
+
+            else:
+                res = []
+
+            index += 1
+
+        res = [p for p in res
+               if p.startswith(sub_tokens[len(sub_tokens) - 1])]
+
+        return res
 
     @classmethod
     def help(cls):
