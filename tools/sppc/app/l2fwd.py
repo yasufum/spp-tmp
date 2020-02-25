@@ -45,12 +45,17 @@ def main():
     # Check for other mandatory opitons.
     if args.port_mask is None:
         common.error_exit('--port-mask')
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
 
     # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
+
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
@@ -64,24 +69,25 @@ def main():
         exit()
 
     # Setup l2fwd command run on container.
-    cmd_path = '%s/examples/l2fwd/%s/l2fwd' % (
+    cmd_path = '{}/examples/l2fwd/{}/l2fwd'.format(
         env.RTE_SDK, env.RTE_TARGET)
 
     l2fwd_cmd = [cmd_path, '\\']
 
-    file_prefix = 'spp-l2fwd-container%d' % dev_ids_list[0]
+    file_prefix = app_helper.gen_sppc_file_prefix('l2fwd')
+
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
     l2fwd_opts = ['-p', args.port_mask, '\\']
 
-    # Parse vhost device IDs and Check the number of devices is
-    # sufficient for port mask.
-    if app_helper.is_sufficient_dev_ids(
-            args.dev_ids, args.port_mask) is not True:
-        print("Error: Cannot reserve ports '%s (= 0b%s)' on '%s'." % (
+    # Check given number of ports is enough for portmask.
+    if (args.port_mask is None) or (args.dev_uids is None):
+        pass
+    elif app_helper.is_sufficient_ports(args) is not True:
+        print("Error: Not enough ports, {} devs for '{}(=0b{})'.".format(
+            len(args.dev_uids.split(',')),
             args.port_mask,
-            format(int(args.port_mask, 16), 'b'),
-            args.dev_ids))
+            format(int(args.port_mask, 16), 'b')))
         exit()
 
     cmds = docker_cmd + docker_opts + l2fwd_cmd + eal_opts + l2fwd_opts
