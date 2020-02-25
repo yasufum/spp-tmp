@@ -209,14 +209,14 @@ def main():
         if os.path.exists(args.rule_ipv4):
             l3fwd_opts += ['--rule_ipv4', '"{:s}"'.format(args.rule_ipv4),
                            '\\']
-        else:
+        elif args.dry_run is not True:
             print('Error: "{}" does not exist'.format(args.rule_ipv4))
             exit()
     if args.rule_ipv6 is not None:
         if os.path.exists(args.rule_ipv6):
             l3fwd_opts += ['--rule_ipv6', '"{:s}"'.format(args.rule_ipv6),
                            '\\']
-        else:
+        elif args.dry_run is not True:
             print('Error: "{}" does not exist'.format(args.rule_ipv6))
             exit()
 
