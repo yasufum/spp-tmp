@@ -19,17 +19,6 @@ using expensive servers.
 
 This chapter describes examples of simple use cases of SPP container.
 
-.. note::
-
-    As described in
-    :ref:`sppc_gs_build_docker_imgs`
-    section, you had better to use Ubuntu 16.04 with
-    ``--dist-ver`` option because SPP container is not stable for running
-    on the latest version.
-
-    Please notice that examples in this section does not use ``dist-ver``
-    options explicitly for simplicity.
-
 
 .. _sppc_usecases_test_vhost_single:
 

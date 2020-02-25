@@ -29,18 +29,6 @@ inside a container.
     ---- testpmd.py
 
 
-.. note::
-
-    As described in
-    :ref:`sppc_gs_build_docker_imgs`
-    section, you had better to use Ubuntu 16.04 with
-    ``--dist-ver`` option because SPP container is not stable for running
-    on the latest version.
-
-    Please notice that examples in this section does not use ``dist-ver``
-    options explicitly for simplicity.
-
-
 .. _sppc_appl_setup:
 
 Setup
@@ -816,10 +804,10 @@ and three vhost interfaces.
 
     $ cd /path/to/spp/tools/sppc
     $ python3 app/pktgen.py -l 8-14 -d vhost:1,vhost:2,vhost:3 \
-      -fg --dist-ver 16.04
+      -fg
      sudo docker run \
      ...
-     sppc/pktgen-ubuntu:16.04 \
+     sppc/pktgen-ubuntu:latest \
      /root/dpdk/../pktgen-dpdk/app/x86_64-native-linuxapp-gcc/pktgen \
      -l 8-14 \
      ...
@@ -1018,8 +1006,8 @@ and kill it.
 
     $ docker ps
     CONTAINER ID  IMAGE                   ...  NAMES
-    80ce3711b85e  sppc/dpdk-ubuntu:16.04  ...  competent_galileo  # kill it
-    281aa8f236ef  sppc/spp-ubuntu:16.04   ...  youthful_mcnulty
+    80ce3711b85e  sppc/dpdk-ubuntu:latest ...  competent_galileo  # kill it
+    281aa8f236ef  sppc/spp-ubuntu:latest  ...  youthful_mcnulty
     $ docker kill competent_galileo
 
 

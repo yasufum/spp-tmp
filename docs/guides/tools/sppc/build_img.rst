@@ -19,14 +19,15 @@ with DPDK 18.11 as following.
 .. code-block:: console
 
     $ cd /path/to/spp/tools/sppc
-    $ python build/main.py --dpdk-branch v18.11 \
+    $ python3 build/main.py -t spp \
+      --dpdk-branch v18.11 \
       --spp-repo https://github.com/your/spp.git
 
 Refer all of options running with ``-h`` option.
 
 .. code-block:: console
 
-    $ python build/main.py -h
+    $ python3 build/main.py -h
     usage: main.py [-h] [-t TARGET] [-ci CONTAINER_IMAGE]
                    [--dist-name DIST_NAME] [--dist-ver DIST_VER]
                    [--dpdk-repo DPDK_REPO] [--dpdk-branch DPDK_BRANCH]
@@ -74,8 +75,8 @@ Version Control for Images
 
 SPP container provides version control as combination of
 target name, Linux distribution name and version.
-Built images are referred such as ``sppc/dpdk-ubuntu:latest`` or
-``sppc/spp-ubuntu:16.04``.
+Built images are referred such as ``sppc/dpdk-ubuntu:latest``,
+``sppc/spp-ubuntu:16.04`` or so.
 ``sppc`` is just a prefix to indicate an image of SPP container.
 
 Build script decides a name from given options or default values.
@@ -85,10 +86,10 @@ name and version, it uses default values ``ubuntu`` and ``latest``.
 .. code-block:: console
 
     # build 'sppc/dpdk-ubuntu:latest'
-    $ python build/main.py -t dpdk
+    $ python3 build/main.py -t dpdk
 
     # build 'sppc/spp-ubuntu:16.04'
-    $ python build/main.py -t spp --dist-ver 16.04
+    $ python3 build/main.py -t spp --dist-ver 16.04
 
 .. note::
 
@@ -104,28 +105,28 @@ name and version, it uses default values ``ubuntu`` and ``latest``.
 
 
 App container scripts also understand this naming rule.
-For launching ``testpmd`` on Ubuntu 16.04,
+For launching ``testpmd`` on Ubuntu 18.04,
 simply give ``--dist-ver`` to indicate the version and other options
 for ``testpmd`` itself.
 
 .. code-block:: console
 
-    # launch testpmd on 'sppc/dpdk-ubuntu:16.04'
-    $ python app/testpmd.py --dist-ver 16.04 -l 3-4 ...
+    # launch testpmd on 'sppc/dpdk-ubuntu:18.04'
+    $ python3 app/testpmd.py --dist-ver 18.04 -l 3-4 ...
 
 But, how can we build images for different versions of DPDK,
-such as 17.11 and 18.05, on the same distribution?
+such as 18.11 and 19.11, on the same distribution?
 In this case, you can use ``--container-image`` or ``-ci`` option for
 using any of names. It is also referred from app container scripts.
 
 .. code-block:: console
 
     # build image with arbitrary name
-    $ python build/main.py -t dpdk -ci sppc/dpdk17.11-ubuntu:latest \
-      --dpdk-branch v17.11
+    $ python3 build/main.py -t dpdk -ci sppc/dpdk18.11-ubuntu:latest \
+      --dpdk-branch v18.11
 
     # launch testpmd with '-ci'
-    $ python app/testpmd.py -ci sppc/dpdk17.11-ubuntu:latest -l 3-4 ...
+    $ python3 app/testpmd.py -ci sppc/dpdk18.11-ubuntu:latest -l 3-4 ...
 
 
 .. _sppc_build_img_dockerfiles:
@@ -177,21 +178,20 @@ script. However, building suricata requires few additional few steps.
 
 
 First, build an image with ``main.py`` script as similar to other apps.
-In this example, use DPDK v18.11 and Ubuntu 16.04.
+In this example, use DPDK v18.11 and Ubuntu 18.04.
 
 .. code-block:: console
 
-    $ python build/main.py -t suricata --dpdk-branch v18.11 --dist-ver 16.04
+    $ python3 build/main.py -t suricata --dpdk-branch v18.11 --dist-ver 18.04
 
 After build is completed, you can find image named as
-``sppc/suricata-ubuntu:16.04`` from ``docker images``.
+``sppc/suricata-ubuntu:18.04`` from ``docker images``.
 Run bash command with this image, and execute an installer script in home
 directory which is created while building.
 
 .. code-block:: console
 
-    sppc/suricata-ubuntu  16.04 ...
-    $ docker run -it sppc/suricata-ubuntu:16.04 /bin/bash
+    $ docker run -it sppc/suricata-ubuntu:18.04 /bin/bash
     # ./install_suricata.sh
 
 It clones and compiles suricata under home directory. You can find
@@ -204,14 +204,14 @@ with ``docker commit`` command.
 
 Logout and create a new docker image with ``docker commit`` image's
 container ID. In this example, new image is named as
-`sppc/suricata-ubuntu2:16.04`.
+`sppc/suricata-ubuntu2:18.04`.
 
 .. code-block:: console
 
     # exit
     $ docker ps -a
-    CONTAINER_ID  sppc/suricata-ubuntu:16.04  "/bin/bash"  3 minutes ...
-    $ docker commit CONTAINER_ID sppc/suricata-ubuntu2:16.04
+    CONTAINER_ID  sppc/suricata-ubuntu:18.04  "/bin/bash"  3 minutes ...
+    $ docker commit CONTAINER_ID sppc/suricata-ubuntu2:18.04
 
 You can run compiled suricata with the new image with docker as following,
 or app container launcher with specific options as described in.
@@ -219,7 +219,7 @@ or app container launcher with specific options as described in.
 
 .. code-block:: console
 
-    $ docker run -it sppc/suricata-ubuntu:16.04 /bin/bash
+    $ docker run -it sppc/suricata-ubuntu:18.04 /bin/bash
     # suricata --build-info
 
 

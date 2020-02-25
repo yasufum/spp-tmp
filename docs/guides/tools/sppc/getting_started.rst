@@ -53,21 +53,19 @@ for the latest DPDK, pktgen or SPP.
 
     # Terminal 1
     $ cd /path/to/spp/tools/sppc
-    $ python build/main.py -t dpdk
-    $ python build/main.py -t pktgen
-    $ python build/main.py -t spp
+    $ python3 build/main.py -t dpdk
+    $ python3 build/main.py -t pktgen
+    $ python3 build/main.py -t spp
 
 Of course DPDK is required from pktgen and SPP, and it causes a
 problem of compatibility between them sometimes.
-At the time writing this document, SPP v18.02 is not compatible with
-the latest DPDK v18.05 and it is failed to compile.
 In this case, you should build SPP with ``--dpdk-branch`` option to tell
 the version of DPDK explicitly.
 
 .. code-block:: console
 
     # Terminal 1
-    $ python build/main.py -t spp --dpdk-branch v18.02
+    $ python3 build/main.py -t spp --dpdk-branch v19.11
 
 You can find all of options by ``build/main.py -h``.
 
@@ -105,13 +103,13 @@ All of images are referred from ``docker images`` command.
     .. code-block:: console
 
         # latest DPDK on latest Ubuntu
-        $ python build/main.py -t dpdk --dist-name ubuntu --dist-ver latest
+        $ python3 build/main.py -t dpdk --dist-name ubuntu --dist-ver latest
 
         # it is also the same
-        $ python build/main.py -t dpdk
+        $ python3 build/main.py -t dpdk
 
-        # or use Ubuntu 16.04
-        $ python build/main.py -t dpdk --dist-ver 16.04
+        # or use Ubuntu 18.04
+        $ python3 build/main.py -t dpdk --dist-ver 18.04
 
 
     Version of other than distro is also configurable by specifying a branch
@@ -119,10 +117,10 @@ All of images are referred from ``docker images`` command.
 
     .. code-block:: console
 
-        $ python build/main.py -t dpdk --dist-ver 16.04 --dpdk-branch v18.02
-        $ python build/main.py -t pktgen --dist-ver 16.04 \
+        $ python3 build/main.py -t dpdk --dist-ver 18.04 --dpdk-branch v19.11
+        $ python3 build/main.py -t pktgen --dist-ver 18.04 \
           --dpdk-branch v18.02 --pktgen-branch pktgen-3.4.9
-        $ python build/main.py -t spp --dist-ver 16.04 --dpdk-branch v18.02
+        $ python3 build/main.py -t spp --dist-ver 18.04 --dpdk-branch v19.11
 
 
 .. _sppc_gs_launch_containers:
@@ -175,7 +173,7 @@ processes.
 
     # Terminal 2
     $ cd /path/to/spp
-    $ python src/spp.py
+    $ python3 src/spp.py
 
 
 SPP Primary Container
@@ -189,7 +187,7 @@ one core and two physical ports in terminal 3.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ python app/spp-primary.py -l 0 -p 0x03
+    $ python3 app/spp-primary.py -l 0 -p 0x03
 
 
 SPP Secondary Container
@@ -204,7 +202,7 @@ It is also run in background mode.
 .. code-block:: console
 
     # Terminal 3
-    $ python app/spp-nfv.py -i 1 -l 1-2
+    $ python3 app/spp-nfv.py -i 1 -l 1-2
 
 If it is succeeded, container is running in background.
 You can find it with ``docker ps`` command.
@@ -264,7 +262,7 @@ with ``-b`` option.
 
     # Terminal 3
     $ cd /path/to/spp/tools/sppc
-    $ app/testpmd.py -l 3-4 \
+    $ python3 app/testpmd.py -l 3-4 \
       -d vhost:1,vhost:2 \
       -fg \
       -b 0000:0a:00.0 0000:0a:00.1
