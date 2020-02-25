@@ -29,6 +29,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    app_name = 'helloworld'
 
     # Container image name such as 'sppc/dpdk-ubuntu:18.04'
     if args.container_image is not None:
@@ -38,32 +39,38 @@ def main():
             common.IMG_BASE_NAMES['dpdk'],
             args.dist_name, args.dist_ver)
 
-    # Check for other mandatory opitons.
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
+    # Setup devices with given device UIDs.
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
 
-    # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = app_helper.setup_docker_opts(
-        args, container_image, sock_files)
+    docker_opts = app_helper.setup_docker_opts(args, sock_files)
 
     # Setup helloworld run on container.
-    cmd_path = '%s/examples/helloworld/%s/helloworld' % (
-        env.RTE_SDK, env.RTE_TARGET)
+    cmd_path = '{0:s}/examples/{2:s}/{1:s}/{2:s}'.format(
+        env.RTE_SDK, env.RTE_TARGET, app_name)
 
     hello_cmd = [cmd_path, '\\']
 
-    file_prefix = 'spp-hello-container%d' % dev_ids_list[0]
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix(app_name)
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
     # No application specific options for helloworld
     hello_opts = []
 
-    cmds = docker_cmd + docker_opts + hello_cmd + eal_opts + hello_opts
+    cmds = docker_cmd + docker_opts + [container_image] + hello_cmd + \
+        eal_opts + hello_opts
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)
