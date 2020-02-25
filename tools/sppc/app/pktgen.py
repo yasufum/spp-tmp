@@ -75,9 +75,16 @@ def main():
             common.IMG_BASE_NAMES['pktgen'],
             args.dist_name, args.dist_ver)
 
-    # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+    # Setup devices with given device UIDs.
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
+
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     if args.workdir is not None:
@@ -91,7 +98,11 @@ def main():
     # Setup pktgen command
     pktgen_cmd = ['pktgen', '\\']
 
-    file_prefix = 'spp-pktgen-container%d' % dev_ids_list[0]
+    # Setup EAL options.
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix('pktgen')
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
     # Setup matrix for assignment of cores and ports.
@@ -107,31 +118,31 @@ def main():
 
         slave_core_list = core_list[1:]
         nof_slave_cores = len(slave_core_list)
-        nof_ports = len(dev_ids_list)
+        nof_ports = len(dev_uids_list)
         nof_cores_each_port = nof_slave_cores / nof_ports
         if nof_cores_each_port < 1:
-            print("Error: Too few cores for given port(s)!")
-            print("%d cores required for %d port(s)" % (
+            print('Error: Too few cores for given port(s)!')
+            print('{0:d} cores required for {1:d} port(s)'.format(
                 (nof_slave_cores + 1), nof_ports))
             exit()
 
         matrix_list = []
         if nof_cores_each_port == 1:
             for i in range(0, nof_ports):
-                matrix_list.append('%d.%d' % (slave_core_list[i], i))
+                matrix_list.append('{0:d}.{1:d}'.format(slave_core_list[i], i))
         elif nof_cores_each_port == 2:
             for i in range(0, nof_ports):
-                matrix_list.append('[%d:%d].%d' % (
+                matrix_list.append('[{0:d}:{1:d}].{2:d}'.format(
                     slave_core_list[2*i], slave_core_list[2*i + 1], i))
         elif nof_cores_each_port == 3:  # Two cores for rx, one for tx
             for i in range(0, nof_ports):
-                matrix_list.append('[%d-%d:%d].%d' % (
+                matrix_list.append('[{0:d}-{1:d}:{2:d}].{3:d}'.format(
                     slave_core_list[3*i],
                     slave_core_list[3*i + 1],
                     slave_core_list[3*i + 2], i))
         elif nof_cores_each_port == 4:
             for i in range(0, nof_ports):
-                matrix_list.append('[%d-%d:%d-%d].%d' % (
+                matrix_list.append('[{0:d}-{1:d}:{2:d}-{3:d}].{4:d}'.format(
                     slave_core_list[4*i],
                     slave_core_list[4*i + 1],
                     slave_core_list[4*i + 2],
@@ -139,7 +150,7 @@ def main():
         # Do not support more than five because it is rare case and
         # calculation is complex.
         else:
-            print("Error: Too many cores for calculation for ports!")
+            print('Error: Too many cores for calculation for ports!')
             print("Consider to use '--matrix' for assigning directly")
             exit()
         matrix = ','.join(matrix_list)
