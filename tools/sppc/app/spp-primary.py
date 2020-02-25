@@ -18,8 +18,17 @@ def parse_args():
         description="Launcher for spp-primary application container")
 
     parser = app_helper.add_eal_args(parser)
+    parser = app_helper.add_sppc_args(parser)
 
     # Application specific arguments
+    parser.add_argument(
+        '-d', '--dev-uids',
+        type=str,
+        help='Virtual devices of SPP in resource UID format')
+    parser.add_argument(
+        '-v', '--volume',
+        nargs='*', type=str,
+        help='Bind mount a volume (for docker)')
     parser.add_argument(
         '-n', '--nof-ring',
         type=int,
@@ -30,14 +39,6 @@ def parse_args():
         type=str,
         help='Port mask')
     parser.add_argument(
-        '-dv', '--dev-vhost-ids',
-        type=str,
-        help='vhost device IDs')
-    parser.add_argument(
-        '-dt', '--dev-tap-ids',
-        type=str,
-        help='TAP device IDs')
-    parser.add_argument(
         '-ip', '--ctl-ip',
         type=str,
         help="IP address of spp-ctl")
@@ -47,13 +48,13 @@ def parse_args():
         default=5555,
         help="Port for primary of spp-ctl")
 
-    parser = app_helper.add_sppc_args(parser)
-
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    app_name = 'spp_primary'
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
@@ -74,60 +75,31 @@ def main():
         docker_opts += ['-it', '\\']
 
     docker_opts += [
-        '--privileged', '\\',  # should be privileged
+        '--privileged', '\\',  # must be privileged
         '-v', '/dev/hugepages:/dev/hugepages', '\\',
-        '-v', '/var/run/:/var/run/', '\\']
+        '-v', '/var/run/:/var/run/', '\\',
+        '-v', '/tmp:/tmp', '\\']
 
-    if args.dev_vhost_ids is not None:
-        docker_opts += ['-v', '/tmp:/tmp', '\\']
+    # Setup devices with given device UIDs.
+    dev_uids_list = None
+    sock_files = []
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
 
-    # Setup for TAP devices with given device IDs.
-    if args.dev_tap_ids is not None:
-        dev_tap_ids = app_helper.dev_ids_to_list(args.dev_tap_ids)
-    else:
-        dev_tap_ids = []
-
-    # Setup for vhost devices with given device IDs.
-    if args.dev_vhost_ids is not None:
-        dev_vhost_ids = app_helper.dev_ids_to_list(args.dev_vhost_ids)
-        socks = []
-        for dev_id in dev_vhost_ids:
-            socks.append({
-                'host': '/tmp/sock{}'.format(dev_id),
-                'guest': '/tmp/sock{}'.format(dev_id)})
-    else:
-        dev_vhost_ids = []
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list, is_spp_pri=True)
 
     docker_opts += [
         container_image, '\\']
 
     # Setup spp primary command.
-    spp_cmd = ['spp_primary', '\\']
+    spp_cmd = [app_name, '\\']
 
-    # Do not use 'app_helper.setup_eal_opts()' because spp_primary does
-    # not use virtio vdev but TAP or vhost, which should be added manually.
-    core_opt = app_helper.get_core_opt(args)
-    mem_opt = app_helper.get_mem_opt(args)
-    eal_opts = [
-        core_opt['attr'], core_opt['val'], '\\',
-        '-n', str(args.nof_memchan), '\\',
-        mem_opt['attr'], mem_opt['val'], '\\',
-        '--huge-dir', '/dev/hugepages', '\\',
-        '--proc-type', 'primary', '\\']
-
-    # Add TAP vdevs
-    for i in range(len(dev_tap_ids)):
-        eal_opts += [
-            '--vdev', 'net_tap{},iface=foo{}'.format(
-                dev_tap_ids[i], dev_tap_ids[i]), '\\']
-
-    # Add vhost vdevs
-    for i in range(len(dev_vhost_ids)):
-        eal_opts += [
-            '--vdev', 'eth_vhost{},iface={}'.format(
-                dev_vhost_ids[i], socks[i]['guest']), '\\']
-
-    eal_opts += ['--', '\\']
+    eal_opts = app_helper.setup_eal_opts(args, common.SPPC_FILE_PREFIX,
+                                         proc_type='primary',
+                                         is_spp_pri=True)
 
     spp_opts = []
     # Check for other mandatory opitons.
