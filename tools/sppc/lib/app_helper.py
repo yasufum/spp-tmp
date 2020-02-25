@@ -99,6 +99,10 @@ def add_appc_args(parser):
         nargs='*', type=str,
         help='Bind mount a volume (for docker)')
     parser.add_argument(
+        '--name',
+        type=str,
+        help='Name of container')
+    parser.add_argument(
         '-nq', '--nof-queues',
         type=int,
         default=1,
@@ -205,6 +209,9 @@ def setup_docker_opts(args, container_image, sock_files, workdir=None):
 
     if workdir is not None:
         docker_opts += ['--workdir', workdir, '\\']
+
+    if args.name is not None:
+        docker_opts += ['--name', args.name, '\\']
 
     if args.no_privileged is not True:
         docker_opts += ['--privileged', '\\']
