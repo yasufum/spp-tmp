@@ -68,6 +68,16 @@ def main():
             common.IMG_BASE_NAMES['dpdk'],
             args.dist_name, args.dist_ver)
 
+    c_dpdk_ver = app_helper.get_dpdk_ver_in_container(
+            env.RTE_SDK, container_image)
+    expected = '19.08-rc1'
+    if app_helper.compare_version(expected, c_dpdk_ver) > 0:
+        print("Load-balancer example was removed after DPDK 'v{}'.".
+              format(expected))
+        print("You cannot run it because DPDK in the container is 'v{}'.".
+              format(c_dpdk_ver))
+        exit()
+
     # Setup devices with given device UIDs.
     dev_uids = None
     sock_files = None
