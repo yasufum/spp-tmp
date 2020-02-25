@@ -60,18 +60,6 @@ def main():
             common.IMG_BASE_NAMES['spp'],
             args.dist_name, args.dist_ver)
 
-    # Setup devices with given device UIDs.
-    dev_uids_list = None
-    # TODO(yasufum) Remove no need sock_files
-    sock_files = []
-    if args.dev_uids is not None:
-        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
-            print('Invalid option: {}'.format(args.dev_uids))
-            exit()
-
-        dev_uids_list = args.dev_uids.split(',')
-        sock_files = app_helper.sock_files(dev_uids_list, is_spp_pri=True)
-
     app_opts = [
         '-v', '/var/run/:/var/run/', '\\',
         '-v', '/tmp:/tmp', '\\']
