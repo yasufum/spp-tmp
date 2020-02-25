@@ -10,6 +10,9 @@ IMG_BASE_NAMES = {
     }
 
 
+SPPC_FILE_PREFIX = 'sppc_spp_fp'
+
+
 def print_pretty_commands(cmds):
     """Print given command in pretty format."""
 
