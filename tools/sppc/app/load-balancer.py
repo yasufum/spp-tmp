@@ -31,7 +31,7 @@ def parse_args():
         type=str,
         help="List of tx ports and queues handled by the I/O tx lcores")
     parser.add_argument(
-        '-w', '--worker-lcores',
+        '-wl', '--worker-lcores',
         type=str,
         help="List of worker lcores")
     parser.add_argument(
@@ -58,6 +58,8 @@ def parse_args():
 def main():
     args = parse_args()
 
+    app_name = 'load_balancer'
+
     # Container image name such as 'sppc/dpdk-ubuntu:18.04'
     if args.container_image is not None:
         container_image = args.container_image
@@ -66,27 +68,33 @@ def main():
             common.IMG_BASE_NAMES['dpdk'],
             args.dist_name, args.dist_ver)
 
-    # Check for other mandatory opitons.
-    if args.dev_ids is None:
-        common.error_exit('--dev-ids')
+    # Setup devices with given device UIDs.
+    dev_uids = None
+    sock_files = None
+    if args.dev_uids is not None:
+        if app_helper.is_valid_dev_uids(args.dev_uids) is False:
+            print('Invalid option: {}'.format(args.dev_uids))
+            exit()
 
-    # Setup for vhost devices with given device IDs.
-    dev_ids_list = app_helper.dev_ids_to_list(args.dev_ids)
-    sock_files = app_helper.sock_files(dev_ids_list)
+        dev_uids_list = args.dev_uids.split(',')
+        sock_files = app_helper.sock_files(dev_uids_list)
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
     docker_opts = app_helper.setup_docker_opts(
         args, container_image, sock_files)
 
-    app_name = 'load_balancer'
-    cmd_path = '%s/examples/%s/%s/%s' % (
-        env.RTE_SDK, app_name, env.RTE_TARGET, app_name)
+    cmd_path = '{0:s}/examples/{1:s}/{2:s}/{1:s}'.format(
+        env.RTE_SDK, app_name, env.RTE_TARGET)
 
     # Setup testpmd command.
     lb_cmd = [cmd_path, '\\']
 
-    file_prefix = 'spp-lb-container%d' % dev_ids_list[0]
+    # Setup EAL options.
+    if args.name is not None:
+        file_prefix = app_helper.gen_sppc_file_prefix(args.name)
+    else:
+        file_prefix = app_helper.gen_sppc_file_prefix(app_name)
     eal_opts = app_helper.setup_eal_opts(args, file_prefix)
 
     lb_opts = []
@@ -95,37 +103,30 @@ def main():
     if args.rx_ports is None:
         common.error_exit('--rx-ports')
     else:
-        rx_ports = '"%s"' % args.rx_ports
-        lb_opts += ['--rx', rx_ports, '\\']
+        lb_opts += ['--rx', '"{:s}"'.format(args.rx_ports), '\\']
 
     if args.tx_ports is None:
         common.error_exit('--tx-ports')
     else:
-        tx_ports = '"%s"' % args.tx_ports
-        lb_opts += ['--tx', tx_ports, '\\']
+        lb_opts += ['--tx', '"{:s}"'.format(args.tx_ports), '\\']
 
     if args.worker_lcores is None:
         common.error_exit('--worker-lcores')
     else:
-        worker_lcores = '%s' % args.worker_lcores
-        lb_opts += ['--w', worker_lcores, '\\']
+        lb_opts += ['--w', '{:s}'.format(args.worker_lcores), '\\']
 
     if args.lpm is None:
         common.error_exit('--lpm')
     else:
-        lpm = '"%s"' % args.lpm
-        lb_opts += ['--lpm', lpm, '\\']
+        lb_opts += ['--lpm', '"{:s}"'.format(args.lpm), '\\']
 
     # Check optional opitons.
     if args.ring_sizes is not None:
-        lb_opts += [
-            '--ring-sizes', args.ring_sizes, '\\']
+        lb_opts += ['--ring-sizes', args.ring_sizes, '\\']
     if args.burst_sizes is not None:
-        lb_opts += [
-            '--burst-sizes', args.burst_sizes, '\\']
+        lb_opts += ['--burst-sizes', args.burst_sizes, '\\']
     if args.pos_lb is not None:
-        lb_opts += [
-            '--pos-lb', str(args.pos_lb)]
+        lb_opts += ['--pos-lb', str(args.pos_lb)]
 
     cmds = docker_cmd + docker_opts + lb_cmd + eal_opts + lb_opts
     if cmds[-1] == '\\':
