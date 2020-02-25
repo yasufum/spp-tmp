@@ -395,9 +395,7 @@ append_lcore_info_json(char *str,
 
 /* TODO(yasufum): change to use shared */
 static int
-append_port_info_json(char *str,
-		struct port *ports_fwd_array,
-		struct port_map *port_map)
+append_port_info_json(char *str)
 {
 	unsigned int i;
 	unsigned int has_port = 0;  // for checking having port at last
@@ -405,7 +403,7 @@ append_port_info_json(char *str,
 	sprintf(str + strlen(str), "\"ports\":[");
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 
-		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+		if (ports_fwd_array[i][0].in_port_id == PORT_RESET)
 			continue;
 
 		has_port = 1;
@@ -457,9 +455,7 @@ append_port_info_json(char *str,
 
 /* TODO(yasufum): change to use shared */
 static int
-append_patch_info_json(char *str,
-		struct port *ports_fwd_array,
-		struct port_map *port_map)
+append_patch_info_json(char *str)
 {
 	unsigned int i;
 	unsigned int has_patch = 0;  // for checking having patch at last
@@ -468,12 +464,12 @@ append_patch_info_json(char *str,
 	sprintf(str + strlen(str), "\"patches\":[");
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 
-		if (ports_fwd_array[i].in_port_id == PORT_RESET)
+		if (ports_fwd_array[i][0].in_port_id == PORT_RESET)
 			continue;
 
 		RTE_LOG(INFO, PRIMARY, "Port ID %d\n", i);
 		RTE_LOG(INFO, PRIMARY, "Status %d\n",
-			ports_fwd_array[i].in_port_id);
+			ports_fwd_array[i][0].in_port_id);
 
 		memset(patch_str, '\0', sizeof(patch_str));
 
@@ -533,14 +529,14 @@ append_patch_info_json(char *str,
 		sprintf(patch_str + strlen(patch_str), "\"dst\":");
 
 		RTE_LOG(INFO, PRIMARY, "Out Port ID %d\n",
-				ports_fwd_array[i].out_port_id);
+				ports_fwd_array[i][0].out_port_id);
 
-		if (ports_fwd_array[i].out_port_id == PORT_RESET) {
+		if (ports_fwd_array[i][0].out_port_id == PORT_RESET) {
 			//sprintf(patch_str + strlen(patch_str), "%s", "\"\"");
 			continue;
 		} else {
 			has_patch = 1;
-			unsigned int j = ports_fwd_array[i].out_port_id;
+			unsigned int j = ports_fwd_array[i][0].out_port_id;
 			switch (port_map[j].port_type) {
 			case PHY:
 				RTE_LOG(INFO, PRIMARY, "Type: PHY\n");
@@ -629,8 +625,8 @@ forwarder_status_json(char *str)
 	else
 		sprintf(buf_running + strlen(buf_running), "\"%s\"", "idling");
 
-	append_port_info_json(buf_ports, ports_fwd_array, port_map);
-	append_patch_info_json(buf_patches, ports_fwd_array, port_map);
+	append_port_info_json(buf_ports);
+	append_patch_info_json(buf_patches);
 
 	sprintf(str, "\"forwarder\":{%s,%s,%s}", buf_running, buf_ports,
 			buf_patches);
@@ -871,7 +867,7 @@ add_port(char *p_type, int p_id)
 	 */
 
 	/* Update ports_fwd_array with port id */
-	ports_fwd_array[port_id].in_port_id = port_id;
+	ports_fwd_array[port_id][0].in_port_id = port_id;
 	return 0;
 }
 
@@ -942,7 +938,7 @@ del_port(char *p_type, int p_id)
 	port_id_list[dev_id].port_id = PORT_RESET;
 	port_id_list[dev_id].type = UNDEF;
 
-	forward_array_remove(dev_id);
+	forward_array_remove(dev_id, 0);
 	port_map_init_one(dev_id);
 
 	return 0;
@@ -964,6 +960,7 @@ parse_command(char *str)
 	char *p_type;
 	int p_id;
 	char tmp_response[MSG_SIZE];
+	uint16_t queue_id;
 
 	memset(sec_name, '\0', 16);
 	memset(tmp_response, '\0', MSG_SIZE);
@@ -1033,7 +1030,8 @@ parse_command(char *str)
 		RTE_LOG(DEBUG, PRIMARY, "'%s' command received.\n",
 				token_list[0]);
 
-		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id,
+			&queue_id);
 		if (ret < 0) {
 			RTE_LOG(ERR, PRIMARY, "Failed to parse RES UID.\n");
 			return ret;
@@ -1055,7 +1053,8 @@ parse_command(char *str)
 	} else if (!strcmp(token_list[0], "del")) {
 		RTE_LOG(DEBUG, PRIMARY, "Received del command\n");
 
-		ret = parse_resource_uid(token_list[1], &p_type, &p_id);
+		ret = parse_resource_uid(token_list[1], &p_type, &p_id,
+			&queue_id);
 		if (ret < 0) {
 			RTE_LOG(ERR, PRIMARY, "Failed to parse RES UID.\n");
 			return ret;
@@ -1094,13 +1093,15 @@ parse_command(char *str)
 			char *out_p_type;
 			int in_p_id;
 			int out_p_id;
+			uint16_t in_queue_id, out_queue_id;
 
-			parse_resource_uid(token_list[1], &in_p_type, &in_p_id);
+			parse_resource_uid(token_list[1], &in_p_type, &in_p_id,
+				&in_queue_id);
 			in_port = find_port_id(in_p_id,
 					get_port_type(in_p_type));
 
 			parse_resource_uid(token_list[2],
-					&out_p_type, &out_p_id);
+					&out_p_type, &out_p_id, &out_queue_id);
 			out_port = find_port_id(out_p_id,
 					get_port_type(out_p_type));
 
@@ -1128,7 +1129,8 @@ parse_command(char *str)
 				RTE_LOG(ERR, PRIMARY, "%s\n", err_msg);
 			}
 
-			if (add_patch(in_port, out_port) == 0) {
+			if (add_patch(in_port, in_queue_id, out_port,
+				out_queue_id) == 0) {
 				RTE_LOG(INFO, PRIMARY,
 					"Patched '%s:%d' and '%s:%d'\n",
 					in_p_type, in_p_id,
@@ -1323,10 +1325,12 @@ main(int argc, char *argv[])
 			}
 
 			/* Update ports_fwd_array with phy port. */
-			ports_fwd_array[i].in_port_id = i;
+			ports_fwd_array[i][0].in_port_id = i;
+			ports_fwd_array[i][0].in_queue_id = 0;
 			port_map[i].port_type = port_type;
 			port_map[i].id = port_id;
 			port_map[i].stats = &ports->port_stats[i];
+			port_map[i].queue_info = NULL;
 
 			/* TODO(yasufum) convert type of port_type to char */
 			RTE_LOG(DEBUG, PRIMARY, "Add port, type: %d, id: %d\n",
