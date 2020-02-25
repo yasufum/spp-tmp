@@ -4,6 +4,7 @@
 from . import common
 import os
 import secrets
+import subprocess
 import sys
 
 
@@ -335,6 +336,34 @@ def gen_sppc_file_prefix(app_name):
     """Generate a unique file prefix of DPDK for SPP Container app."""
 
     return 'sppc-{}-{}'.format(app_name, secrets.token_hex(8))
+
+
+def get_dpdk_ver_in_container(rte_sdk, c_image):
+    """Get DPDK version on a container.
+
+    The version is retrieved by reading `${RTE_SDK/VERION` file.
+    """
+
+    cmd = ['cat', '{:s}/VERSION'.format(rte_sdk)]
+    cmd = ['docker', 'run', '-it', c_image] + cmd
+    # Decode the result of byte type to utf-8.
+    return subprocess.check_output(cmd).decode('utf-8').strip()
+
+
+def compare_version(expected, target):
+    """Compare given versions.
+
+    If two versions are equal, return 0. On the other hand, return -1 if
+    expected ver is less than target, or return 1.
+    """
+
+    from distutils.version import LooseVersion
+    if LooseVersion(expected) == LooseVersion(target):
+        return 0
+    elif LooseVersion(expected) < LooseVersion(target):
+        return 1
+    else:
+        return -1
 
 
 def _uniq(dup_list):
