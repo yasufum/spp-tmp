@@ -126,16 +126,16 @@ On the other hand, application specific options are different each other.
 
     $ python3 app/spp-primary.py -h
     usage: spp-primary.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                          [--socket-mem SOCKET_MEM]
+                          [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                           [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                           [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                          [--single-file-segment]
-                          [--nof-memchan NOF_MEMCHAN] [-n NOF_RING]
-                          [-p PORT_MASK]
-                          [-dv DEV_VHOST_IDS] [-dt DEV_TAP_IDS] [-ip CTRL_IP]
-                          [--ctrl-port CTRL_PORT] [--dist-name DIST_NAME]
-                          [--dist-ver DIST_VER] [--workdir WORKDIR]
-                          [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
+                          [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                          [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]]
+                          [-nq NOF_QUEUES] [--no-privileged] [-n NOF_RING]
+                          [-p PORT_MASK] [-ip CTL_IP] [--ctl-port CTL_PORT]
+                          [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                          [--workdir WORKDIR] [--name NAME] [-ci CONTAINER_IMAGE]
+                          [-fg] [--dry-run]
 
     Launcher for spp-primary application container
 
@@ -146,38 +146,42 @@ On the other hand, application specific options are different each other.
       -c CORE_MASK, --core-mask CORE_MASK
                             Core mask
       -m MEM, --mem MEM     Memory size (default is 1024)
+      --vdev [VDEV [VDEV ...]]
+                            Virtual device in the format of DPDK
       --socket-mem SOCKET_MEM
                             Memory size
-      -b [PCI_BLACKLIST [PCI_BLACKLIST ...]], --pci-blacklist [PCI_BLACKLIST..
+      -b [PCI_BLACKLIST [PCI_BLACKLIST ...]], --pci-blacklist [PCI_BLACKLIST...
                             PCI blacklist for excluding devices
-      -w [PCI_WHITELIST [PCI_WHITELIST ...]], --pci-whitelist [PCI_WHITELIST..
+      -w [PCI_WHITELIST [PCI_WHITELIST ...]], --pci-whitelist [PCI_WHITELIST...
                             PCI whitelist for including devices
       --single-file-segments
                             Create fewer files in hugetlbfs (non-legacy mode
                             only).
       --nof-memchan NOF_MEMCHAN
                             Number of memory channels (default is 4)
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
+      -v [VOLUME [VOLUME ...]], --volume [VOLUME [VOLUME ...]]
+                            Bind mount a volume (for docker)
+      -nq NOF_QUEUES, --nof-queues NOF_QUEUES
+                            Number of queues of virtio (default is 1)
+      --no-privileged       Disable docker's privileged mode if it's needed
       -n NOF_RING, --nof-ring NOF_RING
                             Maximum number of Ring PMD
       -p PORT_MASK, --port-mask PORT_MASK
                             Port mask
-      -dv DEV_VHOST_IDS, --dev-vhost-ids DEV_VHOST_IDS
-                            vhost device IDs
-      -dt DEV_TAP_IDS, --dev-tap-ids DEV_TAP_IDS
-                            TAP device IDs
-      -ip CTRL_IP, --ctrl-ip CTRL_IP
-                            IP address of SPP controller
-      --ctrl-port CTRL_PORT
-                            Port of SPP controller
+      -ip CTL_IP, --ctl-ip CTL_IP
+                            IP address of spp-ctl
+      --ctl-port CTL_PORT   Port for primary of spp-ctl
       --dist-name DIST_NAME
                             Name of Linux distribution
       --dist-ver DIST_VER   Version of Linux distribution
       --workdir WORKDIR     Path of directory in which the command is launched
+      --name NAME           Name of container
       -ci CONTAINER_IMAGE, --container-image CONTAINER_IMAGE
                             Name of container image
       -fg, --foreground     Run container as foreground mode
       --dry-run             Only print matrix, do not run, and exit
-
 
 .. _sppc_appl_spp_secondary:
 
@@ -204,12 +208,14 @@ It shows only application specific options for simplicity.
 
     $ python3 app/spp-nfv.py -h
     usage: spp-nfv.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                      [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                      [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                       [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                       [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                      [--single-file-segment]
-                      [-i SEC_ID] [-ip CTRL_IP] [--ctrl-port CTRL_PORT]
-                      [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                      [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                      [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]] [-nq NOF_QUEUES]
+                      [--no-privileged] [-i SEC_ID] [-ip CTL_IP]
+                      [--ctl-port CTL_PORT] [--dist-name DIST_NAME]
+                      [--dist-ver DIST_VER] [--workdir WORKDIR] [--name NAME]
                       [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for spp-nfv application container
@@ -218,10 +224,9 @@ It shows only application specific options for simplicity.
       ...
       -i SEC_ID, --sec-id SEC_ID
                             Secondary ID
-      -ip CTRL_IP, --ctrl-ip CTRL_IP
-                            IP address of SPP controller
-      --ctrl-port CTRL_PORT
-                            Port of SPP controller
+      -ip CTL_IP, --ctl-ip CTL_IP
+                            IP address of spp-ctl
+      --ctl-port CTL_PORT   Port for secondary of spp-ctl
       ...
 
 
@@ -256,21 +261,21 @@ It shows options without of EAL and container for simplicity.
 
     $ python3 app/l2fwd.py -h
     usage: l2fwd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                    [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                    [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                     [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
-                    [--single-file-segment]
                     [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                    [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
-                    [-p PORT_MASK]
-                    [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                    [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                    [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]] [-nq NOF_QUEUES]
+                    [--no-privileged] [-p PORT_MASK] [--dist-name DIST_NAME]
+                    [--dist-ver DIST_VER] [--workdir WORKDIR] [--name NAME]
                     [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for l2fwd application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -374,24 +379,24 @@ It shows options without of EAL and container for simplicity.
 
     $ python3 app/l3fwd.py -h
     usage: l3fwd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                    [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                    [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                     [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                     [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                    [--single-file-segment]
-                    [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
-                    [-p PORT_MASK] [--config CONFIG] [-P] [-E] [-L]
-                    [-dst [ETH_DEST [ETH_DEST ...]]] [--enable-jumbo]
-                    [--max-pkt-len MAX_PKT_LEN] [--no-numa]
-                    [--hash-entry-num] [--ipv6] [--parse-ptype PARSE_PTYPE]
-                    [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                    [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                    [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]] [-nq NOF_QUEUES]
+                    [--no-privileged] [-p PORT_MASK] [--config CONFIG] [-P] [-E]
+                    [-L] [-dst [ETH_DEST [ETH_DEST ...]]] [--enable-jumbo]
+                    [--max-pkt-len MAX_PKT_LEN] [--no-numa] [--hash-entry-num]
+                    [--ipv6] [--parse-ptype PARSE_PTYPE] [--dist-name DIST_NAME]
+                    [--dist-ver DIST_VER] [--workdir WORKDIR] [--name NAME]
                     [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for l3fwd application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -513,12 +518,26 @@ It shows options without of EAL and container for simplicity.
                         [--workdir WORKDIR] [-ci CONTAINER_IMAGE] [-fg]
                         [--dry-run]
 
+    usage: l3fwd-acl.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
+                        [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
+                        [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
+                        [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
+                        [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                        [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]]
+                        [-nq NOF_QUEUES] [--no-privileged] [-p PORT_MASK]
+                        [--config CONFIG] [-P]
+                        [--rule_ipv4 RULE_IPV4] [--rule_ipv6 RULE_IPV6]
+                        [--scalar] [--enable-jumbo] [--max-pkt-len MAX_PKT_LEN]
+                        [--no-numa] [--dist-name DIST_NAME]
+                        [--dist-ver DIST_VER] [--workdir WORKDIR] [--name NAME]
+                        [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
+
     Launcher for l3fwd-acl application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -595,13 +614,14 @@ It shows options without of EAL and container.
 
     $ python3 app/testpmd.py -h
     usage: testpmd.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                      [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                      [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                       [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                       [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                      [--single-file-segment]
-                      [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
-                      [--pci] [-i] [-a] [--tx-first]
-                      [--stats-period STATS_PERIOD]
+                      [--single-file-segments]
+                      [--nof-memchan NOF_MEMCHAN] [-d DEV_UIDS]
+                      [-v [VOLUME [VOLUME ...]]]
+                      [-nq NOF_QUEUES] [--no-privileged] [--pci] [-i] [-a]
+                      [--tx-first] [--stats-period STATS_PERIOD]
                       [--nb-cores NB_CORES] [--coremask COREMASK]
                       [--portmask PORTMASK] [--no-numa]
                       [--port-numa-config PORT_NUMA_CONFIG]
@@ -613,37 +633,40 @@ It shows options without of EAL and container.
                       [--eth-peer ETH_PEER] [--pkt-filter-mode PKT_FILTER_MODE]
                       [--pkt-filter-report-hash PKT_FILTER_REPORT_HASH]
                       [--pkt-filter-size PKT_FILTER_SIZE]
-                      [--pkt-filter-flexbytes-offset PKT_FILTER_FLEXBYTES...]
+                      [--pkt-filter-flexbytes-offset PKT_FILTER_FLEXBYTES_OFFSET]
                       [--pkt-filter-drop-queue PKT_FILTER_DROP_QUEUE]
                       [--disable-crc-strip] [--enable-lro] [--enable-rx-cksum]
                       [--enable-scatter] [--enable-hw-vlan]
-                      [--enable-hw-vlan-filter] [--enable-hw-vlan-strip]
-                      [--enable-hw-vlan-extend] [--enable-drop-en]
-                      [--disable-rss] [--port-topology PORT_TOPOLOGY]
+                      [--enable-hw-vlan-filter]
+                      [--enable-hw-vlan-strip] [--enable-hw-vlan-extend]
+                      [--enable-drop-en] [--disable-rss]
+                      [--port-topology PORT_TOPOLOGY]
                       [--forward-mode FORWARD_MODE] [--rss-ip] [--rss-udp]
                       [--rxq RXQ] [--rxd RXD] [--txq TXQ] [--txd TXD]
-                      [--burst BURST] [--mbcache MBCACHE] [--rxpt RXPT]
-                      [--rxht RXHT] [--rxfreet RXFREET] [--rxwt RXWT]
-                      [--txpt TXPT] [--txht TXHT] [--txwt TXWT]
+                      [--burst BURST] [--mbcache MBCACHE]
+                      [--rxpt RXPT] [--rxht RXHT] [--rxfreet RXFREET]
+                      [--rxwt RXWT] [--txpt TXPT] [--txht TXHT] [--txwt TXWT]
                       [--txfreet TXFREET] [--txrst TXRST]
                       [--rx-queue-stats-mapping RX_QUEUE_STATS_MAPPING]
                       [--tx-queue-stats-mapping TX_QUEUE_STATS_MAPPING]
-                      [--no-flush-rx] [--txpkts TXPKTS] [--disable-link-check]
-                      [--no-lsc-interrupt] [--no-rmv-interrupt]
+                      [--no-flush-rx] [--txpkts TXPKTS]
+                      [--disable-link-check] [--no-lsc-interrupt]
+                      [--no-rmv-interrupt]
                       [--bitrate-stats [BITRATE_STATS [BITRATE_STATS ...]]]
                       [--print-event PRINT_EVENT] [--mask-event MASK_EVENT]
                       [--flow-isolate-all] [--tx-offloads TX_OFFLOADS]
                       [--hot-plug] [--vxlan-gpe-port VXLAN_GPE_PORT]
-                      [--mlockall] [--no-mlockall] [--dist-name DIST_NAME]
-                      [--dist-ver DIST_VER] [-ci CONTAINER_IMAGE] [-fg]
-                      [--dry-run]
+                      [--mlockall] [--no-mlockall]
+                      [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                      [--workdir WORKDIR]
+                      [--name NAME] [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for testpmd application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -882,21 +905,25 @@ It shows options without of EAL and container for simplicity.
 
     $ python3 app/pktgen.py -h
     usage: pktgen.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                     [--socket-mem SOCKET_MEM] [--nof-memchan NOF_MEMCHAN]
+                     [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                      [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                      [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                     [--single-file-segment]
-                     [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
-                     [--matrix MATRIX] [--log-level LOG_LEVEL]
-                     [--dist-name DIST_NAME] [--dist-ver DIST_VER]
-                     [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
+                     [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
+                     [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]]
+                     [-nq NOF_QUEUES] [--no-privileged] [-s PCAP_FILE]
+                     [-f SCRIPT_FILE]
+                     [-lf LOG_FILE] [-P] [-G] [-g SOCK_ADDRESS] [-T] [-N]
+                     [--matrix MATRIX] [--dist-name DIST_NAME]
+                     [--dist-ver DIST_VER]
+                     [--workdir WORKDIR] [--name NAME] [-ci CONTAINER_IMAGE]
+                     [-fg] [--dry-run]
 
     Launcher for pktgen-dpdk application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -1092,24 +1119,27 @@ Refer options and usages by ``load-balancer.py -h``.
 
     $ python3 app/load-balancer.py -h
     usage: load-balancer.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
+                            [--vdev [VDEV [VDEV ...]]]
                             [--socket-mem SOCKET_MEM]
                             [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                             [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                            [--single-file-segment]
+                            [--single-file-segments]
                             [--nof-memchan NOF_MEMCHAN]
-                            [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
-                            [-rx RX_PORTS] [-tx TX_PORTS] [-w WORKER_LCORES]
-                            [-rsz RING_SIZES] [-bsz BURST_SIZES] [--lpm LPM]
-                            [--pos-lb POS_LB] [--dist-name DIST_NAME]
-                            [--dist-ver DIST_VER] [-ci CONTAINER_IMAGE]
-                            [-fg] [--dry-run]
+                            [-d DEV_UIDS] [-v [VOLUME [VOLUME ...]]]
+                            [-nq NOF_QUEUES] [--no-privileged]
+                            [-rx RX_PORTS] [-tx TX_PORTS] [-wl WORKER_LCORES]
+                            [-rsz RING_SIZES] [-bsz BURST_SIZES]
+                            [--lpm LPM] [--pos-lb POS_LB]
+                            [--dist-name DIST_NAME] [--dist-ver DIST_VER]
+                            [--workdir WORKDIR] [--name NAME]
+                            [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for load-balancer application container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
@@ -1168,20 +1198,23 @@ Refer options and usages by ``load-balancer.py -h``.
 
     $ python3 app/suricata.py -h
     usage: suricata.py [-h] [-l CORE_LIST] [-c CORE_MASK] [-m MEM]
-                       [--socket-mem SOCKET_MEM]
+                       [--vdev [VDEV [VDEV ...]]] [--socket-mem SOCKET_MEM]
                        [-b [PCI_BLACKLIST [PCI_BLACKLIST ...]]]
                        [-w [PCI_WHITELIST [PCI_WHITELIST ...]]]
-                       [--single-file-segments] [--nof-memchan NOF_MEMCHAN]
-                       [-d DEV_IDS] [-nq NOF_QUEUES] [--no-privileged]
+                       [--single-file-segments]
+                       [--nof-memchan NOF_MEMCHAN] [-d DEV_UIDS]
+                       [-v [VOLUME [VOLUME ...]]] [-nq NOF_QUEUES]
+                       [--no-privileged]
                        [--dist-name DIST_NAME] [--dist-ver DIST_VER]
-                       [--workdir WORKDIR] [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
+                       [--workdir WORKDIR] [--name NAME]
+                       [-ci CONTAINER_IMAGE] [-fg] [--dry-run]
 
     Launcher for suricata container
 
     optional arguments:
       ...
-      -d DEV_IDS, --dev-ids DEV_IDS
-                            two or more even vhost device IDs
+      -d DEV_UIDS, --dev-uids DEV_UIDS
+                            Virtual devices of SPP in resource UID format
       -nq NOF_QUEUES, --nof-queues NOF_QUEUES
                             Number of queues of virtio (default is 1)
       --no-privileged       Disable docker's privileged mode if it's needed
