@@ -18,17 +18,9 @@ def parse_args():
         description="Launcher for spp-primary application container")
 
     parser = app_helper.add_eal_args(parser)
-    parser = app_helper.add_sppc_args(parser)
+    parser = app_helper.add_appc_args(parser)
 
     # Application specific arguments
-    parser.add_argument(
-        '-d', '--dev-uids',
-        type=str,
-        help='Virtual devices of SPP in resource UID format')
-    parser.add_argument(
-        '-v', '--volume',
-        nargs='*', type=str,
-        help='Bind mount a volume (for docker)')
     parser.add_argument(
         '-n', '--nof-ring',
         type=int,
@@ -48,6 +40,7 @@ def parse_args():
         default=5555,
         help="Port for primary of spp-ctl")
 
+    parser = app_helper.add_sppc_args(parser)
     return parser.parse_args()
 
 
@@ -58,7 +51,6 @@ def main():
 
     # Setup docker command.
     docker_cmd = ['sudo', 'docker', 'run', '\\']
-    docker_opts = []
 
     # Container image name such as 'sppc/spp-ubuntu:18.04'
     if args.container_image is not None:
@@ -67,18 +59,6 @@ def main():
         container_image = common.container_img_name(
             common.IMG_BASE_NAMES['spp'],
             args.dist_name, args.dist_ver)
-
-    # This container is running in backgroud in defualt.
-    if args.foreground is not True:
-        docker_opts += ['-d', '\\']
-    else:
-        docker_opts += ['-it', '\\']
-
-    docker_opts += [
-        '--privileged', '\\',  # must be privileged
-        '-v', '/dev/hugepages:/dev/hugepages', '\\',
-        '-v', '/var/run/:/var/run/', '\\',
-        '-v', '/tmp:/tmp', '\\']
 
     # Setup devices with given device UIDs.
     dev_uids_list = None
@@ -91,8 +71,13 @@ def main():
         dev_uids_list = args.dev_uids.split(',')
         sock_files = app_helper.sock_files(dev_uids_list, is_spp_pri=True)
 
-    docker_opts += [
-        container_image, '\\']
+    app_opts = [
+        '-v', '/var/run/:/var/run/', '\\',
+        '-v', '/tmp:/tmp', '\\',
+        '--net', 'host', '\\']
+
+    docker_opts = app_helper.setup_docker_opts(
+            args, None, app_opts)
 
     # Setup spp primary command.
     spp_cmd = [app_name, '\\']
@@ -118,7 +103,9 @@ def main():
     else:
         spp_opts += ['-s', '{}:{}'.format(ctl_ip, args.ctl_port), '\\']
 
-    cmds = docker_cmd + docker_opts + spp_cmd + eal_opts + spp_opts
+    cmds = docker_cmd + docker_opts + [container_image] + spp_cmd + \
+        eal_opts + spp_opts
+
     if cmds[-1] == '\\':
         cmds.pop()
     common.print_pretty_commands(cmds)

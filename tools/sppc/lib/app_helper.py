@@ -231,7 +231,18 @@ def setup_eal_opts(args, file_prefix, proc_type='auto', is_spp_pri=False,
     return eal_opts
 
 
-def setup_docker_opts(args, container_image, socks, workdir=None):
+def setup_docker_opts(args, socks=None, app_opts=None, workdir=None):
+    """Return docker options as a list.
+
+    socks must be None if process behaves as master role, such as
+    spp_primary, or failed to initialize the process.
+
+    :param args: Parsed args with argparse
+    :param socks: Socket files, it must be None in spp-primary
+    :param app_opts: Application specific option
+    :returns: A list of docker options
+    """
+
     docker_opts = []
 
     if args.foreground is True:
@@ -239,23 +250,25 @@ def setup_docker_opts(args, container_image, socks, workdir=None):
     else:
         docker_opts = ['-d', '\\']
 
-    if workdir is not None:
-        docker_opts += ['--workdir', workdir, '\\']
+    if args.no_privileged is not True:
+        docker_opts += ['--privileged', '\\']
+
+    docker_opts += [
+        '-v', '/dev/hugepages:/dev/hugepages', '\\']
+
+    if app_opts is not None:
+        docker_opts += app_opts
+
+    if args.workdir is not None:
+        docker_opts += ['--workdir', args.workdir, '\\']
 
     if args.name is not None:
         docker_opts += ['--name', args.name, '\\']
-
-    if args.no_privileged is not True:
-        docker_opts += ['--privileged', '\\']
 
     if socks is not None:
         for sock in socks:
             docker_opts += [
                 '-v', '%s:%s' % (sock['host'], sock['guest']), '\\']
-
-    docker_opts += [
-        '-v', '/dev/hugepages:/dev/hugepages', '\\',
-        container_image, '\\']
 
     return docker_opts
 
