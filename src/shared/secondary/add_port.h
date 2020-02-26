@@ -15,6 +15,7 @@
 #define PCAP_PMD_DEV_NAME "eth_pcap%u"
 #define MEMIF_PMD_DEV_NAME "net_memif%u"
 #define NULL_PMD_DEV_NAME "eth_null%u"
+#define PIPE_PMD_DEV_NAME "spp_pipe%u"
 
 #define PCAP_IFACE_RX "/tmp/spp-rx%d.pcap"
 #define PCAP_IFACE_TX "/tmp/spp-tx%d.pcap"
@@ -107,5 +108,20 @@ add_memif_pmd(int index);
  */
 int
 add_null_pmd(int index);
+
+/**
+ * Create a pipe PMD with given ID.
+ *
+ * @param port_id
+ *   ID of the next possible valid port.
+ * @param rx_ring
+ *   Ring name for rx
+ * @param tx_ring
+ *   Ring name for tx
+ * @return
+ *   Unique port ID
+ */
+int
+add_pipe_pmd(int index, const char *rx_ring, const char *tx_ring);
 
 #endif

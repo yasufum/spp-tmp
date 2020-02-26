@@ -57,6 +57,7 @@
 #define VDEV_ETH_TAP "eth_tap"
 #define VDEV_NET_TAP "net_tap"
 #define VDEV_NET_MEMIF "net_memif"
+#define VDEV_SPP_PIPE "spp_pipe"
 #define VDEV_ETH_NULL "eth_null"
 
 
@@ -109,6 +110,7 @@ enum port_type {
 	NULLPMD,
 	TAP,
 	MEMIF,
+	PIPE,
 	UNDEF,
 };
 

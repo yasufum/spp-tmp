@@ -139,6 +139,15 @@ int parse_dev_name(char *dev_name, int *port_type, int *port_id)
 		*port_id = (int)strtol(pid_str, NULL, 10);
 		*port_type = NULLPMD;
 
+	} else if (strncmp(dev_name, VDEV_SPP_PIPE,
+			strlen(VDEV_SPP_PIPE)) == 0) {
+		dev_str_len = strlen(VDEV_SPP_PIPE);
+		pid_len = dev_name_len - dev_str_len;
+		strncpy(pid_str, dev_name + strlen(VDEV_SPP_PIPE),
+				pid_len);
+		*port_id = (int)strtol(pid_str, NULL, 10);
+		*port_type = PIPE;
+
 	/* TODO(yasufum) add checking invalid port type and return -1 */
 	} else {
 		*port_id = 0;

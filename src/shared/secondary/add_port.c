@@ -62,6 +62,14 @@ get_null_pmd_name(int id)
 	return buffer;
 }
 
+static inline const char *
+get_pipe_pmd_name(int id)
+{
+	static char buffer[sizeof(PIPE_PMD_DEV_NAME) + 2];
+	snprintf(buffer, sizeof(buffer) - 1, PIPE_PMD_DEV_NAME, id);
+	return buffer;
+}
+
 /*
  * Create an empty rx pcap file to given path if it does not exit
  * Return 0 for succeeded, or -1 for failed.
@@ -446,4 +454,30 @@ add_null_pmd(int index)
 	RTE_LOG(DEBUG, SHARED, "null port id %d\n", null_pmd_port_id);
 
 	return null_pmd_port_id;
+}
+
+/*
+ * Create a pipe. Note that this function used by primary only.
+ * Because a pipe is used by an application as a normal ether
+ * device, this function does creation only but does not do
+ * configuration etc.
+ */
+int
+add_pipe_pmd(int index, const char *rx_ring, const char *tx_ring)
+{
+	const char *name;
+	char devargs[64];
+	uint16_t pipe_pmd_port_id;
+
+	int ret;
+
+	name = get_pipe_pmd_name(index);
+	sprintf(devargs, "%s,rx=%s,tx=%s", name, rx_ring, tx_ring);
+	ret = dev_attach_by_devargs(devargs, &pipe_pmd_port_id);
+	if (ret < 0)
+		return ret;
+
+	RTE_LOG(DEBUG, SHARED, "pipe port id %d\n", pipe_pmd_port_id);
+
+	return pipe_pmd_port_id;
 }
