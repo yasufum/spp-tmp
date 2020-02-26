@@ -294,8 +294,11 @@ class PrimaryProc(SppProc):
         return "clear"
 
     @exec_command
-    def port_add(self, port):
-        return "add {port}".format(**locals())
+    def port_add(self, port, rx=None, tx=None):
+        if rx is not None and tx is not None:
+            return "add {port} {rx} {tx}".format(**locals())
+        else:
+            return "add {port}".format(**locals())
 
     @exec_command
     def port_del(self, port):

@@ -13,7 +13,8 @@ import sys
 
 import spp_proc
 
-PORT_TYPES = ["phy", "vhost", "ring", "pcap", "nullpmd", "tap", "memif"]
+PORT_TYPES = ["phy", "vhost", "ring", "pcap", "nullpmd", "tap", "memif",
+              "pipe"]
 VF_PORT_TYPES = ["phy", "vhost", "ring"] # TODO(yasufum) add other ports
 # TODO(yasufum) consider PCAP_PORT_TYPES is required.
 
@@ -64,10 +65,10 @@ class BaseHandler(bottle.Bottle):
         res.content_type = "text/plain"
         return res.body
 
-    def _validate_port(self, port):
+    def _validate_port(self, port, port_types=PORT_TYPES):
         try:
             if_type, if_num = port.split(":")
-            if if_type not in PORT_TYPES:
+            if if_type not in port_types:
                 raise
             if if_type == "phy" and "nq" in if_num:
                 port_num, queue_num = if_num.split("nq")
@@ -545,12 +546,27 @@ class V1PrimaryHandler(BaseHandler):
             raise KeyInvalid('action', body['action'])
         self._validate_port(body['port'])
 
+    def _validate_pipe_args(self, rx_ring, tx_ring):
+        try:
+            self._validate_port(rx_ring, ["ring"])
+        except Exception:
+            raise KeyInvalid('rx', rx_ring)
+        try:
+            self._validate_port(tx_ring, ["ring"])
+        except Exception:
+            raise KeyInvalid('tx', tx_ring)
+
     def primary_port(self, body):
         self._validate_nfv_port(body)
         proc = self._get_proc()
 
         if body['action'] == "add":
-            proc.port_add(body['port'])
+            if body['port'].startswith("pipe:"):
+                self._validate_pipe_args(body.get('rx', ""),
+                                         body.get('tx', ""))
+                proc.port_add(body['port'], body['rx'], body['tx'])
+            else:
+                proc.port_add(body['port'])
         else:
             proc.port_del(body['port'])
 
