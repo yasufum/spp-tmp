@@ -229,6 +229,12 @@ class SppPrimary(object):
                     else:
                         print('    - {} -> {}'.format(port, dst))
 
+            if ('pipes' in json_obj):
+                print('  - pipes:')
+                for pipe in json_obj['pipes']:
+                    print('    - pipe:{} ring:{} ring:{}'.format(pipe['id'],
+                        pipe['rx'], pipe['tx']))
+
             if ('phy_ports' in json_obj) or ('ring_ports' in json_obj):
                 print('- stats')
 
@@ -798,6 +804,10 @@ class SppPrimary(object):
             print("'%s' is already added." % params[0])
         else:
             req_params = {'action': 'add', 'port': params[0]}
+            if len(params) == 3:
+                # add pipe:X ring:A ring:B
+                req_params['rx'] = params[1]
+                req_params['tx'] = params[2]
 
             res = self.spp_ctl_cli.put('primary/ports', req_params)
             if res is not None:
