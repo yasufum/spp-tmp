@@ -28,7 +28,9 @@
  */
 #define PRI_BUF_SIZE_LCORE 128
 #define PRI_BUF_SIZE_PHY 30720
-#define PRI_BUF_SIZE_RING (MSG_SIZE - PRI_BUF_SIZE_LCORE - PRI_BUF_SIZE_PHY)
+#define PRI_BUF_SIZE_PIPE 512
+#define PRI_BUF_SIZE_RING \
+	(MSG_SIZE - PRI_BUF_SIZE_LCORE - PRI_BUF_SIZE_PHY - PRI_BUF_SIZE_PIPE)
 
 #define SPP_PATH_LEN 1024  /* seems enough for path of spp procs */
 #define NOF_TOKENS 48  /* seems enough to contain tokens */
@@ -50,6 +52,7 @@
 struct port_id_map {
 	int port_id;
 	enum port_type type;
+	int rx_ring_id, tx_ring_id;  /* for pipe */
 };
 
 struct port_id_map port_id_list[RTE_MAX_ETHPORTS];
@@ -436,6 +439,10 @@ append_port_info_json(char *str)
 			sprintf(str + strlen(str), "\"memif:%u\",",
 					port_map[i].id);
 			break;
+		case PIPE:
+			sprintf(str + strlen(str), "\"pipe:%u\",",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			/* TODO(yasufum) Need to remove print for undefined ? */
 			sprintf(str + strlen(str), "\"udf\",");
@@ -518,6 +525,12 @@ append_patch_info_json(char *str)
 					"\"memif:%u\",",
 					port_map[i].id);
 			break;
+		case PIPE:
+			RTE_LOG(INFO, SHARED, "Type: PIPE\n");
+			sprintf(patch_str + strlen(patch_str),
+					"\"pipe:%u\",",
+					port_map[i].id);
+			break;
 		case UNDEF:
 			RTE_LOG(INFO, PRIMARY, "Type: UDF\n");
 			/* TODO(yasufum) Need to remove print for undefined ? */
@@ -578,6 +591,12 @@ append_patch_info_json(char *str)
 				RTE_LOG(INFO, PRIMARY, "Type: MEMIF\n");
 				sprintf(patch_str + strlen(patch_str),
 						"\"memif:%u\"",
+						port_map[j].id);
+				break;
+			case PIPE:
+				RTE_LOG(INFO, SHARED, "Type: PIPE\n");
+				sprintf(patch_str + strlen(patch_str),
+						"\"pipe:%u\"",
 						port_map[j].id);
 				break;
 			case UNDEF:
@@ -740,6 +759,34 @@ ring_port_stats_json(char *str)
 	return 0;
 }
 
+static int
+pipes_json(char *str)
+{
+	uint16_t dev_id;
+	char pipe_buf[30];  /* it is enough if port_id < 1000 */
+	int find = 0;
+
+	strcpy(str, "\"pipes\":[");
+	for (dev_id = 0; dev_id < RTE_MAX_ETHPORTS; dev_id++) {
+		if (port_id_list[dev_id].type != PIPE)
+			continue;
+		sprintf(pipe_buf, "{\"id\":%d,\"rx\":%d,\"tx\":%d}",
+				port_id_list[dev_id].port_id,
+				port_id_list[dev_id].rx_ring_id,
+				port_id_list[dev_id].tx_ring_id);
+		if (strlen(str) + strlen(pipe_buf) > PRI_BUF_SIZE_PIPE - 3) {
+			RTE_LOG(ERR, PRIMARY, "Cannot send all of pipes\n");
+			break;
+		}
+		if (find)
+			strcat(str, ",");
+		find = 1;
+		strcat(str, pipe_buf);
+	}
+	strcat(str, "]");
+	return 0;
+}
+
 /**
  * Retrieve all of statu of ports as JSON format managed by primary.
  *
@@ -781,28 +828,33 @@ get_status_json(char *str)
 	char buf_lcores[PRI_BUF_SIZE_LCORE];
 	char buf_phy_ports[PRI_BUF_SIZE_PHY];
 	char buf_ring_ports[PRI_BUF_SIZE_RING];
+	char buf_pipes[PRI_BUF_SIZE_PIPE];
 	memset(buf_phy_ports, '\0', PRI_BUF_SIZE_PHY);
 	memset(buf_ring_ports, '\0', PRI_BUF_SIZE_RING);
 	memset(buf_lcores, '\0', PRI_BUF_SIZE_LCORE);
+	memset(buf_pipes, '\0', PRI_BUF_SIZE_PIPE);
 
 	append_lcore_info_json(buf_lcores, lcore_id_used);
 	phy_port_stats_json(buf_phy_ports);
 	ring_port_stats_json(buf_ring_ports);
+	pipes_json(buf_pipes);
 
-	RTE_LOG(INFO, PRIMARY, "%s, %s\n", buf_phy_ports, buf_ring_ports);
+	RTE_LOG(INFO, PRIMARY, "%s, %s, %s\n", buf_phy_ports, buf_ring_ports,
+			buf_pipes);
 
 	if (get_forwarding_flg() == 1) {
 		char tmp_buf[512];
 		memset(tmp_buf, '\0', sizeof(tmp_buf));
 		forwarder_status_json(tmp_buf);
 
-		sprintf(str, "{%s,%s,%s,%s}",
+		sprintf(str, "{%s,%s,%s,%s,%s}",
 				buf_lcores, tmp_buf, buf_phy_ports,
-				buf_ring_ports);
+				buf_ring_ports, buf_pipes);
 
 	} else {
-		sprintf(str, "{%s,%s,%s}",
-				buf_lcores, buf_phy_ports, buf_ring_ports);
+		sprintf(str, "{%s,%s,%s,%s}",
+				buf_lcores, buf_phy_ports, buf_ring_ports,
+				buf_pipes);
 	}
 
 	return 0;
@@ -814,7 +866,7 @@ get_status_json(char *str)
  */
 /* TODO(yasufum) consider to merge do_add in nfv/commands.h */
 static int
-add_port(char *p_type, int p_id)
+add_port(char *p_type, int p_id, char **token_list)
 {
 	uint16_t dev_id;
 	uint16_t port_id;
@@ -851,6 +903,18 @@ add_port(char *p_type, int p_id)
 		res = add_null_pmd(p_id);
 		port_id_list[cnt].port_id = p_id;
 		port_id_list[cnt].type = NULLPMD;
+	} else if (!strcmp(p_type, "pipe")) {
+		char *dummy_type;
+		uint16_t dummy_queue;
+		res = add_pipe_pmd(p_id, token_list[0], token_list[1]);
+		if (res < 0)
+			return -1;
+		port_id_list[cnt].port_id = p_id;
+		port_id_list[cnt].type = PIPE;
+		parse_resource_uid(token_list[0], &dummy_type,
+				&port_id_list[cnt].rx_ring_id, &dummy_queue);
+		parse_resource_uid(token_list[1], &dummy_type,
+				&port_id_list[cnt].tx_ring_id, &dummy_queue);
 	}
 
 	if (res < 0)
@@ -930,6 +994,12 @@ del_port(char *p_type, int p_id)
 
 	} else if (!strcmp(p_type, "nullpmd")) {
 		dev_id = find_ethdev_id(p_id, NULLPMD);
+		if (dev_id == PORT_RESET)
+			return -1;
+		dev_detach_by_port_id(dev_id);
+
+	} else if (!strcmp(p_type, "pipe")) {
+		dev_id = find_ethdev_id(p_id, PIPE);
 		if (dev_id == PORT_RESET)
 			return -1;
 		dev_detach_by_port_id(dev_id);
@@ -1037,7 +1107,7 @@ parse_command(char *str)
 			return ret;
 		}
 
-		if (add_port(p_type, p_id) < 0) {
+		if (add_port(p_type, p_id, &token_list[2]) < 0) {
 			RTE_LOG(ERR, PRIMARY, "Failed to add_port()\n");
 			sprintf(result, "%s", "\"failed\"");
 		} else
