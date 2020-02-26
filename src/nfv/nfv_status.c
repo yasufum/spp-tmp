@@ -125,6 +125,8 @@ append_port_info_json(char *str)
 				sprintf(str + strlen(str), "\"memif:%u\",",
 						port_map[i].id);
 				break;
+			case PIPE:
+				break;
 			case UNDEF:
 				/*
 				 * TODO(yasufum) Need to remove print for
@@ -187,6 +189,9 @@ append_port_string(char *str, enum port_type port_type,
 	case MEMIF:
 		RTE_LOG(INFO, SHARED, "Type: MEMIF\n");
 		sprintf(str, "\"memif:%u\"", port_id);
+		break;
+
+	case PIPE:
 		break;
 
 	case UNDEF:

@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 		if (port_type == PHY) {
 			port_id = nof_phy_port;
 			nof_phy_port++;
-		} else if (port_type == VHOST)
+		} else if (port_type == VHOST || port_type == PIPE)
 			continue;
 		/* NOTE: vhost may be used another process. even if no
 		 * process uses, it is necessary to "add vhost" explicitly.
