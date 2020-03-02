@@ -9,7 +9,10 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
+DEPDIRS-tools := src
+
 DIRS-y += src
+DIRS-y += tools
 
 include $(RTE_SDK)/mk/rte.extsubdir.mk
 endif
@@ -39,6 +42,8 @@ _dist-clean:
 	rm -f $(wildcard src/*/*/*.pyc)
 	rm -rf $(wildcard src/*/__pycache__)
 	rm -rf $(wildcard src/*/*/__pycache__)
+	rm -rf $(wildcard tools/vdev_test/build)
+	rm -rf $(wildcard tools/vdev_test/$(RTE_TARGET))
 
 .PHONY: doc
 doc: doc-all
