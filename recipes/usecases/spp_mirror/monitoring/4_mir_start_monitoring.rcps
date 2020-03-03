@@ -1,0 +1,7 @@
+# Start component
+mirror 2; component start mir 9 mirror
+
+# Add port for mirror
+mirror 2; port add ring:0 rx mir
+mirror 2; port add ring:4 tx mir
+mirror 2; port add ring:5 tx mir

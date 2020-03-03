@@ -1,0 +1,10 @@
+# Delete port for mirror
+mirror 2; port del ring:0 rx mir
+mirror 2; port del ring:4 tx mir
+mirror 2; port del ring:5 tx mir
+
+# Stop component
+mirror 2; component stop mir 9 mirror
+
+# Exit spp_mirror
+mirror 2; exit
