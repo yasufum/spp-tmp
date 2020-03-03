@@ -385,7 +385,7 @@ to confirm that network on host is configured.
 
 .. code-block:: console
 
-    $ sudo $RE_SDK/examples/build/l2fwd -l 0-1 -- -p 0x03
+    $ sudo $RTE_SDK/examples/build/l2fwd -l 0-1 -- -p 0x03
 
 .. _figure_spp_nfv_l2fwd_vhost:
 

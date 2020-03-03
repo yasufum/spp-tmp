@@ -156,6 +156,8 @@ For host2, swith server to host2 and run nfv commands.
     Switch spp-ctl to "2: 192.168.1.102:7777".
 
     # configure
+    spp > nfv 1; add vhost:0
+    Add vhost:0.
     spp > nfv 1; patch phy:0 vhost:0
     Patch ports (phy:0 -> vhost:0).
     spp > nfv 1; patch vhost:0 phy:1
@@ -173,8 +175,8 @@ Finally, change path from blue lines to red lines.
 .. code-block:: console
 
     # switch to server 1
-    spp > server 2
-    Switch spp-ctl to "2: 192.168.1.102:7777".
+    spp > server 1
+    Switch spp-ctl to "1: 192.168.1.101:7777".
 
     # remove blue path
     spp > nfv 1; stop

@@ -199,14 +199,14 @@ First, delete entries of ``classifier_table`` and ports of components.
 
     # forwarders
     spp > vf 1; port del ring:0 rx fwd1
-    spp > vf 1; port del vhost:0 tx fwd1
+    spp > vf 1; port del ring:2 tx fwd1
     spp > vf 1; port del ring:1 rx fwd2
-    spp > vf 1; port del vhost:2 tx fwd2
+    spp > vf 1; port del ring:3 tx fwd2
 
     # mergers
     spp > vf 1; port del ring:2 rx mgr
     spp > vf 1; port del ring:3 rx mgr
-    spp > vf 1; port del phy:0 tx mgr
+    spp > vf 1; port del phy:1 tx mgr
 
 Then, stop components.
 
@@ -587,8 +587,8 @@ Delete entries from the table and ports from each of components.
     spp > vf 1; port del vhost:3 tx fwd6
     spp > vf 1; port del vhost:1 rx fwd7
     spp > vf 1; port del ring:6 tx fwd7
-    spp > vf 1; port del vhost:3 tx fwd8
-    spp > vf 1; port del ring:7 rx fwd8
+    spp > vf 1; port del vhost:3 rx fwd8
+    spp > vf 1; port del ring:7 tx fwd8
 
     # merger
     spp > vf 1; port del ring:6 rx mgr2

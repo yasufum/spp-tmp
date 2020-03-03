@@ -219,8 +219,9 @@ All of options can be referred with help option ``-h``.
 
 .. code-block:: console
 
-    python3 ./src/spp-ctl/spp-ctl -h
-    usage: spp-ctl [-h] [-b BIND_ADDR] [-p PRI_PORT] [-s SEC_PORT] [-a API_PORT]
+    $ python3 ./src/spp-ctl/spp-ctl -h
+    usage: spp-ctl [-h] [-b BIND_ADDR] [-p PRI_PORT]
+                   [-s SEC_PORT] [-a API_PORT]
 
     SPP Controller
 
@@ -322,7 +323,7 @@ All of options can be referred with help option ``-h``.
 .. code-block:: console
 
     $ python3 src/spp.py -h
-    usage: spp.py [-h] [-b BIND_ADDR] [-a API_PORT]
+    usage: spp.py [-h] [-b BIND_ADDR] [--wait-pri] [--config CONFIG]
 
     SPP Controller
 
@@ -330,6 +331,8 @@ All of options can be referred with help option ``-h``.
       -h, --help            show this help message and exit
       -b BIND_ADDR, --bind-addr BIND_ADDR
                             bind address, default=127.0.0.1:7777
+      --wait-pri            Wait for spp_primary is launched
+      --config CONFIG       Config file path
 
 
 All of SPP CLI commands are described in :doc:`../../commands/index`.
