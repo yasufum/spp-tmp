@@ -1,0 +1,9 @@
+# Stop forwarding
+nfv 1; stop
+
+# Clear all of patches
+nfv 1; patch reset
+
+# Delete vhost PMDs
+nfv 1; del vhost:0
+nfv 1; del vhost:1

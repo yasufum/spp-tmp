@@ -1,0 +1,10 @@
+# Add vhost PMDs
+nfv 1; add vhost:0
+nfv 1; add vhost:1
+
+# Patch ports
+nfv 1; patch phy:0 vhost:0
+nfv 1; patch vhost:1 phy:1
+
+# Start forwarding
+nfv 1; forward
