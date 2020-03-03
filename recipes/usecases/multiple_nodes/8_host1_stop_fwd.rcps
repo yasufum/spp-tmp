@@ -1,0 +1,6 @@
+# Switch to server 1
+server 1
+
+# Stop forwarding
+nfv 2; stop
+nfv 2; patch reset

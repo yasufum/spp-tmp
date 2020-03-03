@@ -1,0 +1,6 @@
+# Switch to server 4
+server 4
+
+# Stop forwarding
+nfv 1; stop
+nfv 1; patch reset

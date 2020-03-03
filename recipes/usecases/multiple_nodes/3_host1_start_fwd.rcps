@@ -1,0 +1,7 @@
+# Switch to server 1
+server 1
+
+# Configure forwarding
+nfv 1; patch phy:1 phy:2
+nfv 1; patch phy:3 phy:0
+nfv 1; forward

@@ -1,0 +1,8 @@
+# Switch to server 2
+server 2
+
+# Configure forwarding
+nfv 1; add vhost:0
+nfv 1; patch phy:0 vhost:0
+nfv 1; patch vhost:0 phy:1
+nfv 1; forward
