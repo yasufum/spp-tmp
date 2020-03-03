@@ -1,0 +1,3 @@
+# Delete MAC address for path2
+vf 1; classifier_table del mac 52:54:00:12:34:57 ring:4
+vf 1; classifier_table del mac 52:54:00:12:34:59 ring:5

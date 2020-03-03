@@ -1,0 +1,19 @@
+# Delete ports on cls2
+vf 1; port del phy:1 rx cls2
+vf 1; port del ring:4 tx cls2
+vf 1; port del ring:5 tx cls2
+
+# Delete ports on fwd2
+vf 1; port del ring:4 rx fwd5
+vf 1; port del vhost:1 tx fwd5
+vf 1; port del ring:5 rx fwd6
+vf 1; port del vhost:3 tx fwd6
+vf 1; port del vhost:1 rx fwd7
+vf 1; port del ring:6 tx fwd7
+vf 1; port del vhost:3 rx fwd8
+vf 1; port del ring:7 tx fwd8
+
+# Delete ports on mgr2
+vf 1; port del ring:6 rx mgr2
+vf 1; port del ring:7 rx mgr2
+vf 1; port del phy:1 tx mgr2

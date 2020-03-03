@@ -1,0 +1,19 @@
+# Delete ports on classifier
+vf 1; port del phy:0 rx cls1
+vf 1; port del ring:0 tx cls1
+vf 1; port del ring:1 tx cls1
+
+# Delete ports on forwarders
+vf 1; port del ring:0 rx fwd1
+vf 1; port del vhost:0 tx fwd1
+vf 1; port del ring:1 rx fwd2
+vf 1; port del vhost:2 tx fwd2
+vf 1; port del vhost:0 rx fwd3
+vf 1; port del ring:2 tx fwd3
+vf 1; port del vhost:2 rx fwd4
+vf 1; port del ring:3 tx fwd4
+
+# Delete ports on merger
+vf 1; port del ring:2 rx mgr1
+vf 1; port del ring:3 rx mgr1
+vf 1; port del phy:0 tx mgr1

@@ -1,0 +1,7 @@
+# Stop components to spp_vf
+vf 1; component stop cls2
+vf 1; component stop fwd5
+vf 1; component stop fwd6
+vf 1; component stop fwd7
+vf 1; component stop fwd8
+vf 1; component stop mgr2
