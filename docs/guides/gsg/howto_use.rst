@@ -944,6 +944,11 @@ Edit configuration of VM with virsh command. The name of VMs are found from
 
 You need to define namespace ``qemu`` to use tags such as
 ``<qemu:commandline>``.
+In ``libvirt``, ``<qemu:commandline>`` tag is supported to utilize qemu specific
+features. In this example configuration of hugepage and/or network device is
+done via modifying domain XML file.
+Please see details in
+`libvirt document <https://libvirt.org/drvqemu.html#qemucommand>`_.
 
 .. code-block:: none
 
@@ -965,6 +970,10 @@ registering destinations for classifier's table.
 
 
 Here is an example of XML config for using with SPP.
+The following example is just excerpt from complete
+sample.
+The complete sample can be found in
+`spp-vm1.xml <http://git.dpdk.org/apps/spp/tree/docs/samples/spp-vm1.xml>`_.
 
 .. code-block:: xml
 
@@ -973,85 +982,28 @@ Here is an example of XML config for using with SPP.
       <uuid>d90f5420-861a-4479-8559-62d7a1545cb9</uuid>
       <memory unit='KiB'>4194304</memory>
       <currentMemory unit='KiB'>4194304</currentMemory>
-      <memoryBacking>
-        <hugepages/>
-      </memoryBacking>
-      <vcpu placement='static'>4</vcpu>
-      <os>
-        <type arch='x86_64' machine='pc-i440fx-2.3'>hvm</type>
-        <boot dev='hd'/>
-      </os>
-      <features>
-        <acpi/>
-        <apic/>
-        <pae/>
-      </features>
-      <clock offset='utc'/>
-      <on_poweroff>destroy</on_poweroff>
-      <on_reboot>restart</on_reboot>
-      <on_crash>restart</on_crash>
-      <devices>
-        <emulator>/usr/local/bin/qemu-system-x86_64</emulator>
-        <disk type='file' device='disk'>
-          <driver name='qemu' type='raw'/>
-          <source file='/var/lib/libvirt/images/spp-vm1.qcow2'/>
-          <target dev='hda' bus='ide'/>
-          <address type='drive' controller='0' bus='0' target='0' unit='0'/>
-        </disk>
-        <disk type='block' device='cdrom'>
-          <driver name='qemu' type='raw'/>
-          <target dev='hdc' bus='ide'/>
-          <readonly/>
-          <address type='drive' controller='0' bus='1' target='0' unit='0'/>
-        </disk>
-        <controller type='usb' index='0'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x01'
-          function='0x2'/>
-        </controller>
-        <controller type='pci' index='0' model='pci-root'/>
-        <controller type='ide' index='0'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x01'
-          function='0x1'/>
-        </controller>
-        <interface type='network'>
-          <mac address='52:54:00:99:aa:7f'/>
-          <source network='default'/>
-          <model type='rtl8139'/>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x02'
-          function='0x0'/>
-        </interface>
-        <serial type='pty'>
-          <target type='isa-serial' port='0'/>
-        </serial>
-        <console type='pty'>
-          <target type='serial' port='0'/>
-        </console>
-        <memballoon model='virtio'>
-          <address type='pci' domain='0x0000' bus='0x00' slot='0x03'
-          function='0x0'/>
-        </memballoon>
-      </devices>
+      "..."
       <qemu:commandline>
         <qemu:arg value='-cpu'/>
         <qemu:arg value='host'/>
         <qemu:arg value='-object'/>
-        <qemu:arg
-        value='memory-backend-file,id=mem,size=4096M,mem-path=/run/hugepages/kvm,share=on'/>
+        <qemu:arg value='memory-backend-file,
+        id=mem,size=4096M,mem-path=/run/hugepages/kvm,share=on'/>
         <qemu:arg value='-numa'/>
         <qemu:arg value='node,memdev=mem'/>
         <qemu:arg value='-mem-prealloc'/>
         <qemu:arg value='-chardev'/>
         <qemu:arg value='socket,id=chr0,path=/tmp/sock0,server'/>
         <qemu:arg value='-device'/>
-        <qemu:arg
-        value='virtio-net-pci,netdev=vhost-net0,mac=52:54:00:12:34:56'/>
+        <qemu:arg value='virtio-net-pci,netdev=vhost-net0,
+        mac=52:54:00:12:34:56'/>
         <qemu:arg value='-netdev'/>
         <qemu:arg value='vhost-user,id=vhost-net0,chardev=chr0,vhostforce'/>
         <qemu:arg value='-chardev'/>
         <qemu:arg value='socket,id=chr1,path=/tmp/sock1,server'/>
         <qemu:arg value='-device'/>
-        <qemu:arg
-        value='virtio-net-pci,netdev=vhost-net1,mac=52:54:00:12:34:57'/>
+        <qemu:arg value='virtio-net-pci,netdev=vhost-net1,
+        mac=52:54:00:12:34:57'/>
         <qemu:arg value='-netdev'/>
         <qemu:arg value='vhost-user,id=vhost-net1,chardev=chr1,vhostforce'/>
       </qemu:commandline>
