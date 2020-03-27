@@ -109,24 +109,24 @@ consists of three parts.
 
     spp > vf 1; status
     Basic Information:
-      - client-id: 3
-      - ports: [phy:0, phy:1, ring:0, ring:1, ring:2, ring:3, ring:4]
-      - lcore_ids:
-        - master: 2
-        - slaves: [3, 4, 5, 6]
+     - client-id: 1
+     - ports: [phy:0 nq 0, phy:0 nq 1, ring:0, ring:1, ring:2]
+     - lcore_ids:
+       - master: 1
+       - slaves: [2, 3 ,4, 5]
     Classifier Table:
-      - C0:8E:CD:38:EA:A8, ring:4
-      - C0:8E:CD:38:BC:E6, ring:3
+     - C0:8E:CD:38:EA:A8, ring:1
+     - C0:8E:CD:38:BC:E6, ring:2
     Components:
-      - core:5 'fw1' (type: forward)
-        - rx: ring:0
-        - tx: ring:1
-      - core:6 'mg' (type: merge)
-      - core:7 'cls' (type: classifier)
-        - rx: ring:2
-        - tx: ring:3
-        - tx: ring:4
-      - core:8 '' (type: unuse)
+     - core:2 'fwd1' (type: forward)
+       - rx: phy:0 nq 0
+       - tx: ring:0
+     - core:3 'mg' (type: merge)
+     - core:4 'cls' (type: classifier)
+       - rx: phy:0 nq 1
+       - tx: ring:1
+       - tx: ring:2
+     - core:5 '' (type: unuse)
 
 ``Basic Information`` is for describing attributes of ``spp_vf`` itself.
 ``client-id`` is a secondary ID of the process and ``ports`` is a list of
@@ -214,10 +214,12 @@ Adding port
 
 .. code-block:: console
 
-    spp > vf SEC_ID; port add RES_UID DIR NAME
+    spp > vf SEC_ID; port add RES_UID [nq QUEUE_NUM] DIR NAME
 
 ``RES_UID`` is with replaced with resource UID such as ``ring:0`` or
 ``vhost:1``. ``spp_vf`` supports three types of port.
+``nq QUEUE_NUM`` is the queue number when multi-queue is configured.
+This is optional parameter.
 
   * ``phy`` : Physical NIC
   * ``ring`` : Ring PMD
@@ -237,6 +239,9 @@ by referring the table. How to configure the table is described in
     # recieve from 'phy:0'
     spp > vf 2; port add phy:0 rx cls1
 
+    # receive from queue 1 of 'phy:0'
+    spp > vf 2; port add phy:0 nq 1 rx cls1
+
     # send to 'ring:0' and 'ring:1'
     spp > vf 2; port add ring:0 tx cls1
     spp > vf 2; port add ring:1 tx cls1
@@ -252,14 +257,14 @@ To remove VLAN tag, simply add ``del_vlantag`` sub command without arguments.
 
 .. code-block:: console
 
-    spp > vf SEC_ID; port add RES_UID DIR NAME del_vlantag
+    spp > vf SEC_ID; port add RES_UID [nq QUEUE_NUM] DIR NAME del_vlantag
 
 On the other hand, use ``add_vlantag`` which takes two arguments,
 ``VID`` and ``PCP``, for adding VLAN tag to the packets.
 
 .. code-block:: console
 
-    spp > vf SEC_ID; port add RES_UID DIR NAME add_vlantag VID PCP
+    spp > vf SEC_ID; port add RES_UID [nq QUEUE_NUM] DIR NAME add_vlantag VID PCP
 
 ``VID`` is a VLAN ID and ``PCP`` is a Priority Code Point defined in
 `IEEE 802.1p
@@ -300,7 +305,7 @@ Delete a port which is not used anymore.
 
 .. code-block:: console
 
-    spp > vf SEC_ID; port del RES_UID DIR NAME
+    spp > vf SEC_ID; port del RES_UID [nq QUEUE_NUM] DIR NAME
 
 It is same as the adding port, but no need to add additional sub command
 for VLAN features.
@@ -311,6 +316,9 @@ Here is an example.
 
     # delete rx port 'ring:0' from 'cls1'
     spp > vf 2; port del ring:0 rx cls1
+
+    # delete rx port queue 1 of 'phy:0' from 'cls1'
+    spp > vf 2; port del phy:0 nq 1 rx cls1
 
     # delete tx port 'vhost:1' from 'mgr1'
     spp > vf 2; port del vhost:1 tx mgr1
@@ -335,6 +343,12 @@ a table of classifier.
 
     # delete entry
     spp > vf SEC_ID; classifier_table del mac MAC_ADDRESS RES_ID
+
+    # add entry with multi-queue support
+    spp > vf SEC_ID; classifier_table add mac MAC_ADDR RES_UID [nq QUEUE_NUM]
+
+    # delete entry with multi-queue support
+    spp > vf SEC_ID; classifier_table del mac MAC_ADDRESS RES_ID [nq QUEUE_NUM]
 
 This is an example to register MAC address ``52:54:00:01:00:01``
 with port ``ring:0``.
