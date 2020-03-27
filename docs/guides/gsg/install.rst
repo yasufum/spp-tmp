@@ -129,6 +129,14 @@ config file ``common_base`` should be changed to ``y`` to enable PCAP.
     ...
     CONFIG_RTE_PORT_PCAP=y
 
+If you use MLX5 NIC, ``CONFIG_RTE_LIBRTE_MLX5_PMD`` defined in
+config file ``common_base`` should be changed to ``y``.
+
+.. code-block:: none
+
+    # dpdk/config/common_base
+    CONFIG_RTE_LIBRTE_MLX5_PMD=y
+
 Compile DPDK with target environment.
 
 .. code-block:: console
@@ -137,29 +145,6 @@ Compile DPDK with target environment.
     $ export RTE_SDK=$(pwd)
     $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
     $ make install T=$RTE_TARGET
-
-
-PCAP is disabled by default in DPDK configuration, so should be changed
-if you use this feature.
-``CONFIG_RTE_LIBRTE_PMD_PCAP`` and ``CONFIG_RTE_PORT_PCAP`` defined in
-config file ``common_base`` should be changed to ``y`` to enable PCAP.
-
-.. code-block:: console
-
-    # dpdk/config/common_base
-    CONFIG_RTE_LIBRTE_PMD_PCAP=y
-    ...
-    CONFIG_RTE_PORT_PCAP=y
-
-Compile DPDK with options for target environment.
-
-.. code-block:: console
-
-    $ cd dpdk
-    $ export RTE_SDK=$(pwd)
-    $ export RTE_TARGET=x86_64-native-linuxapp-gcc  # depends on your env
-    $ make install T=$RTE_TARGET
-
 
 Pyhton
 ------
