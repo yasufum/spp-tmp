@@ -438,3 +438,211 @@ Equivalent CLI command
 .. code-block:: none
 
     pri; launch {proc_type} {sec_id} {eal_opts} -- {app_opts}
+
+POST /v1/primary/flow_rules/port_id/{port_id}/validate
+------------------------------------------------------
+
+Validate flow rule for specific port_id.
+
+* Normal response codes: 200
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X POST \
+           http://127.0.0.1:7777/v1/primary/flow_rules/port_id/0/validate \
+           -H "Content-type: application/json" \
+           -d '{ \
+               "rule": \
+                  { \
+                  "group": 0, \
+                  "priority": 0, \
+                  "direction": "ingress", \
+                  "transfer": true, \
+                  "pattern": \
+                    [ \
+                      "eth dst is 11:22:33:44:55:66 type mask 0xffff", \
+                      "vlan vid is 100" \
+                    ], \
+                  "actions": \
+                    [ \
+                      "queue index 1", \
+                      "of_pop_vlan" \
+                    ] \
+                  } \
+               }'
+
+Response
+~~~~~~~~
+
+.. _table_spp_ctl_primary_flow_validate:
+
+.. table:: Response params of validate.
+
+    +------------+--------+----------------------------------------+
+    | Name       | Type   | Description                            |
+    |            |        |                                        |
+    +============+========+========================================+
+    | result     | string | Validation result.                     |
+    +------------+-------++----------------------------------------+
+    | message    | string | Additional information if any.         |
+    +------------+-------++----------------------------------------+
+
+Response example
+~~~~~~~~~~~~~~~~
+
+.. code-block:: json
+
+        {
+                "result" : "success",
+                "message" : "Flow rule validated"
+        }
+
+POST /v1/primary/flow_rules/port_id/{port_id}
+---------------------------------------------
+
+Create flow rule for specific port_id.
+
+* Normal response codes: 200
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X POST http://127.0.0.1:7777/v1/primary/flow_rules/port_id/0 \
+           -H "Content-type: application/json" \
+           -d '{ \
+               "rule": \
+                  { \
+                  "group": 0, \
+                  "priority": 0, \
+                  "direction": "ingress", \
+                  "transfer": true, \
+                  "pattern": \
+                    [ \
+                      "eth dst is 11:22:33:44:55:66 type mask 0xffff", \
+                      "vlan vid is 100" \
+                    ], \
+                  "actions": \
+                    [ \
+                      "queue index 1", \
+                      "of_pop_vlan" \
+                    ] \
+                  } \
+               }'
+
+Response
+~~~~~~~~
+
+.. _table_spp_ctl_primary_flow_create:
+
+.. table:: Response params of flow creation.
+
+    +------------+--------+----------------------------------------+
+    | Name       | Type   | Description                            |
+    |            |        |                                        |
+    +============+========+========================================+
+    | result     | string | Creation result.                       |
+    +------------+--------+----------------------------------------+
+    | message    | string | Additional information if any.         |
+    +------------+--------+----------------------------------------+
+    | rule_id    | string | Rule id allocated if successful.       |
+    +------------+--------+----------------------------------------+
+
+Response example
+~~~~~~~~~~~~~~~~
+
+.. code-block:: json
+
+        {
+                "result" : "success",
+                "message" : "Flow rule #0 created",
+                "rule_id" : "0"
+        }
+
+DELETE /v1/primary/flow_rule/port_id/{port_id}
+----------------------------------------------
+
+Delete all flow rule for specific port_id.
+
+* Normal response codes: 200
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X DELETE http://127.0.0.1:7777/v1/primary/flow_rule/port_id/0
+
+Response
+~~~~~~~~
+
+.. _table_spp_ctl_primary_flow_flush:
+
+.. table:: Response params of flow flush.
+
+    +------------+--------+----------------------------------------+
+    | Name       | Type   | Description                            |
+    |            |        |                                        |
+    +============+========+========================================+
+    | result     | string | Deletion result.                       |
+    +------------+--------+----------------------------------------+
+    | message    | string | Additional information if any.         |
+    +------------+--------+----------------------------------------+
+
+Response example
+~~~~~~~~~~~~~~~~
+
+.. code-block:: json
+
+        {
+                "result" : "success",
+                "message" : "Flow rule all destroyed"
+        }
+
+DELETE /v1/primary/flow_rule/{rule_id}/port_id/{port_id}
+--------------------------------------------------------
+
+Delete specific flow rule for specific port_id.
+
+* Normal response codes: 200
+
+
+Request example
+~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ curl -X DELETE http://127.0.0.1:7777/v1/primary/flow_rules/0/port_id/0
+
+Response
+~~~~~~~~
+
+.. _table_spp_ctl_primary_flow_delete:
+
+.. table:: Response params of flow deletion.
+
+    +------------+--------+----------------------------------------+
+    | Name       | Type   | Description                            |
+    |            |        |                                        |
+    +============+========+========================================+
+    | result     | string | Deletion result.                       |
+    +------------+--------+----------------------------------------+
+    | message    | string | Additional information if any.         |
+    +------------+--------+----------------------------------------+
+
+Response example
+~~~~~~~~~~~~~~~~
+
+.. code-block:: json
+
+        {
+                "result" : "success",
+                "message" : "Flow rule #0 destroyed"
+        }
