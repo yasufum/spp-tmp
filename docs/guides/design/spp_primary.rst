@@ -25,6 +25,9 @@ the server process of the sample application.
 It does not work for packet forwaring without in some usecases, but just
 provide rings and memory pools for secondary processes.
 
+Primary process supports ``rte_flow`` of DPDK for hardware offloading.
+Packet distribution based on dst MAC address and/or VLAN ID
+is supported. Entag/detag of VLAN is also supported.
 
 Master and Worker Threads
 -------------------------
