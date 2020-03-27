@@ -53,9 +53,10 @@ Show status fo ``spp_primary`` and forwarding statistics of each of ports.
       - master: 0
     - stats
       - physical ports:
-          ID          rx          tx    tx_drop  mac_addr
-           0           0           0           0  56:48:4f:53:54:00
-           1           0           0           0  56:48:4f:53:54:01
+          ID          rx          tx    tx_drop   rxq  txq mac_addr
+           0           0           0           0   16   16 3c:fd:fe:b6:c4:28
+           1           0           0           0 1024 1024 3c:fd:fe:b6:c4:29
+           2           0           0           0    1    1 3c:fd:fe:b6:c4:30
       - ring ports:
           ID          rx          tx     rx_drop     tx_drop
            0           0           0           0           0
@@ -247,3 +248,95 @@ In terms of log, each of secondary processes are output its log messages to
 files under ``log`` directory of project root. The name of log file is defined
 with type of process and secondary ID. For instance, ``nfv 2``, the path of log
 file is ``log/spp_nfv-2.log``.
+
+.. _commands_primary_flow:
+
+flow
+----
+
+Manipulate flow rules.
+
+You can request ``validate`` before creating flow rule.
+
+.. code-block:: console
+
+   spp > pri; flow validate phy:0 ingress group 1 pattern eth dst is
+         10:22:33:44:55:66 / vlan vid is 100 / end actions queue index 0 /
+         of_pop_vlan / end
+   Flow rule validated
+
+
+You can create rules by using ``create`` request.
+
+.. code-block:: console
+
+   spp > pri; flow create phy:0 ingress group 1 pattern eth dst is
+         10:22:33:44:55:66 / vlan vid is 100 / end actions queue index 0 /
+         of_pop_vlan / end
+   Flow rule #0 created
+
+.. note::
+
+   ``validate`` and/or ``create`` in flow command tends to take long
+   parameters. But you should enter it as one line.
+   CLI assumes that new line means ``command is entered``. So command
+   should be entered without using new line.
+
+You can delete specific flow rule.
+
+.. code-block:: console
+
+   spp > pri; flow destroy phy:0 0
+   Flow rule #0 destroyed
+
+Listing flow rules per physical port is supported.
+
+.. code-block:: console
+
+   spp > pri; flow list phy:0
+   ID      Group   Prio    Attr    Rule
+   0       1       0       -e-     ETH => OF_PUSH_VLAN OF_SET_VLAN_VID OF_SET_VLAN_PCP
+   1       1       0       i--     ETH VLAN => QUEUE OF_POP_VLAN
+   2       0       0       i--     ETH => JUMP
+
+The following is the parameters to be displayed.
+
+* ``ID``: Identifier of the rule which is unique per physical port.
+* ``Group``: Group number the rule belongs.
+* ``Prio``: Priority value of the rule.
+* ``Attr``: Attributes for the rule which is independent each other.
+  The possible values of ``Attr`` are ``i`` or ``e`` or ``t``. ``i`` means
+  ingress. ``e`` means egress and ``t`` means transfer.
+* ``Rule``: Rule notation.
+
+Flow detail can be listed.
+
+.. code-block:: console
+
+   spp > pri; flow status phy:0 0
+   Attribute:
+     Group   Priority Ingress Egress Transfer
+     1       0        true    false  false
+   Patterns:
+     - eth:
+       - spec:
+         - dst: 10:22:33:44:55:66
+         - src: 00:00:00:00:00:00
+         - type: 0xffff
+       - last:
+       - mask:
+         - dst: ff:ff:ff:ff:ff:ff
+         - src: 00:00:00:00:00:00
+         - type: 0xffff
+     - vlan:
+       - spec:
+         - tci: 0x0064
+         - inner_type: 0x0000
+       - last:
+       - mask:
+         - tci: 0xffff
+         - inner_type: 0x0000
+   Actions:
+     - queue:
+       - index: 0
+     - of_pop_vlan:
