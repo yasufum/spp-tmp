@@ -285,6 +285,19 @@ Python 2 or 3 ?
 Without SPP container tools, Python2 is not supported anymore.
 SPP container will also be updated to Python3.
 
+Driver for Mellanox NIC
+-----------------------
+
+In case of using MLX5 NIC, you have to install driver.
+You can download driver from Mellanox's `SW/Drivers
+<https://www.mellanox.com/page/mlnx_ofed_matrix?mtag=linux_sw_drivers>`.
+The following example assumes that
+MLNX_OFED_LINUX-4.7-1.0.0.1-ubuntu18.04-x86_64.tgz is downloaded.
+
+.. code-block:: console
+
+   $cd MLNX_OFED_LINUX-4.7-1.0.0.1-ubuntu18.04-x86_64/
+   $sudo ./mlnxofedinstall --upstream-libs --dpdk --force
 
 Reference
 ---------
