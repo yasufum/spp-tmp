@@ -464,6 +464,26 @@ secondary processes.
         -n 10 \
         -s 192.168.1.100:5555
 
+In case of using MLX5 supported NIC, you must add ``dv_flow_en=1``
+with white list option.
+
+.. code-block:: console
+
+    # terminal 3
+    $ sudo ./src/primary/x86_64-native-linuxapp-gcc/spp_primary \
+        -l 0 -n 4 \
+        -w 0000:03:00.0,dv_flow_en=1 \
+        -w 0000:04:00.0,dv_flow_en=1 \
+        -w 0000:05:00.0 \
+        --socket-mem 512,512 \
+        --huge-dir /dev/hugepages \
+        --proc-type primary \
+        --base-virtaddr 0x100000000
+        -- \
+        -p 0x03 \
+        -n 10 \
+        -s 192.168.1.100:5555
+
 - EAL options:
 
   - ``-l``: core list
