@@ -48,5 +48,4 @@ Coding Guidelines
 Maintainer
 ----------
 
-* Ferruh Yigit <ferruh.yigit@intel.com>
 * Yasufumi Ogawa <ogawa.yasufumi@lab.ntt.co.jp>
