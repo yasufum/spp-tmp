@@ -51,9 +51,6 @@
  */
 #define CLS_DUMMY_ADDR_STR "00:00:00:00:00:01"
 
-/* Sampling interval timer for latency evaluation */
-#define SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL 1000000
-
 /**
  * TODO(Yamashita) change type names.
  *  "merge" -> "merger", "forward" -> "forwarder".
