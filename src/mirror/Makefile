@@ -26,7 +26,6 @@ SRCS-y += $(SPP_WKT_DIR)/port_capability.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_runner.c
-SRCS-y += $(SPP_WKT_DIR)/latency_stats.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_res_formatter.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
@@ -42,11 +41,6 @@ CFLAGS += -DSPP_MIRROR_SHALLOWCOPY
 
 # Optional Settings
 #CFLAGS += -DSPP_DEMONIZE
-
-# TODO(Hideyuki Yamashita) ringlatencystats cannot run because a fatal
-# bug in initialization of this feature. So you should not use it until
-# this fatal bug is fixed.
-#CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)
 LDLIBS += -lrte_pmd_ring

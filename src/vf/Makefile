@@ -20,7 +20,6 @@ SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_SEC_DIR)/json_helper.c
 SRCS-y += $(SPP_SEC_DIR)/common.c
 SRCS-y += $(SPP_SEC_DIR)/utils.c $(SPP_SEC_DIR)/add_port.c
-SRCS-y += $(SPP_WKT_DIR)/latency_stats.c
 SRCS-y += $(SPP_WKT_DIR)/port_capability.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/cmd_parser.c
@@ -37,11 +36,6 @@ CFLAGS += -DSPP_VF_MODULE
 
 # Optional Settings
 #CFLAGS += -DSPP_DEMONIZE
-
-# TODO(Hideyuki Yamashita) ringlatencystats cannot run because a fatal
-# bug in initialization of this feature. So you should not use it until
-# this fatal bug is fixed.
-#CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
 ifeq ($(CONFIG_RTE_BUILD_SHARED_LIB),y)
 LDLIBS += -lrte_pmd_ring

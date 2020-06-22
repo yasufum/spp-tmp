@@ -24,7 +24,6 @@ SRCS-y += $(SPP_SEC_DIR)/utils.c
 SRCS-y += $(SPP_SEC_DIR)/string_buffer.c
 SRCS-y += $(SPP_WKT_DIR)/conn_spp_ctl.c
 SRCS-y += $(SPP_WKT_DIR)/port_capability.c
-SRCS-y += $(SPP_WKT_DIR)/latency_stats.c
 
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += $(WERROR_FLAGS) -O3 -MMD
@@ -34,7 +33,6 @@ CFLAGS += -I$(SRCDIR)/../shared
 
 # Optional Settings
 #CFLAGS += -DSPP_DEMONIZE
-#CFLAGS += -DSPP_RINGLATENCYSTATS_ENABLE
 
 LDLIBS += -llz4
 
