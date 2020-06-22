@@ -20,9 +20,6 @@
 #include "shared/secondary/spp_worker_th/cmd_utils.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "shared/secondary/spp_worker_th/latency_stats.h"
-#endif
 
 /* Declare global variables */
 #define RTE_LOGTYPE_MIRROR RTE_LOGTYPE_USER1
@@ -336,13 +333,8 @@ mirror_proc(int id)
 
 	rx = &path->ports[0].rx;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	nb_rx = sppwk_eth_ring_stats_rx_burst(rx->ethdev_port_id,
-			rx->iface_type, rx->iface_no, 0, bufs, MAX_PKT_BURST);
-#else
 	nb_rx = rte_eth_rx_burst(rx->ethdev_port_id, rx->queue_no, bufs,
 			MAX_PKT_BURST);
-#endif
 
 	if (unlikely(nb_rx == 0))
 		return SPPWK_RET_OK;
@@ -399,26 +391,15 @@ mirror_proc(int id)
 		}
 
 		if (cnt != 0)
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-			nb_tx2 = sppwk_eth_ring_stats_tx_burst(
-					tx->ethdev_port_id, tx->iface_type,
-					tx->iface_no, 0, copybufs, cnt);
-#else
 			nb_tx2 = rte_eth_tx_burst(tx->ethdev_port_id,
 					tx->queue_no, copybufs, cnt);
-#endif
 	}
 
 	/* orginal */
 	tx = &path->ports[0].tx;
 	if (tx->ethdev_port_id >= 0)
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-		nb_tx1 = sppwk_eth_ring_stats_tx_burst(tx->ethdev_port_id,
-				tx->iface_type, tx->iface_no, 0, bufs, nb_rx);
-#else
 		nb_tx1 = rte_eth_tx_burst(tx->ethdev_port_id, tx->queue_no,
 				bufs, nb_rx);
-#endif
 	nb_tx = nb_tx1;
 
 	if (nb_tx1 != nb_tx2)
@@ -570,24 +551,6 @@ main(int argc, char *argv[])
 		if (unlikely(ret_cmd_init != SPPWK_RET_OK))
 			break;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-		int port_type, port_id;
-		char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
-		int nof_rings = 0;
-		for (int i = 0; i < RTE_MAX_ETHPORTS; i++) {
-			if (!rte_eth_dev_is_valid_port(i))
-				continue;
-			rte_eth_dev_get_name_by_port(i, dev_name);
-			ret = parse_dev_name(dev_name, &port_type, &port_id);
-			if (port_type == RING)
-				nof_rings++;
-		}
-		int ret_ringlatency = sppwk_init_ring_latency_stats(
-				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				nof_rings);
-		if (unlikely(ret_ringlatency != SPPWK_RET_OK))
-			break;
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 		/* Start worker threads of classifier and forwarder */
 		lcore_id = 0;
@@ -630,9 +593,6 @@ main(int argc, char *argv[])
 			 */
 			usleep(100);
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-			print_ring_latency_stats(&g_iface_info);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
 		if (unlikely(ret_do != SPPWK_RET_OK)) {
@@ -653,9 +613,6 @@ main(int argc, char *argv[])
 	 /* Remove vhost sock file if not running in vhost-client mode. */
 	del_vhost_sockfile(g_iface_info.vhost);
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	sppwk_clean_ring_latency_stats();
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 	RTE_LOG(INFO, MIRROR, "Exit spp_mirror.\n");
 	return ret;
