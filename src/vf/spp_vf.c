@@ -19,9 +19,6 @@
 
 #define RTE_LOGTYPE_SPP_VF RTE_LOGTYPE_USER1
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "shared/secondary/spp_worker_th/latency_stats.h"
-#endif
 
 /* getopt_long return value for long option */
 enum SPP_LONGOPT_RETVAL {
@@ -280,24 +277,6 @@ main(int argc, char *argv[])
 		if (unlikely(ret != SPPWK_RET_OK))
 			break;
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-		int port_type, port_id;
-		char dev_name[RTE_DEV_NAME_MAX_LEN] = { 0 };
-		int nof_rings = 0;
-		for (int i = 0; i < RTE_MAX_ETHPORTS; i++) {
-			if (!rte_eth_dev_is_valid_port(i))
-				continue;
-			rte_eth_dev_get_name_by_port(i, dev_name);
-			ret = parse_dev_name(dev_name, &port_type, &port_id);
-			if (port_type == RING)
-				nof_rings++;
-		}
-		ret = sppwk_init_ring_latency_stats(
-				SPP_RING_LATENCY_STATS_SAMPLING_INTERVAL,
-				nof_rings);
-		if (unlikely(ret != SPPWK_RET_OK))
-			break;
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 		/* Start worker threads of classifier and forwarder */
 		RTE_LCORE_FOREACH_SLAVE(lcore_id) {
@@ -332,9 +311,6 @@ main(int argc, char *argv[])
 			*/
 			usleep(100);
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-			print_ring_latency_stats(&g_iface_info);
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 		}
 
 		if (unlikely(ret != SPPWK_RET_OK)) {
@@ -358,9 +334,6 @@ main(int argc, char *argv[])
 	 */
 	del_vhost_sockfile(g_iface_info.vhost);
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	sppwk_clean_ring_latency_stats();
-#endif /* SPP_RINGLATENCYSTATS_ENABLE */
 
 	RTE_LOG(INFO, SPP_VF, "Exit spp_vf.\n");
 	return ret;

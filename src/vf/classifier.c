@@ -29,9 +29,6 @@
 #include "shared/secondary/spp_worker_th/vf_deps.h"
 #include "shared/secondary/spp_worker_th/port_capability.h"
 
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-#include "shared/secondary/spp_worker_th/latency_stats.h"
-#endif
 
 #define RTE_LOGTYPE_VF_CLS RTE_LOGTYPE_USER1
 
@@ -424,15 +421,11 @@ transmit_packets(struct cls_port_info *clsd_data)
 	uint16_t n_tx;
 
 	/* transmit packets */
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	n_tx = sppwk_eth_vlan_ring_stats_tx_burst(clsd_data->ethdev_port_id,
-			clsd_data->iface_type, clsd_data->iface_no,
-			0, clsd_data->pkts, clsd_data->nof_pkts);
-#else
+
 	n_tx = sppwk_eth_vlan_tx_burst(clsd_data->ethdev_port_id,
 			clsd_data->queue_no, clsd_data->pkts,
 			clsd_data->nof_pkts);
-#endif
+
 
 	/* free cannot transmit packets */
 	if (unlikely(n_tx != clsd_data->nof_pkts)) {
@@ -758,14 +751,10 @@ classify_packets(int comp_id)
 		return SPPWK_RET_OK;
 
 	/* Retrieve packets */
-#ifdef SPP_RINGLATENCYSTATS_ENABLE
-	n_rx = sppwk_eth_vlan_ring_stats_rx_burst(clsd_data_rx->ethdev_port_id,
-			clsd_data_rx->iface_type, clsd_data_rx->iface_no,
-			0, rx_pkts, MAX_PKT_BURST);
-#else
+
 	n_rx = sppwk_eth_vlan_rx_burst(clsd_data_rx->ethdev_port_id,
 			clsd_data_rx->queue_no, rx_pkts, MAX_PKT_BURST);
-#endif
+
 	if (unlikely(n_rx == 0))
 		return SPPWK_RET_OK;
 
