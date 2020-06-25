@@ -45,6 +45,12 @@ Coding Guidelines
 * C code should follow the DPDK coding standards.
 * Python code should follow PEP8.
 
+Bug report
+----------
+
+How to issue bug is described in "Bug report" chapter
+in the RST document.
+
 Maintainer
 ----------
 
